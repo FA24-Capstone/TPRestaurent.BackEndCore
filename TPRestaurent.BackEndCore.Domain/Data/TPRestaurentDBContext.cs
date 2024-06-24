@@ -35,6 +35,10 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.TableRating> TableRatings { get; set; } = null!;
         public DbSet<Models.Tag> Tags { get; set; } = null!;
         public DbSet<Models.Token> Tokens { get; set; } = null!;
+        public DbSet<Models.EnumModels.OrderStatus> OrderStatuses { get; set; } = null!;
+        public DbSet<Models.EnumModels.OTPType> OTPTypes { get; set; } = null!;
+        public DbSet<Models.EnumModels.PaymentMethod> PaymentMethods { get; set; } = null!;
+        public DbSet<Models.EnumModels.RatingPoint> RatingPoints { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
