@@ -19,5 +19,8 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid? BlogId { get; set; }
         [ForeignKey(nameof(BlogId))]
         public Blog? Blog { get; set; }
+        public Guid? RatingId { get; set; }
+        [ForeignKey(nameof(RatingId))]
+        public Rating? Rating { get; set; }
     }
 }

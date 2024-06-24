@@ -1,4 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using TPRestaurent.BackEndCore.Domain.Models.EnumModels;
 
 namespace TPRestaurent.BackEndCore.Domain.Data
 {
@@ -33,7 +36,81 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.Tag> Tags { get; set; } = null!;
         public DbSet<Models.Token> Tokens { get; set; } = null!;
 
-     
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            builder.Entity<IdentityRole>().HasData(new IdentityRole
+            {
+                Id = "6a32e12a-60b5-4d93-8306-82231e1232d7",
+                Name = "ADMIN",
+                ConcurrencyStamp = "6a32e12a-60b5-4d93-8306-82231e1232d7",
+                NormalizedName = "admin"
+            });
+            builder.Entity<IdentityRole>().HasData(new IdentityRole
+            {
+                Id = "85b6791c-49d8-4a61-ad0b-8274ec27e764",
+                Name = "STAFF",
+                ConcurrencyStamp = "85b6791c-49d8-4a61-ad0b-8274ec27e764",
+                NormalizedName = "staff"
+            });
+            builder.Entity<IdentityRole>().HasData(new IdentityRole
+            {
+                Id = "814f9270-78f5-4503-b7d3-0c567e5812ba",
+                Name = "SHIPPER",
+                ConcurrencyStamp = "814f9270-78f5-4503-b7d3-0c567e5812ba",
+                NormalizedName = "shipper"
+            });
+            builder.Entity<IdentityRole>().HasData(new IdentityRole
+            {
+                Id = "02962efa-1273-46c0-b103-7167b1742ef3",
+                Name = "CUSTOMER",
+                ConcurrencyStamp = "02962efa-1273-46c0-b103-7167b1742ef3",
+                NormalizedName = "customer"
+            });
+           
 
+            base.OnModelCreating(builder);
+
+            SeedEnumTable<Models.EnumModels.OrderStatus, Enums.OrderStatus>(builder);
+            SeedEnumTable<Models.EnumModels.OTPType, Enums.OTPType>(builder);
+            SeedEnumTable<Models.EnumModels.PaymentMethod, Enums.PaymentMethod>(builder);
+            SeedEnumTable<Models.EnumModels.RatingPoint, Enums.RatingPoint>(builder);
+
+        }
+
+        private static void SeedEnumTable<TEntity, TEnum>(ModelBuilder modelBuilder)
+                 where TEntity : class
+                 where TEnum : System.Enum
+        {
+            var enumType = typeof(TEnum);
+            var entityType = typeof(TEntity);
+
+            if (!enumType.IsEnum)
+            {
+                throw new ArgumentException("TEnum must be an enum type.");
+            }
+
+            var enumValues = System.Enum.GetValues(enumType).Cast<TEnum>();
+
+            foreach (var enumValue in enumValues)
+            {
+                var entityInstance = Activator.CreateInstance(entityType);
+                entityType.GetProperty("Id")!.SetValue(entityInstance, enumValue);
+                entityType.GetProperty("Name")!.SetValue(entityInstance, enumValue.ToString());
+                modelBuilder.Entity<TEntity>().HasData(entityInstance!);
+            }
+        }
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            IConfiguration config = new ConfigurationBuilder()
+                           .SetBasePath(Directory.GetCurrentDirectory())
+                           .AddJsonFile("appsettings.json", true, true)
+                           .Build();
+            string cs = config["ConnectionStrings:DB"];
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseSqlServer(cs);
+            }
+          
+        }
     }
 }
