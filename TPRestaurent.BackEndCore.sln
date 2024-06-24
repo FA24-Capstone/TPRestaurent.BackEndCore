@@ -1,17 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 25.0.1706.12
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.34928.147
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPRestaurent.BackEndCore.API", "TPRestaurent.BackEndCore.API\TPRestaurent.BackEndCore.API.csproj", "{14711226-16C9-490A-A896-66AB19C3CAA9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TPRestaurent.BackEndCore.API", "TPRestaurent.BackEndCore.API\TPRestaurent.BackEndCore.API.csproj", "{14711226-16C9-490A-A896-66AB19C3CAA9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPRestaurent.BackEndCore.Domain", "TPRestaurent.BackEndCore.Domain\TPRestaurent.BackEndCore.Domain.csproj", "{9AEEB9E2-B708-4CE2-89CF-6FB4B8B897AA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TPRestaurent.BackEndCore.Domain", "TPRestaurent.BackEndCore.Domain\TPRestaurent.BackEndCore.Domain.csproj", "{9AEEB9E2-B708-4CE2-89CF-6FB4B8B897AA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPRestaurent.BackEndCore.Application", "TPRestaurent.BackEndCore.Application\TPRestaurent.BackEndCore.Application.csproj", "{4E770791-A5CF-40F9-BCE5-202238F3E44F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TPRestaurent.BackEndCore.Application", "TPRestaurent.BackEndCore.Application\TPRestaurent.BackEndCore.Application.csproj", "{4E770791-A5CF-40F9-BCE5-202238F3E44F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPRestaurent.BackEndCore.Infrastructure", "TPRestaurent.BackEndCore.Infrastructure\TPRestaurent.BackEndCore.Infrastructure.csproj", "{5111D0AE-3557-430C-993E-3291137618E5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TPRestaurent.BackEndCore.Infrastructure", "TPRestaurent.BackEndCore.Infrastructure\TPRestaurent.BackEndCore.Infrastructure.csproj", "{5111D0AE-3557-430C-993E-3291137618E5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPRestaurent.BackEndCore.Common", "TPRestaurent.BackEndCore.Common\TPRestaurent.BackEndCore.Common.csproj", "{D3C5289B-EE3B-4250-B0EC-AEA6098FBE3B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TPRestaurent.BackEndCore.Common", "TPRestaurent.BackEndCore.Common\TPRestaurent.BackEndCore.Common.csproj", "{D3C5289B-EE3B-4250-B0EC-AEA6098FBE3B}"
+EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{1C1A5A61-36DD-4B91-9C32-C992B5764AFF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{D3C5289B-EE3B-4250-B0EC-AEA6098FBE3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D3C5289B-EE3B-4250-B0EC-AEA6098FBE3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D3C5289B-EE3B-4250-B0EC-AEA6098FBE3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C1A5A61-36DD-4B91-9C32-C992B5764AFF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C1A5A61-36DD-4B91-9C32-C992B5764AFF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C1A5A61-36DD-4B91-9C32-C992B5764AFF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C1A5A61-36DD-4B91-9C32-C992B5764AFF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

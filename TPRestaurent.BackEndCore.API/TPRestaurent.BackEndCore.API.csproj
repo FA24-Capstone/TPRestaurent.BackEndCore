@@ -1,19 +1,38 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>413c660a-bf81-41b9-8617-ca285c0084ae</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'TP.Restaurent.BackEndCore.API' " />
   <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.20.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+	  <PackageReference Include="Google.Cloud.Storage.V1" Version="4.7.0" />
+
+
+	  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.22" />
+
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.22" />
+
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.22" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\TPRestaurent.BackEndCore.Application\TPRestaurent.BackEndCore.Application.csproj">
       <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
     </ProjectReference>
+    <ProjectReference Include="..\TPRestaurent.BackEndCore.Common\TPRestaurent.BackEndCore.Common.csproj" />
+    <ProjectReference Include="..\TPRestaurent.BackEndCore.Domain\TPRestaurent.BackEndCore.Domain.csproj" />
+    <ProjectReference Include="..\TPRestaurent.BackEndCore.Infrastructure\TPRestaurent.BackEndCore.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\" />
   </ItemGroup>
 </Project>

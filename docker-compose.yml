@@ -1,0 +1,19 @@
+version: '3.4'
+
+services:
+ tprestaurent.backend.db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: tprestaurent.backend.db
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "03122002Hq@@"
+    volumes:
+      - ./.containers/tprestaurent.backend.db:/var/lib/mssql/data
+    ports:
+      - "1433:1433"
+
+ tprestaurent.backendcore.api:
+    image: ${DOCKER_REGISTRY-}tprestaurentbackendcoreapi
+    build:
+      context: .
+      dockerfile: TPRestaurent.BackEndCore.API/Dockerfile

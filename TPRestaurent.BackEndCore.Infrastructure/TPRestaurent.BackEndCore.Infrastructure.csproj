@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -7,15 +7,34 @@
   </PropertyGroup>
 
   <ItemGroup>
+	  <PackageReference Include="AutoMapper" Version="13.0.1" />
+	  <PackageReference Include="Firebase.Auth" Version="1.0.0" />
+	  <PackageReference Include="FirebaseAdmin" Version="2.0.0" />
+	  <PackageReference Include="Google.Apis.Auth" Version="1.65.0" />
+	  <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
+	  <PackageReference Include="RestSharp" Version="110.2.0" />
+	  <PackageReference Include="FirebaseStorage.net" Version="1.0.3" />
+	  <PackageReference Include="Hangfire" Version="1.8.6" />
+	  <PackageReference Include="MailKit" Version="4.2.0" />
+	  <PackageReference Include="DinkToPdf" Version="1.0.8" />
+	  <PackageReference Include="DinkToPdfCopyDependencies" Version="1.0.8" />
+	  <PackageReference Include="EPPlus" Version="7.0.1" />
+	  <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.25" />
+	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	  <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.2.0" />
+	  <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <ProjectReference Include="..\TPRestaurent.BackEndCore.Domain\TPRestaurent.BackEndCore.Domain.csproj" />
     <ProjectReference Include="..\TPRestaurent.BackEndCore.Application\TPRestaurent.BackEndCore.Application.csproj" />
   </ItemGroup>
+	<ItemGroup>
+		
+
+	</ItemGroup>
   <ItemGroup>
     <None Remove="Contract\" />
     <None Remove="Implementation\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contract\" />
-    <Folder Include="Implementation\" />
   </ItemGroup>
 </Project>
