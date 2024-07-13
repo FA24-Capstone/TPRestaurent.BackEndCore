@@ -12,12 +12,15 @@ namespace TPRestaurent.BackEndCore.Domain.Models
     {
         [Key]
         public Guid OrderDetailId { get; set; }
-        public Guid? OrderId { get; set; }
+        public Guid OrderId { get; set; }
         [ForeignKey(nameof(OrderId))]
         public Order? Order { get; set; } 
         public Guid? DishId { get; set; }
         [ForeignKey(nameof(DishId))]
         public Dish? Dish { get; set; }
+        public Guid? ComboId { get; set; }
+        [ForeignKey(nameof(ComboId))]
+        public Combo? Combo { get; set; }
         public int Quantity { get; set; }
         public double Price { get; set; }
 

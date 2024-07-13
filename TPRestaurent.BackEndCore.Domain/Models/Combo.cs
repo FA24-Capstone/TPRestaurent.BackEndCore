@@ -7,12 +7,14 @@ using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
 {
-    public class Ingredient
+    public class Combo
     {
-        [Key]   
-        public Guid IngredientId { get; set; }
+        [Key]
+        public Guid ComboId { get; set; }
         public string Name { get; set; } = null!;
-        public string? Description { get; set; } 
-        public string Image { get; set; } = null!;
+        public string Description { get; set; }
+        public double Price { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
     }
 }

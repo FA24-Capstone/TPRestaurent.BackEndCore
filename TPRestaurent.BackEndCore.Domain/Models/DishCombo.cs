@@ -5,18 +5,21 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TPRestaurent.BackEndCore.Domain.Enums;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
 {
-    public class DishIngredient
+    public class DishCombo
     {
         [Key]
-        public Guid DishIngredientId { get; set; }
+        public Guid DishComboId { get; set; }
+        public bool HasOptions { get; set; }
+        public int? OptionSetNumber { get; set; }
         public Guid DishId { get; set; }
         [ForeignKey(nameof(DishId))]
         public Dish? Dish { get; set; }
-        public Guid? IngredientId { get; set; }
-        [ForeignKey(nameof(IngredientId))]
-        public Ingredient? Ingredient { get; set; }
+        public Guid ComboId { get; set; }
+        [ForeignKey(nameof(ComboId))]
+        public Combo? Combo { get; set; }
     }
 }

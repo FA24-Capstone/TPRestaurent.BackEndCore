@@ -1,23 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Domain.Enums;
 
-namespace TPRestaurent.BackEndCore.Domain.Models
+namespace TPRestaurent.BackEndCore.Common.DTO.Request
 {
-    public class Dish
+    public class DishDto
     {
-        [Key]
-        public Guid DishId { get; set; }
         public string Name { get; set; } = null!;
         public string Description { get; set; } = null!;
         public string Image { get; set; } = null!;
         public double Price { get; set; }
         public double Discount { get; set; }
         public DishItemType DishItemType { get; set; }
-        public bool isAvailable { get; set; }
     }
 }

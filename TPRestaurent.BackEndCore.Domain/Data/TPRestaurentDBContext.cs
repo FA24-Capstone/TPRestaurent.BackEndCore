@@ -21,8 +21,6 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.CustomerInfo> CustomerInfos { get; set; } = null!;
         public DbSet<Models.Dish> Dishes { get; set; } = null!;
         public DbSet<Models.DishTag> DishTags { get; set; } = null!;
-        public DbSet<Models.DishIngredient> DishIngredients { get; set; } = null!;
-        public DbSet<Models.Ingredient> Ingredients { get; set; } = null!;
         public DbSet<Models.LoyalPointsHistory> LoyalPointsHistories { get; set; } = null!;
         public DbSet<Models.Order> Orders { get; set; } = null!;
         public DbSet<Models.OrderDetail> OrderDetails { get; set; } = null!;
@@ -35,10 +33,16 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.TableRating> TableRatings { get; set; } = null!;
         public DbSet<Models.Tag> Tags { get; set; } = null!;
         public DbSet<Models.Token> Tokens { get; set; } = null!;
+        public DbSet<Models.Configuration> Configurations { get; set; } = null!;
+        public DbSet<Models.Combo> Combos { get; set; } = null!;
+        public DbSet<Models.DishCombo> DishCombos { get; set; } = null!;
+        public DbSet<Models.StoreCreditHistory> StoreCreditHistories { get; set; } = null!;
+        public DbSet<Models.StoreCredit> StoreCredits { get; set; } = null!;
         public DbSet<Models.EnumModels.OrderStatus> OrderStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.OTPType> OTPTypes { get; set; } = null!;
         public DbSet<Models.EnumModels.PaymentMethod> PaymentMethods { get; set; } = null!;
         public DbSet<Models.EnumModels.RatingPoint> RatingPoints { get; set; } = null!;
+        public DbSet<Models.EnumModels.DishItemType> DishItemTypes { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
