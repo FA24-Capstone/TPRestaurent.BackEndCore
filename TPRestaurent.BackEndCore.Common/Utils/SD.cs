@@ -158,4 +158,9 @@ public class SD
         //public string? Description { get; set; }
         //public string? MenuType { get; set; }
     }
+    public class FirebasePathName
+    {
+        public static string BASE_URL = "https://firebasestorage.googleapis.com/v0/b/hcqs-project.appspot.com/o/";
+        public static string DISH_PREFIX = "dish/";
+    }
 }

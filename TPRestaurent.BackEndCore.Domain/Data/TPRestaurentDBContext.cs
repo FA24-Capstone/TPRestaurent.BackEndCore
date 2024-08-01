@@ -118,7 +118,8 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             {
                 optionsBuilder.UseSqlServer(cs);
             }
-          
+           // optionsBuilder.UseSqlServer(
+           //"server=.;database=TPRestaurent;uid=SA;pwd=12345;TrustServerCertificate=True;MultipleActiveResultSets=True;");
         }
     }
 }
