@@ -168,5 +168,6 @@ public class SD
     {
         public static string BASE_URL = "https://firebasestorage.googleapis.com/v0/b/hcqs-project.appspot.com/o/";
         public static string DISH_PREFIX = "dish/";
+        public static string COMBO_PREFIX = "combo/";
     }
 }
