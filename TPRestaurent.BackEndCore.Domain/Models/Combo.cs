@@ -14,6 +14,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid ComboId { get; set; }
         public string Name { get; set; } = null!;
         public string Description { get; set; }
+        public string? Image {  get; set; }
         public double Price { get; set; }
         public Enums.ComboCategory CategoryId { get; set; }
         [ForeignKey(nameof(CategoryId))]

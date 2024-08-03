@@ -12,7 +12,6 @@ namespace TPRestaurent.BackEndCore.Domain.Models
     {
         [Key]
         public Guid DishTagId { get; set; }
-        public string Name { get; set; } = null!;
         public Guid? DishId { get; set; }
         [ForeignKey(nameof(DishId))]
         public Dish? Dish { get; set; }
