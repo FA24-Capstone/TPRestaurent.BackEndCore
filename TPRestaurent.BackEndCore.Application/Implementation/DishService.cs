@@ -40,7 +40,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var firebaseService = Resolve<IFirebaseService>();
                     var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
-                    var dishExsted = _dishRepository.GetByExpression(p => p.Name == dto.Name);
+                    var dishExsted = await _dishRepository.GetByExpression(p => p.Name == dto.Name);
                     if (dishExsted != null)
                     {
                         result = BuildAppActionResultError(result, $"This dish with the name {dto.Name} is already exsited");
@@ -132,7 +132,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                  var dishList = await _dishRepository
-                    .GetAllDataByExpression(p => p.Name.Contains(keyword) || string.IsNullOrEmpty(keyword), pageNumber, pageSize, null, false, p => p.DishItemType!);
+                    .GetAllDataByExpression((p => p.Name.Contains(keyword) || string.IsNullOrEmpty(keyword)), pageNumber, pageSize, null, false, null);
                  result.Result = dishList;  
             }
             catch (Exception ex)
@@ -147,7 +147,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                result.Result = await _dishRepository.GetByExpression(p => p.DishId == dishId, p => p.DishItemType);
+                result.Result = await _dishRepository.GetByExpression(p => p.DishId == dishId);
             }
             catch (Exception ex)
             {
@@ -156,7 +156,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> UpdateDish(Guid dishId, DishDto dto)
+        public async Task<AppActionResult> UpdateDish(UpdateDishRequestDto dto)
         {
             var result = new AppActionResult();
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
@@ -165,15 +165,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var firebaseService = Resolve<IFirebaseService>();
                     var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
-                    var dishDb = await _dishRepository.GetById(dishId);
+                    var dishDb = await _dishRepository.GetById(dto.DishId);
                     if (dishDb == null)
                     {
-                        result = BuildAppActionResultError(result, $"The dish with id {dishId} is not exsited");
+                        result = BuildAppActionResultError(result, $"Món ăn với id {dto.DishId} không tồn tại");
                     }
-                    var oldFiles = await staticFileRepository.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, null);
+                    var oldFiles = await staticFileRepository!.GetAllDataByExpression(p => p.DishId == dto.DishId, 0, 0, null, false, null);
                     if (oldFiles.Items == null || !oldFiles.Items.Any())
                     {
-                        return BuildAppActionResultError(result, "These image files are not exsited");
+                        return BuildAppActionResultError(result, $"Các file hình ảnh của món ăn với id {dishDb.DishId} không tồn tại");
                     }
                     var oldFileList = new List<StaticFile>();
                     foreach (var oldImg in oldFiles.Items!)
@@ -183,7 +183,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var imageResult = firebaseService!.DeleteFileFromFirebase(pathName);
                         if (imageResult != null)
                         {
-                            result.Messages.Add("Delete image on firebase cloud successful");
+                            result.Messages.Add("Xóa các file hình ảnh thành công");
                         }
                     }
 
@@ -228,7 +228,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         if (!upload.IsSuccess)
                         {
-                            return BuildAppActionResultError(result, "Upload failed");
+                            return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
                         }
                     }
 

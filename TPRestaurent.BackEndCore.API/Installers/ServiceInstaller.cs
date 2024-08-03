@@ -1,4 +1,6 @@
 ﻿using TPRestaurent.BackEndCore.Application;
+using TPRestaurent.BackEndCore.Application.Contract.IServices;
+using TPRestaurent.BackEndCore.Application.Implementation;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Domain.Data;
 using TPRestaurent.BackEndCore.Infrastructure.Implementation;
@@ -14,6 +16,8 @@ public class ServiceInstaller : IInstaller
         //========//
         services.AddScoped<IDBContext, TPRestaurentDBContext>();
         //services.AddScoped<IJwtService, JwtService>();
+        services.AddScoped<IDishService, DishService>();
+        services.AddScoped<IComboService, ComboService>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
     }
 }
