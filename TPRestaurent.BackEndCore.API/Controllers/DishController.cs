@@ -7,7 +7,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
-    [Route("api/dish")]
+    [Route("dish")]
     [ApiController]
     public class DishController : ControllerBase
     {
@@ -31,7 +31,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
 
 
         [HttpPost("create-dish")]
-        public async Task<AppActionResult> CreateDish(DishDto dishDto)
+        public async Task<AppActionResult> CreateDish([FromForm] DishDto dishDto)
         {
             return await _dishService.CreateDish(dishDto);  
         }
@@ -43,7 +43,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPut("update-dish")]
-        public async Task<AppActionResult> UpdateDish(UpdateDishRequestDto dto)
+        public async Task<AppActionResult> UpdateDish([FromForm] UpdateDishRequestDto dto)
         {
             return await _dishService.UpdateDish(dto);
         }

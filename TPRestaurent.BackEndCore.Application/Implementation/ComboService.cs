@@ -61,12 +61,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     foreach (var file in comboDto!.ImageFiles!)
                     {
                         var pathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDb.ComboId}{Guid.NewGuid()}.jpg";
-                        var upload = await firebaseService.UploadFileToFirebase(file, pathName );
+                        var upload = await firebaseService!.UploadFileToFirebase(file, pathName );
                         var staticImg = new StaticFile
                         {
                             StaticFileId = Guid.NewGuid(),
                             ComboId = comboDb.ComboId,
-                            Path = upload!.Result.ToString()
+                            Path = upload!.Result!.ToString()!
                         };
                         staticList.Add(staticImg);
                         if (!upload.IsSuccess)
@@ -80,7 +80,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         foreach (var dishId in dishComboDto.ListDishId)
                         {
                             var dishExisted = await dishRepository!.GetById(dishId);
-                            if (dishExisted != null)
+                            if (dishExisted == null)
                             {
                                 result = BuildAppActionResultError(result, $"Món ăn với id {dishId} không tồn tại");
                             }
@@ -186,19 +186,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
                     var firebaseService = Resolve<IFirebaseService>();
                     var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
-                   
-                    var comboDb = await _comboRepository.GetByExpression(p => p.ComboId == comboDto.ComboId);
-                    if (comboDb == null)
-                    {
-                        result = BuildAppActionResultError(result, $"Combo với id {comboDto.ComboId} không tồn tại");
-                    }
-                    comboDb.Name = comboDto.Name;
-                    comboDb.Description = comboDto.Description;
-                    comboDb.StartDate = comboDto.StartDate;
-                    comboDb.EndDate = comboDto.EndDate;
-                    comboDb.Price = comboDto.Price;
 
-                    var oldFiles = await staticFileRepository.GetAllDataByExpression(p => p.ComboId == comboDto.ComboId, 0, 0, null, false, p => p.Combo);
+
+                    var oldFiles = await staticFileRepository!.GetAllDataByExpression(p => p.ComboId == comboDto.ComboId, 0, 0, null, false, p => p.Combo!);
                     if (oldFiles.Items == null || !oldFiles.Items.Any())
                     {
                         return BuildAppActionResultError(result, $"Các file hình ảnh của combo với id {comboDto.ComboId} không tồn tại");
@@ -207,7 +197,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     foreach (var oldImg in oldFiles.Items!)
                     {
                         oldFileList.Add(oldImg);
-                        var pathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDb!.ComboId}.jpg";
+                        var pathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDto!.ComboId}.jpg";
                         var imageResult = firebaseService!.DeleteFileFromFirebase(pathName);
                         if (imageResult != null)
                         {
@@ -220,7 +210,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
 
                     await staticFileRepository.DeleteRange(oldFileList);
-                    await _unitOfWork.SaveChangesAsync();
+
+
+                    var comboDb = await _comboRepository.GetByExpression(p => p.ComboId == comboDto.ComboId);
+                    if (comboDb == null)
+                    {
+                        result = BuildAppActionResultError(result, $"Combo với id {comboDto.ComboId} không tồn tại");
+                    }
+                    comboDb.Name = comboDto.Name;
+                    comboDb.Description = comboDto.Description;
+                    comboDb.StartDate = comboDto.StartDate;
+                    comboDb.EndDate = comboDto.EndDate;
+                    comboDb.Price = comboDto.Price;
 
                     List<StaticFile> staticList = new List<StaticFile>();
                     foreach (var file in comboDto!.ImageFiles!)
@@ -242,18 +243,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     }
 
-                        var dishComboDb = await dishComboRepository!.GetAllDataByExpression(p => p.ComboId == comboDto.ComboId, 0, 0, null, false, p => p.Dish!);
+                    var dishComboDb = await dishComboRepository!.GetAllDataByExpression(p => p.ComboId == comboDb.ComboId, 0, 0, null, false, p => p.Dish!);
                     foreach (var dishComboDto in comboDto.DishComboDtos)
                     {
                         foreach (var dishId in dishComboDto.ListDishId)
                         {
-                            var existingDishCombo = await dishComboRepository.GetById(dishComboDto.ComboId);
+                            var existingDishCombo = await dishComboRepository.GetById(dishComboDto.DishComboId);
                             if (existingDishCombo == null)
                             {
                                 var newDishCombo = new DishCombo
                                 {
                                     DishComboId = dishComboDto.DishComboId, 
-                                    ComboId = dishComboDto.ComboId,
+                                    ComboId = comboDb.ComboId,
                                     HasOptions = dishComboDto.HasOptions,
                                     OptionSetNumber = dishComboDto.OptionSetNumber, 
                                     DishId = dishId,    

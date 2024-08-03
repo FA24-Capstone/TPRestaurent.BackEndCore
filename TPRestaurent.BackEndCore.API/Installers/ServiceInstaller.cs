@@ -18,6 +18,8 @@ public class ServiceInstaller : IInstaller
         //services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IDishService, DishService>();
         services.AddScoped<IComboService, ComboService>();
+        services.AddScoped<IFirebaseService, FirebaseService>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+
     }
 }

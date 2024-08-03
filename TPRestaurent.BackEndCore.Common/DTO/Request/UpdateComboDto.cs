@@ -27,6 +27,5 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public bool HasOptions { get; set; }
         public int? OptionSetNumber { get; set; }
         public List<Guid> ListDishId { get; set; } = new List<Guid>();
-        public Guid ComboId { get; set; }
     }
 }

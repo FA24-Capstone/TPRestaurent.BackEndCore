@@ -6,7 +6,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
-    [Route("api/combo")]
+    [Route("combo")]
     [ApiController]
     public class ComboController : ControllerBase
     {
@@ -22,14 +22,14 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _comboService.GetAllCombo(keyword, pageNumber, pageSize);
         }
 
-        [HttpGet("get-combo-by-id/{combiId}")]
+        [HttpGet("get-combo-by-id/{comboId}")]
         public async Task<AppActionResult> GetComboById(Guid comboId)
         {
             return await _comboService.GetComboById(comboId);   
         }
 
         [HttpPost("create-combo")]
-        public async Task<AppActionResult> CreateCombo(ComboDto comboDto)
+        public async Task<AppActionResult> CreateCombo([FromForm] ComboDto comboDto)
         {
             return await _comboService.CreateCombo(comboDto);     
         }
@@ -41,7 +41,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPut("update-combo")]
-        public async Task<AppActionResult> UpdateCombo(UpdateComboDto comboDto)
+        public async Task<AppActionResult> UpdateCombo([FromForm] UpdateComboDto comboDto)
         {
             return await _comboService.UpdateCombo(comboDto);   
         }
