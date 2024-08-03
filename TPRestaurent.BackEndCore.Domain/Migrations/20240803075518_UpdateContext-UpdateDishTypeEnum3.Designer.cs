@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240803075518_UpdateContext-UpdateDishTypeEnum3")]
+    partial class UpdateContextUpdateDishTypeEnum3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -458,71 +460,61 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         new
                         {
                             Id = 2,
-                            Name = "HOTPOT"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "BBQ"
-                        },
-                        new
-                        {
-                            Id = 4,
                             Name = "HOTPOT_BROTH"
                         },
                         new
                         {
-                            Id = 5,
+                            Id = 3,
                             Name = "HOTPOT_MEAT"
                         },
                         new
                         {
-                            Id = 6,
+                            Id = 4,
                             Name = "HOTPOT_SEAFOOD"
                         },
                         new
                         {
-                            Id = 7,
+                            Id = 5,
                             Name = "HOTPOT_VEGGIE"
                         },
                         new
                         {
-                            Id = 8,
+                            Id = 6,
                             Name = "BBQ_MEAT"
                         },
                         new
                         {
-                            Id = 9,
+                            Id = 7,
                             Name = "BBQ_SEAFOOD"
                         },
                         new
                         {
-                            Id = 10,
+                            Id = 8,
                             Name = "HOTPOT_TOPPING"
                         },
                         new
                         {
-                            Id = 11,
+                            Id = 9,
                             Name = "BBQ_TOPPING"
                         },
                         new
                         {
-                            Id = 12,
+                            Id = 10,
                             Name = "SIDEDISH"
                         },
                         new
                         {
-                            Id = 13,
+                            Id = 11,
                             Name = "DRINK"
                         },
                         new
                         {
-                            Id = 14,
+                            Id = 12,
                             Name = "DESSERT"
                         },
                         new
                         {
-                            Id = 15,
+                            Id = 13,
                             Name = "SAUCE"
                         });
                 });

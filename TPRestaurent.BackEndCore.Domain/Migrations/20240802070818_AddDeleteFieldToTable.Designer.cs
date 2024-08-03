@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240802070818_AddDeleteFieldToTable")]
+    partial class AddDeleteFieldToTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -213,9 +215,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -234,8 +233,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("ComboId");
-
-                    b.HasIndex("CategoryId");
 
                     b.ToTable("Combos");
                 });
@@ -281,9 +278,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.Property<DateTime>("ExpiryDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Img")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("MinimumAmount")
                         .HasColumnType("float");
@@ -417,20 +411,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.ToTable("DishTags");
                 });
 
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.ComboCategory", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ComboCategory");
-                });
-
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.DishItemType", b =>
                 {
                     b.Property<int>("Id")
@@ -443,88 +423,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("DishItemTypes");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 0,
-                            Name = "APPETIZER"
-                        },
-                        new
-                        {
-                            Id = 1,
-                            Name = "SOUP"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = "HOTPOT"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "BBQ"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Name = "HOTPOT_BROTH"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Name = "HOTPOT_MEAT"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Name = "HOTPOT_SEAFOOD"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Name = "HOTPOT_VEGGIE"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Name = "BBQ_MEAT"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            Name = "BBQ_SEAFOOD"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            Name = "HOTPOT_TOPPING"
-                        },
-                        new
-                        {
-                            Id = 11,
-                            Name = "BBQ_TOPPING"
-                        },
-                        new
-                        {
-                            Id = 12,
-                            Name = "SIDEDISH"
-                        },
-                        new
-                        {
-                            Id = 13,
-                            Name = "DRINK"
-                        },
-                        new
-                        {
-                            Id = 14,
-                            Name = "DESSERT"
-                        },
-                        new
-                        {
-                            Id = 15,
-                            Name = "SAUCE"
-                        });
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.OrderStatus", b =>
@@ -698,78 +596,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         {
                             Id = 5,
                             Name = "Five"
-                        });
-                });
-
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.ReservationRequestStatus", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ReservationRequestStatuses");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 0,
-                            Name = "PENDING"
-                        },
-                        new
-                        {
-                            Id = 1,
-                            Name = "SUCCESSFUL"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = "FAILED"
-                        });
-                });
-
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.TableSize", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TableSizes");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 2,
-                            Name = "TWO"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Name = "FOUR"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Name = "SIX"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Name = "EIGHT"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            Name = "TEN"
                         });
                 });
 
@@ -954,15 +780,11 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("CustomerAccountId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<double>("Deposit")
                         .HasColumnType("float");
-
-                    b.Property<DateTime?>("EndTime")
-                        .HasColumnType("datetime2");
 
                     b.Property<int>("NumberOfPeople")
                         .HasColumnType("int");
@@ -970,9 +792,14 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<DateTime>("ReservationDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("TableId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("ReservationId");
 
-                    b.HasIndex("CustomerAccountId");
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("TableId");
 
                     b.ToTable("Reservations");
                 });
@@ -981,9 +808,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 {
                     b.Property<Guid>("ReservationDishId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("ComboId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("DishId")
@@ -999,8 +823,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("ReservationDishId");
-
-                    b.HasIndex("ComboId");
 
                     b.HasIndex("DishId");
 
@@ -1091,6 +913,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("Capacity")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -1101,14 +926,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid?>("TableRatingId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("TableSizeId")
-                        .HasColumnType("int");
-
                     b.HasKey("TableId");
 
                     b.HasIndex("TableRatingId");
-
-                    b.HasIndex("TableSizeId");
 
                     b.ToTable("Tables");
                 });
@@ -1204,17 +1024,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Navigation("CreateByAccount");
 
                     b.Navigation("UpdateByAccount");
-                });
-
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Combo", b =>
-                {
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.ComboCategory", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.CustomerInfo", b =>
@@ -1357,21 +1166,21 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Reservation", b =>
                 {
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "CustomerAccount")
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.CustomerInfo", "Customer")
                         .WithMany()
-                        .HasForeignKey("CustomerAccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CustomerId");
 
-                    b.Navigation("CustomerAccount");
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Table", "Table")
+                        .WithMany()
+                        .HasForeignKey("TableId");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Table");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.ReservationDish", b =>
                 {
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Combo", "Combo")
-                        .WithMany()
-                        .HasForeignKey("ComboId");
-
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Dish", "Dish")
                         .WithMany()
                         .HasForeignKey("DishId");
@@ -1379,8 +1188,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Reservation", "Reservation")
                         .WithMany()
                         .HasForeignKey("ReservationId");
-
-                    b.Navigation("Combo");
 
                     b.Navigation("Dish");
 
@@ -1442,15 +1249,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .WithMany()
                         .HasForeignKey("TableRatingId");
 
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.TableSize", "TableSize")
-                        .WithMany()
-                        .HasForeignKey("TableSizeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("TableRating");
-
-                    b.Navigation("TableSize");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Token", b =>
