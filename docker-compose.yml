@@ -14,6 +14,13 @@ services:
 
  tprestaurent.backendcore.api:
     image: ${DOCKER_REGISTRY-}tprestaurentbackendcoreapi
+    container_name: tprestaurent.backend.api
     build:
       context: .
       dockerfile: TPRestaurent.BackEndCore.API/Dockerfile
+    depends_on:
+      tprestaurent.backend.db:
+        condition: service_started
+    ports:
+    - "3000:80"
+    - "3001:443"

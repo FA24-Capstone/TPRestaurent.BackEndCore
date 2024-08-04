@@ -25,4 +25,5 @@ RUN dotnet publish "./TPRestaurent.BackEndCore.API.csproj" -c $BUILD_CONFIGURATI
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+
 ENTRYPOINT ["dotnet", "TPRestaurent.BackEndCore.API.dll"]
