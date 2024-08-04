@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Firebase.Auth;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Identity;
@@ -23,6 +24,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     public class AccountService : GenericBackendService, IAccountService
     {
         private readonly IGenericRepository<Account> _accountRepository;
+        private readonly IGenericRepository<IdentityUserRole<string>> _userRoleRepository;
         private readonly IMapper _mapper;
         private readonly SignInManager<Account> _signInManager;
         private readonly TokenDto _tokenDto;
@@ -40,7 +42,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             IExcelService excelService,
             IFileService fileService,
             IMapper mapper,
-            IServiceProvider serviceProvider
+            IServiceProvider serviceProvider,
+            IGenericRepository<IdentityUserRole<string>> userRoleRepository
         ) : base(serviceProvider)
         {
             _accountRepository = accountRepository;
@@ -60,16 +63,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var user = await _accountRepository.GetByExpression(u =>
-                    u!.Email.ToLower() == loginRequest.Email.ToLower() && u.IsDeleted == false);
+                    u!.PhoneNumber!.ToLower() == loginRequest.PhoneNumber.ToLower() && u.IsDeleted == false);
                 if (user == null)
-                    result = BuildAppActionResultError(result, $" {loginRequest.Email} này không tồn tại trong hệ thống");
+                    result = BuildAppActionResultError(result, $" {loginRequest.PhoneNumber} này không tồn tại trong hệ thống");
                 else if (user.IsVerified == false)
                     result = BuildAppActionResultError(result, "Tài khoản này chưa được xác thực !");
 
                 var passwordSignIn =
-                    await _signInManager.PasswordSignInAsync(loginRequest.Email, loginRequest.Password, false, false);
+                    await _signInManager.PasswordSignInAsync(loginRequest.PhoneNumber, loginRequest.Password, false, false);
                 if (!passwordSignIn.Succeeded) result = BuildAppActionResultError(result, "Đăng nhâp thất bại");
-                if (!BuildAppActionResultIsError(result)) result = await LoginDefault(loginRequest.Email, user);
+                if (!BuildAppActionResultIsError(result)) result = await LoginDefault(loginRequest.PhoneNumber, user);
             }
             catch (Exception ex)
             {
@@ -79,34 +82,34 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> VerifyLoginGoogle(string email, string verifyCode)
-        {
-            var result = new AppActionResult();
-            try
-            {
-                var user = await _accountRepository.GetByExpression(u =>
-                    u!.Email.ToLower() == email.ToLower() && u.IsDeleted == false);
-                if (user == null)
-                    result = BuildAppActionResultError(result, $"Email này không tồn tại");
-                else if (user.IsVerified == false)
-                    result = BuildAppActionResultError(result, "Tài khoản này chưa xác thực !");
-                else if (user.VerifyCode != verifyCode)
-                    result = BuildAppActionResultError(result, "Mã xác thực sai!");
+        //public async Task<AppActionResult> VerifyLoginGoogle(string email, string verifyCode)
+        //{
+        //    var result = new AppActionResult();
+        //    try
+        //    {
+        //        var user = await _accountRepository.GetByExpression(u =>
+        //            u!.Email.ToLower() == email.ToLower() && u.IsDeleted == false);
+        //        if (user == null)
+        //            result = BuildAppActionResultError(result, $"Email này không tồn tại");
+        //        else if (user.IsVerified == false)
+        //            result = BuildAppActionResultError(result, "Tài khoản này chưa xác thực !");
+        //        else if (user.VerifyCode != verifyCode)
+        //            result = BuildAppActionResultError(result, "Mã xác thực sai!");
 
-                if (!BuildAppActionResultIsError(result))
-                {
-                    result = await LoginDefault(email, user);
-                    user!.VerifyCode = null;
-                    await _unitOfWork.SaveChangesAsync();
-                }
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
+        //        if (!BuildAppActionResultIsError(result))
+        //        {
+        //            result = await LoginDefault(email, user);
+        //            user!.VerifyCode = null;
+        //            await _unitOfWork.SaveChangesAsync();
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        result = BuildAppActionResultError(result, ex.Message);
+        //    }
 
-            return result;
-        }
+        //    return result;
+        //}
 
         public async Task<AppActionResult> CreateAccount(SignUpRequestDto signUpRequest, bool isGoogle)
         {
@@ -523,13 +526,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        private async Task<AppActionResult> LoginDefault(string email, Account? user)
+        private async Task<AppActionResult> LoginDefault(string phoneNumber, Account? user)
         {
             var result = new AppActionResult();
 
             var jwtService = Resolve<IJwtService>();
             var utility = Resolve<Utility>();
-            var token = await jwtService!.GenerateAccessToken(new LoginRequestDto { Email = email });
+            var token = await jwtService!.GenerateAccessToken(new LoginRequestDto { PhoneNumber = phoneNumber });
 
             if (user!.RefreshToken == null)
             {
@@ -545,10 +548,37 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             _tokenDto.Token = token;
             _tokenDto.RefreshToken = user.RefreshToken;
+            var roleList = new List<string>();
+            var roleListDb = await _userRoleRepository.GetAllDataByExpression(r => r.UserId.Equals(user.Id), 0, 0, null, false, null);
+            if (roleListDb.Items == null || roleListDb.Items.Count == 0)
+            {
+                roleList = new List<string>();  
+            }
+            roleList = roleListDb.Items!.Select(r => r.RoleId).ToList();
+
+            var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
+            var roleNameList = new List<string>();
+            var roleNameDb = await roleRepository!.GetAllDataByExpression(p => roleList.Contains(p.Id), 0, 0, null, false, null);
+            if (roleNameDb.Items!.Count == 0)
+            {
+                roleNameList = new List<string>();  
+            }
+            roleNameList = roleNameDb.Items!.DistinctBy(i => i.Id).Select(i => i.Name).ToList();
+      
             result.Result = _tokenDto;
             await _unitOfWork.SaveChangesAsync();
 
             return result;
+        }
+
+        public async Task<List<string>> GetRoleListByAccountId(string userId)
+        {
+            var roleListDb = await _userRoleRepository.GetAllDataByExpression(r => r.UserId.Equals(userId), 0, 0, null, false, null);
+            if (roleListDb.Items == null || roleListDb.Items.Count == 0)
+            {
+                return new List<string>();
+            }
+            return roleListDb.Items.Select(r => r.RoleId).ToList();
         }
 
         public async Task<AppActionResult> AssignRoleForUserId(string userId, IList<string> roleId)
@@ -698,8 +728,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result.Messages.Add(error);
                 }
             }
-
-
             return result;
         }
 

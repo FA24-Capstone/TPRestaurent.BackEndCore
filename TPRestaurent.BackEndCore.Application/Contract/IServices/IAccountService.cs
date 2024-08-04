@@ -12,7 +12,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
     {
         Task<AppActionResult> Login(LoginRequestDto loginRequest);
 
-        public Task<AppActionResult> VerifyLoginGoogle(string email, string verifyCode);
+        //public Task<AppActionResult> VerifyLoginGoogle(string email, string verifyCode);
 
         Task<AppActionResult> CreateAccount(SignUpRequestDto signUpRequest, bool isGoogle);
 
