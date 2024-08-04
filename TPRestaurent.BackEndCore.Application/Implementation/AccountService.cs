@@ -116,8 +116,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                if (await _accountRepository.GetByExpression(r => r!.UserName == signUpRequest.Email) != null)
-                    result = BuildAppActionResultError(result, "Email hoặc username không tồn tại!");
+                if (await _accountRepository.GetByExpression(r => r!.PhoneNumber == signUpRequest.PhoneNumber) != null)
+                    result = BuildAppActionResultError(result, "Số điện thoại không tồn tại!");
 
                 if (!BuildAppActionResultIsError(result))
                 {
@@ -448,7 +448,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             if (user != null)
             {
-                code = Guid.NewGuid().ToString("N").Substring(0, 6);
+                var random = new Random();
+                code = random.Next(100000, 999999).ToString();
                 user.VerifyCode = code;
             }
 
@@ -564,6 +565,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 roleNameList = new List<string>();  
             }
             roleNameList = roleNameDb.Items!.DistinctBy(i => i.Id).Select(i => i.Name).ToList();
+            if ()
+            {
+
+            }
       
             result.Result = _tokenDto;
             await _unitOfWork.SaveChangesAsync();
@@ -712,9 +717,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> GenerateOTP(string phoneNumber)
         {
             AppActionResult result = new AppActionResult();
-            var code = Guid.NewGuid().ToString("N").Substring(0, 6);
+            var random = new Random();
+            var code = random.Next(100000, 999999).ToString();
             var smsService = Resolve<ISmsService>();
-            var response = await smsService!.SendMessage($"Mã xác thực tại hệ thống Cóc Travel của bạn là {code}",
+            var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
                 phoneNumber);
 
             if (response.IsSuccess)

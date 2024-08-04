@@ -113,11 +113,13 @@ namespace TPRestaurent.BackEndCore.Domain.Data
                            .SetBasePath(Directory.GetCurrentDirectory())
                            .AddJsonFile("appsettings.json", true, true)
                            .Build();
-            string cs = config["ConnectionStrings:DB"];
-            if (!optionsBuilder.IsConfigured)
-            {
-                optionsBuilder.UseSqlServer(cs);
-            }
+            //string cs = config["ConnectionStrings:DB"];
+            //if (!optionsBuilder.IsConfigured)
+            //{
+            //    optionsBuilder.UseSqlServer(cs);
+            //}
+            optionsBuilder.UseSqlServer(
+           "server=.;database=TPRestaurent;uid=SA;pwd=12345;TrustServerCertificate=True;MultipleActiveResultSets=True;");
         }
     }
 }
