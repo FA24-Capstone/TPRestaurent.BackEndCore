@@ -90,7 +90,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 ComboId = comboDb.ComboId,
                                 OptionSetNumber = dishComboDto.OptionSetNumber,
                                 HasOptions = dishComboDto.HasOptions,
-                                DishId = dishId
+                                DishSizeDetailId = dishId
                             };
                             await dishComboRepository!.Insert(dishCombo);
                         }
@@ -162,7 +162,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, $"Combo với id {comboId} không tồn tại");
                 }
-                var dishComboDb = await dishComboRepository!.GetAllDataByExpression(p => p.ComboId == comboId, 0, 0, null, false, p => p.Dish!);
+                var dishComboDb = await dishComboRepository!.GetAllDataByExpression(p => p.ComboId == comboId, 0, 0, null, false, p => p.DishSizeDetail.Dish!);
 
                 comboResponse.DishCombo = dishComboDb.Items!;
                 comboResponse.Combo = comboDb!;
@@ -243,7 +243,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     }
 
-                    var dishComboDb = await dishComboRepository!.GetAllDataByExpression(p => p.ComboId == comboDb.ComboId, 0, 0, null, false, p => p.Dish!);
+                    var dishComboDb = await dishComboRepository!.GetAllDataByExpression(p => p.ComboId == comboDb.ComboId, 0, 0, null, false, p => p.DishSizeDetail.Dish!);
                     foreach (var dishComboDto in comboDto.DishComboDtos)
                     {
                         foreach (var dishId in dishComboDto.ListDishId)
@@ -257,7 +257,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     ComboId = comboDb.ComboId,
                                     HasOptions = dishComboDto.HasOptions,
                                     OptionSetNumber = dishComboDto.OptionSetNumber, 
-                                    DishId = dishId,    
+                                    //DishSizeDetailId = dishId,    
                                 };
                                 await dishComboRepository.Insert(newDishCombo);
                             }
@@ -265,7 +265,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 existingDishCombo.HasOptions = dishComboDto.HasOptions; 
                                 existingDishCombo.OptionSetNumber = dishComboDto.OptionSetNumber;
-                                existingDishCombo.DishId = dishId;
+                                //existingDishCombo.DishSizeDetailId = dishId;
                                 await dishComboRepository.Update(existingDishCombo);    
                             }
                         }

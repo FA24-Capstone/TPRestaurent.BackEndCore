@@ -170,7 +170,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 result = BuildAppActionResultError(result, $"Không tìm thấy món ăn với id {reservationDish.DishId}");
                                 return result;
                             }
-                            total += reservationDish.Quantity * dishDb.Price;
+                            //total += reservationDish.Quantity * dishDb.Price;
                         }
                     }
                 }
@@ -194,26 +194,34 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     if (endTime.HasValue) 
                     {
-                        conditions.Add(() => r => !(r.ReservationDate < endTime
+                        conditions.Add(() => r => (r.ReservationDate < endTime
                                                     && (r.EndTime != null && r.EndTime < startTime || r.EndTime == null 
                                                         && r.ReservationDate.AddHours(SD.DefaultValue.AVERAGE_MEAL_DURATION) < startTime)));
                     }
                     else 
                     {
-                        conditions.Add(() => r => !(r.ReservationDate < startTime.Value.AddHours(SD.DefaultValue.AVERAGE_MEAL_DURATION)
+                        conditions.Add(() => r => (r.ReservationDate < startTime.Value.AddHours(SD.DefaultValue.AVERAGE_MEAL_DURATION)
                                                     && (r.EndTime != null && r.EndTime < startTime || r.EndTime == null 
                                                         && r.ReservationDate.AddHours(SD.DefaultValue.AVERAGE_MEAL_DURATION) < startTime)));
                     }
                 }
 
-                //if (numOfPeople.HasValue) {
-                //    conditions.Add(() => r => r.Table.Capacity > numOfPeople);
-                //}
-
                 Expression expression = DynamicLinqBuilder<Reservation>.BuildExpression(conditions);
 
-                //var availableReservation = await _reservationRepository.GetAllDataByExpression((Expression<Func<Reservation, bool>>?)expression, pageNumber, pageSize, null, false, r => r.Table.TableRating);
+                //Get all collided reservations
 
+                var unavailableReservation = await _reservationRepository.GetAllDataByExpression((Expression<Func<Reservation, bool>>?)expression, pageNumber, pageSize, null, false, null);
+                
+                if(unavailableReservation!.Items.Count > 0)
+                {
+                    var unavailableReservationIds = unavailableReservation.Items.Select(x => x.ReservationId);
+                    var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
+                    var tableRepository = Resolve<IGenericRepository<Table>>();
+                    var reservedTableDb = await reservationTableDetailRepository!.GetAllDataByExpression(r => unavailableReservationIds.Contains(r.ReservationId), 0, 0, null, false, r => r.Table);
+                    var reservedTableIds = reservedTableDb.Items.Select(x => x.TableId);
+                    var availableTableDb = await tableRepository.GetAllDataByExpression(t => !reservedTableIds.Contains(t.TableId), 0, 0, null, false, null);
+                    result.Result = availableTableDb;
+                }
                 //result.Result = availableReservation.Items.Select(x => x.Table);
             }
             catch (Exception ex) {
@@ -227,14 +235,42 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             throw new NotImplementedException();
         }
 
-        public Task<AppActionResult> SuggestTable(ReservationDto dto)
-        {
-            throw new NotImplementedException();
-        }
-
+       
         public Task<AppActionResult> UpdateReservation(ReservationDto dto)
         {
             throw new NotImplementedException();
         }
+
+        public async Task<AppActionResult> SuggestTable(SuggestTableDto dto)
+        {
+            AppActionResult result = null;
+            try
+            {
+                //Validate
+                List<Guid> guids = new List<Guid>();
+                var conditions = new List<Func<Expression<Func<Reservation, bool>>>>();
+                //Get All Available Table
+                var availableTableResult = await GetAvailableTable(dto.StartTime, dto.EndTime, null, 0, 0);
+                if (availableTableResult.IsSuccess) 
+                {
+                    var availableTable = (PagedResult<Table>)availableTableResult.Result!;
+                    if(availableTable.Items!.Count > 0)
+                    {
+                              
+                    } 
+                }
+
+
+                //Get Table with condition: 
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            return result;
+        }
+
+        
     }
 }

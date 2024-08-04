@@ -5,10 +5,24 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
-    public partial class AddFields : Migration
+    public partial class Init : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "AspNetRoles",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    NormalizedName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetRoles", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "Categories",
                 columns: table => new
@@ -22,6 +36,33 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ComboCategories",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ComboCategories", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Configurations",
+                columns: table => new
+                {
+                    ConfigurationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PreValue = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ActiveValue = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ActiveDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Configurations", x => x.ConfigurationId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Coupons",
                 columns: table => new
                 {
@@ -31,7 +72,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ExpiryDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     MinimumAmount = table.Column<double>(type: "float", nullable: false),
-                    Quantity = table.Column<int>(type: "int", nullable: false)
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    Img = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -47,7 +89,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Image = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Price = table.Column<double>(type: "float", nullable: false),
-                    Discount = table.Column<double>(type: "float", nullable: false)
+                    Discount = table.Column<double>(type: "float", nullable: false),
+                    DishItemType = table.Column<int>(type: "int", nullable: false),
+                    isAvailable = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -55,35 +99,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "IdentityRole",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    NormalizedName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_IdentityRole", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Ingredients",
-                columns: table => new
-                {
-                    IngredientId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Image = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Ingredients", x => x.IngredientId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "OrderStatus",
+                name: "DishItemTypes",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false),
@@ -91,11 +107,11 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_OrderStatus", x => x.Id);
+                    table.PrimaryKey("PK_DishItemTypes", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "OTPType",
+                name: "OrderStatuses",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false),
@@ -103,11 +119,11 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_OTPType", x => x.Id);
+                    table.PrimaryKey("PK_OrderStatuses", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "PaymentMethod",
+                name: "OTPTypes",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false),
@@ -115,11 +131,11 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PaymentMethod", x => x.Id);
+                    table.PrimaryKey("PK_OTPTypes", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "RatingPoint",
+                name: "PaymentMethods",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false),
@@ -127,7 +143,31 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_RatingPoint", x => x.Id);
+                    table.PrimaryKey("PK_PaymentMethods", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RatingPoints",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RatingPoints", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ReservationRequestStatuses",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReservationRequestStatuses", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -143,6 +183,18 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "TableSizes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TableSizes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Tags",
                 columns: table => new
                 {
@@ -155,27 +207,48 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DishIngredients",
+                name: "AspNetRoleClaims",
                 columns: table => new
                 {
-                    DishIngredientId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DishId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    IngredientId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DishIngredients", x => x.DishIngredientId);
+                    table.PrimaryKey("PK_AspNetRoleClaims", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_DishIngredients_Dishes_DishId",
-                        column: x => x.DishId,
-                        principalTable: "Dishes",
-                        principalColumn: "DishId",
+                        name: "FK_AspNetRoleClaims_AspNetRoles_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "AspNetRoles",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.NoAction);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Combos",
+                columns: table => new
+                {
+                    ComboId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Image = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Price = table.Column<double>(type: "float", nullable: false),
+                    CategoryId = table.Column<int>(type: "int", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Combos", x => x.ComboId);
                     table.ForeignKey(
-                        name: "FK_DishIngredients_Ingredients_IngredientId",
-                        column: x => x.IngredientId,
-                        principalTable: "Ingredients",
-                        principalColumn: "IngredientId");
+                        name: "FK_Combos_ComboCategories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "ComboCategories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.NoAction);
                 });
 
             migrationBuilder.CreateTable(
@@ -184,7 +257,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 {
                     TableId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     TableName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Capacity = table.Column<int>(type: "int", nullable: false),
+                    TableSizeId = table.Column<int>(type: "int", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     TableRatingId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
@@ -195,6 +269,12 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         column: x => x.TableRatingId,
                         principalTable: "TableRatings",
                         principalColumn: "TableRatingId");
+                    table.ForeignKey(
+                        name: "FK_Tables_TableSizes_TableSizeId",
+                        column: x => x.TableSizeId,
+                        principalTable: "TableSizes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.NoAction);
                 });
 
             migrationBuilder.CreateTable(
@@ -202,7 +282,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 columns: table => new
                 {
                     DishTagId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DishId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     TagId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
@@ -222,7 +301,81 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Accounts",
+                name: "DishCombos",
+                columns: table => new
+                {
+                    DishComboId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    HasOptions = table.Column<bool>(type: "bit", nullable: false),
+                    OptionSetNumber = table.Column<int>(type: "int", nullable: true),
+                    DishId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ComboId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DishCombos", x => x.DishComboId);
+                    table.ForeignKey(
+                        name: "FK_DishCombos_Combos_ComboId",
+                        column: x => x.ComboId,
+                        principalTable: "Combos",
+                        principalColumn: "ComboId",
+                        onDelete: ReferentialAction.NoAction);
+                    table.ForeignKey(
+                        name: "FK_DishCombos_Dishes_DishId",
+                        column: x => x.DishId,
+                        principalTable: "Dishes",
+                        principalColumn: "DishId",
+                        onDelete: ReferentialAction.NoAction);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserClaims",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserClaims", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserLogins",
+                columns: table => new
+                {
+                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProviderKey = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProviderDisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserLogins", x => new { x.LoginProvider, x.ProviderKey });
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserRoles",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserRoles", x => new { x.UserId, x.RoleId });
+                    table.ForeignKey(
+                        name: "FK_AspNetUserRoles_AspNetRoles_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "AspNetRoles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.NoAction);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUsers",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
@@ -236,10 +389,10 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     RefreshToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     RefreshTokenExpiryTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CustomerId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    NormalizedUserName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    NormalizedEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    NormalizedEmail = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
                     PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     SecurityStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -252,7 +405,27 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Accounts", x => x.Id);
+                    table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserTokens",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserTokens", x => new { x.UserId, x.LoginProvider, x.Name });
+                    table.ForeignKey(
+                        name: "FK_AspNetUserTokens_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.NoAction);
                 });
 
             migrationBuilder.CreateTable(
@@ -272,15 +445,15 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 {
                     table.PrimaryKey("PK_Blogs", x => x.BlogId);
                     table.ForeignKey(
-                        name: "FK_Blogs_Accounts_CreateBy",
+                        name: "FK_Blogs_AspNetUsers_CreateBy",
                         column: x => x.CreateBy,
-                        principalTable: "Accounts",
+                        principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.NoAction);
                     table.ForeignKey(
-                        name: "FK_Blogs_Accounts_UpdateBy",
+                        name: "FK_Blogs_AspNetUsers_UpdateBy",
                         column: x => x.UpdateBy,
-                        principalTable: "Accounts",
+                        principalTable: "AspNetUsers",
                         principalColumn: "Id");
                 });
 
@@ -299,9 +472,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 {
                     table.PrimaryKey("PK_CustomerInfos", x => x.CustomerId);
                     table.ForeignKey(
-                        name: "FK_CustomerInfos_Accounts_AccountId",
+                        name: "FK_CustomerInfos_AspNetUsers_AccountId",
                         column: x => x.AccountId,
-                        principalTable: "Accounts",
+                        principalTable: "AspNetUsers",
                         principalColumn: "Id");
                 });
 
@@ -320,9 +493,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 {
                     table.PrimaryKey("PK_OTPs", x => x.OTPId);
                     table.ForeignKey(
-                        name: "FK_OTPs_Accounts_AccountId",
+                        name: "FK_OTPs_AspNetUsers_AccountId",
                         column: x => x.AccountId,
-                        principalTable: "Accounts",
+                        principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.NoAction);
                 });
@@ -346,27 +519,49 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 {
                     table.PrimaryKey("PK_Ratings", x => x.RatingId);
                     table.ForeignKey(
-                        name: "FK_Ratings_Accounts_AccountId",
+                        name: "FK_Ratings_AspNetUsers_AccountId",
                         column: x => x.AccountId,
-                        principalTable: "Accounts",
+                        principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.NoAction);
                     table.ForeignKey(
-                        name: "FK_Ratings_Accounts_CreateBy",
+                        name: "FK_Ratings_AspNetUsers_CreateBy",
                         column: x => x.CreateBy,
-                        principalTable: "Accounts",
+                        principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.NoAction);
                     table.ForeignKey(
-                        name: "FK_Ratings_Accounts_UpdateBy",
+                        name: "FK_Ratings_AspNetUsers_UpdateBy",
                         column: x => x.UpdateBy,
-                        principalTable: "Accounts",
+                        principalTable: "AspNetUsers",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Ratings_Dishes_DishId",
                         column: x => x.DishId,
                         principalTable: "Dishes",
                         principalColumn: "DishId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Reservations",
+                columns: table => new
+                {
+                    ReservationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ReservationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    NumberOfPeople = table.Column<int>(type: "int", nullable: false),
+                    EndTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CustomerAccountId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Deposit = table.Column<double>(type: "float", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Reservations", x => x.ReservationId);
+                    table.ForeignKey(
+                        name: "FK_Reservations_AspNetUsers_CustomerAccountId",
+                        column: x => x.CustomerAccountId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.NoAction);
                 });
 
             migrationBuilder.CreateTable(
@@ -386,37 +581,30 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 {
                     table.PrimaryKey("PK_Tokens", x => x.TokenId);
                     table.ForeignKey(
-                        name: "FK_Tokens_Accounts_AccountId",
+                        name: "FK_Tokens_AspNetUsers_AccountId",
                         column: x => x.AccountId,
-                        principalTable: "Accounts",
+                        principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.NoAction);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Reservations",
+                name: "StoreCredits",
                 columns: table => new
                 {
-                    ReservationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ReservationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    NumberOfPeople = table.Column<int>(type: "int", nullable: false),
-                    CustomerId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    TableId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    Deposit = table.Column<double>(type: "float", nullable: false)
+                    StoreCreditId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Amount = table.Column<double>(type: "float", nullable: false),
+                    CustomerInfoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Reservations", x => x.ReservationId);
+                    table.PrimaryKey("PK_StoreCredits", x => x.StoreCreditId);
                     table.ForeignKey(
-                        name: "FK_Reservations_CustomerInfos_CustomerId",
-                        column: x => x.CustomerId,
+                        name: "FK_StoreCredits_CustomerInfos_CustomerInfoId",
+                        column: x => x.CustomerInfoId,
                         principalTable: "CustomerInfos",
-                        principalColumn: "CustomerId");
-                    table.ForeignKey(
-                        name: "FK_Reservations_Tables_TableId",
-                        column: x => x.TableId,
-                        principalTable: "Tables",
-                        principalColumn: "TableId");
+                        principalColumn: "CustomerId",
+                        onDelete: ReferentialAction.NoAction);
                 });
 
             migrationBuilder.CreateTable(
@@ -426,6 +614,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     StaticFileId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Path = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DishId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    ComboId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     BlogId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     RatingId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
@@ -437,6 +626,11 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         column: x => x.BlogId,
                         principalTable: "Blogs",
                         principalColumn: "BlogId");
+                    table.ForeignKey(
+                        name: "FK_StaticFiles_Combos_ComboId",
+                        column: x => x.ComboId,
+                        principalTable: "Combos",
+                        principalColumn: "ComboId");
                     table.ForeignKey(
                         name: "FK_StaticFiles_Dishes_DishId",
                         column: x => x.DishId,
@@ -456,12 +650,18 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     ReservationDishId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ReservationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     DishId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    ComboId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Quantity = table.Column<int>(type: "int", nullable: false),
                     Note = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ReservationDishes", x => x.ReservationDishId);
+                    table.ForeignKey(
+                        name: "FK_ReservationDishes_Combos_ComboId",
+                        column: x => x.ComboId,
+                        principalTable: "Combos",
+                        principalColumn: "ComboId");
                     table.ForeignKey(
                         name: "FK_ReservationDishes_Dishes_DishId",
                         column: x => x.DishId,
@@ -472,6 +672,26 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         column: x => x.ReservationId,
                         principalTable: "Reservations",
                         principalColumn: "ReservationId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "StoreCreditHistories",
+                columns: table => new
+                {
+                    StoreCreditHistoryId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsInput = table.Column<bool>(type: "bit", nullable: false),
+                    Amount = table.Column<double>(type: "float", nullable: false),
+                    StoreCreditId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StoreCreditHistories", x => x.StoreCreditHistoryId);
+                    table.ForeignKey(
+                        name: "FK_StoreCreditHistories_StoreCredits_StoreCreditId",
+                        column: x => x.StoreCreditId,
+                        principalTable: "StoreCredits",
+                        principalColumn: "StoreCreditId",
+                        onDelete: ReferentialAction.NoAction);
                 });
 
             migrationBuilder.CreateTable(
@@ -506,9 +726,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 {
                     table.PrimaryKey("PK_Orders", x => x.OrderId);
                     table.ForeignKey(
-                        name: "FK_Orders_Accounts_AccountId",
+                        name: "FK_Orders_AspNetUsers_AccountId",
                         column: x => x.AccountId,
-                        principalTable: "Accounts",
+                        principalTable: "AspNetUsers",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Orders_CustomerInfos_CustomerId",
@@ -527,14 +747,20 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 columns: table => new
                 {
                     OrderDetailId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     DishId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    ComboId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Quantity = table.Column<int>(type: "int", nullable: false),
                     Price = table.Column<double>(type: "float", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_OrderDetails", x => x.OrderDetailId);
+                    table.ForeignKey(
+                        name: "FK_OrderDetails_Combos_ComboId",
+                        column: x => x.ComboId,
+                        principalTable: "Combos",
+                        principalColumn: "ComboId");
                     table.ForeignKey(
                         name: "FK_OrderDetails_Dishes_DishId",
                         column: x => x.DishId,
@@ -544,22 +770,56 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         name: "FK_OrderDetails_Orders_OrderId",
                         column: x => x.OrderId,
                         principalTable: "Orders",
-                        principalColumn: "OrderId");
+                        principalColumn: "OrderId",
+                        onDelete: ReferentialAction.NoAction);
                 });
 
             migrationBuilder.InsertData(
-                table: "IdentityRole",
+                table: "AspNetRoles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
+                    { "000f9270-78f5-4503-b7d3-0c567e5812ba", "000f9270-78f5-4503-b7d3-0c567e5812ba", "CHEF", "chef" },
                     { "02962efa-1273-46c0-b103-7167b1742ef3", "02962efa-1273-46c0-b103-7167b1742ef3", "CUSTOMER", "customer" },
-                    { "6a32e12a-60b5-4d93-8306-82231e1232d7", "6a32e12a-60b5-4d93-8306-82231e1232d7", "ADMIN", "admin" },
-                    { "814f9270-78f5-4503-b7d3-0c567e5812ba", "814f9270-78f5-4503-b7d3-0c567e5812ba", "SHIPPER", "shipper" },
+                    { "814f9270-78f5-4503-b7d3-0c567e5812ba", "814f9270-78f5-4503-b7d3-0c567e5812ba", "MANAGER", "manager" },
                     { "85b6791c-49d8-4a61-ad0b-8274ec27e764", "85b6791c-49d8-4a61-ad0b-8274ec27e764", "STAFF", "staff" }
                 });
 
             migrationBuilder.InsertData(
-                table: "OTPType",
+                table: "ComboCategories",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
+                    { 0, "HOTPOT" },
+                    { 1, "BBQ" },
+                    { 2, "BOTH" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "DishItemTypes",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
+                    { 0, "APPETIZER" },
+                    { 1, "SOUP" },
+                    { 2, "HOTPOT" },
+                    { 3, "BBQ" },
+                    { 4, "HOTPOT_BROTH" },
+                    { 5, "HOTPOT_MEAT" },
+                    { 6, "HOTPOT_SEAFOOD" },
+                    { 7, "HOTPOT_VEGGIE" },
+                    { 8, "BBQ_MEAT" },
+                    { 9, "BBQ_SEAFOOD" },
+                    { 10, "HOTPOT_TOPPING" },
+                    { 11, "BBQ_TOPPING" },
+                    { 12, "SIDEDISH" },
+                    { 13, "DRINK" },
+                    { 14, "DESSERT" },
+                    { 15, "SAUCE" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "OTPTypes",
                 columns: new[] { "Id", "Name" },
                 values: new object[,]
                 {
@@ -575,7 +835,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 });
 
             migrationBuilder.InsertData(
-                table: "OrderStatus",
+                table: "OrderStatuses",
                 columns: new[] { "Id", "Name" },
                 values: new object[,]
                 {
@@ -586,7 +846,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 });
 
             migrationBuilder.InsertData(
-                table: "PaymentMethod",
+                table: "PaymentMethods",
                 columns: new[] { "Id", "Name" },
                 values: new object[,]
                 {
@@ -597,21 +857,89 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 });
 
             migrationBuilder.InsertData(
-                table: "RatingPoint",
+                table: "RatingPoints",
                 columns: new[] { "Id", "Name" },
                 values: new object[,]
                 {
                     { 1, "One" },
-                    { 2, "Two" },
+                    { 2, "Two" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "RatingPoints",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
                     { 3, "Three" },
                     { 4, "Four" },
                     { 5, "Five" }
                 });
 
+            migrationBuilder.InsertData(
+                table: "ReservationRequestStatuses",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
+                    { 0, "PENDING" },
+                    { 1, "SUCCESSFUL" },
+                    { 2, "FAILED" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "TableSizes",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
+                    { 2, "TWO" },
+                    { 4, "FOUR" },
+                    { 6, "SIX" },
+                    { 8, "EIGHT" },
+                    { 10, "TEN" }
+                });
+
             migrationBuilder.CreateIndex(
-                name: "IX_Accounts_CustomerId",
-                table: "Accounts",
+                name: "IX_AspNetRoleClaims_RoleId",
+                table: "AspNetRoleClaims",
+                column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "RoleNameIndex",
+                table: "AspNetRoles",
+                column: "NormalizedName",
+                unique: true,
+                filter: "[NormalizedName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUserClaims_UserId",
+                table: "AspNetUserClaims",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUserLogins_UserId",
+                table: "AspNetUserLogins",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUserRoles_RoleId",
+                table: "AspNetUserRoles",
+                column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "EmailIndex",
+                table: "AspNetUsers",
+                column: "NormalizedEmail");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUsers_CustomerId",
+                table: "AspNetUsers",
                 column: "CustomerId");
+
+            migrationBuilder.CreateIndex(
+                name: "UserNameIndex",
+                table: "AspNetUsers",
+                column: "NormalizedUserName",
+                unique: true,
+                filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Blogs_CreateBy",
@@ -624,19 +952,24 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 column: "UpdateBy");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Combos_CategoryId",
+                table: "Combos",
+                column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CustomerInfos_AccountId",
                 table: "CustomerInfos",
                 column: "AccountId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DishIngredients_DishId",
-                table: "DishIngredients",
-                column: "DishId");
+                name: "IX_DishCombos_ComboId",
+                table: "DishCombos",
+                column: "ComboId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DishIngredients_IngredientId",
-                table: "DishIngredients",
-                column: "IngredientId");
+                name: "IX_DishCombos_DishId",
+                table: "DishCombos",
+                column: "DishId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DishTags_DishId",
@@ -652,6 +985,11 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 name: "IX_LoyalPointsHistories_OrderId",
                 table: "LoyalPointsHistories",
                 column: "OrderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderDetails_ComboId",
+                table: "OrderDetails",
+                column: "ComboId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrderDetails_DishId",
@@ -704,6 +1042,11 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 column: "UpdateBy");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ReservationDishes_ComboId",
+                table: "ReservationDishes",
+                column: "ComboId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ReservationDishes_DishId",
                 table: "ReservationDishes",
                 column: "DishId");
@@ -714,19 +1057,19 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 column: "ReservationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Reservations_CustomerId",
+                name: "IX_Reservations_CustomerAccountId",
                 table: "Reservations",
-                column: "CustomerId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Reservations_TableId",
-                table: "Reservations",
-                column: "TableId");
+                column: "CustomerAccountId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StaticFiles_BlogId",
                 table: "StaticFiles",
                 column: "BlogId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StaticFiles_ComboId",
+                table: "StaticFiles",
+                column: "ComboId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StaticFiles_DishId",
@@ -739,9 +1082,24 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 column: "RatingId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_StoreCreditHistories_StoreCreditId",
+                table: "StoreCreditHistories",
+                column: "StoreCreditId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StoreCredits_CustomerInfoId",
+                table: "StoreCredits",
+                column: "CustomerInfoId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Tables_TableRatingId",
                 table: "Tables",
                 column: "TableRatingId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tables_TableSizeId",
+                table: "Tables",
+                column: "TableSizeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tokens_AccountId",
@@ -749,8 +1107,32 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 column: "AccountId");
 
             migrationBuilder.AddForeignKey(
-                name: "FK_Accounts_CustomerInfos_CustomerId",
-                table: "Accounts",
+                name: "FK_AspNetUserClaims_AspNetUsers_UserId",
+                table: "AspNetUserClaims",
+                column: "UserId",
+                principalTable: "AspNetUsers",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.NoAction);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_AspNetUserLogins_AspNetUsers_UserId",
+                table: "AspNetUserLogins",
+                column: "UserId",
+                principalTable: "AspNetUsers",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.NoAction);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_AspNetUserRoles_AspNetUsers_UserId",
+                table: "AspNetUserRoles",
+                column: "UserId",
+                principalTable: "AspNetUsers",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.NoAction);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_AspNetUsers_CustomerInfos_CustomerId",
+                table: "AspNetUsers",
                 column: "CustomerId",
                 principalTable: "CustomerInfos",
                 principalColumn: "CustomerId");
@@ -766,15 +1148,15 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
-                name: "FK_Accounts_CustomerInfos_CustomerId",
-                table: "Accounts");
+                name: "FK_CustomerInfos_AspNetUsers_AccountId",
+                table: "CustomerInfos");
 
             migrationBuilder.DropForeignKey(
-                name: "FK_Orders_CustomerInfos_CustomerId",
+                name: "FK_Orders_AspNetUsers_AccountId",
                 table: "Orders");
 
             migrationBuilder.DropForeignKey(
-                name: "FK_Orders_Accounts_AccountId",
+                name: "FK_Orders_CustomerInfos_CustomerId",
                 table: "Orders");
 
             migrationBuilder.DropForeignKey(
@@ -782,49 +1164,76 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 table: "LoyalPointsHistories");
 
             migrationBuilder.DropTable(
+                name: "AspNetRoleClaims");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUserClaims");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUserLogins");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUserRoles");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
                 name: "Categories");
+
+            migrationBuilder.DropTable(
+                name: "Configurations");
 
             migrationBuilder.DropTable(
                 name: "Coupons");
 
             migrationBuilder.DropTable(
-                name: "DishIngredients");
+                name: "DishCombos");
+
+            migrationBuilder.DropTable(
+                name: "DishItemTypes");
 
             migrationBuilder.DropTable(
                 name: "DishTags");
 
             migrationBuilder.DropTable(
-                name: "IdentityRole");
-
-            migrationBuilder.DropTable(
                 name: "OrderDetails");
 
             migrationBuilder.DropTable(
-                name: "OrderStatus");
+                name: "OrderStatuses");
 
             migrationBuilder.DropTable(
                 name: "OTPs");
 
             migrationBuilder.DropTable(
-                name: "OTPType");
+                name: "OTPTypes");
 
             migrationBuilder.DropTable(
-                name: "PaymentMethod");
+                name: "PaymentMethods");
 
             migrationBuilder.DropTable(
-                name: "RatingPoint");
+                name: "RatingPoints");
 
             migrationBuilder.DropTable(
                 name: "ReservationDishes");
 
             migrationBuilder.DropTable(
+                name: "ReservationRequestStatuses");
+
+            migrationBuilder.DropTable(
                 name: "StaticFiles");
+
+            migrationBuilder.DropTable(
+                name: "StoreCreditHistories");
+
+            migrationBuilder.DropTable(
+                name: "Tables");
 
             migrationBuilder.DropTable(
                 name: "Tokens");
 
             migrationBuilder.DropTable(
-                name: "Ingredients");
+                name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "Tags");
@@ -836,22 +1245,31 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 name: "Blogs");
 
             migrationBuilder.DropTable(
+                name: "Combos");
+
+            migrationBuilder.DropTable(
                 name: "Ratings");
 
             migrationBuilder.DropTable(
-                name: "Tables");
-
-            migrationBuilder.DropTable(
-                name: "Dishes");
+                name: "StoreCredits");
 
             migrationBuilder.DropTable(
                 name: "TableRatings");
 
             migrationBuilder.DropTable(
-                name: "CustomerInfos");
+                name: "TableSizes");
 
             migrationBuilder.DropTable(
-                name: "Accounts");
+                name: "ComboCategories");
+
+            migrationBuilder.DropTable(
+                name: "Dishes");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "CustomerInfos");
 
             migrationBuilder.DropTable(
                 name: "Orders");

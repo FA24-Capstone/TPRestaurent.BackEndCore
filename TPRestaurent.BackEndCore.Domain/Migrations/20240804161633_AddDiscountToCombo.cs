@@ -4,23 +4,23 @@
 
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
-    public partial class AddDeleteFieldToTable : Migration
+    public partial class AddDiscountToCombo : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
-                name: "IsDeleted",
-                table: "Tables",
-                type: "bit",
+            migrationBuilder.AddColumn<double>(
+                name: "Discount",
+                table: "Combos",
+                type: "float",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: 0.0);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "IsDeleted",
-                table: "Tables");
+                name: "Discount",
+                table: "Combos");
         }
     }
 }

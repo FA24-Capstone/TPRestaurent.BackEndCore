@@ -16,7 +16,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> UpdateReservation(ReservationDto dto);
         public Task<AppActionResult> RemoveReservation(Guid reservationId);
         public Task<AppActionResult> CalculateDeposit(string ReservationDishDtos);
-        public Task<AppActionResult> SuggestTable(ReservationDto dto);
+        public Task<AppActionResult> SuggestTable(SuggestTableDto dto);
 
     }
 }

@@ -50,8 +50,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         DishId = Guid.NewGuid(),
                         Name = dto.Name,
                         Description = dto.Description,
-                        Discount = dto.Discount,
-                        DishItemType = dto.DishItemType,
+                        //Discount = dto.Discount,
+                        DishItemTypeId = dto.DishItemType,
                         isAvailable = true,
                     };
                     List<StaticFile> staticList = new List<StaticFile>();
@@ -234,9 +234,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     dishDb.Name = dto.Name;
                     dishDb.Description = dto.Description;
-                    dishDb.Price = dto.Price;
-                    dishDb.DishItemType = dto.DishItemType;
-                    dishDb.Discount = dto.Discount;
+                    //dishDb.Price = dto.Price;
+                    dishDb.DishItemTypeId = dto.DishItemType;
+                    //dishDb.Discount = dto.Discount;
                     dishDb.isAvailable = dto.isAvailable;
                     if (!BuildAppActionResultIsError(result))
                     {
