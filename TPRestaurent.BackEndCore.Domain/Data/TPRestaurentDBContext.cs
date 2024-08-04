@@ -107,17 +107,17 @@ namespace TPRestaurent.BackEndCore.Domain.Data
                 modelBuilder.Entity<TEntity>().HasData(entityInstance!);
             }
         }
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            IConfiguration config = new ConfigurationBuilder()
-                           .SetBasePath(Directory.GetCurrentDirectory())
-                           .AddJsonFile("appsettings.json", true, true)
-                           .Build();
-            string cs = config["ConnectionStrings:DB"];
-            if (!optionsBuilder.IsConfigured)
-            {
-                optionsBuilder.UseSqlServer(cs);
-            }
-        }
+        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        //{
+        //    IConfiguration config = new ConfigurationBuilder()
+        //                   .SetBasePath(Directory.GetCurrentDirectory())
+        //                   .AddJsonFile("appsettings.json", true, true)
+        //                   .Build();
+        //    string cs = config["ConnectionStrings:DB"];
+        //    if (!optionsBuilder.IsConfigured)
+        //    {
+        //        optionsBuilder.UseSqlServer(cs);
+        //    }
+        //}
     }
 }
