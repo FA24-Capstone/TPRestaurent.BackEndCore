@@ -822,6 +822,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             return result;
         }
+
         public async Task<AppActionResult> GenerateOTP(string phoneNumber)
         {
             AppActionResult result = new AppActionResult();
@@ -1036,5 +1037,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
     }
 }
