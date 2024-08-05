@@ -274,7 +274,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var code = await GenerateVerifyCodeSms(user!.PhoneNumber, true);
                     var response = await smsService!.SendMessage($"Mã xác thực của bạn là là: {code}",
                     phoneNumber);
-                    var optsDb = new OTP
+                    var otpsDb = new OTP
                     {
                         OTPId = Guid.NewGuid(),
                         Type = otp,
@@ -283,8 +283,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         ExpiredTime = DateTime.UtcNow.AddMinutes(5),
                         IsUsed = false,
                     };
-                    await _otpRepository.Insert(optsDb);
+                    await _otpRepository.Insert(otpsDb);
                     await _unitOfWork.SaveChangesAsync();
+                    result.Result = otpsDb;
                 }
             }
             catch (Exception ex)
