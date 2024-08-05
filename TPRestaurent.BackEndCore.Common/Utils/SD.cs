@@ -72,6 +72,12 @@ public class SD
         public static string LOGIN_FAILED = "Đăng nhập thất bại";
     }
 
+    public class DefaultValue
+    {
+        public static double AVERAGE_MEAL_DURATION = 1.5;
+        public static double DEPOSIT_PERCENT = 0.4;
+    }
+
     public class SubjectMail
     {
         public static string VERIFY_ACCOUNT = "[TRAVEL]  CHÀO MỪNG BẠN ĐẾN VỚI TRAVEL. VUI LÒNG XÁC MINH TÀI KHOẢN";

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240803075830_UpdateContext-UpdateDishTypeEnum4")]
+    partial class UpdateContextUpdateDishTypeEnum4
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -223,9 +225,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Image")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -404,6 +403,10 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid?>("DishId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<Guid?>("TagId")
                         .HasColumnType("uniqueidentifier");
 
@@ -427,24 +430,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ComboCategories");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 0,
-                            Name = "HOTPOT"
-                        },
-                        new
-                        {
-                            Id = 1,
-                            Name = "BBQ"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = "BOTH"
-                        });
+                    b.ToTable("ComboCategory");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.DishItemType", b =>

@@ -132,7 +132,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                  var dishList = await _dishRepository
-                    .GetAllDataByExpression((p => p.Name.Contains(keyword) || string.IsNullOrEmpty(keyword)), pageNumber, pageSize, null, false, null);
+                    .GetAllDataByExpression(p => p.Name.Contains(keyword) || string.IsNullOrEmpty(keyword), pageNumber, pageSize, null, false, p => p.DishItemType!);
                  result.Result = dishList;  
             }
             catch (Exception ex)

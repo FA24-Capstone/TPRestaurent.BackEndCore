@@ -19,6 +19,39 @@ public class MappingConfig
              .ForMember(desc => desc.isAvailable, act => act.MapFrom(src => src.isAvailable))
              .ReverseMap();
             ;
+
+            config.CreateMap<Table, TableDto>()
+             .ForMember(desc => desc.TableName, act => act.MapFrom(src => src.TableName))
+             .ForMember(desc => desc.TableSizeId, act => act.MapFrom(src => src.TableSizeId))
+             .ForMember(desc => desc.TableRatingId, act => act.MapFrom(src => src.TableRatingId))
+             .ReverseMap();
+            ;
+
+            config.CreateMap<ReservationRequestDto, ReservationRequest>()
+             .ForMember(desc => desc.ReservationDate, act => act.MapFrom(src => src.ReservationDate))
+             .ForMember(desc => desc.NumberOfPeople, act => act.MapFrom(src => src.NumberOfPeople))
+             .ForMember(desc => desc.EndTime, act => act.MapFrom(src => src.EndTime))
+             .ForMember(desc => desc.CreateBy, act => act.MapFrom(src => src.CustomerAccountId))
+             .ForMember(desc => desc.Note, act => act.MapFrom(src => src.Note))
+             .ReverseMap();
+            ;
+
+            config.CreateMap<Reservation, ReservationDto>()
+             .ForMember(desc => desc.ReservationDate, act => act.MapFrom(src => src.ReservationDate))
+             .ForMember(desc => desc.NumberOfPeople, act => act.MapFrom(src => src.NumberOfPeople))
+             .ForMember(desc => desc.EndTime, act => act.MapFrom(src => src.EndTime))
+             .ForMember(desc => desc.CustomerAccountId, act => act.MapFrom(src => src.CustomerAccountId))
+             .ForMember(desc => desc.Deposit, act => act.MapFrom(src => src.Deposit))
+             .ReverseMap();
+            ;
+
+            config.CreateMap<ReservationDish, ReservationDishDto>()
+            .ForMember(desc => desc.DishId, act => act.MapFrom(src => src.DishId))
+            .ForMember(desc => desc.ComboId, act => act.MapFrom(src => src.ComboId))
+            .ForMember(desc => desc.Quantity, act => act.MapFrom(src => src.Quantity))
+            .ForMember(desc => desc.Note, act => act.MapFrom(src => src.Note))
+            .ReverseMap();
+            ;
         });
         // Trong class MappingConfig
 
