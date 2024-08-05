@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Castle.DynamicProxy.Generators;
 using Firebase.Auth;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
@@ -37,6 +38,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly IExcelService _excelService;
         private readonly IFileService _fileService;
         private readonly IGenericRepository<OTP> _otpRepository;
+        private readonly IGenericRepository<CustomerInfo> _customerInfoRepository;
         public AccountService(
             IGenericRepository<Account> accountRepository,
             IUnitOfWork unitOfWork,
@@ -48,7 +50,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             IMapper mapper,
             IServiceProvider serviceProvider,
             IGenericRepository<IdentityUserRole<string>> userRoleRepository,
-            IGenericRepository<OTP> otpRepository
+            IGenericRepository<OTP> otpRepository,
+            IGenericRepository<CustomerInfo> customerInfoRepository
         ) : base(serviceProvider)
         {
             _accountRepository = accountRepository;
@@ -61,6 +64,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _otpRepository = otpRepository; 
             _tokenDto = new TokenDto();
             _mapper = mapper;
+            _userRoleRepository = userRoleRepository;
+            _otpRepository = otpRepository;
+            _customerInfoRepository = customerInfoRepository;   
         }
 
         public async Task<AppActionResult> Login(LoginRequestDto loginRequest)
@@ -878,8 +884,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-
-
         public async Task<AppActionResult> UpdateAccountInformation(UpdateAccountInformationRequest request)
         {
             var result = new AppActionResult();
@@ -900,6 +904,67 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result.Result = await _accountRepository.Update(account);
                 }
                 await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> AddNewCustomerInfo(CustomerInforRequest customerInforRequest)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var accountDb = await _accountRepository.GetByExpression(p => p.Id == customerInforRequest.AccountId);
+                if (accountDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Tài khoản với số điện thoại {customerInforRequest.AccountId} không tồn tại!");
+                }
+                var customerInfor = new CustomerInfo
+                {
+                    CustomerId = Guid.NewGuid(),
+                    Name = customerInforRequest.Name,       
+                    PhoneNumber = customerInforRequest.PhoneNumber,
+                    AccountId = customerInforRequest.AccountId,
+                    Address = customerInforRequest.Address,
+                };
+
+                await _customerInfoRepository.Insert(customerInfor);
+                await _unitOfWork.SaveChangesAsync();   
+                result.Result = customerInfor;  
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> UpdateCustomerInfo(UpdateCustomerInforRequest customerInforRequest)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var accountDb = await _accountRepository.GetByExpression(p => p.Id == customerInforRequest.AccountId);
+                if (accountDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Tài khoản với số điện thoại {customerInforRequest.AccountId} không tồn tại!");
+                }
+                var updateCustomerInfo = await _customerInfoRepository.GetByExpression(p => p.CustomerId == customerInforRequest.CustomerId);
+                if (updateCustomerInfo == null)
+                {
+                    result = BuildAppActionResultError(result, $"Thông tin và địa chỉ của {customerInforRequest.CustomerId} không tồn tại!");
+                }
+
+                updateCustomerInfo.Address = customerInforRequest.Address;  
+                updateCustomerInfo.PhoneNumber = customerInforRequest.PhoneNumber;  
+                updateCustomerInfo.Name = customerInforRequest.Name;
+
+                await _customerInfoRepository.Update(updateCustomerInfo);
+                await _unitOfWork.SaveChangesAsync();   
+                result.Result = updateCustomerInfo;       
             }
             catch (Exception ex)
             {

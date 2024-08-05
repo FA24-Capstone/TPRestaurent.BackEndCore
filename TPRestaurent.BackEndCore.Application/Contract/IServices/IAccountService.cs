@@ -19,22 +19,21 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> UpdateAccountInformation(UpdateAccountInformationRequest request);
         Task<AppActionResult> SendOTP(string phoneNumber, OTPType otp);
         Task<AppActionResult> ChangePassword(ChangePasswordDto changePasswordDto);
-
         Task<AppActionResult> GetAccountByUserId(string id);
-
         Task<AppActionResult> GetAllAccount(int pageIndex, int pageSize);
-
         Task<AppActionResult> GetNewToken(string refreshToken, string userId);
-
         Task<AppActionResult> ForgotPassword(ForgotPasswordDto dto);
-
         Task<AppActionResult> ActiveAccount(string email, string verifyCode);
-
         Task<string> GenerateVerifyCode(string email, bool isForForgettingPassword);
         Task<string> GenerateVerifyCodeSms(string phoneNumber, bool isForForgettingPassword);
         Task<AppActionResult> GoogleCallBack(string accessTokenFromGoogle);
         Task<AppActionResult> GetAccountsByRoleName(string roleName, int pageNumber, int pageSize);
         Task<AppActionResult> GetAccountsByRoleId(Guid Id, int pageNumber, int pageSize);
         Task<AppActionResult> GenerateOTP(string phoneNumber);
+        Task<AppActionResult> AddNewCustomerInfo(CustomerInforRequest customerInforRequest);
+        Task<AppActionResult> UpdateCustomerInfo(UpdateCustomerInforRequest customerInforRequest);
+        Task<AppActionResult> GetAllCustomerInfo(Guid accountId);
+        Task<AppActionResult> GetCustomerInfo(Guid customerId);
+        Task<AppActionResult> DeleteCustomerInfo(Guid customerId);
     }
 }
