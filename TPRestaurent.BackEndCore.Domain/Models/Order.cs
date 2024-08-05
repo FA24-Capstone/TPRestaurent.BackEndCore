@@ -25,6 +25,9 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Enums.PaymentMethod PaymentMethodId { get; set; }
         [ForeignKey(nameof(PaymentMethodId))]
         public EnumModels.PaymentMethod? PaymentMethod { get; set; }
+        public Guid? ReservationId { get; set; }
+        [ForeignKey(nameof(ReservationId))]
+        public Reservation? Reservation { get; set; }
         public Guid? LoyalPointsHistoryId { get; set; }
         [ForeignKey(nameof(LoyalPointsHistoryId))]
         public LoyalPointsHistory? LoyalPointsHistory { get; set; }

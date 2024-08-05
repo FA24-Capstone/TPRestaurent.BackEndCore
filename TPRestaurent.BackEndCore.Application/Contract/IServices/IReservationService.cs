@@ -13,6 +13,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
     {
         public Task<AppActionResult> GetAvailableTable(DateTime? startTime, DateTime? endTime, int? numOfPeople, int pageNumber, int pageSize);
         public Task<AppActionResult> AddReservation(ReservationDto dto);
+        public Task<AppActionResult> GetAllReservation(int? time, Domain.Enums.ReservationStatus? status, int pageNumber, int pageSize);
         public Task<AppActionResult> UpdateReservation(ReservationDto dto);
         public Task<AppActionResult> RemoveReservation(Guid reservationId);
         public Task<AppActionResult> CalculateDeposit(string ReservationDishDtos);

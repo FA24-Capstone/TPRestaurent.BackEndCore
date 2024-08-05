@@ -51,6 +51,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.EnumModels.TableSize> TableSizes { get; set; } = null!;
         public DbSet<Models.EnumModels.ComboCategory> ComboCategories { get; set; } = null!;
         public DbSet<Models.EnumModels.DishSize> DishSizes { get; set; } = null!;
+        public DbSet<Models.EnumModels.ReservationStatus> ReservationStatuses { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -96,6 +97,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             SeedEnumTable<Models.EnumModels.TableSize, Enums.TableSize>(builder);
             SeedEnumTable<Models.EnumModels.ComboCategory, Enums.ComboCategory>(builder);
             SeedEnumTable<Models.EnumModels.DishSize, Enums.DishSize>(builder);
+            SeedEnumTable<Models.EnumModels.ReservationStatus, Enums.ReservationStatus>(builder);
 
         }
 
