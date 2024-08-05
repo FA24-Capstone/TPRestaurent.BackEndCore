@@ -12,8 +12,8 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    [Migration("20240804171709_AdjustAddressInfomation")]
-    partial class AdjustAddressInfomation
+    [Migration("20240805144805_init")]
+    partial class init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -963,6 +963,37 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         });
                 });
 
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.ReservationStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ReservationStatuses");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 0,
+                            Name = "PENDING"
+                        },
+                        new
+                        {
+                            Id = 1,
+                            Name = "PAID"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "CANCELLED"
+                        });
+                });
+
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.TableSize", b =>
                 {
                     b.Property<int>("Id")
@@ -1050,6 +1081,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<int>("PaymentMethodId")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("ReservationId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -1065,6 +1099,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasIndex("LoyalPointsHistoryId");
 
                     b.HasIndex("PaymentMethodId");
+
+                    b.HasIndex("ReservationId");
 
                     b.ToTable("Orders");
                 });
@@ -1199,9 +1235,14 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<DateTime>("ReservationDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("StatusId")
+                        .HasColumnType("int");
+
                     b.HasKey("ReservationId");
 
                     b.HasIndex("CustomerAccountId");
+
+                    b.HasIndex("StatusId");
 
                     b.ToTable("Reservations");
                 });
@@ -1608,6 +1649,10 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Reservation", "Reservation")
+                        .WithMany()
+                        .HasForeignKey("ReservationId");
+
                     b.Navigation("Account");
 
                     b.Navigation("CustomerInfo");
@@ -1615,6 +1660,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Navigation("LoyalPointsHistory");
 
                     b.Navigation("PaymentMethod");
+
+                    b.Navigation("Reservation");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.OrderDetail", b =>
@@ -1690,7 +1737,15 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.ReservationStatus", "ReservationStatus")
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("CustomerAccount");
+
+                    b.Navigation("ReservationStatus");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.ReservationDish", b =>

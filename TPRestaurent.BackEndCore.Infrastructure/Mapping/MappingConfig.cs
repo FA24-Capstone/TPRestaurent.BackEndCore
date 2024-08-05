@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Castle.Core.Resource;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
+using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Infrastructure.Mapping;
@@ -11,6 +12,18 @@ public class MappingConfig
     {
         var mappingConfig = new MapperConfiguration(config =>
         {
+
+            config.CreateMap<Account, AccountResponse>()
+                .ForMember(desc => desc.Id, act => act.MapFrom(src => src.Id))
+                .ForMember(desc => desc.Email, act => act.MapFrom(src => src.Email))
+                .ForMember(desc => desc.Gender, act => act.MapFrom(src => src.Gender))
+                .ForMember(desc => desc.IsVerified, act => act.MapFrom(src => src.IsVerified))
+                .ForMember(desc => desc.FirstName, act => act.MapFrom(src => src.FirstName))
+                .ForMember(desc => desc.LastName, act => act.MapFrom(src => src.LastName))
+                .ForMember(desc => desc.PhoneNumber, act => act.MapFrom(src => src.PhoneNumber))
+                .ForMember(desc => desc.UserName, act => act.MapFrom(src => src.UserName))
+                ;
+
             config.CreateMap<Dish, DishDto>()
              .ForMember(desc => desc.Name, act => act.MapFrom(src => src.Name))
              .ForMember(desc => desc.Description, act => act.MapFrom(src => src.Description))

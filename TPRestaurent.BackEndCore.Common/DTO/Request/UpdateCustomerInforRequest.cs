@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Common.DTO.Request
 {
-    public class LoginRequestDto
+    public class UpdateCustomerInforRequest
     {
+        public Guid CustomerId { get; set; }
+        public string Name { get; set; } = null!;
         public string PhoneNumber { get; set; } = null!;
-        public string Password { get; set; } = null!;
-        public string? OTPCode { get; set; }        
+        public string Address { get; set; } = null!;
+        public string? AccountId { get; set; }
     }
 }

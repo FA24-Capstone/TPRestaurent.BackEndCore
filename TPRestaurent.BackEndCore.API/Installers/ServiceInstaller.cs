@@ -15,13 +15,18 @@ public class ServiceInstaller : IInstaller
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         //========//
         services.AddScoped<IDBContext, TPRestaurentDBContext>();
-        //services.AddScoped<IJwtService, JwtService>();
+        services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IDishService, DishService>();
+        services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IComboService, ComboService>();
         services.AddScoped<IReservationService, ReservationService>();
         services.AddScoped<IReservationRequestService, ReservationRequestService>();
         services.AddScoped<IFirebaseService, FirebaseService>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<ISmsService, SmsService>();
+        services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IExcelService, ExcelService>();
+
 
     }
 }
