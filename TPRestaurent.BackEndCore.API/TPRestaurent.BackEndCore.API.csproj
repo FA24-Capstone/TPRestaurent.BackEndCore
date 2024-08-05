@@ -31,4 +31,10 @@
     <ProjectReference Include="..\TPRestaurent.BackEndCore.Domain\TPRestaurent.BackEndCore.Domain.csproj" />
     <ProjectReference Include="..\TPRestaurent.BackEndCore.Infrastructure\TPRestaurent.BackEndCore.Infrastructure.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>

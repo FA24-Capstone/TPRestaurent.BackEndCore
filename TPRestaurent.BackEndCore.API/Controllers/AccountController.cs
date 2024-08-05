@@ -103,11 +103,6 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.SendEmailForActiveCode(email);
         }
 
-        [HttpPost("generate-otp")]
-        public async Task<AppActionResult> GenerateOTP(string phoneNumber)
-        {
-            return await _accountService.GenerateOTP(phoneNumber);  
-        }
 
         [HttpPost("verify-number")]
         public async Task<AppActionResult> VerifyNumberAccount(string phoneNumber, string optCode)

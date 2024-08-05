@@ -194,8 +194,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-
-
         private async Task<bool> AddCustomerInformation(Account user)
         {
             bool isSuccessful = false;
@@ -213,6 +211,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var customerRepository = Resolve<IGenericRepository<CustomerInfo>>();
                 await customerRepository!.Insert(customer);
                 await _unitOfWork.SaveChangesAsync();
+                isSuccessful = true;    
             }
             catch (Exception ex)
             {
@@ -267,7 +266,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var user = await _accountRepository.GetByExpression(a =>
-                  a!.PhoneNumber == phoneNumber && a.IsDeleted == false && a.IsVerified == true);
+                  a!.PhoneNumber == phoneNumber && a.IsDeleted == false );
                 if (user == null) result = BuildAppActionResultError(result, "Tài khoản không tồn tại hoặc chưa được xác thực");
                 if (!BuildAppActionResultIsError(result))
                 {
