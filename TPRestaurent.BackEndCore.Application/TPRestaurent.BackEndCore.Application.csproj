@@ -26,7 +26,9 @@
     <PackageReference Include="FirebaseAdmin" Version="2.0.0" />
     <PackageReference Include="FirebaseStorage.net" Version="1.0.3" />
     <PackageReference Include="Google.Apis.Auth" Version="1.65.0" />
+    <PackageReference Include="MailKit" Version="4.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.2.0" />
+    <PackageReference Include="MimeKit" Version="4.2.0" />
     <PackageReference Include="RestSharp" Version="110.2.0" />
     <PackageReference Include="Twilio" Version="7.2.2" />
   </ItemGroup>

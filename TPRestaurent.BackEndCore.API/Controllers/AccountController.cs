@@ -43,8 +43,6 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.GetAccountByUserId(id);    
         }
 
-
-
         [HttpPost("create-account")]
         public async Task<AppActionResult> CreateAccount(SignUpRequestDto request)
         {
