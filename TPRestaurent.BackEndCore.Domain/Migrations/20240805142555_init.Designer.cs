@@ -12,8 +12,13 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
+<<<<<<<< HEAD:TPRestaurent.BackEndCore.Domain/Migrations/20240805142555_init.Designer.cs
     [Migration("20240805142555_init")]
     partial class init
+========
+    [Migration("20240804142945_Init")]
+    partial class Init
+>>>>>>>> ReservationAndTable:TPRestaurent.BackEndCore.Domain/Migrations/20240804142945_Init.Designer.cs
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -30,26 +35,27 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("NormalizedName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("IdentityRole");
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
+
+                    b.ToTable("AspNetRoles", (string)null);
 
                     b.HasData(
-                        new
-                        {
-                            Id = "6a32e12a-60b5-4d93-8306-82231e1232d7",
-                            ConcurrencyStamp = "6a32e12a-60b5-4d93-8306-82231e1232d7",
-                            Name = "ADMIN",
-                            NormalizedName = "admin"
-                        },
                         new
                         {
                             Id = "85b6791c-49d8-4a61-ad0b-8274ec27e764",
@@ -61,8 +67,15 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         {
                             Id = "814f9270-78f5-4503-b7d3-0c567e5812ba",
                             ConcurrencyStamp = "814f9270-78f5-4503-b7d3-0c567e5812ba",
-                            Name = "SHIPPER",
-                            NormalizedName = "shipper"
+                            Name = "MANAGER",
+                            NormalizedName = "manager"
+                        },
+                        new
+                        {
+                            Id = "000f9270-78f5-4503-b7d3-0c567e5812ba",
+                            ConcurrencyStamp = "000f9270-78f5-4503-b7d3-0c567e5812ba",
+                            Name = "CHEF",
+                            NormalizedName = "chef"
                         },
                         new
                         {
@@ -71,6 +84,112 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                             Name = "CUSTOMER",
                             NormalizedName = "customer"
                         });
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RoleId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetRoleClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("RoleId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetUserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("UserId", "LoginProvider", "Name");
+
+                    b.ToTable("AspNetUserTokens", (string)null);
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Account", b =>
@@ -82,13 +201,15 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("CustomerId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
@@ -115,10 +236,12 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("NormalizedEmail")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("NormalizedUserName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
@@ -142,7 +265,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("UserName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("VerifyCode")
                         .HasColumnType("nvarchar(max)");
@@ -151,7 +275,15 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("Accounts");
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex")
+                        .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.ToTable("AspNetUsers", (string)null);
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Blog", b =>
@@ -215,12 +347,18 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Image")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -233,6 +371,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("ComboId");
+
+                    b.HasIndex("CategoryId");
 
                     b.ToTable("Combos");
                 });
@@ -278,6 +418,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.Property<DateTime>("ExpiryDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Img")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("MinimumAmount")
                         .HasColumnType("float");
@@ -395,10 +538,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid?>("DishId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<Guid?>("TagId")
                         .HasColumnType("uniqueidentifier");
 
@@ -409,6 +548,37 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasIndex("TagId");
 
                     b.ToTable("DishTags");
+                });
+
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.ComboCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ComboCategories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 0,
+                            Name = "HOTPOT"
+                        },
+                        new
+                        {
+                            Id = 1,
+                            Name = "BBQ"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "BOTH"
+                        });
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.DishItemType", b =>
@@ -423,6 +593,88 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("DishItemTypes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 0,
+                            Name = "APPETIZER"
+                        },
+                        new
+                        {
+                            Id = 1,
+                            Name = "SOUP"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "HOTPOT"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "BBQ"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "HOTPOT_BROTH"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "HOTPOT_MEAT"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "HOTPOT_SEAFOOD"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "HOTPOT_VEGGIE"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "BBQ_MEAT"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "BBQ_SEAFOOD"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "HOTPOT_TOPPING"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Name = "BBQ_TOPPING"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Name = "SIDEDISH"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Name = "DRINK"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Name = "DESSERT"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Name = "SAUCE"
+                        });
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.OrderStatus", b =>
@@ -596,6 +848,78 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         {
                             Id = 5,
                             Name = "Five"
+                        });
+                });
+
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.ReservationRequestStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ReservationRequestStatuses");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 0,
+                            Name = "PENDING"
+                        },
+                        new
+                        {
+                            Id = 1,
+                            Name = "SUCCESSFUL"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "FAILED"
+                        });
+                });
+
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.TableSize", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TableSizes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 2,
+                            Name = "TWO"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "FOUR"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "SIX"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "EIGHT"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "TEN"
                         });
                 });
 
@@ -780,11 +1104,15 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("CustomerId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("CustomerAccountId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<double>("Deposit")
                         .HasColumnType("float");
+
+                    b.Property<DateTime?>("EndTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("NumberOfPeople")
                         .HasColumnType("int");
@@ -792,14 +1120,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<DateTime>("ReservationDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("TableId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("ReservationId");
 
-                    b.HasIndex("CustomerId");
-
-                    b.HasIndex("TableId");
+                    b.HasIndex("CustomerAccountId");
 
                     b.ToTable("Reservations");
                 });
@@ -808,6 +1131,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 {
                     b.Property<Guid>("ReservationDishId")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ComboId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("DishId")
@@ -823,6 +1149,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("ReservationDishId");
+
+                    b.HasIndex("ComboId");
 
                     b.HasIndex("DishId");
 
@@ -913,8 +1241,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("Capacity")
-                        .HasColumnType("int");
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<string>("TableName")
                         .IsRequired()
@@ -923,9 +1251,14 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid?>("TableRatingId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("TableSizeId")
+                        .HasColumnType("int");
+
                     b.HasKey("TableId");
 
                     b.HasIndex("TableRatingId");
+
+                    b.HasIndex("TableSizeId");
 
                     b.ToTable("Tables");
                 });
@@ -997,6 +1330,57 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.ToTable("Tokens");
                 });
 
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Account", b =>
                 {
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.CustomerInfo", "Customer")
@@ -1021,6 +1405,17 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Navigation("CreateByAccount");
 
                     b.Navigation("UpdateByAccount");
+                });
+
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Combo", b =>
+                {
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.ComboCategory", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.CustomerInfo", b =>
@@ -1163,21 +1558,21 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Reservation", b =>
                 {
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.CustomerInfo", "Customer")
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "CustomerAccount")
                         .WithMany()
-                        .HasForeignKey("CustomerId");
+                        .HasForeignKey("CustomerAccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Table", "Table")
-                        .WithMany()
-                        .HasForeignKey("TableId");
-
-                    b.Navigation("Customer");
-
-                    b.Navigation("Table");
+                    b.Navigation("CustomerAccount");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.ReservationDish", b =>
                 {
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Combo", "Combo")
+                        .WithMany()
+                        .HasForeignKey("ComboId");
+
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Dish", "Dish")
                         .WithMany()
                         .HasForeignKey("DishId");
@@ -1185,6 +1580,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Reservation", "Reservation")
                         .WithMany()
                         .HasForeignKey("ReservationId");
+
+                    b.Navigation("Combo");
 
                     b.Navigation("Dish");
 
@@ -1246,7 +1643,15 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .WithMany()
                         .HasForeignKey("TableRatingId");
 
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.TableSize", "TableSize")
+                        .WithMany()
+                        .HasForeignKey("TableSizeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("TableRating");
+
+                    b.Navigation("TableSize");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Token", b =>

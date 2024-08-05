@@ -14,7 +14,9 @@ using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
+using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
+using static TPRestaurent.BackEndCore.Common.Utils.SD;
 using Table = TPRestaurent.BackEndCore.Domain.Models.Table;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
@@ -35,7 +37,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         public async Task<AppActionResult> AddReservation(ReservationDto dto)
         {
-            using(var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
                 AppActionResult result = new AppActionResult();
                 try
@@ -120,12 +122,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
                     await reservationTableDetailRepository!.InsertRange(reservationTableDetails);
-
+                    await _unitOfWork.SaveChangesAsync();
                     scope.Complete();
                 }
                 catch (Exception ex)
                 {
-                    result = BuildAppActionResultError(result, ex.Message );
+                    result = BuildAppActionResultError(result, ex.Message);
                 }
                 return result;
             }
@@ -152,17 +154,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     Dish dishDb = null;
                     Combo comboDb = null;
 
-                    foreach(var reservationDish in reservationDishDtos!)
+                    foreach (var reservationDish in reservationDishDtos!)
                     {
                         if (reservationDish.ComboId.HasValue)
                         {
-                            comboDb = await comboRepository!.GetByExpression(c => c.ComboId == reservationDish.ComboId.Value && c.EndDate > utility.GetCurrentDateTimeInTimeZone(), null) ;
-                            if (comboDb == null) {
+                            comboDb = await comboRepository!.GetByExpression(c => c.ComboId == reservationDish.ComboId.Value && c.EndDate > utility.GetCurrentDateTimeInTimeZone(), null);
+                            if (comboDb == null)
+                            {
                                 result = BuildAppActionResultError(result, $"Không tìm thấy combo với id {reservationDish.ComboId}");
                                 return result;
                             }
                             total += reservationDish.Quantity * comboDb.Price;
-                        } else
+                        }
+                        else
                         {
                             dishDb = await dishRepository!.GetByExpression(c => c.DishId == reservationDish.DishId.Value && c.isAvailable, null);
                             if (comboDb == null)
@@ -170,16 +174,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 result = BuildAppActionResultError(result, $"Không tìm thấy món ăn với id {reservationDish.DishId}");
                                 return result;
                             }
-                            total += reservationDish.Quantity * dishDb.Price;
+                            //total += reservationDish.Quantity * dishDb.Price;
                         }
                     }
                 }
-
                 result.Result = total * SD.DefaultValue.DEPOSIT_PERCENT;
             }
             catch (Exception ex)
             {
-                result = BuildAppActionResultError(result, ex?.Message );
+                result = BuildAppActionResultError(result, ex?.Message);
             }
             return result;
         }
@@ -190,33 +193,42 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var conditions = new List<Func<Expression<Func<Reservation, bool>>>>();
-                if (startTime.HasValue) 
+                if (startTime.HasValue)
                 {
-                    if (endTime.HasValue) 
+                    if (endTime.HasValue)
                     {
-                        conditions.Add(() => r => !(r.ReservationDate < endTime
-                                                    && (r.EndTime != null && r.EndTime < startTime || r.EndTime == null 
+                        conditions.Add(() => r => (r.ReservationDate < endTime
+                                                    && (r.EndTime != null && r.EndTime < startTime || r.EndTime == null
                                                         && r.ReservationDate.AddHours(SD.DefaultValue.AVERAGE_MEAL_DURATION) < startTime)));
                     }
-                    else 
+                    else
                     {
-                        conditions.Add(() => r => !(r.ReservationDate < startTime.Value.AddHours(SD.DefaultValue.AVERAGE_MEAL_DURATION)
-                                                    && (r.EndTime != null && r.EndTime < startTime || r.EndTime == null 
+                        conditions.Add(() => r => (r.ReservationDate < startTime.Value.AddHours(SD.DefaultValue.AVERAGE_MEAL_DURATION)
+                                                    && (r.EndTime != null && r.EndTime < startTime || r.EndTime == null
                                                         && r.ReservationDate.AddHours(SD.DefaultValue.AVERAGE_MEAL_DURATION) < startTime)));
                     }
                 }
 
-                //if (numOfPeople.HasValue) {
-                //    conditions.Add(() => r => r.Table.Capacity > numOfPeople);
-                //}
-
                 Expression expression = DynamicLinqBuilder<Reservation>.BuildExpression(conditions);
 
-                //var availableReservation = await _reservationRepository.GetAllDataByExpression((Expression<Func<Reservation, bool>>?)expression, pageNumber, pageSize, null, false, r => r.Table.TableRating);
+                //Get all collided reservations
 
+                var unavailableReservation = await _reservationRepository.GetAllDataByExpression((Expression<Func<Reservation, bool>>?)expression, pageNumber, pageSize, null, false, null);
+
+                if (unavailableReservation!.Items.Count > 0)
+                {
+                    var unavailableReservationIds = unavailableReservation.Items.Select(x => x.ReservationId);
+                    var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
+                    var tableRepository = Resolve<IGenericRepository<Table>>();
+                    var reservedTableDb = await reservationTableDetailRepository!.GetAllDataByExpression(r => unavailableReservationIds.Contains(r.ReservationId), 0, 0, null, false, r => r.Table);
+                    var reservedTableIds = reservedTableDb.Items.Select(x => x.TableId);
+                    var availableTableDb = await tableRepository.GetAllDataByExpression(t => !reservedTableIds.Contains(t.TableId), 0, 0, null, false, null);
+                    result.Result = availableTableDb;
+                }
                 //result.Result = availableReservation.Items.Select(x => x.Table);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
@@ -227,14 +239,153 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             throw new NotImplementedException();
         }
 
-        public Task<AppActionResult> SuggestTable(ReservationDto dto)
-        {
-            throw new NotImplementedException();
-        }
 
         public Task<AppActionResult> UpdateReservation(ReservationDto dto)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<AppActionResult> SuggestTable(SuggestTableDto dto)
+        {
+            AppActionResult result = null;
+            try
+            {
+                //Validate
+                List<Guid> guids = new List<Guid>();
+                var conditions = new List<Func<Expression<Func<Reservation, bool>>>>();
+                //Get All Available Table
+                var availableTableResult = await GetAvailableTable(dto.StartTime, dto.EndTime, null, 0, 0);
+                if (availableTableResult.IsSuccess)
+                {
+                    var availableTable = (PagedResult<Table>)availableTableResult.Result!;
+                    if (availableTable.Items!.Count > 0)
+                    {
+                        result.Result = await GetTables(availableTable.Items, dto.NumOfPeople, dto.RequiredAirConditioner, dto.IsPrivate);
+                    }
+                }
+
+
+                //Get Table with condition: 
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            return result;
+        }
+
+        public async Task<List<Table>> GetTables(List<Table> allAvailableTables, int quantity, bool requiredAirCondition, bool isPrivate)
+        {
+            List<Table> result = new List<Table>();
+            try
+            {
+                string tableCode = "T";
+                if (isPrivate)
+                {
+                    tableCode = "V";
+                }
+                else if (requiredAirCondition)
+                {
+                    tableCode = "L";
+                }
+
+                var tableType = allAvailableTables.Where(t => t.TableName.Contains(tableCode)).GroupBy(t => t.TableSizeId)
+                                                  .ToDictionary(k => k.Key, k => k.ToList());
+
+                if (!tableType.Equals("V"))
+                {
+                    if (quantity <= 2)
+                    {
+                        if (tableType.ContainsKey(TableSize.TWO) && tableType[TableSize.TWO].Count > 0)
+                        {
+                            result.Add(tableType[TableSize.TWO].FirstOrDefault());
+                            return result;
+                        }
+                    }
+
+                    if (quantity <= 4)
+                    {
+                        if (tableType.ContainsKey(TableSize.FOUR) && tableType[TableSize.SIX].Count > 0)
+                        {
+                            result.Add(tableType[TableSize.FOUR].FirstOrDefault());
+                            return result;
+                        }
+                    }
+
+                    if (quantity <= 6)
+                    {
+                        if (tableType.ContainsKey(TableSize.SIX) && tableType[TableSize.SIX].Count > 0)
+                        {
+                            result.Add(tableType[TableSize.SIX].FirstOrDefault());
+                            return result;
+                        }
+                    }
+                }
+
+                if (quantity <= 8)
+                {
+                    if (tableType.ContainsKey(TableSize.EIGHT) && tableType[TableSize.EIGHT].Count > 0)
+                    {
+                        result.Add(tableType[TableSize.EIGHT].FirstOrDefault());
+                        return result;
+                    }
+                }
+
+                if (quantity <= 10)
+                {
+                    if (tableType.ContainsKey(TableSize.TEN) && tableType[TableSize.TEN].Count > 0)
+                    {
+                        result.Add(tableType[TableSize.TEN].FirstOrDefault());
+                        return result;
+                    }
+                }
+                return result;
+            }
+            catch (Exception ex)
+            {
+                result = new List<Table>();
+            }
+            return result;
+
+
+        }
+
+        public async Task<AppActionResult> GetAllReservation(int? time, ReservationStatus? status, int pageNumber, int pageSize)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var conditions = new List<Func<Expression<Func<Reservation, bool>>>>();
+                
+                if (time.HasValue)
+                {
+                    //This week
+                    if(time == 0)
+                    {
+                        var startOfWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
+                        var endOfWeek = startOfWeek.AddDays(7).AddSeconds(-1);
+
+                        // Add the condition to the list
+                        conditions.Add(() => r =>
+                            r.ReservationDate >= startOfWeek && r.ReservationDate <= endOfWeek);
+                    }
+                }
+
+                if (status.HasValue)
+                {
+                    conditions.Add(() => r => r.StatusId == status.Value);
+                }
+
+                Expression expression = DynamicLinqBuilder<Reservation>.BuildExpression(conditions);
+                result.Result = await _reservationRepository.GetAllDataByExpression((Expression<Func<Reservation, bool>>?)expression, pageNumber, pageSize, r => r.ReservationDate, true, null);
+
+            }
+            catch (Exception ex) 
+            { 
+            
+            }
+            return result;
         }
     }
 }

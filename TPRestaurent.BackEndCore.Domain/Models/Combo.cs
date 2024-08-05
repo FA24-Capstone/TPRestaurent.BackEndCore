@@ -16,6 +16,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public string Description { get; set; }
         public string? Image {  get; set; }
         public double Price { get; set; }
+        public double Discount { get; set; }
         public Enums.ComboCategory CategoryId { get; set; }
         [ForeignKey(nameof(CategoryId))]
         public EnumModels.ComboCategory? Category { get; set; }

@@ -85,7 +85,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
 
                     var reservationRequest = _mapper.Map<ReservationRequest>(dto);
-                    reservationRequest.Status = ReservationRequestStatus.PENDING;
+                    reservationRequest.StatusId = ReservationRequestStatus.PENDING;
                     reservationRequest.ReservationDishes = JsonConvert.SerializeObject(dto.ReservationDishes);  
                     await _repository.Insert(reservationRequest);
                     await _unitOfWork.SaveChangesAsync();
@@ -108,7 +108,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result.Result = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, r => r.CreateDate, false, null);
                 } else
                 {
-                    result.Result = await _repository.GetAllDataByExpression(r => r.Status == status, pageNumber, pageSize, r => r.CreateDate, false, null);
+                    result.Result = await _repository.GetAllDataByExpression(r => r.StatusId == status, pageNumber, pageSize, r => r.CreateDate, false, null);
                 }
             }
             catch (Exception ex) 
@@ -130,13 +130,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return result;
                 }
 
-                if (reservationRequestDb.Status != ReservationRequestStatus.PENDING) 
+                if (reservationRequestDb.StatusId != ReservationRequestStatus.PENDING) 
                 {
                     result = BuildAppActionResultError(result, $"Yêu cầu đã được xử lý trước đó");
                     return result;
                 }
 
-                reservationRequestDb.Status = status;
+                reservationRequestDb.StatusId = status;
                 await _repository.Update(reservationRequestDb);
                 await _unitOfWork.SaveChangesAsync();   
             }

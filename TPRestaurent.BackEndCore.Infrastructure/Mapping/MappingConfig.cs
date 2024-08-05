@@ -14,8 +14,8 @@ public class MappingConfig
             config.CreateMap<Dish, DishDto>()
              .ForMember(desc => desc.Name, act => act.MapFrom(src => src.Name))
              .ForMember(desc => desc.Description, act => act.MapFrom(src => src.Description))
-             .ForMember(desc => desc.Price, act => act.MapFrom(src => src.Price))
-             .ForMember(desc => desc.Discount, act => act.MapFrom(src => src.Discount))
+             //.ForMember(desc => desc.Price, act => act.MapFrom(src => src.Price))
+             //.ForMember(desc => desc.Discount, act => act.MapFrom(src => src.Discount))
              .ForMember(desc => desc.isAvailable, act => act.MapFrom(src => src.isAvailable))
              .ReverseMap();
             ;

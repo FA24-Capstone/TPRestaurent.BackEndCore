@@ -22,7 +22,12 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid? CustomerId { get; set; } 
         [ForeignKey(nameof(CustomerId))]
         public CustomerInfo? CustomerInfo { get; set; }
-        public PaymentMethod PaymentMethod { get; set; }
+        public Enums.PaymentMethod PaymentMethodId { get; set; }
+        [ForeignKey(nameof(PaymentMethodId))]
+        public EnumModels.PaymentMethod? PaymentMethod { get; set; }
+        public Guid? ReservationId { get; set; }
+        [ForeignKey(nameof(ReservationId))]
+        public Reservation? Reservation { get; set; }
         public Guid? LoyalPointsHistoryId { get; set; }
         [ForeignKey(nameof(LoyalPointsHistoryId))]
         public LoyalPointsHistory? LoyalPointsHistory { get; set; }

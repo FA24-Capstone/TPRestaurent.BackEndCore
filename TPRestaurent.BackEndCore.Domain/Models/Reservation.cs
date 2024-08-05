@@ -19,5 +19,8 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         [ForeignKey(nameof(CustomerAccountId))]
         public Account? CustomerAccount { get; set; }
         public double Deposit { get; set; }
+        public Enums.ReservationStatus StatusId { get; set; }
+        [ForeignKey(nameof(StatusId))]
+        public EnumModels.ReservationStatus? ReservationStatus { get; set; }
     }
 }

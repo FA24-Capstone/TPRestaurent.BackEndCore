@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using TPRestaurent.BackEndCore.Domain.Models;
 using TPRestaurent.BackEndCore.Domain.Models.EnumModels;
 
 namespace TPRestaurent.BackEndCore.Domain.Data
 {
-    public class TPRestaurentDBContext : DbContext, IDBContext
+    public class TPRestaurentDBContext : IdentityDbContext<Account>, IDBContext
     {
         public TPRestaurentDBContext()
         {
@@ -38,6 +40,8 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.DishCombo> DishCombos { get; set; } = null!;
         public DbSet<Models.StoreCreditHistory> StoreCreditHistories { get; set; } = null!;
         public DbSet<Models.StoreCredit> StoreCredits { get; set; } = null!;
+        public DbSet<Models.DishSizeDetail> DishSizeDetails { get; set; } = null!;
+        public DbSet<Models.CustomerInfoAddress> CustomerInfoAddress { get; set; } = null!;
         public DbSet<Models.EnumModels.OrderStatus> OrderStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.OTPType> OTPTypes { get; set; } = null!;
         public DbSet<Models.EnumModels.PaymentMethod> PaymentMethods { get; set; } = null!;
@@ -46,16 +50,12 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.EnumModels.ReservationRequestStatus> ReservationRequestStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.TableSize> TableSizes { get; set; } = null!;
         public DbSet<Models.EnumModels.ComboCategory> ComboCategories { get; set; } = null!;
+        public DbSet<Models.EnumModels.DishSize> DishSizes { get; set; } = null!;
+        public DbSet<Models.EnumModels.ReservationStatus> ReservationStatuses { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            builder.Entity<IdentityRole>().HasData(new IdentityRole
-            {
-                Id = "6a32e12a-60b5-4d93-8306-82231e1232d7",
-                Name = "ADMIN",
-                ConcurrencyStamp = "6a32e12a-60b5-4d93-8306-82231e1232d7",
-                NormalizedName = "admin"
-            });
+           
             builder.Entity<IdentityRole>().HasData(new IdentityRole
             {
                 Id = "85b6791c-49d8-4a61-ad0b-8274ec27e764",
@@ -66,9 +66,16 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             builder.Entity<IdentityRole>().HasData(new IdentityRole
             {
                 Id = "814f9270-78f5-4503-b7d3-0c567e5812ba",
-                Name = "SHIPPER",
+                Name = "MANAGER",
                 ConcurrencyStamp = "814f9270-78f5-4503-b7d3-0c567e5812ba",
-                NormalizedName = "shipper"
+                NormalizedName = "manager"
+            });
+            builder.Entity<IdentityRole>().HasData(new IdentityRole
+            {
+                Id = "000f9270-78f5-4503-b7d3-0c567e5812ba",
+                Name = "CHEF",
+                ConcurrencyStamp = "000f9270-78f5-4503-b7d3-0c567e5812ba",
+                NormalizedName = "chef"
             });
             builder.Entity<IdentityRole>().HasData(new IdentityRole
             {
@@ -89,6 +96,8 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             SeedEnumTable<Models.EnumModels.ReservationRequestStatus, Enums.ReservationRequestStatus>(builder);
             SeedEnumTable<Models.EnumModels.TableSize, Enums.TableSize>(builder);
             SeedEnumTable<Models.EnumModels.ComboCategory, Enums.ComboCategory>(builder);
+            SeedEnumTable<Models.EnumModels.DishSize, Enums.DishSize>(builder);
+            SeedEnumTable<Models.EnumModels.ReservationStatus, Enums.ReservationStatus>(builder);
 
         }
 
@@ -114,19 +123,17 @@ namespace TPRestaurent.BackEndCore.Domain.Data
                 modelBuilder.Entity<TEntity>().HasData(entityInstance!);
             }
         }
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            IConfiguration config = new ConfigurationBuilder()
-                           .SetBasePath(Directory.GetCurrentDirectory())
-                           .AddJsonFile("appsettings.json", true, true)
-                           .Build();
-            //string cs = config["ConnectionStrings:DB"];
-            //if (!optionsBuilder.IsConfigured)
-            //{
-            //    optionsBuilder.UseSqlServer(cs);
-            //}
-            optionsBuilder.UseSqlServer(
-           "server=.;database=TPRestaurent;uid=SA;pwd=12345;TrustServerCertificate=True;MultipleActiveResultSets=True;");
-        }
+        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        //{
+        //    IConfiguration config = new ConfigurationBuilder()
+        //                   .SetBasePath(Directory.GetCurrentDirectory())
+        //                   .AddJsonFile("appsettings.json", true, true)
+        //                   .Build();
+        //    string cs = config["ConnectionStrings:DB"];
+        //    if (!optionsBuilder.IsConfigured)
+        //    {
+        //        optionsBuilder.UseSqlServer(cs);
+        //    }
+        //}
     }
 }
