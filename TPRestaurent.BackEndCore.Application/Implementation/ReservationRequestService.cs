@@ -48,7 +48,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var accountRepository = Resolve<IGenericRepository<Account>>();
-                if((await accountRepository!.GetById(dto.CustomerAccountId)) == null)
+                if((await accountRepository!.GetById(dto.CustomerAccountId.ToString())) == null)
                 {
                     result = BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng với id {dto.CustomerAccountId}");
                     return result;
@@ -56,22 +56,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if (dto.ReservationDishes.Count > 0) 
                 {
-                    var dishRepository = Resolve<IGenericRepository<Dish>>();
+                    var dishRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                     var comboRepository = Resolve<IGenericRepository<Combo>>();
                     foreach (var item in dto.ReservationDishes) 
                     { 
-                        if(item.DishId != null)
+                        if(item.DishSizeDetailId != null)
                         {
-                            if((await dishRepository!.GetByExpression(d => d.DishId == item.DishId && d.isAvailable, null)) == null)
+                            if((await dishRepository!.GetByExpression(d => d.DishSizeDetailId == item.DishSizeDetailId && d.IsAvailable, null)) == null)
                             {
-                                result = BuildAppActionResultError(result, $"Không tìm thấy món ăn với id {item.DishId}");
+                                result = BuildAppActionResultError(result, $"Không tìm thấy món ăn với id {item.DishSizeDetailId}");
                                 return result;
                             }
                         } else
                         {
                             if ((await comboRepository!.GetByExpression(d => d.ComboId == item.ComboId && d.EndDate < utility.GetCurrentDateTimeInTimeZone(), null)) == null)
                             {
-                                result = BuildAppActionResultError(result, $"Không tìm thấy combo với id {item.DishId}");
+                                result = BuildAppActionResultError(result, $"Không tìm thấy combo với id {item.ComboId}");
                                 return result;
                             }
                         }
@@ -85,6 +85,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
 
                     var reservationRequest = _mapper.Map<ReservationRequest>(dto);
+                    reservationRequest.ReservationRequestId = Guid.NewGuid();
                     reservationRequest.StatusId = ReservationRequestStatus.PENDING;
                     reservationRequest.ReservationDishes = JsonConvert.SerializeObject(dto.ReservationDishes);  
                     await _repository.Insert(reservationRequest);

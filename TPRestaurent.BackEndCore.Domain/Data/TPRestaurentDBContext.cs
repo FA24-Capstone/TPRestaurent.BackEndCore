@@ -29,6 +29,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.OTP> OTPs { get; set; } = null!;
         public DbSet<Models.Rating> Ratings { get; set; } = null!;
         public DbSet<Models.Reservation> Reservations { get; set; } = null!;
+        public DbSet<Models.ReservationRequest> ReservationRequests { get; set; } = null!;
         public DbSet<Models.ReservationDish> ReservationDishes { get; set; } = null!;
         public DbSet<Models.StaticFile> StaticFiles { get; set; } = null!;
         public DbSet<Models.Table> Tables { get; set; } = null!;
