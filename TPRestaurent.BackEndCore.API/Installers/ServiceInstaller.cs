@@ -20,6 +20,7 @@ public class ServiceInstaller : IInstaller
         services.AddScoped<IComboService, ComboService>();
         services.AddScoped<IFirebaseService, FirebaseService>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<ISmsService, SmsService>();
 
     }
 }
