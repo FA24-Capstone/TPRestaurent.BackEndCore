@@ -17,6 +17,7 @@ public class ServiceInstaller : IInstaller
         services.AddScoped<IDBContext, TPRestaurentDBContext>();
         //services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IDishService, DishService>();
+        services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IComboService, ComboService>();
         services.AddScoped<IFirebaseService, FirebaseService>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
