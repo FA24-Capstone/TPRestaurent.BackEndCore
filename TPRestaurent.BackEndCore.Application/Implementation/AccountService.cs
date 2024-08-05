@@ -36,7 +36,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly UserManager<Account> _userManager;
         private readonly IEmailService _emailService;
         private readonly IExcelService _excelService;
-        private readonly IFileService _fileService;
         private readonly IGenericRepository<OTP> _otpRepository;
         private readonly IGenericRepository<CustomerInfo> _customerInfoRepository;
         public AccountService(
@@ -46,7 +45,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             SignInManager<Account> signInManager,
             IEmailService emailService,
             IExcelService excelService,
-            IFileService fileService,
             IMapper mapper,
             IServiceProvider serviceProvider,
             IGenericRepository<IdentityUserRole<string>> userRoleRepository,
@@ -60,7 +58,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _signInManager = signInManager;
             _emailService = emailService;
             _excelService = excelService;
-            _fileService = fileService;
             _otpRepository = otpRepository; 
             _tokenDto = new TokenDto();
             _mapper = mapper;

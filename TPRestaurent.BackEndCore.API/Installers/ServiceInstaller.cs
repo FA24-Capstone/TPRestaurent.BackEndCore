@@ -23,5 +23,8 @@ public class ServiceInstaller : IInstaller
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ISmsService, SmsService>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IExcelService, ExcelService>();
+
+
     }
 }
