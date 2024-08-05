@@ -32,7 +32,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GenerateOTP(string phoneNumber);
         Task<AppActionResult> AddNewCustomerInfo(CustomerInforRequest customerInforRequest);
         Task<AppActionResult> UpdateCustomerInfo(UpdateCustomerInforRequest customerInforRequest);
-        Task<AppActionResult> GetAllCustomerInfo(Guid accountId);
+        Task<AppActionResult> GetAllCustomerInfoByAccountId(string accountId, int pageNumber, int pageSize);
         Task<AppActionResult> GetCustomerInfo(Guid customerId);
         Task<AppActionResult> DeleteCustomerInfo(Guid customerId);
     }

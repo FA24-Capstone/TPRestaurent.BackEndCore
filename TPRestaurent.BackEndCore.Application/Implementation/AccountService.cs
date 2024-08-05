@@ -972,5 +972,69 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+        public async Task<AppActionResult> GetAllCustomerInfoByAccountId(string accountId, int pageNumber, int pageSize)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                CustomerInfoResponse customerInfoResponse = new CustomerInfoResponse();
+                var accountDb = await _accountRepository.GetByExpression(p => p.Id == accountId);
+                if (accountDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Tài khoản với số điện thoại {accountId} không tồn tại!");
+                }
+                var customerInforList = await _customerInfoRepository.GetAllDataByExpression(p => p.AccountId == accountId, pageNumber, pageSize, null, false, null);
+                customerInfoResponse.Account = accountDb;
+                customerInfoResponse.CustomerInfo = customerInforList.Items!;
+                result.Result = customerInfoResponse;       
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetCustomerInfo(Guid customerId)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var customerInfoDb = await _customerInfoRepository.GetByExpression(p => p.CustomerId == customerId, a => a.Account!);
+                if (customerInfoDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Thông tin và địa chỉ của khách với id {customerId} không tồn tại");
+                }
+                result.Result = customerInfoDb;     
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> DeleteCustomerInfo(Guid customerId)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var customerInfoDb = await _customerInfoRepository.GetByExpression(p => p.CustomerId == customerId, a => a.Account!);
+                if (customerInfoDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Thông tin và địa chỉ của khách với id {customerId} không tồn tại");
+                }
+                await _customerInfoRepository.DeleteById(customerId);
+                await _unitOfWork.SaveChangesAsync();
+                result.IsSuccess = true;
+                result.Messages.Add("Xóa thông tin địa chỉ khách hàng thành công");
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
     }
 }
