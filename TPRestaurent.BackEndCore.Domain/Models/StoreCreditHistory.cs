@@ -13,6 +13,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         [Key]
         public Guid StoreCreditHistoryId { get; set; }
         public bool IsInput { get; set; }
+        public DateTime? Date {  get; set; }
         public double Amount { get; set; }
         public Guid StoreCreditId { get; set; }
         [ForeignKey(nameof(StoreCreditId))]

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using MailKit.Search;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json;
 using System;
@@ -387,6 +388,56 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             catch (Exception ex) 
             { 
             
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetAllReservationByAccountId(string accountId, ReservationStatus? status, int pageNumber, int pageSize)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                if (status.HasValue)
+                {
+                    result.Result = await _reservationRepository.GetAllDataByExpression(o => o.CustomerAccountId.Equals(accountId) && o.StatusId == status, pageNumber, pageSize, o => o.ReservationDate, false, null);
+                }
+                else
+                {
+                    result.Result = await _reservationRepository.GetAllDataByExpression(o => o.CustomerAccountId.Equals(accountId), pageNumber, pageSize, o => o.ReservationDate, false, null);
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetAllReservationDetail(Guid reservationId)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var reservationDb = await _reservationRepository.GetById(reservationId);
+                if (reservationDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Không tìm thấy thông tin đặt bàn với id {reservationId}");
+                    return result;
+                }
+
+                var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
+                var reservationTableDetailDb = await reservationTableDetailRepository!.GetAllDataByExpression(o => o.ReservationId == reservationId, 0, 0, null, false, o => o.Table);
+                var reservationDishDb = await _reservationDishRepository!.GetAllDataByExpression(o => o.ReservationId == reservationId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo);
+                result.Result = new ReservationReponse
+                {
+                    Reservation = reservationDb,
+                    ReservationDishes = reservationDishDb.Items!,
+                    ReservationTableDetails = reservationTableDetailDb.Items!
+                };
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }

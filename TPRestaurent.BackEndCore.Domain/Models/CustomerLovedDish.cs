@@ -8,12 +8,16 @@ using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
 {
-    public class StoreCredit
+    public class CustomerLovedDish
     {
         [Key]
-        public Guid StoreCreditId { get; set; }
-        public double Amount { get; set; }
-        public DateTime ExpiredDate { get; set; }
+        public Guid CustomerLovedDishId { get; set; }
+        public Guid? DishId { get; set; }
+        [ForeignKey(nameof(DishId))]
+        public Dish? Dish { get; set; } 
+        public Guid? ComboId { get; set; }
+        [ForeignKey(nameof(ComboId))]
+        public Combo? Combo { get; set; }
         public Guid CustomerInfoId { get; set; }
         [ForeignKey(nameof(CustomerInfoId))]
         public CustomerInfo? CustomerInfo { get; set; }

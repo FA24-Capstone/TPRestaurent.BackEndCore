@@ -12,8 +12,8 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    [Migration("20240805144308_AddTransaction")]
-    partial class AddTransaction
+    [Migration("20240806073953_AddDateToCreditHistory")]
+    partial class AddDateToCreditHistory
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -791,6 +791,11 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         {
                             Id = 4,
                             Name = "Cancelled"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Delivering"
                         });
                 });
 
@@ -1114,7 +1119,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid?>("ComboId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("DishId")
+                    b.Property<Guid?>("DishSizeDetailId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("OrderId")
@@ -1130,7 +1135,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.HasIndex("ComboId");
 
-                    b.HasIndex("DishId");
+                    b.HasIndex("DishSizeDetailId");
 
                     b.HasIndex("OrderId");
 
@@ -1410,6 +1415,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.Property<double>("Amount")
                         .HasColumnType("float");
+
+                    b.Property<DateTime?>("Date")
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("IsInput")
                         .HasColumnType("bit");
@@ -1771,9 +1779,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .WithMany()
                         .HasForeignKey("ComboId");
 
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Dish", "Dish")
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.DishSizeDetail", "DishSizeDetail")
                         .WithMany()
-                        .HasForeignKey("DishId");
+                        .HasForeignKey("DishSizeDetailId");
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Order", "Order")
                         .WithMany()
@@ -1783,7 +1791,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.Navigation("Combo");
 
-                    b.Navigation("Dish");
+                    b.Navigation("DishSizeDetail");
 
                     b.Navigation("Order");
                 });

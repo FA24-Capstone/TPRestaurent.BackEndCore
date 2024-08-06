@@ -10,6 +10,7 @@ namespace TPRestaurent.BackEndCore.Domain.Enums
     {
         PENDING,
         PAID,
+        DINING,
         CANCELLED
     }
 }

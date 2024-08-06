@@ -43,6 +43,8 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.StoreCreditHistory> StoreCreditHistories { get; set; } = null!;
         public DbSet<Models.StoreCredit> StoreCredits { get; set; } = null!;
         public DbSet<Models.DishSizeDetail> DishSizeDetails { get; set; } = null!;
+        public DbSet<Models.CustomerLovedDish> CustomerLovedDishes { get; set; } = null!;
+        public DbSet<Models.CustomerSavedCoupon> CustomerSavedCoupons { get; set; } = null!;
         public DbSet<Models.CustomerInfoAddress> CustomerInfoAddress { get; set; } = null!;
         public DbSet<Models.Transaction> Transactions { get; set; } = null!;
         public DbSet<Models.EnumModels.OrderStatus> OrderStatuses { get; set; } = null!;
