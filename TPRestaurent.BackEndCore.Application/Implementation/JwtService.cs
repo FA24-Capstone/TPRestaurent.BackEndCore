@@ -44,7 +44,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var accountRepository = Resolve<IGenericRepository<Account>>();
                 var utility = Resolve<Common.Utils.Utility>();
                 var user = await accountRepository!.GetByExpression(u =>
-                    u!.Email.ToLower() == loginRequest.PhoneNumber.ToLower());
+                    u!.PhoneNumber.ToLower() == loginRequest.PhoneNumber.ToLower());
 
                 if (user != null)
                 {
