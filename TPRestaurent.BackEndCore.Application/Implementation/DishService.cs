@@ -27,9 +27,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             IMapper mapper
             ) : base(serviceProvider)
         {
-            _dishRepository = dishRepository;   
-            _unitOfWork = unitOfWork;   
-            _mapper = mapper;   
+            _dishRepository = dishRepository;
+            _unitOfWork = unitOfWork;
+            _mapper = mapper;
         }
 
         public async Task<AppActionResult> CreateDish(DishDto dto)
@@ -118,7 +118,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 dishDb!.isAvailable = false;
                 result.IsSuccess = true;
                 result.Messages.Add("This dish has been delete successfully");
-                await _unitOfWork.SaveChangesAsync();   
+                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -132,9 +132,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                 var dishList = await _dishRepository
-                    .GetAllDataByExpression(p => p.Name.Contains(keyword) || string.IsNullOrEmpty(keyword), pageNumber, pageSize, null, false, p => p.DishItemType!);
-                 result.Result = dishList;  
+                var dishList = await _dishRepository
+                   .GetAllDataByExpression(p => p.Name.Contains(keyword) || string.IsNullOrEmpty(keyword), pageNumber, pageSize, null, false, p => p.DishItemType!);
+                result.Result = dishList;
             }
             catch (Exception ex)
             {
@@ -158,22 +158,28 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.Dish!);
+                if (staticFileDb.Items.Count < 0 && staticFileDb.Items == null)
+                {
+                    result = BuildAppActionResultError(result, $"Hình ảnh món ăn với id {dishId} không tồn tại");
+                }
                 var ratingDb = await ratingRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.Dish!);
-                if (ratingDb!.Items!.Count< 0 && ratingDb!.Items == null)
+                if (ratingDb == null || ratingDb.Items == null || ratingDb.Items.Count <= 0)
                 {
                     result = BuildAppActionResultError(result, $"Các đánh giá món ăn với id {dishId} không tồn tại");
-                    foreach (var rating in ratingDb.Items!)
-                    {
-                        var ratingStaticFileDb = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == rating.RatingId, 0, 0, null, false, p => p.Dish!);
-                        var ratingDishResponse = new RatingDishResponse
-                        {
-                            RatingList = ratingDb.Items,
-                            RatingImgs = ratingStaticFileDb.Items!
-                        };
-                        dishResponse.RatingDish.Add(ratingDishResponse);
-                    }
+                    return result;
                 }
-                
+
+                foreach (var rating in ratingDb.Items!)
+                {
+                    var ratingStaticFileDb = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == rating.RatingId, 0, 0, null, false, p => p.Dish!);
+                    var ratingDishResponse = new RatingDishResponse
+                    {
+                        Rating = rating,
+                        RatingImgs = ratingStaticFileDb.Items!
+                    };
+                    dishResponse.RatingDish.Add(ratingDishResponse);
+                }
+
                 dishResponse.Dish = dishDb!;
                 dishResponse.DishImgs = staticFileDb.Items!;
 
