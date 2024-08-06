@@ -21,6 +21,10 @@ public class ServiceInstaller : IInstaller
         services.AddScoped<IComboService, ComboService>();
         services.AddScoped<IReservationService, ReservationService>();
         services.AddScoped<IReservationRequestService, ReservationRequestService>();
+        services.AddScoped<IOrderService, OrderService>();
+        services.AddScoped<IStoreCreditService, StoreCreditService>();
+        services.AddScoped<ICustomerLovedDishService, CustomerLovedDishService>();
+        services.AddScoped<ICustomerSavedCouponService, CustomerSavedCouponService>();
         services.AddScoped<IFirebaseService, FirebaseService>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ISmsService, SmsService>();

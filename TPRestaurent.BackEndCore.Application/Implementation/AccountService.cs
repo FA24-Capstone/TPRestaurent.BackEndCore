@@ -5,6 +5,7 @@ using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using OfficeOpenXml.FormulaParsing.FormulaExpressions;
 using System;
@@ -22,6 +23,7 @@ using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
 using Twilio.Types;
+using Utility = TPRestaurent.BackEndCore.Common.Utils.Utility;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -354,8 +356,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             try
             {
-                var currentTime = DateTime.Now; 
-                var otpCodeDb = await _otpRepository.GetByExpression(p => p.Code == changePasswordDto.OTPCode && p.Type == OTPType.ChangePassword);
+                var utility = Resolve<Utility>();
+                var otpCodeListDb = await _otpRepository.GetAllDataByExpression(p => p.Code == changePasswordDto.OTPCode && p.Type == OTPType.ChangePassword && p.ExpiredTime > utility.GetCurrentDateTimeInTimeZone(), 0, 0, null, false, null);
+                if (otpCodeListDb.Items.Count == 0)
+                {
+                    result = BuildAppActionResultError(result, "Không tìm thấy mã xác nhận");
+                    return result;
+                }
+                else if (otpCodeListDb.Items.Count > 1)
+                {
+                    result = BuildAppActionResultError(result, "Có nhiều hơn 1 mã xác nhận còn hiệu lực. Vui lòng thử lại sau 5 phút");
+                    return result;
+                }
+                var otpCodeDb = otpCodeListDb.Items.FirstOrDefault();
                 if (await _accountRepository.GetByExpression(c =>
                         c!.PhoneNumber == changePasswordDto.PhoneNumber && c.IsDeleted == false) == null)
                     result = BuildAppActionResultError(result,
@@ -364,7 +377,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, $"Mã OTP đã được sử dụng");
                 }
-                if (otpCodeDb!.ExpiredTime < currentTime)
+                if (otpCodeDb!.ExpiredTime < utility.GetCurrentDateTimeInTimeZone())
                 {
                     result = BuildAppActionResultError(result, $"Mã OTP đã hết hạn");
                 }
@@ -430,13 +443,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             try
             {
-                var user = await _accountRepository.GetByExpression(a =>
+                var user = _userManager.Users.FirstOrDefault(a =>
                     a!.PhoneNumber == dto.PhoneNumber && a.IsDeleted == false && a.IsVerified == true);
-                var otpCodeDb = await _otpRepository.GetByExpression(p => p!.AccountId == user!.Id && p.Type == OTPType.ForgotPassword);
-                DateTime currentTime = DateTime.Now;
-                if (user == null)
+                if (user == null) { 
                     result = BuildAppActionResultError(result, "Tài khoản không tồn tại hoặc chưa được xác thực!");
-                else if (otpCodeDb!.Code != dto.RecoveryCode)
+                    return result;
+                }
+                var utility = Resolve<Utility>();
+                var otpCodeListDb = await _otpRepository.GetAllDataByExpression(p => p!.AccountId == user!.Id && p.Type == OTPType.ForgotPassword && p.ExpiredTime > utility.GetCurrentDateTimeInTimeZone(), 0,0, null, false, null);
+                if (otpCodeListDb.Items.Count == 0) 
+                {
+                    result = BuildAppActionResultError(result, "Không tìm thấy mã xác nhận");
+                    return result;
+                } else if(otpCodeListDb.Items.Count > 1)
+                {
+                    result = BuildAppActionResultError(result, "Có nhiều hơn 1 mã xác nhận còn hiệu lực. Vui lòng thử lại sau 5 phút");
+                    return result;
+                }
+                var otpCodeDb = otpCodeListDb.Items.FirstOrDefault();
+                DateTime currentTime = DateTime.Now;
+                if (otpCodeDb!.Code != dto.RecoveryCode)
                     result = BuildAppActionResultError(result, "Mã xác nhận sai");
                 else if (otpCodeDb.IsUsed == true)
                     result = BuildAppActionResultError(result, "Mã xác nhận đã sử dụng");

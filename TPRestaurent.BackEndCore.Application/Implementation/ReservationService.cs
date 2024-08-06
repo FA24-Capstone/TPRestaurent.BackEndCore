@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using MailKit.Search;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json;
 using System;
@@ -64,7 +65,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
 
                     var accountRepository = Resolve<IGenericRepository<Account>>();
-                    if ((await accountRepository!.GetById(dto.CustomerAccountId!)) == null)
+                    if ((await accountRepository!.GetById(dto.CustomerAccountId!.ToString())) == null)
                     {
                         result = BuildAppActionResultError(result, $"Không tìm thấy tài khoản khách hàng với id {dto.CustomerAccountId}");
                         return result;
@@ -80,13 +81,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                     }
 
-                    var collidedTable = await CheckTableBooking(dto.ReservationTableIds, dto.ReservationDate, dto.EndTime);
+                    //var collidedTable = await CheckTableBooking(dto.ReservationTableIds, dto.ReservationDate, dto.EndTime);
 
-                    if (collidedTable.Count > 0)
-                    {
-                        result = BuildAppActionResultError(result, $"Danh sách bàn đặt bị. Vui lòng thử lại");
-                        return result;
-                    }
+                    //if (collidedTable.Count > 0)
+                    //{
+                    //    result = BuildAppActionResultError(result, $"Danh sách bàn đặt bị. Vui lòng thử lại");
+                    //    return result;
+                    //}
 
                     var reservation = _mapper.Map<Reservation>(dto);
                     reservation.ReservationId = Guid.NewGuid();
@@ -147,11 +148,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var reservationDishDtos = JsonConvert.DeserializeObject<List<ReservationDishDto>>(ReservationDishDtos);
                 if (reservationDishDtos!.Count() > 0)
                 {
-                    var dishRepository = Resolve<IGenericRepository<Dish>>();
+                    var dishRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                     var comboRepository = Resolve<IGenericRepository<Combo>>();
                     var utility = Resolve<Utility>();
 
-                    Dish dishDb = null;
+                    DishSizeDetail dishDb = null;
                     Combo comboDb = null;
 
                     foreach (var reservationDish in reservationDishDtos!)
@@ -168,13 +169,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                         else
                         {
-                            dishDb = await dishRepository!.GetByExpression(c => c.DishId == reservationDish.DishId.Value && c.isAvailable, null);
-                            if (comboDb == null)
+                            dishDb = await dishRepository!.GetByExpression(c => c.DishSizeDetailId == reservationDish.DishSizeDetailId.Value && c.IsAvailable, null);
+                            if (dishDb == null)
                             {
-                                result = BuildAppActionResultError(result, $"Không tìm thấy món ăn với id {reservationDish.DishId}");
+                                result = BuildAppActionResultError(result, $"Không tìm thấy món ăn với id {reservationDish.DishSizeDetailId}");
                                 return result;
                             }
-                            //total += reservationDish.Quantity * dishDb.Price;
+                            total += reservationDish.Quantity * dishDb.Price;
                         }
                     }
                 }
@@ -215,15 +216,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var unavailableReservation = await _reservationRepository.GetAllDataByExpression((Expression<Func<Reservation, bool>>?)expression, pageNumber, pageSize, null, false, null);
 
+                var tableRepository = Resolve<IGenericRepository<Table>>();
                 if (unavailableReservation!.Items.Count > 0)
                 {
                     var unavailableReservationIds = unavailableReservation.Items.Select(x => x.ReservationId);
                     var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
-                    var tableRepository = Resolve<IGenericRepository<Table>>();
                     var reservedTableDb = await reservationTableDetailRepository!.GetAllDataByExpression(r => unavailableReservationIds.Contains(r.ReservationId), 0, 0, null, false, r => r.Table);
-                    var reservedTableIds = reservedTableDb.Items.Select(x => x.TableId);
-                    var availableTableDb = await tableRepository.GetAllDataByExpression(t => !reservedTableIds.Contains(t.TableId), 0, 0, null, false, null);
+                    var reservedTableIds = reservedTableDb.Items!.Select(x => x.TableId);
+                    var availableTableDb = await tableRepository!.GetAllDataByExpression(t => !reservedTableIds.Contains(t.TableId), 0, 0, null, false, null);
                     result.Result = availableTableDb;
+                } else
+                {
+                    result.Result = await tableRepository!.GetAllDataByExpression(null, 0, 0, null, false, null);
                 }
                 //result.Result = availableReservation.Items.Select(x => x.Table);
             }
@@ -247,7 +251,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         public async Task<AppActionResult> SuggestTable(SuggestTableDto dto)
         {
-            AppActionResult result = null;
+            AppActionResult result = new AppActionResult();
             try
             {
                 //Validate
@@ -384,6 +388,56 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             catch (Exception ex) 
             { 
             
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetAllReservationByAccountId(string accountId, ReservationStatus? status, int pageNumber, int pageSize)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                if (status.HasValue)
+                {
+                    result.Result = await _reservationRepository.GetAllDataByExpression(o => o.CustomerAccountId.Equals(accountId) && o.StatusId == status, pageNumber, pageSize, o => o.ReservationDate, false, null);
+                }
+                else
+                {
+                    result.Result = await _reservationRepository.GetAllDataByExpression(o => o.CustomerAccountId.Equals(accountId), pageNumber, pageSize, o => o.ReservationDate, false, null);
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetAllReservationDetail(Guid reservationId)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var reservationDb = await _reservationRepository.GetById(reservationId);
+                if (reservationDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Không tìm thấy thông tin đặt bàn với id {reservationId}");
+                    return result;
+                }
+
+                var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
+                var reservationTableDetailDb = await reservationTableDetailRepository!.GetAllDataByExpression(o => o.ReservationId == reservationId, 0, 0, null, false, o => o.Table);
+                var reservationDishDb = await _reservationDishRepository!.GetAllDataByExpression(o => o.ReservationId == reservationId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo);
+                result.Result = new ReservationReponse
+                {
+                    Reservation = reservationDb,
+                    ReservationDishes = reservationDishDb.Items!,
+                    ReservationTableDetails = reservationTableDetailDb.Items!
+                };
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }

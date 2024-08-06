@@ -29,6 +29,8 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.OTP> OTPs { get; set; } = null!;
         public DbSet<Models.Rating> Ratings { get; set; } = null!;
         public DbSet<Models.Reservation> Reservations { get; set; } = null!;
+        public DbSet<Models.ReservationRequest> ReservationRequests { get; set; } = null!;
+        public DbSet<Models.ReservationTableDetail> ReservationTableDetail { get; set; } = null!;
         public DbSet<Models.ReservationDish> ReservationDishes { get; set; } = null!;
         public DbSet<Models.StaticFile> StaticFiles { get; set; } = null!;
         public DbSet<Models.Table> Tables { get; set; } = null!;
@@ -41,7 +43,10 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.StoreCreditHistory> StoreCreditHistories { get; set; } = null!;
         public DbSet<Models.StoreCredit> StoreCredits { get; set; } = null!;
         public DbSet<Models.DishSizeDetail> DishSizeDetails { get; set; } = null!;
+        public DbSet<Models.CustomerLovedDish> CustomerLovedDishes { get; set; } = null!;
+        public DbSet<Models.CustomerSavedCoupon> CustomerSavedCoupons { get; set; } = null!;
         public DbSet<Models.CustomerInfoAddress> CustomerInfoAddress { get; set; } = null!;
+        public DbSet<Models.Transaction> Transactions { get; set; } = null!;
         public DbSet<Models.EnumModels.OrderStatus> OrderStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.OTPType> OTPTypes { get; set; } = null!;
         public DbSet<Models.EnumModels.PaymentMethod> PaymentMethods { get; set; } = null!;

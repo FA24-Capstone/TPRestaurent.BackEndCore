@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240806073953_AddDateToCreditHistory")]
+    partial class AddDateToCreditHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -484,56 +486,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasIndex("CustomerInfoId");
 
                     b.ToTable("CustomerInfoAddress");
-                });
-
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.CustomerLovedDish", b =>
-                {
-                    b.Property<Guid>("CustomerLovedDishId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("ComboId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("CustomerInfoId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("DishId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("CustomerLovedDishId");
-
-                    b.HasIndex("ComboId");
-
-                    b.HasIndex("CustomerInfoId");
-
-                    b.HasIndex("DishId");
-
-                    b.ToTable("CustomerLovedDishes");
-                });
-
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.CustomerSavedCoupon", b =>
-                {
-                    b.Property<Guid>("CustomerSavedCouponId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("CouponId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("CustomerInfoId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsUsedOrExpired")
-                        .HasColumnType("bit");
-
-                    b.HasKey("CustomerSavedCouponId");
-
-                    b.HasIndex("CouponId");
-
-                    b.HasIndex("CustomerInfoId");
-
-                    b.ToTable("CustomerSavedCoupons");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Dish", b =>
@@ -1043,11 +995,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         new
                         {
                             Id = 2,
-                            Name = "DINING"
-                        },
-                        new
-                        {
-                            Id = 3,
                             Name = "CANCELLED"
                         });
                 });
@@ -1130,9 +1077,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid?>("CustomerId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("CustomerSavedCouponId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid?>("LoyalPointsHistoryId")
                         .HasColumnType("uniqueidentifier");
 
@@ -1156,8 +1100,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasIndex("AccountId");
 
                     b.HasIndex("CustomerId");
-
-                    b.HasIndex("CustomerSavedCouponId");
 
                     b.HasIndex("LoyalPointsHistoryId");
 
@@ -1458,9 +1400,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid>("CustomerInfoId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("ExpiredDate")
-                        .HasColumnType("datetime2");
-
                     b.HasKey("StoreCreditId");
 
                     b.HasIndex("CustomerInfoId");
@@ -1728,48 +1667,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Navigation("CustomerInfo");
                 });
 
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.CustomerLovedDish", b =>
-                {
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Combo", "Combo")
-                        .WithMany()
-                        .HasForeignKey("ComboId");
-
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.CustomerInfo", "CustomerInfo")
-                        .WithMany()
-                        .HasForeignKey("CustomerInfoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Dish", "Dish")
-                        .WithMany()
-                        .HasForeignKey("DishId");
-
-                    b.Navigation("Combo");
-
-                    b.Navigation("CustomerInfo");
-
-                    b.Navigation("Dish");
-                });
-
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.CustomerSavedCoupon", b =>
-                {
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Coupon", "Coupon")
-                        .WithMany()
-                        .HasForeignKey("CouponId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.CustomerInfo", "CustomerInfo")
-                        .WithMany()
-                        .HasForeignKey("CustomerInfoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Coupon");
-
-                    b.Navigation("CustomerInfo");
-                });
-
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Dish", b =>
                 {
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.DishItemType", "DishItemType")
@@ -1851,10 +1748,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .WithMany()
                         .HasForeignKey("CustomerId");
 
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.CustomerSavedCoupon", "CustomerSavedCoupon")
-                        .WithMany()
-                        .HasForeignKey("CustomerSavedCouponId");
-
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.LoyalPointsHistory", "LoyalPointsHistory")
                         .WithMany()
                         .HasForeignKey("LoyalPointsHistoryId");
@@ -1872,8 +1765,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Navigation("Account");
 
                     b.Navigation("CustomerInfo");
-
-                    b.Navigation("CustomerSavedCoupon");
 
                     b.Navigation("LoyalPointsHistory");
 

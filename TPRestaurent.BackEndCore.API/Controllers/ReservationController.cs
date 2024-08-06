@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
@@ -20,6 +21,18 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         public async Task<AppActionResult> GetAllReservaton(int? time, Domain.Enums.ReservationStatus status, int pageNumber = 1, int pageSize = 10)
         {
             return await _service.GetAllReservation(time, status,pageNumber, pageSize);
+        }
+
+        [HttpGet("get-all-reservation-by-account-id")]
+        public async Task<AppActionResult> GetAllReservatonByAccountId(string accountid, Domain.Enums.ReservationStatus status, int pageNumber = 1, int pageSize = 10)
+        {
+            return await _service.GetAllReservationByAccountId(accountid, status, pageNumber, pageSize);
+        }
+
+        [HttpGet("get-reservation-detail/{reservationId}")]
+        public async Task<AppActionResult> GetAllReservationDetail(Guid reservationId)
+        {
+            return await _service.GetAllReservationDetail(reservationId);
         }
 
         [HttpPost("add-reservation")]
