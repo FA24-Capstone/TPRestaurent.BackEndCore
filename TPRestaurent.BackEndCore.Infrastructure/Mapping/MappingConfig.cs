@@ -59,7 +59,7 @@ public class MappingConfig
             ;
 
             config.CreateMap<ReservationDish, ReservationDishDto>()
-            .ForMember(desc => desc.DishSizeDetailId, act => act.MapFrom(src => src.DishSizeDetailId))
+            .ForMember(desc => desc.DishId, act => act.MapFrom(src => src.DishId))
             .ForMember(desc => desc.ComboId, act => act.MapFrom(src => src.ComboId))
             .ForMember(desc => desc.Quantity, act => act.MapFrom(src => src.Quantity))
             .ForMember(desc => desc.Note, act => act.MapFrom(src => src.Note))
