@@ -92,9 +92,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result = BuildAppActionResultError(result, $"Mã OTP không tồn tại");
                 }
                 var passwordSignIn =
-                    await _signInManager.PasswordSignInAsync(loginRequest.PhoneNumber, loginRequest.Password, false, false);
+                    await _signInManager.PasswordSignInAsync(user.UserName, loginRequest.Password, false, false);
                 if (!passwordSignIn.Succeeded) result = BuildAppActionResultError(result, "Đăng nhâp thất bại");
                 if (!BuildAppActionResultIsError(result)) result = await LoginDefault(loginRequest.PhoneNumber, user);
+
+                otpCodeDb!.IsUsed = true;
+                await _otpRepository.Update(otpCodeDb);
             }
             catch (Exception ex)
             {
@@ -248,6 +251,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     account.PhoneNumber = accountRequest.PhoneNumber;
                     result.Result = await _accountRepository.Update(account);
+
+                    otpCodeDb.IsUsed = true;
+                    await _otpRepository.Update(otpCodeDb);
                 }
 
                 await _unitOfWork.SaveChangesAsync();
@@ -373,6 +379,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         changePasswordDto.NewPassword);
                     if (!changePassword.Succeeded)
                         result = BuildAppActionResultError(result, "Thay đổi mật khẩu thất bại");
+
+
+                    otpCodeDb.IsUsed = true;
+                    await _otpRepository.Update(otpCodeDb);
                 }
 
                 await _unitOfWork.SaveChangesAsync();
@@ -421,15 +431,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var user = await _accountRepository.GetByExpression(a =>
                     a!.PhoneNumber == dto.PhoneNumber && a.IsDeleted == false && a.IsVerified == true);
-                var userOtp = await _otpRepository.GetByExpression(p => p!.AccountId == user!.Id && p.Type == OTPType.ForgotPassword);
+                var otpCodeDb = await _otpRepository.GetByExpression(p => p!.AccountId == user!.Id && p.Type == OTPType.ForgotPassword);
                 DateTime currentTime = DateTime.Now;
                 if (user == null)
                     result = BuildAppActionResultError(result, "Tài khoản không tồn tại hoặc chưa được xác thực!");
-                else if (userOtp!.Code != dto.RecoveryCode)
+                else if (otpCodeDb!.Code != dto.RecoveryCode)
                     result = BuildAppActionResultError(result, "Mã xác nhận sai");
-                else if (userOtp.IsUsed == true)
+                else if (otpCodeDb.IsUsed == true)
                     result = BuildAppActionResultError(result, "Mã xác nhận đã sử dụng");
-                else if (userOtp.ExpiredTime < currentTime)
+                else if (otpCodeDb.ExpiredTime < currentTime)
                     result = BuildAppActionResultError(result, "Mã xác nhận đã hết hạn sử dụng");
 
                 if (!BuildAppActionResultIsError(result))
@@ -440,6 +450,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         user!.VerifyCode = null;
                     else
                         result = BuildAppActionResultError(result, "Thay đổi mật khẩu thất bại. Vui lòng thử lại");
+
+                    otpCodeDb.IsUsed = true;
+                    await _otpRepository.Update(otpCodeDb);
                 }
 
                 await _unitOfWork.SaveChangesAsync();
@@ -531,7 +544,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var code = string.Empty;
 
             var user = await _accountRepository.GetByExpression(a =>
-                a!.PhoneNumber == phoneNumber && a.IsDeleted == false && a.IsVerified == isForForgettingPassword);
+                a!.PhoneNumber == phoneNumber && a.IsDeleted == false );
 
             if (user != null)
             {
@@ -872,6 +885,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result = await LoginDefault(phoneNumber, user);
                     user!.VerifyCode = null;
                     user.IsVerified = true;
+
+
+                    optUser.IsUsed = true;
+                    await _otpRepository.Update(optUser);
                     await _unitOfWork.SaveChangesAsync();
                 }
             }
