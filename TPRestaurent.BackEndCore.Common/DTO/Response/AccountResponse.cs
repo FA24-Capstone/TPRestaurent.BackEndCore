@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Identity;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,6 +17,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public bool IsVerified { get; set; }
         public string UserName { get; set; } = null!;
         public string Email { get; set; } = null!;
-        public object Role { get; set; }
+        public List<IdentityRole> Roles { get; set; }
+        public string MainRole { get; set; }
     }
 }
