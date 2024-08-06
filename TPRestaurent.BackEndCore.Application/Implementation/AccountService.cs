@@ -98,6 +98,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 otpCodeDb!.IsUsed = true;
                 await _otpRepository.Update(otpCodeDb);
+                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -286,7 +287,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         Type = otp,
                         AccountId = user.Id,
                         Code = code,
-                        ExpiredTime = DateTime.UtcNow.AddMinutes(5),
+                        ExpiredTime = DateTime.Now.AddMinutes(5),
                         IsUsed = false,
                     };
                     await _otpRepository.Insert(otpsDb);
@@ -679,7 +680,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 _tokenDto.MainRole = "CHEF";
             }
-            else if (roleNameList.Count > 0)
+            else if (roleNameList.Count > 1)
             {
                 _tokenDto.MainRole = roleNameList.FirstOrDefault(n => !n.Equals("CUSTOMER"));
             }
