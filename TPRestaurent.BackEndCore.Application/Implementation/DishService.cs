@@ -8,6 +8,7 @@ using System.Transactions;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
+using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Models;
@@ -145,9 +146,33 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> GetDishById(Guid dishId)
         {
             var result = new AppActionResult();
+            var dishResponse = new DishResponse();
+            var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
+            var ratingRepository = Resolve<IGenericRepository<Rating>>();
             try
             {
-                result.Result = await _dishRepository.GetByExpression(p => p.DishId == dishId);
+                var dishDb = await _dishRepository.GetByExpression(p => p.DishId == dishId, p => p.DishItemType);
+                if (dishDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Món ăn với id {dishId} không tồn tại");
+                }
+
+                var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.Dish!);
+                var ratingDb = await ratingRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.Dish!);
+                if (ratingDb!.Items!.Count< 0 && ratingDb!.Items == null)
+                {
+                    result = BuildAppActionResultError(result, $"Các đánh giá món ăn với id {dishId} không tồn tại");
+                    foreach (var rating in ratingDb.Items!)
+                    {
+                        var ratingStaticFileDb = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == rating.RatingId, 0, 0, null, false, p => p.Dish!);
+                        
+                    }
+                }
+                
+                dishResponse.Dish = dishDb!;
+                dishResponse.DishImgs = staticFileDb.Items!;
+
+                result.Result = dishResponse;
             }
             catch (Exception ex)
             {
