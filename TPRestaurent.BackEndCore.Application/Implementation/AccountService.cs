@@ -226,7 +226,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return isSuccessful;
         }
 
-        public async Task<AppActionResult> UpdateAccountPhoneNumber(UpdateAccountPhoneNumberRequestDto accountRequest)
+        public async Task<AppActionResult> UpdateAccountPhoneNumber(UpdatePhoneRequestDto accountRequest)
         {
             var result = new AppActionResult();
             try

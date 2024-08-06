@@ -15,7 +15,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> VerifyLoginGoogle(string email, string verifyCode);
         Task<AppActionResult> CreateAccount(SignUpRequestDto signUpRequest, bool isGoogle);
         Task<AppActionResult> VerifyNumberAccount(string phoneNumber, string optCode);
-        Task<AppActionResult> UpdateAccountPhoneNumber(UpdateAccountPhoneNumberRequestDto applicationUser);
+        Task<AppActionResult> UpdateAccountPhoneNumber(UpdatePhoneRequestDto applicationUser);
         Task<AppActionResult> UpdateAccountInformation(UpdateAccountInformationRequest request);
         Task<AppActionResult> SendOTP(string phoneNumber, OTPType otp);
         Task<AppActionResult> ChangePassword(ChangePasswordDto changePasswordDto);

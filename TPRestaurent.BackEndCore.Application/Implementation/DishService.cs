@@ -165,7 +165,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     foreach (var rating in ratingDb.Items!)
                     {
                         var ratingStaticFileDb = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == rating.RatingId, 0, 0, null, false, p => p.Dish!);
-                        
+                        var ratingDishResponse = new RatingDishResponse
+                        {
+                            RatingList = ratingDb.Items,
+                            RatingImgs = ratingStaticFileDb.Items!
+                        };
+                        dishResponse.RatingDish.Add(ratingDishResponse);
                     }
                 }
                 

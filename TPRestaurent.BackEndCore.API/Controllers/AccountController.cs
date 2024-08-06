@@ -26,7 +26,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("update-account-phone-number")]
-        public async Task<AppActionResult> UpdateAccountPhoneNumber(UpdateAccountPhoneNumberRequestDto accountRequest)
+        public async Task<AppActionResult> UpdateAccountPhoneNumber(UpdatePhoneRequestDto accountRequest)
         {
             return await _accountService.UpdateAccountPhoneNumber(accountRequest);  
         }

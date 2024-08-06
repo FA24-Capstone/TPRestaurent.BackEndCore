@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Common.DTO.Request
 {
-    public class UpdateAccountPhoneNumberRequestDto
+    public class UpdatePhoneRequestDto
     {
-        public string PhoneNumber { get; set; } = null!;
-        public string OTPCode { get; set; } = null!;
+        public string? PhoneNumber { get; set; }
+        public string? OTPCode { get; set; }
     }
 }
