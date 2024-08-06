@@ -868,7 +868,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result = BuildAppActionResultError(result, $"Số điện thoại này không tồn tại!");
                 }
 
-                var optUser = await _otpRepository.GetByExpression(p => p!.Code == optCode && p.Type == OTPType.Register, p => p.Account!);
+                var optUser = await _otpRepository.GetByExpression(p => p!.Code == optCode && p.Type == OTPType.ConfirmPhone, p => p.Account!);
                 if (optUser == null) 
                 {
                     result = BuildAppActionResultError(result, $"Mã Otp không tồn tại!");
@@ -938,8 +938,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, $"Tài khoản với số điện thoại {customerInforRequest.AccountId} không tồn tại!");
                 }
-                var customerInfor = new CustomerInfo
-                {
+
+                 var customerInfor = new CustomerInfo
+                 {
                     CustomerId = Guid.NewGuid(),
                     Name = customerInforRequest.Name,       
                     PhoneNumber = customerInforRequest.PhoneNumber,
