@@ -17,7 +17,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 {
     public class ReservationRequestService : GenericBackendService, IReservationRequestService
     {
-        private readonly IGenericRepository<ReservationRequest> _repository;
+        private  IGenericRepository<ReservationRequest> _repository;
         private IUnitOfWork _unitOfWork;
         private IMapper _mapper;
         public ReservationRequestService(IGenericRepository<ReservationRequest> repository,

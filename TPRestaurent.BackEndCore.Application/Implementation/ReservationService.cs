@@ -382,7 +382,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 Expression expression = DynamicLinqBuilder<Reservation>.BuildExpression(conditions);
-                result.Result = await _reservationRepository.GetAllDataByExpression((Expression<Func<Reservation, bool>>?)expression, pageNumber, pageSize, r => r.ReservationDate, true, null);
+                result.Result = await _reservationRepository.GetAllDataByExpression((Expression<Func<Reservation, bool>>?)expression, pageNumber, pageSize, r => r.ReservationDate, true, p => p.CustomerAccount!);
 
             }
             catch (Exception ex) 
