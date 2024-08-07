@@ -10,6 +10,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
     public class DishResponse
     {
         public Dish Dish { get; set; } = null!;
+        public List<DishSizeDetail> dishSizeDetails { get; set; } = null!;  
         public List<StaticFile> DishImgs { get; set; } = new List<StaticFile>();
         public List<RatingDishResponse> RatingDish { get; set; } = new List<RatingDishResponse>();
     }

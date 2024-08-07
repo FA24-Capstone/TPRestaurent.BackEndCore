@@ -149,6 +149,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var dishResponse = new DishResponse();
             var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
             var ratingRepository = Resolve<IGenericRepository<Rating>>();
+            var dishSizeRepository = Resolve<IGenericRepository<DishSizeDetail>>();
             try
             {
                 var dishDb = await _dishRepository.GetByExpression(p => p.DishId == dishId, p => p.DishItemType);
@@ -156,9 +157,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, $"Món ăn với id {dishId} không tồn tại");
                 }
-
+                var dishSizeDetailsDb = await dishSizeRepository.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.Dish!, p => p.DishSize!);
+                if (dishSizeDetailsDb!.Items!.Count < 0 && dishSizeDetailsDb.Items == null)
+                {
+                    result = BuildAppActionResultError(result, $"Size món ăn với id {dishId} không tồn tại");
+                }
+                dishResponse.dishSizeDetails = dishSizeDetailsDb!.Items!;
                 var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.Dish!);
-                if (staticFileDb.Items.Count < 0 && staticFileDb.Items == null)
+                if (staticFileDb!.Items!.Count < 0 && staticFileDb.Items == null)
                 {
                     result = BuildAppActionResultError(result, $"Hình ảnh món ăn với id {dishId} không tồn tại");
                 }

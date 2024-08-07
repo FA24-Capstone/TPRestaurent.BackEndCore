@@ -15,7 +15,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid OrderId { get; set; }
         public DateTime OrderDate { get; set; }
         public double TotalAmount { get; set; }
-        public  OrderStatus Status { get; set; } 
+        public OrderStatus Status { get; set; } 
         public string? AccountId { get; set; }
         [ForeignKey(nameof(AccountId))]
         public Account? Account { get; set; } = null!;
@@ -34,5 +34,10 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid? CustomerSavedCouponId { get; set; }
         [ForeignKey(nameof(CustomerSavedCouponId))]
         public CustomerSavedCoupon? CustomerSavedCoupon { get; set; }
+        public string? Note { get; set; }
+        public bool? IsDelivering { get; set; }
+        public Guid? TableId { get; set; }
+        [ForeignKey(nameof(TableId))]
+        public Table? Table { get; set; }       
     }
 }

@@ -29,5 +29,9 @@ public class MappingConfigurationInstaller : IInstaller
         var vnPayConfiguration = new VnPayConfiguration();
         configuration.GetSection("Vnpay").Bind(vnPayConfiguration);
         services.AddSingleton(vnPayConfiguration);
+
+        var smsConfiguration = new SmsConfiguration();
+        configuration.GetSection("SmsConfiguration").Bind(smsConfiguration);
+        services.AddSingleton(smsConfiguration);
     }
 }
