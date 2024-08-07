@@ -23,6 +23,6 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Combo? Combo { get; set; }
         public int Quantity { get; set; }
         public double Price { get; set; }
-
+        public string? Note { get; set; }    
     }
 }

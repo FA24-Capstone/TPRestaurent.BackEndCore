@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
+using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Domain.Enums;
@@ -24,6 +25,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _repository = repository;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+        }
+
+        public Task<AppActionResult> ChangeOrderStatus(string orderId, bool? isDelivering)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<AppActionResult> DeleteOrderDetail(Guid orderDetailId)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<AppActionResult> GetAllOrderByAccountId(string accountId, OrderStatus? status, int pageNumber, int pageSize)
@@ -45,6 +61,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
+        }
+
+        public async Task<AppActionResult> GetOrderById(Guid orderId)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var orderDb = await _repository.GetByExpression(p => p.OrderId == orderId);
+            }
+            catch (Exception ex) 
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;  
         }
 
         public async Task<AppActionResult> GetOrderDetail(Guid orderId)
