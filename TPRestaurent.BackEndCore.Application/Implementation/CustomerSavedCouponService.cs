@@ -37,5 +37,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+        public async Task<AppActionResult> TakeCoupon(string accountId, Guid couponId)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return result;
     }
 }

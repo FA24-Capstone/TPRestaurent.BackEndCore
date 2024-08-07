@@ -10,5 +10,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
     public interface ICustomerSavedCouponService
     {
         public Task<AppActionResult> GetAllCustomerCoupon(string accountId, int pageNumber, int pageSize);
+        public Task<AppActionResult> TakeCoupon(string accountId, Guid couponId);
     }
 }
