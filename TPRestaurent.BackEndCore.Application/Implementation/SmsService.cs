@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Castle.Core.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
+using TPRestaurent.BackEndCore.Common.ConfigurationModel;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
@@ -12,8 +14,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 {
     public class SmsService : GenericBackendService, ISmsService
     {
+        private readonly SmsConfiguration _configuration;
         public SmsService(IServiceProvider serviceProvider) : base(serviceProvider)
         {
+            _configuration = Resolve<SmsConfiguration>()!; 
         }
 
         public async Task<AppActionResult> SendMessage(string message, string phoneNumber)
@@ -21,8 +25,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                string accountSid = "AC16c01656bd500a1aa1ea9fe9040360d7";
-                string authToken = "788dab3dcd68e060682311d3141b7299";
+                string accountSid = _configuration.AccountSid;
+                string authToken = _configuration.AuthToken;
                 TwilioClient.Init(accountSid, authToken);
 
                 var apiResponsse = MessageResource.Create(
