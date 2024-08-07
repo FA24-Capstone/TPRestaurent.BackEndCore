@@ -93,9 +93,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, $"Mã OTP không tồn tại");
                 }
-                var passwordSignIn =
-                    await _signInManager.PasswordSignInAsync(user.UserName, loginRequest.Password, false, false);
-                if (!passwordSignIn.Succeeded) result = BuildAppActionResultError(result, "Đăng nhâp thất bại");
+
+                if (otpCodeDb.Code != loginRequest.OTPCode) result = BuildAppActionResultError(result, "Đăng nhâp thất bại");
                 if (!BuildAppActionResultIsError(result)) result = await LoginDefault(loginRequest.PhoneNumber, user);
 
                 otpCodeDb!.IsUsed = true;
@@ -341,7 +340,29 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (roleUser != null) userRole.Add(roleUser);
                 }
 
-                item.Role = userRole;
+                item.Roles = userRole;
+                var roleNameList = userRole.DistinctBy(i => i.Id).Select(i => i.Name).ToList();
+
+                if (roleNameList.Contains("MANAGER"))
+                {
+                    item.MainRole = "MANAGER";
+                }
+                else if (roleNameList.Contains("STAFF"))
+                {
+                    item.MainRole = "STAFF";
+                }
+                else if (roleNameList.Contains("CHEF"))
+                {
+                    item.MainRole = "CHEF";
+                }
+                else if (roleNameList.Count > 1)
+                {
+                    item.MainRole = roleNameList.FirstOrDefault(n => !n.Equals("CUSTOMER"));
+                }
+                else
+                {
+                    item.MainRole = "CUSTOMER";
+                }
             }
 
             result.Result =
