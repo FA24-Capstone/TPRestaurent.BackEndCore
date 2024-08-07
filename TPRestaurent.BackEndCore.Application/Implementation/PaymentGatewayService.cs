@@ -60,7 +60,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             pay.AddRequestData("vnp_OrderType", "other");
             pay.AddRequestData("vnp_ReturnUrl", urlCallBack);
-            pay.AddRequestData("vnp_TxnRef", requestDto.OrderID);
+            if (!string.IsNullOrEmpty(requestDto.OrderID))
+            {
+                pay.AddRequestData("vnp_TxnRef", requestDto.OrderID);
+            }
+            else
+            {
+                pay.AddRequestData("vnp_TxnRef", requestDto.ReservationID);
+            }
             paymentUrl = pay.CreateRequestUrl(_configuration["Vnpay:BaseUrl"], _configuration["Vnpay:HashSecret"]);
 
             return paymentUrl;

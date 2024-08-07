@@ -94,16 +94,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     await _reservationRepository.Insert(reservation);
 
-                    var reservationDishDtos = JsonConvert.DeserializeObject<List<ReservationDishDto>>(dto.ReservationDishDtos);
-                    if (reservationDishDtos == null)
+                    if (dto.ReservationDishDtos.Count() > 0)
                     {
-                        result = BuildAppActionResultError(result, $"Tạo danh sách món ăn đặt bàn xảy ra lỗi. Vui lòng thử lại");
-                        return result;
-                    }
-
-                    if (reservationDishDtos.Count() > 0)
-                    {
-                        var reservationDishes = _mapper.Map<List<ReservationDish>>(reservationDishDtos);
+                        var reservationDishes = _mapper.Map<List<ReservationDish>>(dto.ReservationDishDtos);
                         reservationDishes.ForEach(r =>
                         {
                             r.ReservationDishId = Guid.NewGuid();
@@ -139,13 +132,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             throw new NotImplementedException();
         }
 
-        public async Task<AppActionResult> CalculateDeposit(string ReservationDishDtos)
+        public async Task<AppActionResult> CalculateDeposit(List<ReservationDishDto> reservationDishDtos)
         {
             AppActionResult result = new AppActionResult();
             try
             {
                 double total = 0;
-                var reservationDishDtos = JsonConvert.DeserializeObject<List<ReservationDishDto>>(ReservationDishDtos);
                 if (reservationDishDtos!.Count() > 0)
                 {
                     var dishRepository = Resolve<IGenericRepository<DishSizeDetail>>();
@@ -438,6 +430,42 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             catch (Exception ex)
             {
                 result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> UpdateReservationStatus(Guid reservationId, ReservationStatus status)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var reservationDb = await _reservationRepository.GetById(reservationId);
+                if(reservationDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Không tìm thấy yêu cầu đặt bàn với id {reservationId}");
+                    return result;
+                }
+                bool updated = false;
+                if(reservationDb.StatusId == ReservationStatus.PENDING)
+                {
+                    if(status == ReservationStatus.DINING)
+                    {
+                        result = BuildAppActionResultError(result, $"Yêu cầu đặt bàn với id {reservationId} chưa được xử lí,không thể diễn ra");
+                        return result;
+                    }
+                    reservationDb.StatusId = status;
+                    updated = true; 
+                } else if (reservationDb.StatusId == ReservationStatus.PAID && status != ReservationStatus.PENDING  && status != ReservationStatus.PAID)
+                {
+                    reservationDb.StatusId = status;
+                    updated = true;
+                }
+                await _reservationRepository.Update(reservationDb);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+            
             }
             return result;
         }
