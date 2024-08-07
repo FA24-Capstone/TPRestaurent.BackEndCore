@@ -15,7 +15,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public DateTime? EndTime { get; set; }
         public Guid? CustomerAccountId { get; set; }
         public double Deposit { get; set; }
-        public string ReservationDishDtos { get; set; } = null!;
+        public List<ReservationDishDto> ReservationDishDtos { get; set; } = new List<ReservationDishDto>();
         public List<Guid> ReservationTableIds { get; set; } = new List<Guid>();
     }
 }

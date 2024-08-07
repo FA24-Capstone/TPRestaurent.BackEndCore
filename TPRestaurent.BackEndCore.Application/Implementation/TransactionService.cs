@@ -47,17 +47,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     };
 
                     await _repository.Insert(transaction);
+                    paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest, context);
                     await _unitOfWork.SaveChangesAsync();   
 
-                    paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest, context);
+                    result.Result = paymentUrl;
                 }
-
-
-
             }
             catch (Exception ex)
             {
-            
+                result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
