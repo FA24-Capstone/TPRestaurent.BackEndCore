@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240807174211_AddDeviceTable")]
+    partial class AddDeviceTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -534,30 +536,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasIndex("CustomerInfoId");
 
                     b.ToTable("CustomerSavedCoupons");
-                });
-
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Device", b =>
-                {
-                    b.Property<Guid>("DeviceId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("DeviceCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DevicePassword")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("TableId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("DeviceId");
-
-                    b.HasIndex("TableId");
-
-                    b.ToTable("Devices");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Dish", b =>
@@ -1816,17 +1794,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Navigation("Coupon");
 
                     b.Navigation("CustomerInfo");
-                });
-
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Device", b =>
-                {
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Table", "Table")
-                        .WithMany()
-                        .HasForeignKey("TableId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Table");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Dish", b =>

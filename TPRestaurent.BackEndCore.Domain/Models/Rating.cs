@@ -22,5 +22,11 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid? DishId { get; set; } = null!;
         [ForeignKey(nameof(DishId))]
         public Dish? Dish { get; set; }
+        public Guid? ComboId { get; set; } = null!;
+        [ForeignKey(nameof(ComboId))]
+        public Combo? Combo { get; set; }
+        public Guid? OrderId { get; set; } = null!;
+        [ForeignKey(nameof(OrderId))]
+        public Order? Order { get; set; }
     }
 }

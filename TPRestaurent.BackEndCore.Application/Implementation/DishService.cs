@@ -5,12 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
+using System.Web.Razor.Tokenizer.Symbols;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
+using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
@@ -127,13 +129,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetAllDish(string? keyword, int pageNumber, int pageSize)
+        public async Task<AppActionResult> GetAllDish(string? keyword, DishItemType? type, int pageNumber, int pageSize)
         {
             var result = new AppActionResult();
             try
             {
                 var dishList = await _dishRepository
-                   .GetAllDataByExpression(p => p.Name.Contains(keyword) || string.IsNullOrEmpty(keyword), pageNumber, pageSize, null, false, p => p.DishItemType!);
+                   .GetAllDataByExpression(p => (p.Name.Contains(keyword) && !string.IsNullOrEmpty(keyword) || string.IsNullOrEmpty(keyword))
+                                             && (type.HasValue && p.DishItemTypeId == type || !type.HasValue), pageNumber, pageSize, null, false, p => p.DishItemType!);
                 result.Result = dishList;
             }
             catch (Exception ex)
@@ -142,6 +145,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+     
 
         public async Task<AppActionResult> GetDishById(Guid dishId)
         {
