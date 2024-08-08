@@ -60,9 +60,18 @@ public class MappingConfig
 
             config.CreateMap<ReservationDish, ReservationDishDto>()
             .ForMember(desc => desc.ComboId, act => act.MapFrom(src => src.ComboId))
+            .ForMember(desc => desc.DishSizeDetailId, act => act.MapFrom(src => src.DishSizeDetailId))
             .ForMember(desc => desc.Quantity, act => act.MapFrom(src => src.Quantity))
             .ForMember(desc => desc.Note, act => act.MapFrom(src => src.Note))
             .ReverseMap();
+            ;
+
+            config.CreateMap<OrderDetail, OrderDetailsDto>()
+           .ForMember(desc => desc.ComboId, act => act.MapFrom(src => src.ComboId))
+           .ForMember(desc => desc.DishSizeDetailId, act => act.MapFrom(src => src.DishSizeDetailId))
+           .ForMember(desc => desc.Quantity, act => act.MapFrom(src => src.Quantity))
+           .ForMember(desc => desc.Note, act => act.MapFrom(src => src.Note))
+           .ReverseMap();
             ;
         });
         // Trong class MappingConfig

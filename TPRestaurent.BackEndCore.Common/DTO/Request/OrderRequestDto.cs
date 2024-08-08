@@ -27,12 +27,10 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
 
     public class OrderDetailsDto
     {
-        public Guid OrderId { get; set; }
         public Guid? DishSizeDetailId { get; set; }
         public Guid? ComboId { get; set; }
         [ForeignKey(nameof(ComboId))]
         public int Quantity { get; set; }
-        public double Price { get; set; }
         public string? Note { get; set; }    
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Castle.Core.Configuration;
+using Firebase.Auth;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,7 +29,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 string accountSid = _configuration.AccountSid;
                 string authToken = _configuration.AuthToken;
                 TwilioClient.Init(accountSid, authToken);
-
+                if (phoneNumber[0] == '0') phoneNumber = phoneNumber.Substring(1, phoneNumber.Length - 1);
                 var apiResponsse = MessageResource.Create(
                    body: $"{message}",
                    from: new Twilio.Types.PhoneNumber("+1 443 333 1958"),

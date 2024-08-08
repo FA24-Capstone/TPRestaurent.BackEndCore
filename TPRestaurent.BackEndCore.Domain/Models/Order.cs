@@ -16,9 +16,6 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public DateTime OrderDate { get; set; }
         public double TotalAmount { get; set; }
         public OrderStatus Status { get; set; } 
-        public string? AccountId { get; set; }
-        [ForeignKey(nameof(AccountId))]
-        public Account? Account { get; set; } = null!;
         public Guid? CustomerId { get; set; } 
         [ForeignKey(nameof(CustomerId))]
         public CustomerInfo? CustomerInfo { get; set; }

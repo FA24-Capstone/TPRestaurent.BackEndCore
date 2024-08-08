@@ -27,6 +27,53 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _mapper = mapper;
         }
 
+        public async Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var dishRepository = Resolve<IGenericRepository<DishSizeDetail>>();
+                var comboRepository = Resolve<IGenericRepository<Combo>>();
+                var orderDb = await _repository.GetById(dto.OrderId);
+                if (orderDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {dto.OrderId}");
+                    return result;
+                }
+
+                var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(o => o.OrderId == dto.OrderId, 0, 0, null, false, null);
+                int orderBatch = 1;
+                if (orderDetailDb.Items.Count > 0)
+                {
+                    orderBatch = orderDetailDb.Items.OrderByDescending(o => o.OrderBatch).Select(o => o.OrderBatch).FirstOrDefault() + 1;
+                }
+                var orderDetail = _mapper.Map<List<OrderDetail>>(dto.OrderDetailsDtos);
+                orderDetail.ForEach(async o =>
+                {
+                    o.OrderId = dto.OrderId;
+                    if (o.ComboId.HasValue)
+                    {
+                        o.Price = (await comboRepository.GetById(o.ComboId)).Price;
+                    } else
+                    {
+                        o.Price = (await dishRepository.GetById(o.DishSizeDetailId)).Price;
+                    }
+                    o.OrderBatch = orderBatch;
+                    orderDb.TotalAmount += o.Price * o.Quantity;
+                });
+                await _repository.Update(orderDb);
+                await orderDetailRepository.InsertRange(orderDetail);
+                await _unitOfWork.SaveChangesAsync();
+                //AddOrderMessageToChef
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
         public Task<AppActionResult> ChangeOrderStatus(string orderId, bool? isDelivering)
         {
             throw new NotImplementedException();
@@ -49,11 +96,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 if (status.HasValue) 
                 {
-                    result.Result = await _repository.GetAllDataByExpression(o => o.AccountId.Equals(accountId) && o.Status == status, pageNumber, pageSize, o => o.OrderDate, false, null);
+                    result.Result = await _repository.GetAllDataByExpression(o => o.CustomerInfo.AccountId.Equals(accountId) && o.Status == status, pageNumber, pageSize, o => o.OrderDate, false, null);
                 }
                 else
                 {
-                    result.Result = await _repository.GetAllDataByExpression(o => o.AccountId.Equals(accountId), pageNumber, pageSize, o => o.OrderDate, false, null);
+                    result.Result = await _repository.GetAllDataByExpression(o => o.CustomerInfo.AccountId.Equals(accountId), pageNumber, pageSize, o => o.OrderDate, false, null);
                 }
             }
             catch (Exception ex) 
