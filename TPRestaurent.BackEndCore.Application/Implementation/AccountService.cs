@@ -73,14 +73,33 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                var currentTime = DateTime.Now; 
+                var utility = Resolve<Utility>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone(); 
                 var user = await _accountRepository.GetByExpression(u =>
                     u!.PhoneNumber!.ToLower() == loginRequest.PhoneNumber.ToLower() && u.IsDeleted == false);
-                var otpCodeDb = await _otpRepository.GetByExpression(p => p.Code == loginRequest.OTPCode && p.Type == OTPType.Login);
+                var otpCodeListDb = await _otpRepository.GetAllDataByExpression(p => p.Code == loginRequest.OTPCode && (p.Type == OTPType.Login || p.Type == OTPType.ConfirmPhone) && p.ExpiredTime > currentTime && !p.IsUsed, 0, 0, null, false, null);
+
+                if(otpCodeListDb.Items.Count > 1)
+                {
+                    result = BuildAppActionResultError(result, "Xảy ra lỗi trong quá trình xử lí, có nhiều hơn 1 otp khả dụng. Vui lòng thử lại sau ít phút");
+                    return result;
+                }
+
+                if(otpCodeListDb.Items.Count == 0)
+                {
+                    result = BuildAppActionResultError(result, "Mã otp đã nhập không khả dụng. Vui lòng thử lại");
+                    return result;
+                }
+                var otpCodeDb = otpCodeListDb.Items[0];
+
                 if (user == null)
                     result = BuildAppActionResultError(result, $" {loginRequest.PhoneNumber} này không tồn tại trong hệ thống");
-                else if (user.IsVerified == false)
-                    result = BuildAppActionResultError(result, "Tài khoản này chưa được xác thực !");
+                
+                if (user.IsVerified == false)
+                {                  
+                    user.IsVerified= true;
+                    user.VerifyCode = null;
+                }
                 if (otpCodeDb!.IsUsed == true)
                 {
                     result = BuildAppActionResultError(result, $"Mã OTP đã được sử dụng");
@@ -98,6 +117,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (!BuildAppActionResultIsError(result)) result = await LoginDefault(loginRequest.PhoneNumber, user);
 
                 otpCodeDb!.IsUsed = true;
+                await _accountRepository.Update(user);
                 await _otpRepository.Update(otpCodeDb);
                 await _unitOfWork.SaveChangesAsync();
             }
@@ -273,6 +293,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
+                var utility = Resolve<Utility>();
+                var availableOtp = await _otpRepository.GetAllDataByExpression(o => o.Account.PhoneNumber.Equals(phoneNumber) && otp == o.Type && o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && !o.IsUsed, 0, 0, null, false, null);
+                if (availableOtp.Items.Count > 1) 
+                {
+                    result = BuildAppActionResultError(result, "Xảy ra lỗi trong quá trình xử lí, có nhiều hơn 1 otp khả dụng. Vui lòng thử lại sau ít phút");
+                    return result;
+                }
+
+                if(availableOtp.Items.Count == 1)
+                {
+                    result.Result = availableOtp.Items[0];
+                    return result;
+                }
 
                 var user = await _accountRepository.GetByExpression(a =>
                   a!.PhoneNumber == phoneNumber && a.IsDeleted == false);

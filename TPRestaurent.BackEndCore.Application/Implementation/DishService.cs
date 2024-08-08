@@ -168,27 +168,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result = BuildAppActionResultError(result, $"Size món ăn với id {dishId} không tồn tại");
                 }
                 dishResponse.dishSizeDetails = dishSizeDetailsDb!.Items!;
-                var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.Dish!);
-                if (staticFileDb!.Items!.Count < 0 && staticFileDb.Items == null)
-                {
-                    result = BuildAppActionResultError(result, $"Hình ảnh món ăn với id {dishId} không tồn tại");
-                }
-                var ratingDb = await ratingRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.Dish!);
-                if (ratingDb == null || ratingDb.Items == null || ratingDb.Items.Count <= 0)
-                {
-                    result = BuildAppActionResultError(result, $"Các đánh giá món ăn với id {dishId} không tồn tại");
-                    return result;
-                }
+                var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, null);
 
-                foreach (var rating in ratingDb.Items!)
+                var ratingDb = await ratingRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, null);
+                
+                if(ratingDb.Items.Count > 0)
                 {
-                    var ratingStaticFileDb = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == rating.RatingId, 0, 0, null, false, p => p.Dish!);
-                    var ratingDishResponse = new RatingDishResponse
+                    foreach (var rating in ratingDb.Items!)
                     {
-                        Rating = rating,
-                        RatingImgs = ratingStaticFileDb.Items!
-                    };
-                    dishResponse.RatingDish.Add(ratingDishResponse);
+                        var ratingStaticFileDb = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == rating.RatingId, 0, 0, null, false, null);
+                        var ratingDishResponse = new RatingDishResponse
+                        {
+                            Rating = rating,
+                            RatingImgs = ratingStaticFileDb.Items!
+                        };
+                        dishResponse.RatingDish.Add(ratingDishResponse);
+                    }
                 }
 
                 dishResponse.Dish = dishDb!;
