@@ -37,7 +37,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public Guid? DishSizeDetailId { get; set; }
         public Guid? ComboId { get; set; }
         public int Quantity { get; set; }
-        public double Price { get; set; }
         public string? Note { get; set; }    
     }
 }

@@ -140,7 +140,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var comboDb = 
-                    await _comboRepository.GetAllDataByExpression((p => p.Name.Contains(keyword) || string.IsNullOrEmpty(keyword)), pageNumber, pageSize, null, false, null);
+                    await _comboRepository.GetAllDataByExpression((p => p.Name.Contains(keyword) || string.IsNullOrEmpty(keyword)), pageNumber, pageSize, null, false, c => c.Category);
                 result.Result = comboDb;        
             }
             catch (Exception ex) 
@@ -156,15 +156,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
+                var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
                 var comboResponse = new ComboResponseDto();
-                var comboDb = await _comboRepository.GetByExpression(p => p!.ComboId == comboId);
+                var comboDb = await _comboRepository.GetByExpression(p => p!.ComboId == comboId, p => p.Category);
                 if (comboDb == null)
                 {
                     result = BuildAppActionResultError(result, $"Combo với id {comboId} không tồn tại");
                 }
                 var dishComboDb = await dishComboRepository!.GetAllDataByExpression(p => p.ComboId == comboId, 0, 0, null, false, p => p.DishSizeDetail.Dish!);
+                var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.ComboId == comboId, 0, 0, null, false, null);
 
                 comboResponse.DishCombo = dishComboDb.Items!;
+                comboResponse.Imgs = staticFileDb.Items!.Select(s => s.Path).ToList();
                 comboResponse.Combo = comboDb!;
                 result.Result = comboResponse;
             }

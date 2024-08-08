@@ -4,6 +4,7 @@ using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.Implementation;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Domain.Enums;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
@@ -18,10 +19,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-dish/{pageNumber}/{pageSize}")]
-        public async Task<AppActionResult> GetAllDish(string? keyword, int pageNumber = 1, int pageSize = 10)
+        public async Task<AppActionResult> GetAllDish(string? keyword, DishItemType type, int pageNumber = 1, int pageSize = 10)
         {
-            return await _dishService.GetAllDish(keyword, pageNumber, pageSize);
+            return await _dishService.GetAllDish(keyword, type, pageNumber, pageSize);
         }
+
 
         [HttpGet("get-dish-by-id/{dishId}")]
         public async Task<AppActionResult> GetDishbyId(Guid dishId)

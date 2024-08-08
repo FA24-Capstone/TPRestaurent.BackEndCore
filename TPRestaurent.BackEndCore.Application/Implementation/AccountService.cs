@@ -73,14 +73,33 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                var currentTime = DateTime.Now; 
+                var utility = Resolve<Utility>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone(); 
                 var user = await _accountRepository.GetByExpression(u =>
                     u!.PhoneNumber!.ToLower() == loginRequest.PhoneNumber.ToLower() && u.IsDeleted == false);
-                var otpCodeDb = await _otpRepository.GetByExpression(p => p.Code == loginRequest.OTPCode && p.Type == OTPType.Login);
+                var otpCodeListDb = await _otpRepository.GetAllDataByExpression(p => p.Code == loginRequest.OTPCode && (p.Type == OTPType.Login || p.Type == OTPType.ConfirmPhone) && p.ExpiredTime > currentTime && !p.IsUsed, 0, 0, null, false, null);
+
+                if(otpCodeListDb.Items.Count > 1)
+                {
+                    result = BuildAppActionResultError(result, "Xảy ra lỗi trong quá trình xử lí, có nhiều hơn 1 otp khả dụng. Vui lòng thử lại sau ít phút");
+                    return result;
+                }
+
+                if(otpCodeListDb.Items.Count == 0)
+                {
+                    result = BuildAppActionResultError(result, "Mã otp đã nhập không khả dụng. Vui lòng thử lại");
+                    return result;
+                }
+                var otpCodeDb = otpCodeListDb.Items[0];
+
                 if (user == null)
                     result = BuildAppActionResultError(result, $" {loginRequest.PhoneNumber} này không tồn tại trong hệ thống");
-                else if (user.IsVerified == false)
-                    result = BuildAppActionResultError(result, "Tài khoản này chưa được xác thực !");
+                
+                if (user.IsVerified == false)
+                {                  
+                    user.IsVerified= true;
+                    user.VerifyCode = null;
+                }
                 if (otpCodeDb!.IsUsed == true)
                 {
                     result = BuildAppActionResultError(result, $"Mã OTP đã được sử dụng");
@@ -98,6 +117,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (!BuildAppActionResultIsError(result)) result = await LoginDefault(loginRequest.PhoneNumber, user);
 
                 otpCodeDb!.IsUsed = true;
+                await _accountRepository.Update(user);
                 await _otpRepository.Update(otpCodeDb);
                 await _unitOfWork.SaveChangesAsync();
             }
@@ -273,15 +293,55 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
+                var utility = Resolve<Utility>();
+                var availableOtp = await _otpRepository.GetAllDataByExpression(o => o.Account.PhoneNumber.Equals(phoneNumber) && otp == o.Type && o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && !o.IsUsed, 0, 0, null, false, null);
+                if (availableOtp.Items.Count > 1) 
+                {
+                    result = BuildAppActionResultError(result, "Xảy ra lỗi trong quá trình xử lí, có nhiều hơn 1 otp khả dụng. Vui lòng thử lại sau ít phút");
+                    return result;
+                }
+
+                if(availableOtp.Items.Count == 1)
+                {
+                    result.Result = availableOtp.Items[0];
+                    return result;
+                }
+
                 var user = await _accountRepository.GetByExpression(a =>
-                  a!.PhoneNumber == phoneNumber && a.IsDeleted == false );
-                if (user == null) result = BuildAppActionResultError(result, "Tài khoản không tồn tại hoặc chưa được xác thực");
+                  a!.PhoneNumber == phoneNumber && a.IsDeleted == false);
+                if (user == null)
+                {
+                    if(otp != OTPType.Register && otp != OTPType.Login)
+                    {
+                        result = BuildAppActionResultError(result, "Tài khoản không tồn tại hoặc chưa được xác thực");
+                    }
+                }
                 if (!BuildAppActionResultIsError(result))
                 {
                     var smsService = Resolve<ISmsService>();
-                    var code = await GenerateVerifyCodeSms(user!.PhoneNumber, true);
-                    var response = await smsService!.SendMessage($"Mã xác thực của bạn là là: {code}",
-                    phoneNumber);
+                    string code = "";
+                    
+                    if (otp == OTPType.Register || otp == OTPType.Login)
+                    {
+                        var createAccountResult = await RegisterAccountByPhoneNumber(phoneNumber);
+                        if (!createAccountResult.IsSuccess)
+                        {
+                            result = BuildAppActionResultError(result, $"Đăng tài khoản cho số điện thoại {phoneNumber} thất bại. Vui lòng thử lại");
+                            return result;
+                        }
+                        user = (Account?)createAccountResult.Result;
+                        if (user == null) 
+                        {
+                            result = BuildAppActionResultError(result, $"Đăng tài khoản cho số điện thoại {phoneNumber} thất bại. Vui lòng thử lại");
+                            return result;
+                        }
+                        code = user.VerifyCode;
+                        var response = await smsService!.SendMessage($"Mã xác thực của bạn là là: {code}", phoneNumber);
+                    }
+                    else
+                    {
+                        code = await GenerateVerifyCodeSms(phoneNumber, true);
+                    }
                     var otpsDb = new OTP
                     {
                         OTPId = Guid.NewGuid(),
@@ -302,6 +362,53 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
 
+        }
+
+        private async Task<AppActionResult> RegisterAccountByPhoneNumber(string phoneNumber)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var random = new Random();
+                var verifyCode = string.Empty;
+                verifyCode = random.Next(100000, 999999).ToString();
+                int accountRandomNumber = random.Next(1000000, 9999999);
+                var user = new Account
+                {
+                    Email = $"{SD.AccountDefaultInfomation.DEFAULT_EMAIL}{accountRandomNumber}{SD.DEFAULT_EMAIL_DOMAIN}",
+                    UserName = $"{SD.AccountDefaultInfomation.DEFAULT_EMAIL}{accountRandomNumber}{SD.DEFAULT_EMAIL_DOMAIN}",
+                    FirstName = SD.AccountDefaultInfomation.DEFAULT_FIRSTNAME,
+                    LastName = SD.AccountDefaultInfomation.DEFAULT_LASTNAME,
+                    PhoneNumber = phoneNumber,
+                    Gender = true,
+                    VerifyCode = verifyCode,
+                    IsVerified = false
+                };
+                var resultCreateUser = await _userManager.CreateAsync(user, SD.DEFAULT_PASSWORD);
+                if (resultCreateUser.Succeeded)
+                {
+                    result.Result = user;
+                }
+                else
+                {
+                    result = BuildAppActionResultError(result, $"Tạo tài khoản không thành công");
+                }
+
+                var resultCreateRole = await _userManager.AddToRoleAsync(user, "CUSTOMER");
+                if (!resultCreateRole.Succeeded) result = BuildAppActionResultError(result, $"Cấp quyền khách hàng không thành công");
+                bool customerAdded = await AddCustomerInformation(user);
+                if (!customerAdded)
+                {
+                    result = BuildAppActionResultError(result, $"Tạo thông tin khách hàng không thành công");
+                }
+
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         }
 
         public async Task<AppActionResult> GetAccountByUserId(string id)

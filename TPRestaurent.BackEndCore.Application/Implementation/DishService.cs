@@ -5,12 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
+using System.Web.Razor.Tokenizer.Symbols;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
+using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
@@ -127,13 +129,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetAllDish(string? keyword, int pageNumber, int pageSize)
+        public async Task<AppActionResult> GetAllDish(string? keyword, DishItemType? type, int pageNumber, int pageSize)
         {
             var result = new AppActionResult();
             try
             {
                 var dishList = await _dishRepository
-                   .GetAllDataByExpression(p => p.Name.Contains(keyword) || string.IsNullOrEmpty(keyword), pageNumber, pageSize, null, false, p => p.DishItemType!);
+                   .GetAllDataByExpression(p => (p.Name.Contains(keyword) && !string.IsNullOrEmpty(keyword) || string.IsNullOrEmpty(keyword))
+                                             && (type.HasValue && p.DishItemTypeId == type || !type.HasValue), pageNumber, pageSize, null, false, p => p.DishItemType!);
                 result.Result = dishList;
             }
             catch (Exception ex)
@@ -142,6 +145,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+     
 
         public async Task<AppActionResult> GetDishById(Guid dishId)
         {
@@ -163,27 +168,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result = BuildAppActionResultError(result, $"Size món ăn với id {dishId} không tồn tại");
                 }
                 dishResponse.dishSizeDetails = dishSizeDetailsDb!.Items!;
-                var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.Dish!);
-                if (staticFileDb!.Items!.Count < 0 && staticFileDb.Items == null)
-                {
-                    result = BuildAppActionResultError(result, $"Hình ảnh món ăn với id {dishId} không tồn tại");
-                }
-                var ratingDb = await ratingRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.Dish!);
-                if (ratingDb == null || ratingDb.Items == null || ratingDb.Items.Count <= 0)
-                {
-                    result = BuildAppActionResultError(result, $"Các đánh giá món ăn với id {dishId} không tồn tại");
-                    return result;
-                }
+                var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, null);
 
-                foreach (var rating in ratingDb.Items!)
+                var ratingDb = await ratingRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, null);
+                
+                if(ratingDb.Items.Count > 0)
                 {
-                    var ratingStaticFileDb = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == rating.RatingId, 0, 0, null, false, p => p.Dish!);
-                    var ratingDishResponse = new RatingDishResponse
+                    foreach (var rating in ratingDb.Items!)
                     {
-                        Rating = rating,
-                        RatingImgs = ratingStaticFileDb.Items!
-                    };
-                    dishResponse.RatingDish.Add(ratingDishResponse);
+                        var ratingStaticFileDb = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == rating.RatingId, 0, 0, null, false, null);
+                        var ratingDishResponse = new RatingDishResponse
+                        {
+                            Rating = rating,
+                            RatingImgs = ratingStaticFileDb.Items!
+                        };
+                        dishResponse.RatingDish.Add(ratingDishResponse);
+                    }
                 }
 
                 dishResponse.Dish = dishDb!;

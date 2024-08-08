@@ -6,6 +6,14 @@ public class SD
 {
     public static int MAX_RECORD_PER_PAGE = short.MaxValue;
     public static string DEFAULT_PASSWORD = "TourGuide@123";
+    public static string DEFAULT_EMAIL_DOMAIN = "@gmail.com";
+
+    public class AccountDefaultInfomation
+    {
+        public static string DEFAULT_EMAIL = "TPCustomer";
+        public static string DEFAULT_FIRSTNAME = "Firstname";
+        public static string DEFAULT_LASTNAME = "Lasttname";
+    }
 
     public static string FormatDateTime(DateTime dateTime)
     {

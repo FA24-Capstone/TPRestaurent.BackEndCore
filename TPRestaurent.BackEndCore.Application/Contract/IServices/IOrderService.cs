@@ -15,5 +15,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto);
         public Task<AppActionResult> DeleteOrderDetail(Guid orderDetailId);
         public Task<AppActionResult> ChangeOrderStatus(string orderId, bool? isDelivering);
+        public Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto);
     }
 }
