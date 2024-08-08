@@ -32,9 +32,87 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             throw new NotImplementedException();
         }
 
-        public Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto)
+        public async Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto)
         {
-            throw new NotImplementedException();
+            var result = new AppActionResult();
+            try
+            {
+                var accountRepository = Resolve<IGenericRepository<Account>>();
+                var customerInfoRepository = Resolve<IGenericRepository<CustomerInfo>>();   
+                var reservationRepository = Resolve<IGenericRepository<Reservation>>();
+                var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
+                var customerSavedCouponRepository = Resolve<IGenericRepository<CustomerSavedCoupon>>();
+                var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
+                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var comboRepository = Resolve<IGenericRepository<Combo>>();
+
+
+                var reservationDb = await reservationRepository!.GetById(orderRequestDto.ReservationId!);
+                if (reservationDb != null)
+                {
+                    var customerInfoDb = await customerInfoRepository!.GetByExpression(p => p.CustomerId == orderRequestDto.CustomerId, p => p.Account!);
+                    if (customerInfoDb == null)
+                    {
+                        var newCustomerInfo = new CustomerInfo
+                        {
+                            CustomerId = Guid.NewGuid(),    
+                            PhoneNumber = orderRequestDto.CustomerInfo!.PhoneNumber,    
+                            Name = orderRequestDto.CustomerInfo.Name,   
+                        };
+                        
+                        await customerInfoRepository.Insert(newCustomerInfo);
+
+                        var orderDb = new Order
+                        {
+                            OrderId = Guid.NewGuid(),
+                            CustomerId = newCustomerInfo.CustomerId,
+                            Note = orderRequestDto.Note,
+                            OrderDate = orderRequestDto.OrderDate,  
+                            Status = OrderStatus.Pending,   
+                            ReservationId = reservationDb.ReservationId,    
+                            PaymentMethodId = orderRequestDto.PaymentMethodId,  
+                        };
+
+                        foreach (var orderDetail in orderRequestDto.OrderDetailsDtos)
+                        {
+                            var comboDb = await comboRepository!.GetById(orderDetail.ComboId!);
+                            if (comboDb == null)
+                            {
+                                result = BuildAppActionResultError(result, $"Combo với id {orderDetail.ComboId} không tồn tại");
+                            }
+
+                            var dishSizeDetailDb = await dishSizeDetailRepository!.GetByExpression(p => p.DishSizeDetailId == orderDetail.DishSizeDetailId, p => p.Dish!);
+                            if (dishSizeDetailDb == null)
+                            {
+                                result = BuildAppActionResultError(result, $"Món ăn với id {orderDetail.DishSizeDetailId} không tồn tại");
+                            }
+
+                            var orderDetailDishDb = new OrderDetail
+                            {
+                                OrderDetailId = Guid.NewGuid(), 
+                                DishSizeDetailId = orderDetail.DishSizeDetailId,    
+                                Note = orderDetail.Note,    
+                                Quantity = orderDetail.Quantity,    
+                                OrderId = orderDb.OrderId,
+                                Price = orderDetail.Price * orderDetail.Quantity,
+                            };
+
+                            var order
+                        }
+                          
+                    }
+
+                }
+                else if ()
+                {
+
+                }
+            }
+            catch (Exception ex) 
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;  
         }
 
         public Task<AppActionResult> DeleteOrderDetail(Guid orderDetailId)
@@ -63,19 +141,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetOrderById(Guid orderId)
-        {
-            var result = new AppActionResult();
-            try
-            {
-                var orderDb = await _repository.GetByExpression(p => p.OrderId == orderId);
-            }
-            catch (Exception ex) 
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;  
-        }
 
         public async Task<AppActionResult> GetOrderDetail(Guid orderId)
         {

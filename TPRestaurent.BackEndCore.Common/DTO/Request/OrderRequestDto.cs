@@ -14,20 +14,26 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public DateTime OrderDate { get; set; }
         public double TotalAmount { get; set; }
         public string? AccountId { get; set; }
-        public Account? Account { get; set; } = null!;
         public Guid? CustomerId { get; set; }
-        public CustomerInfo? CustomerInfo { get; set; }
+        public CustomerInfoRequest? CustomerInfo { get; set; }
         public PaymentMethod PaymentMethodId { get; set; }
         public Guid? ReservationId { get; set; }
         public Guid? LoyalPointsHistoryId { get; set; }
         public Guid? CustomerSavedCouponId { get; set; }
         public string? Note { get; set; }
-        public bool? isDelivering { get; set; }  
+        public bool? isDelivering { get; set; }
+        public List<OrderDetailsDto> OrderDetailsDtos { get; set; } = new List<OrderDetailsDto>();    
     }
+
+    public class CustomerInfoRequest 
+    {
+        public string Name { get; set; } = null!;
+        public string PhoneNumber { get; set; } = null!;
+    }
+
 
     public class OrderDetailsDto
     {
-        public Guid OrderId { get; set; }
         public Guid? DishSizeDetailId { get; set; }
         public Guid? ComboId { get; set; }
         [ForeignKey(nameof(ComboId))]
