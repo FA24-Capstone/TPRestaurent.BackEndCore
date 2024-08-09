@@ -22,6 +22,7 @@ public class MappingConfig
                 .ForMember(desc => desc.LastName, act => act.MapFrom(src => src.LastName))
                 .ForMember(desc => desc.PhoneNumber, act => act.MapFrom(src => src.PhoneNumber))
                 .ForMember(desc => desc.UserName, act => act.MapFrom(src => src.UserName))
+                .ForMember(desc => desc.Avatar, act => act.MapFrom(src => src.Avatar))
                 ;
 
             config.CreateMap<Dish, DishDto>()

@@ -808,6 +808,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             _tokenDto.Token = token;
             _tokenDto.RefreshToken = user.RefreshToken;
+            _tokenDto.Account = _mapper.Map<AccountResponse>(user);
             var roleList = new List<string>();
             var roleListDb = await _userRoleRepository.GetAllDataByExpression(r => r.UserId.Equals(user.Id), 0, 0, null, false, null);
             if (roleListDb.Items == null || roleListDb.Items.Count == 0)
@@ -843,7 +844,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 _tokenDto.MainRole = "CUSTOMER";
             }
-
+            _tokenDto.Account.Roles = roleNameDb.Items;
+            _tokenDto.Account.MainRole = _tokenDto.MainRole;
             result.Result = _tokenDto;
             await _unitOfWork.SaveChangesAsync();
 
