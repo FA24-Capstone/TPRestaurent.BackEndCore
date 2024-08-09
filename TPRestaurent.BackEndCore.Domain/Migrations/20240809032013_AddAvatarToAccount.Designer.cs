@@ -12,8 +12,8 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    [Migration("20240807175147_init")]
-    partial class init
+    [Migration("20240809032013_AddAvatarToAccount")]
+    partial class AddAvatarToAccount
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -194,6 +194,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
+
+                    b.Property<string>("Avatar")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -1150,9 +1153,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("AccountId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<Guid?>("CustomerId")
                         .HasColumnType("uniqueidentifier");
 
@@ -1188,8 +1188,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.HasKey("OrderId");
 
-                    b.HasIndex("AccountId");
-
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("CustomerSavedCouponId");
@@ -1219,6 +1217,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("OrderBatch")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("OrderId")
                         .HasColumnType("uniqueidentifier");
@@ -1904,10 +1905,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Order", b =>
                 {
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "Account")
-                        .WithMany()
-                        .HasForeignKey("AccountId");
-
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.CustomerInfo", "CustomerInfo")
                         .WithMany()
                         .HasForeignKey("CustomerId");
@@ -1933,8 +1930,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Table", "Table")
                         .WithMany()
                         .HasForeignKey("TableId");
-
-                    b.Navigation("Account");
 
                     b.Navigation("CustomerInfo");
 

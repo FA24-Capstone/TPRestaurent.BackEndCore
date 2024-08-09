@@ -1074,6 +1074,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     account!.FirstName = request.FirstName;
                     account.LastName = request.LastName;
                     account.PhoneNumber = request.PhoneNumber;
+                    if (!string.IsNullOrEmpty(request.Avatar))
+                    {
+                        account.Avatar = request.Avatar;
+                    }
                     result.Result = await _accountRepository.Update(account);
                 }
                 await _unitOfWork.SaveChangesAsync();

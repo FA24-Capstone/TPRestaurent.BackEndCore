@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
-    public partial class init : Migration
+    public partial class AddAvatarToAccount : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -462,6 +462,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     Gender = table.Column<bool>(type: "bit", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     IsVerified = table.Column<bool>(type: "bit", nullable: false),
+                    Avatar = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     VerifyCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     RefreshToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     RefreshTokenExpiryTime = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -864,7 +865,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     OrderDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     TotalAmount = table.Column<double>(type: "float", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
-                    AccountId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     CustomerId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     PaymentMethodId = table.Column<int>(type: "int", nullable: false),
                     ReservationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
@@ -877,11 +877,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Orders", x => x.OrderId);
-                    table.ForeignKey(
-                        name: "FK_Orders_AspNetUsers_AccountId",
-                        column: x => x.AccountId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Orders_CustomerInfos_CustomerId",
                         column: x => x.CustomerId,
@@ -925,7 +920,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     ComboId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Quantity = table.Column<int>(type: "int", nullable: false),
                     Price = table.Column<double>(type: "float", nullable: false),
-                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OrderBatch = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1369,11 +1365,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 column: "OrderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Orders_AccountId",
-                table: "Orders",
-                column: "AccountId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Orders_CustomerId",
                 table: "Orders",
                 column: "CustomerId");
@@ -1592,10 +1583,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
             migrationBuilder.DropForeignKey(
                 name: "FK_CustomerInfos_AspNetUsers_AccountId",
                 table: "CustomerInfos");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Orders_AspNetUsers_AccountId",
-                table: "Orders");
 
             migrationBuilder.DropForeignKey(
                 name: "FK_Reservations_AspNetUsers_CustomerAccountId",
