@@ -322,7 +322,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var smsService = Resolve<ISmsService>();
                     string code = "";
                     
-                    if (otp == OTPType.Register || otp == OTPType.Login)
+                    if ((otp == OTPType.Register || otp == OTPType.Login) && user == null)
                     {
                         var createAccountResult = await RegisterAccountByPhoneNumber(phoneNumber);
                         if (!createAccountResult.IsSuccess)
@@ -337,7 +337,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return result;
                         }
                         code = user.VerifyCode;
-                        var response = await smsService!.SendMessage($"Mã xác thực của bạn là là: {code}", phoneNumber);
+                        //var response = await smsService!.SendMessage($"Mã xác thực của bạn là là: {code}", phoneNumber);
                     }
                     else
                     {
@@ -354,6 +354,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     };
                     await _otpRepository.Insert(otpsDb);
                     await _unitOfWork.SaveChangesAsync();
+                    otpsDb.Account = null;
                     result.Result = otpsDb;
                 }
             }
@@ -708,8 +709,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 code = random.Next(100000, 999999).ToString();
                 user.VerifyCode = code;
                 var smsService = Resolve<ISmsService>();
-                var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
-                    phoneNumber);
+                //var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
+                //    phoneNumber);
             }
 
             await _unitOfWork.SaveChangesAsync();
@@ -997,20 +998,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var random = new Random();
             var code = random.Next(100000, 999999).ToString();
             var smsService = Resolve<ISmsService>();
-            var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
-                phoneNumber);
+            //var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
+            //    phoneNumber);
 
-            if (response.IsSuccess)
-            {
-                result.Result = code;
-            }
-            else
-            {
-                foreach (var error in response.Messages)
-                {
-                    result.Messages.Add(error);
-                }
-            }
+            result.Result = code;
+
+            //if (response.IsSuccess)
+            //{
+            //    result.Result = code;
+            //}
+            //else
+            //{
+            //    foreach (var error in response.Messages)
+            //    {
+            //        result.Messages.Add(error);
+            //    }
+            //}
             return result;
         }
 
