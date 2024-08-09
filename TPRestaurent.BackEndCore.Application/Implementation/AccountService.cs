@@ -250,7 +250,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                var currentTime = DateTime.Now; 
+                var utility = Resolve<Utility>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone(); 
                 var account =
                     await _accountRepository.GetByExpression(
                         a => a!.PhoneNumber == accountRequest.PhoneNumber!.ToLower());
@@ -348,7 +349,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         Type = otp,
                         AccountId = user.Id,
                         Code = code,
-                        ExpiredTime = DateTime.Now.AddMinutes(5),
+                        ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
                         IsUsed = false,
                     };
                     await _otpRepository.Insert(otpsDb);
@@ -571,13 +572,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             try
             {
+                var utility = Resolve<Utility>();
                 var user = _userManager.Users.FirstOrDefault(a =>
                     a!.PhoneNumber == dto.PhoneNumber && a.IsDeleted == false && a.IsVerified == true);
                 if (user == null) { 
                     result = BuildAppActionResultError(result, "Tài khoản không tồn tại hoặc chưa được xác thực!");
                     return result;
                 }
-                var utility = Resolve<Utility>();
                 var otpCodeListDb = await _otpRepository.GetAllDataByExpression(p => p!.AccountId == user!.Id && p.Type == OTPType.ForgotPassword && p.ExpiredTime > utility.GetCurrentDateTimeInTimeZone(), 0,0, null, false, null);
                 if (otpCodeListDb.Items.Count == 0) 
                 {
@@ -589,7 +590,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return result;
                 }
                 var otpCodeDb = otpCodeListDb.Items.FirstOrDefault();
-                DateTime currentTime = DateTime.Now;
+                DateTime currentTime = utility.GetCurrentDateTimeInTimeZone();
                 if (otpCodeDb!.Code != dto.RecoveryCode)
                     result = BuildAppActionResultError(result, "Mã xác nhận sai");
                 else if (otpCodeDb.IsUsed == true)
