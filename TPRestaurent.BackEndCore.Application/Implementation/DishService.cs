@@ -170,7 +170,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 dishResponse.dishSizeDetails = dishSizeDetailsDb!.Items!;
                 var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, null);
 
-                var ratingDb = await ratingRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, null);
+                var ratingDb = await ratingRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.CreateByAccount, p => p.UpdateByAccount);
                 
                 if(ratingDb.Items.Count > 0)
                 {

@@ -250,7 +250,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                var currentTime = DateTime.Now; 
+                var utility = Resolve<Utility>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone(); 
                 var account =
                     await _accountRepository.GetByExpression(
                         a => a!.PhoneNumber == accountRequest.PhoneNumber!.ToLower());
@@ -321,7 +322,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var smsService = Resolve<ISmsService>();
                     string code = "";
                     
-                    if (otp == OTPType.Register || otp == OTPType.Login)
+                    if ((otp == OTPType.Register || otp == OTPType.Login) && user == null)
                     {
                         var createAccountResult = await RegisterAccountByPhoneNumber(phoneNumber);
                         if (!createAccountResult.IsSuccess)
@@ -336,7 +337,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return result;
                         }
                         code = user.VerifyCode;
-                        var response = await smsService!.SendMessage($"Mã xác thực của bạn là là: {code}", phoneNumber);
+                        //var response = await smsService!.SendMessage($"Mã xác thực của bạn là là: {code}", phoneNumber);
                     }
                     else
                     {
@@ -348,11 +349,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         Type = otp,
                         AccountId = user.Id,
                         Code = code,
-                        ExpiredTime = DateTime.Now.AddMinutes(5),
+                        ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
                         IsUsed = false,
                     };
                     await _otpRepository.Insert(otpsDb);
                     await _unitOfWork.SaveChangesAsync();
+                    otpsDb.Account = null;
                     result.Result = otpsDb;
                 }
             }
@@ -571,13 +573,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             try
             {
+                var utility = Resolve<Utility>();
                 var user = _userManager.Users.FirstOrDefault(a =>
                     a!.PhoneNumber == dto.PhoneNumber && a.IsDeleted == false && a.IsVerified == true);
                 if (user == null) { 
                     result = BuildAppActionResultError(result, "Tài khoản không tồn tại hoặc chưa được xác thực!");
                     return result;
                 }
-                var utility = Resolve<Utility>();
                 var otpCodeListDb = await _otpRepository.GetAllDataByExpression(p => p!.AccountId == user!.Id && p.Type == OTPType.ForgotPassword && p.ExpiredTime > utility.GetCurrentDateTimeInTimeZone(), 0,0, null, false, null);
                 if (otpCodeListDb.Items.Count == 0) 
                 {
@@ -589,7 +591,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return result;
                 }
                 var otpCodeDb = otpCodeListDb.Items.FirstOrDefault();
-                DateTime currentTime = DateTime.Now;
+                DateTime currentTime = utility.GetCurrentDateTimeInTimeZone();
                 if (otpCodeDb!.Code != dto.RecoveryCode)
                     result = BuildAppActionResultError(result, "Mã xác nhận sai");
                 else if (otpCodeDb.IsUsed == true)
@@ -707,8 +709,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 code = random.Next(100000, 999999).ToString();
                 user.VerifyCode = code;
                 var smsService = Resolve<ISmsService>();
-                var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
-                    phoneNumber);
+                //var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
+                //    phoneNumber);
             }
 
             await _unitOfWork.SaveChangesAsync();
@@ -807,6 +809,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             _tokenDto.Token = token;
             _tokenDto.RefreshToken = user.RefreshToken;
+            _tokenDto.Account = _mapper.Map<AccountResponse>(user);
             var roleList = new List<string>();
             var roleListDb = await _userRoleRepository.GetAllDataByExpression(r => r.UserId.Equals(user.Id), 0, 0, null, false, null);
             if (roleListDb.Items == null || roleListDb.Items.Count == 0)
@@ -842,7 +845,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 _tokenDto.MainRole = "CUSTOMER";
             }
-
+            _tokenDto.Account.Roles = roleNameDb.Items;
+            _tokenDto.Account.MainRole = _tokenDto.MainRole;
             result.Result = _tokenDto;
             await _unitOfWork.SaveChangesAsync();
 
@@ -994,20 +998,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var random = new Random();
             var code = random.Next(100000, 999999).ToString();
             var smsService = Resolve<ISmsService>();
-            var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
-                phoneNumber);
+            //var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
+            //    phoneNumber);
 
-            if (response.IsSuccess)
-            {
-                result.Result = code;
-            }
-            else
-            {
-                foreach (var error in response.Messages)
-                {
-                    result.Messages.Add(error);
-                }
-            }
+            result.Result = code;
+
+            //if (response.IsSuccess)
+            //{
+            //    result.Result = code;
+            //}
+            //else
+            //{
+            //    foreach (var error in response.Messages)
+            //    {
+            //        result.Messages.Add(error);
+            //    }
+            //}
             return result;
         }
 
@@ -1071,6 +1077,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     account!.FirstName = request.FirstName;
                     account.LastName = request.LastName;
                     account.PhoneNumber = request.PhoneNumber;
+                    if (!string.IsNullOrEmpty(request.Avatar))
+                    {
+                        account.Avatar = request.Avatar;
+                    }
                     result.Result = await _accountRepository.Update(account);
                 }
                 await _unitOfWork.SaveChangesAsync();

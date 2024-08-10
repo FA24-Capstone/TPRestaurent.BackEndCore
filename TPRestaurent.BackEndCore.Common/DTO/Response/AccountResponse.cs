@@ -17,6 +17,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public bool IsVerified { get; set; }
         public string UserName { get; set; } = null!;
         public string Email { get; set; } = null!;
+        public string? Avatar { get; set; }
         public List<IdentityRole> Roles { get; set; }
         public string MainRole { get; set; }
     }
