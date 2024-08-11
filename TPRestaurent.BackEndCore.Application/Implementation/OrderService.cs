@@ -57,11 +57,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     o.OrderId = dto.OrderId;
                     if (o.ComboId.HasValue)
                     {
-                        o.Price = (await comboRepository.GetById(o.ComboId)).Price;
+                        o.Price = (await comboRepository!.GetById(o.ComboId)).Price;
                     }
                     else
                     {
-                        o.Price = (await dishRepository.GetById(o.DishSizeDetailId)).Price;
+                        o.Price = (await dishRepository!.GetById(o.DishSizeDetailId!)).Price;
                     }
                     o.OrderBatch = orderBatch;
                     orderDb.TotalAmount += o.Price * o.Quantity;
@@ -78,9 +78,78 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public Task<AppActionResult> ChangeOrderStatus(string orderId, bool? isDelivering)
+        public async Task<AppActionResult> ChangeOrderStatus(string orderId, bool IsSuccessful)
         {
-            throw new NotImplementedException();
+            var result = new AppActionResult();
+            try
+            {
+                var orderDb = await _repository.GetById(orderId);
+                if (orderDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Đơn hàng với id {orderId} không tồn tại");
+                }
+                else
+                {
+                    if (orderDb.IsDelivering == true)
+                    {
+                        if (orderDb.Status == OrderStatus.Pending)
+                        {
+                            if (IsSuccessful)
+                            {
+                                orderDb.Status = OrderStatus.Processing;
+                            }
+                            else
+                            {
+                                orderDb.Status = OrderStatus.Cancelled;
+                            }
+                        }else if (orderDb.Status == OrderStatus.Processing)
+                        {
+                            if (IsSuccessful)
+                            {
+                                orderDb.Status = OrderStatus.Delivering; 
+                            }
+                            else
+                            {
+                                orderDb.Status = OrderStatus.Cancelled;
+                            }
+                        }
+                        else if (orderDb.Status == OrderStatus.Delivering)
+                        {
+                            if (IsSuccessful)
+                            {
+                                orderDb.Status = OrderStatus.Completed;
+                            }
+                            else
+                            {
+                                orderDb.Status = OrderStatus.Cancelled;
+                            }
+                        }
+                        else
+                        {
+                            result = BuildAppActionResultError(result, $"Đơn hàng không thể cập nhật những trạng thái khác");
+                        }
+                    }
+                    else
+                    {
+                        if (IsSuccessful)
+                        {
+                            orderDb.Status = OrderStatus.Completed;
+                        }
+                        else
+                        {
+                            orderDb.Status = OrderStatus.Cancelled;
+                        }
+                    }
+
+                    await _repository.Update(orderDb);
+                    await _unitOfWork.SaveChangesAsync();   
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         }
 
         public async Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto)
@@ -117,7 +186,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 CustomerId = customerInfoDb!.CustomerId,
                                 Note = orderRequestDto.Note,
                                 OrderDate = orderRequestDto.OrderDate,
-                                Status = OrderStatus.Pending,
+                                Status = OrderStatus.Processing,
                                 ReservationId = reservationDb.ReservationId,
                                 PaymentMethodId = orderRequestDto.PaymentMethodId,
                                 IsDelivering = false,
@@ -300,7 +369,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 IsDelivering = false,
                                 Note = orderRequestDto.Note,
                                 PaymentMethodId = orderRequestDto.PaymentMethodId,  
-                                Status = OrderStatus.Pending,
+                                Status = OrderStatus.Processing,
                                 OrderDate = orderRequestDto.OrderDate,  
                             };
 
@@ -444,7 +513,133 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             PaymentMethodId = orderRequestDto.PaymentMethodId,
                             IsDelivering = true,
                         };
+                        List<OrderDetail> orderDetailsDto = new List<OrderDetail>();
+                        double money = 0;
 
+                        foreach (var orderDetail in orderRequestDto.OrderDetailsDtos)
+                        {
+                            var orderDetailDb = new OrderDetail
+                            {
+                                OrderDetailId = Guid.NewGuid(),
+                                Note = orderDetail.Note,
+                                Quantity = orderDetail.Quantity,
+                                OrderId = orderDb.OrderId,
+                            };
+
+                            if (orderDetail.ComboId.HasValue)
+                            {
+                                var comboDb = await comboRepository!.GetById(orderDetail.ComboId!);
+                                if (comboDb == null)
+                                {
+                                    return BuildAppActionResultError(result, $"Combo với id {orderDetail.ComboId} không tồn tại");
+                                }
+                                else
+                                {
+                                    orderDetailDb.ComboId = orderDetail.ComboId;
+                                    orderDetailDb.Price = comboDb!.Price * orderDetail.Quantity;
+                                }
+
+                            }
+                            else
+                            {
+                                var dishSizeDetailDb = await dishSizeDetailRepository!.GetByExpression(p => p.DishSizeDetailId == orderDetail.DishSizeDetailId, p => p.Dish!);
+                                if (dishSizeDetailDb == null)
+                                {
+                                    return BuildAppActionResultError(result, $"Món ăn với id {orderDetail.DishSizeDetailId} không tồn tại");
+                                }
+                                else
+                                {
+                                    orderDetailDb.DishSizeDetailId = dishSizeDetailDb.DishSizeDetailId;
+                                    orderDetailDb.Price = dishSizeDetailDb!.Price * orderDetail.Quantity;
+                                }
+                            }
+                            orderDetailsDto.Add(orderDetailDb);
+                            await orderDetailRepository!.InsertRange(orderDetailsDto);
+                            money += orderDetailDb.Price;
+                        }
+
+                        orderDb.TotalAmount = money;
+
+                        if (orderRequestDto.CustomerId.HasValue)
+                        {
+                            var customerInfoDb = await customerInfoRepository!.GetByExpression(p => p.CustomerId == orderRequestDto.CustomerId, p => p.Account!);
+                            var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => p.CustomerInfoId == orderRequestDto.CustomerId, 0, 0, null, false, p => p.Coupon!);
+
+                            if (customerSavedCouponDb.Items!.Count < 0 && customerSavedCouponDb.Items != null)
+                            {
+                                if (orderRequestDto.CouponId.HasValue)
+                                {
+                                    var customerSavedCoupon = customerSavedCouponDb.Items.FirstOrDefault(c => c.CouponId == orderRequestDto.CouponId);
+                                    if (customerSavedCoupon != null && customerSavedCoupon.IsUsedOrExpired == false)
+                                    {
+                                        var coupon = await couponRepository!.GetById(customerSavedCoupon.CouponId);
+                                        if (coupon != null)
+                                        {
+                                            double discountMoney = money * (coupon.DiscountPercent / 100);
+                                            money -= discountMoney;
+                                        }
+
+                                        money = Math.Max(0, money);
+
+                                        orderDb.CustomerSavedCouponId = customerSavedCoupon.CustomerSavedCouponId;
+                                        // Update the coupon usage
+                                        customerSavedCoupon.IsUsedOrExpired = true;
+                                        await customerSavedCouponRepository!.Update(customerSavedCoupon);
+
+                                    }
+                                }
+                            }
+                            if (orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse > 0)
+                            {
+                                // Check if the user has enough points
+                                if (customerInfoDb!.LoyaltyPoint >= orderRequestDto.LoyalPointsToUse)
+                                {
+                                    // Calculate the discount (assuming 1 point = 1 currency unit)
+                                    double loyaltyDiscount = Math.Min(orderRequestDto.LoyalPointsToUse.Value, money);
+                                    money -= loyaltyDiscount;
+
+                                    // Ensure the total doesn't go below zero
+                                    money = Math.Max(0, money);
+
+                                    // Update the customer's loyalty points
+                                    customerInfoDb.LoyaltyPoint -= (int)loyaltyDiscount;
+
+                                    // Create a new loyalty point history entry for the point usage
+                                    var loyalPointUsageHistory = new LoyalPointsHistory
+                                    {
+                                        LoyalPointsHistoryId = Guid.NewGuid(),
+                                        TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
+                                        OrderId = orderDb.OrderId,
+                                        PointChanged = -(int)loyaltyDiscount,
+                                        NewBalance = customerInfoDb.LoyaltyPoint
+                                    };
+
+                                    await loyalPointsHistoryRepository!.Insert(loyalPointUsageHistory);
+                                }
+                                else
+                                {
+                                    // Handle the case where the user doesn't have enough points
+                                    return BuildAppActionResultError(result, "Không đủ điểm tích lũy để sử dụng.");
+                                }
+                            }
+
+                            var newLoyalPointHistory = new LoyalPointsHistory
+                            {
+                                LoyalPointsHistoryId = Guid.NewGuid(),
+                                TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
+                                OrderId = orderDb.OrderId,
+                                PointChanged = (int)money / 100,
+                                NewBalance = customerInfoDb!.LoyaltyPoint + (int)money / 100
+                            };
+
+                            await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
+
+                            orderDb.LoyalPointsHistoryId = newLoyalPointHistory.LoyalPointsHistoryId;
+
+                            customerInfoDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
+                            await customerInfoRepository.Update(customerInfoDb);
+                        }
+                        await _repository.Insert(orderDb);
                     }
                     if (!BuildAppActionResultIsError(result))
                     {
@@ -458,11 +653,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
             }
             return result;
-        }
-
-        public Task<AppActionResult> DeleteOrderDetail(Guid orderDetailId)
-        {
-            throw new NotImplementedException();
         }
 
         public async Task<AppActionResult> GetAllOrderByAccountId(string accountId, OrderStatus? status, int pageNumber, int pageSize)
