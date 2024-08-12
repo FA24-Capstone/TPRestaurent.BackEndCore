@@ -59,21 +59,30 @@ public class MappingConfig
              .ReverseMap();
             ;
 
-            config.CreateMap<ReservationDish, ReservationDishDto>()
-            .ForMember(desc => desc.ComboId, act => act.MapFrom(src => src.ComboId))
+            config.CreateMap<ReservationDishDto, ReservationDish>()
+            .ForMember(desc => desc.ComboId, act =>
+            {
+                act.MapFrom(src => src.Combo.ComboId);
+                act.Condition(src => src.Combo != null);
+            })
             .ForMember(desc => desc.DishSizeDetailId, act => act.MapFrom(src => src.DishSizeDetailId))
             .ForMember(desc => desc.Quantity, act => act.MapFrom(src => src.Quantity))
             .ForMember(desc => desc.Note, act => act.MapFrom(src => src.Note))
             .ReverseMap();
             ;
 
-            config.CreateMap<OrderDetail, OrderDetailsDto>()
-           .ForMember(desc => desc.ComboId, act => act.MapFrom(src => src.ComboId))
-           .ForMember(desc => desc.DishSizeDetailId, act => act.MapFrom(src => src.DishSizeDetailId))
+            config.CreateMap<OrderDetailsDto, OrderDetail>()
+            .ForMember(desc => desc.ComboId, act =>
+            {
+                act.MapFrom(src => src.Combo.ComboId);
+                act.Condition(src => src.Combo != null);
+            })
+            .ForMember(desc => desc.DishSizeDetailId, act => act.MapFrom(src => src.DishSizeDetailId))
            .ForMember(desc => desc.Quantity, act => act.MapFrom(src => src.Quantity))
            .ForMember(desc => desc.Note, act => act.MapFrom(src => src.Note))
            .ReverseMap();
             ;
+
         });
         // Trong class MappingConfig
 

@@ -69,9 +69,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                         } else
                         {
-                            if ((await comboRepository!.GetByExpression(d => d.ComboId == item.ComboId && d.EndDate < utility.GetCurrentDateTimeInTimeZone(), null)) == null)
+                            if ((await comboRepository!.GetByExpression(d => d.ComboId == item.Combo.ComboId && d.EndDate < utility.GetCurrentDateTimeInTimeZone(), null)) == null)
                             {
-                                result = BuildAppActionResultError(result, $"Không tìm thấy combo với id {item.ComboId}");
+                                result = BuildAppActionResultError(result, $"Không tìm thấy combo với id {item.Combo.ComboId}");
                                 return result;
                             }
                         }

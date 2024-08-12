@@ -16,10 +16,10 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public bool HasOptions { get; set; }
         public int? OptionSetNumber { get; set; }
         public int Quantity { get; set; }
-        public Guid DishSizeDetailId { get; set; }
+        public Guid? DishSizeDetailId { get; set; }
         [ForeignKey(nameof(DishSizeDetailId))]
         public DishSizeDetail? DishSizeDetail { get; set; }
-        public Guid ComboId { get; set; }
+        public Guid? ComboId { get; set; }
         [ForeignKey(nameof(ComboId))]
         public Combo? Combo { get; set; }
     }

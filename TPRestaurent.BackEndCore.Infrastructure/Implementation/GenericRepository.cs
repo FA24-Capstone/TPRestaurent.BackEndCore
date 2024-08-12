@@ -111,5 +111,15 @@ namespace TPRestaurent.BackEndCore.Infrastructure.Implementation
             _dbSet.RemoveRange(entities);
             return entities.ToList();
         }
+
+        public async Task<List<T>> UpdateRange(IEnumerable<T> entities)
+        {
+            foreach (var entity in entities)
+            {
+                _dbSet.Attach(entity);
+                _context.Entry(entity).State = EntityState.Modified;
+            }
+            return entities.ToList();
+        }
     }
 }

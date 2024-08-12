@@ -26,12 +26,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     {
         private readonly IGenericRepository<Reservation> _reservationRepository;
         private readonly IGenericRepository<ReservationDish> _reservationDishRepository;
+        private readonly IGenericRepository<ComboOrderDetail> _comboOrderDetailRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        public ReservationService(IGenericRepository<Reservation> reservationRepository, IGenericRepository<ReservationDish> reservationDishRepository, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service) : base(service)
+        public ReservationService(IGenericRepository<Reservation> reservationRepository, 
+                                  IGenericRepository<ReservationDish> reservationDishRepository, 
+                                  IGenericRepository<ComboOrderDetail> comboOrderDetailRepository,
+                                  IUnitOfWork unitOfWork, 
+                                  IMapper mapper, IServiceProvider service) : base(service)
         {
             _reservationRepository = reservationRepository;
             _reservationDishRepository = reservationDishRepository;
+            _comboOrderDetailRepository = comboOrderDetailRepository;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
@@ -91,7 +97,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     var reservation = _mapper.Map<Reservation>(dto);
                     reservation.ReservationId = Guid.NewGuid();
-
                     await _reservationRepository.Insert(reservation);
 
                     if (dto.ReservationDishDtos.Count() > 0)
@@ -103,6 +108,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             r.ReservationId = reservation.ReservationId;
                         });
 
+                        var dishComboComboDetailList = new List<ComboOrderDetail>();
+                        foreach (var item in dto.ReservationDishDtos) 
+                        { 
+                            if(item.Combo != null)
+                            {
+                                item.Combo.DishComboIds.ForEach(d => dishComboComboDetailList.Add(new ComboOrderDetail
+                                {
+                                    ComboOrderDetailId = Guid.NewGuid(),
+                                    DishComboId = d
+                                }));
+                            }
+                        }
+                        await _comboOrderDetailRepository.InsertRange(dishComboComboDetailList);
                         await _reservationDishRepository.InsertRange(reservationDishes);
                     }
 
@@ -149,12 +167,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     foreach (var reservationDish in reservationDishDtos!)
                     {
-                        if (reservationDish.ComboId.HasValue)
+                        if (reservationDish.Combo != null)
                         {
-                            comboDb = await comboRepository!.GetByExpression(c => c.ComboId == reservationDish.ComboId.Value && c.EndDate > utility.GetCurrentDateTimeInTimeZone(), null);
+                            comboDb = await comboRepository!.GetByExpression(c =>  c.ComboId == reservationDish.Combo.ComboId && c.EndDate > utility.GetCurrentDateTimeInTimeZone(), null);
                             if (comboDb == null)
                             {
-                                result = BuildAppActionResultError(result, $"Không tìm thấy combo với id {reservationDish.ComboId}");
+                                result = BuildAppActionResultError(result, $"Không tìm thấy combo với id {reservationDish.Combo.ComboId}");
                                 return result;
                             }
                             total += reservationDish.Quantity * comboDb.Price;
