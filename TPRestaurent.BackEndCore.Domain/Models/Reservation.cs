@@ -15,9 +15,9 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public DateTime ReservationDate { get; set; }
         public int NumberOfPeople { get; set; }
         public DateTime? EndTime { get; set; }
-        public string CustomerAccountId { get; set; } = null!;
-        [ForeignKey(nameof(CustomerAccountId))]
-        public Account? CustomerAccount { get; set; }
+        public Guid? CustomerInfoId { get; set; } = null!;
+        [ForeignKey(nameof(CustomerInfoId))]
+        public CustomerInfo? CustomerInfo { get; set; }
         public double Deposit { get; set; }
         public Enums.ReservationStatus StatusId { get; set; }
         [ForeignKey(nameof(StatusId))]

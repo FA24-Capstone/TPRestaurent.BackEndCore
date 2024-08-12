@@ -70,10 +70,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         return result;
                     }
 
-                    var accountRepository = Resolve<IGenericRepository<Account>>();
-                    if ((await accountRepository!.GetById(dto.CustomerAccountId!.ToString())) == null)
+                    var accountRepository = Resolve<IGenericRepository<CustomerInfo>>();
+                    if ((await accountRepository!.GetById(dto.CustomerInfoId!)) == null)
                     {
-                        result = BuildAppActionResultError(result, $"Không tìm thấy tài khoản khách hàng với id {dto.CustomerAccountId}");
+                        result = BuildAppActionResultError(result, $"Không tìm thấy  thông tin khách hàng với id {dto.CustomerInfoId}");
                         return result;
                     }
 
@@ -101,25 +101,33 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     if (dto.ReservationDishDtos.Count() > 0)
                     {
-                        var reservationDishes = _mapper.Map<List<ReservationDish>>(dto.ReservationDishDtos);
-                        reservationDishes.ForEach(r =>
-                        {
-                            r.ReservationDishId = Guid.NewGuid();
-                            r.ReservationId = reservation.ReservationId;
-                        });
-
+                        var reservationDishes = new List<ReservationDish>();
                         var dishComboComboDetailList = new List<ComboOrderDetail>();
-                        foreach (var item in dto.ReservationDishDtos) 
-                        { 
-                            if(item.Combo != null)
+                        Guid reservationDishId = Guid.NewGuid();
+                        dto.ReservationDishDtos.ForEach(r =>
+                        {
+                            reservationDishId = Guid.NewGuid();
+                            reservationDishes.Add(new ReservationDish
                             {
-                                item.Combo.DishComboIds.ForEach(d => dishComboComboDetailList.Add(new ComboOrderDetail
+                                DishSizeDetailId = r.DishSizeDetailId,
+                                ComboId = (r.Combo != null) ? r.Combo.ComboId : (Guid?)null,
+                                Note = r.Note,
+                                Quantity = r.Quantity,
+                                ReservationId = reservation.ReservationId,
+                                ReservationDishId = reservationDishId
+                            });
+
+                            if (r.Combo != null)
+                            {
+                                r.Combo.DishComboIds.ForEach(d => dishComboComboDetailList.Add(new ComboOrderDetail
                                 {
                                     ComboOrderDetailId = Guid.NewGuid(),
-                                    DishComboId = d
+                                    DishComboId = d,
+                                    ReservationDishId = reservationDishId
                                 }));
                             }
-                        }
+                        });
+
                         await _comboOrderDetailRepository.InsertRange(dishComboComboDetailList);
                         await _reservationDishRepository.InsertRange(reservationDishes);
                     }
@@ -392,7 +400,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 Expression expression = DynamicLinqBuilder<Reservation>.BuildExpression(conditions);
-                result.Result = await _reservationRepository.GetAllDataByExpression((Expression<Func<Reservation, bool>>?)expression, pageNumber, pageSize, r => r.ReservationDate, true, p => p.CustomerAccount!);
+                result.Result = await _reservationRepository.GetAllDataByExpression((Expression<Func<Reservation, bool>>?)expression, pageNumber, pageSize, r => r.ReservationDate, true, p => p.CustomerInfo.Account!);
 
             }
             catch (Exception ex) 
@@ -402,18 +410,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetAllReservationByAccountId(string accountId, ReservationStatus? status, int pageNumber, int pageSize)
+        public async Task<AppActionResult> GetAllReservationByAccountId(Guid customerInfoId, ReservationStatus? status, int pageNumber, int pageSize)
         {
             AppActionResult result = new AppActionResult();
             try
             {
                 if (status.HasValue)
                 {
-                    result.Result = await _reservationRepository.GetAllDataByExpression(o => o.CustomerAccountId.Equals(accountId) && o.StatusId == status, pageNumber, pageSize, o => o.ReservationDate, false, null);
+                    result.Result = await _reservationRepository.GetAllDataByExpression(o => o.CustomerInfoId.Equals(customerInfoId) && o.StatusId == status, pageNumber, pageSize, o => o.ReservationDate, false, null);
                 }
                 else
                 {
-                    result.Result = await _reservationRepository.GetAllDataByExpression(o => o.CustomerAccountId.Equals(accountId), pageNumber, pageSize, o => o.ReservationDate, false, null);
+                    result.Result = await _reservationRepository.GetAllDataByExpression(o => o.CustomerInfoId.Equals(customerInfoId), pageNumber, pageSize, o => o.ReservationDate, false, null);
                 }
             }
             catch (Exception ex)

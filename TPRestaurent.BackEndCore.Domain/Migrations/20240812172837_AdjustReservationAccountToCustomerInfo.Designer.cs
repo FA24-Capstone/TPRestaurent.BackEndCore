@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240812172837_AdjustReservationAccountToCustomerInfo")]
+    partial class AdjustReservationAccountToCustomerInfo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1357,6 +1359,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("CustomerAccountId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<Guid?>("CustomerInfoId")
                         .HasColumnType("uniqueidentifier");
 
@@ -1376,6 +1381,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("ReservationId");
+
+                    b.HasIndex("CustomerAccountId");
 
                     b.HasIndex("CustomerInfoId");
 
@@ -2065,6 +2072,10 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Reservation", b =>
                 {
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "CustomerAccount")
+                        .WithMany()
+                        .HasForeignKey("CustomerAccountId");
+
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.CustomerInfo", "CustomerInfo")
                         .WithMany()
                         .HasForeignKey("CustomerInfoId");
@@ -2074,6 +2085,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasForeignKey("StatusId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("CustomerAccount");
 
                     b.Navigation("CustomerInfo");
 

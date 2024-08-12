@@ -54,17 +54,13 @@ public class MappingConfig
              .ForMember(desc => desc.ReservationDate, act => act.MapFrom(src => src.ReservationDate))
              .ForMember(desc => desc.NumberOfPeople, act => act.MapFrom(src => src.NumberOfPeople))
              .ForMember(desc => desc.EndTime, act => act.MapFrom(src => src.EndTime))
-             .ForMember(desc => desc.CustomerAccountId, act => act.MapFrom(src => src.CustomerAccountId))
+             .ForMember(desc => desc.CustomerInfoId, act => act.MapFrom(src => src.CustomerInfoId))
              .ForMember(desc => desc.Deposit, act => act.MapFrom(src => src.Deposit))
              .ReverseMap();
             ;
 
             config.CreateMap<ReservationDishDto, ReservationDish>()
-            .ForMember(desc => desc.ComboId, act =>
-            {
-                act.MapFrom(src => src.Combo.ComboId);
-                act.Condition(src => src.Combo != null);
-            })
+            .ForMember(dest => dest.ComboId, opt => opt.MapFrom(src => src.Combo == null ? (Guid?)null : src.Combo.ComboId))
             .ForMember(desc => desc.DishSizeDetailId, act => act.MapFrom(src => src.DishSizeDetailId))
             .ForMember(desc => desc.Quantity, act => act.MapFrom(src => src.Quantity))
             .ForMember(desc => desc.Note, act => act.MapFrom(src => src.Note))

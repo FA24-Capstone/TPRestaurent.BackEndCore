@@ -24,9 +24,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-reservation-by-account-id")]
-        public async Task<AppActionResult> GetAllReservatonByAccountId(string accountid, Domain.Enums.ReservationStatus status, int pageNumber = 1, int pageSize = 10)
+        public async Task<AppActionResult> GetAllReservatonByAccountId(Guid customerInfoId, Domain.Enums.ReservationStatus status, int pageNumber = 1, int pageSize = 10)
         {
-            return await _service.GetAllReservationByAccountId(accountid, status, pageNumber, pageSize);
+            return await _service.GetAllReservationByAccountId(customerInfoId, status, pageNumber, pageSize);
         }
 
         [HttpGet("get-reservation-detail/{reservationId}")]
