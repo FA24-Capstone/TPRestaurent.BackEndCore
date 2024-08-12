@@ -12,12 +12,9 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
     public class OrderRequestDto
     {
         public DateTime OrderDate { get; set; }
-        public double TotalAmount { get; set; }
-        public string? AccountId { get; set; }
         public Guid? CustomerId { get; set; }
         public PaymentMethod PaymentMethodId { get; set; }
         public Guid? ReservationId { get; set; }
-        public Guid? LoyalPointsHistoryId { get; set; }
         public Guid? CouponId { get; set; }
         public string? Note { get; set; }
         public bool? isDelivering { get; set; }

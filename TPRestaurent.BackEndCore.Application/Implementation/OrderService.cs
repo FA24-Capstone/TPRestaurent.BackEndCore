@@ -327,7 +327,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                             orderDb.TotalAmount = money - reservationDb.Deposit;
 
-                            if (customerSavedCouponDb.Items!.Count < 0 && customerSavedCouponDb.Items != null)
+                            if (customerSavedCouponDb.Items!.Count > 0 && customerSavedCouponDb.Items != null)
                             {
                                 if (orderRequestDto.CouponId.HasValue)
                                 {
@@ -337,7 +337,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         var coupon = await couponRepository!.GetById(customerSavedCoupon.CouponId);
                                         if (coupon != null)
                                         {
-                                            double discountMoney = money * (coupon.DiscountPercent / 100);
+                                            double discountMoney = money * (coupon.DiscountPercent * 0.01);
                                             money -= discountMoney;
                                         }
                                         //NEED BUSINESS RULE HERE
@@ -478,7 +478,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 var customerInfoDb = await customerInfoRepository!.GetByExpression(p => p.CustomerId == orderRequestDto.CustomerId, p => p.Account!);
                                 var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => p.CustomerInfoId == orderRequestDto.CustomerId, 0, 0, null, false, p => p.Coupon!);
 
-                                if (customerSavedCouponDb.Items!.Count < 0 && customerSavedCouponDb.Items != null)
+                                if (customerSavedCouponDb.Items!.Count > 0 && customerSavedCouponDb.Items != null)
                                 {
                                     if (orderRequestDto.CouponId.HasValue)
                                     {
@@ -488,7 +488,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             var coupon = await couponRepository!.GetById(customerSavedCoupon.CouponId);
                                             if (coupon != null)
                                             {
-                                                double discountMoney = money * (coupon.DiscountPercent / 100);
+                                                double discountMoney = money * (coupon.DiscountPercent * 0.01);
                                                 money -= discountMoney;
                                             }
 
@@ -640,7 +640,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         var coupon = await couponRepository!.GetById(customerSavedCoupon.CouponId);
                                         if (coupon != null)
                                         {
-                                            double discountMoney = money * (coupon.DiscountPercent / 100);
+                                            double discountMoney = money * (coupon.DiscountPercent * 0.01);
                                             money -= discountMoney;
                                         }
 
@@ -807,7 +807,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     var coupon = await couponRepository!.GetById(customerSavedCoupon.CouponId);
                                     if (coupon != null)
                                     {
-                                        double discountAmount = orderDb.TotalAmount * (coupon.DiscountPercent / 100);
+                                        double discountAmount = orderDb.TotalAmount * (coupon.DiscountPercent * 0.01);
                                         orderDb.TotalAmount -= discountAmount;
                                     }
                                     //NEED BUSINESS RULE HERE
@@ -909,16 +909,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         data.PaidDeposit = reservationDb.Deposit;
                     }
                     var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => p.CustomerInfoId == orderRequestDto.CustomerId, 0, 0, null, false, p => p.Coupon!);
-                    if (customerSavedCouponDb.Items!.Count < 0 && customerSavedCouponDb.Items != null)
+                    if (customerSavedCouponDb.Items!.Count > 0 && customerSavedCouponDb.Items != null)
                     {
                         if (orderRequestDto.CouponId.HasValue)
                         {
                             var customerSavedCoupon = customerSavedCouponDb.Items.FirstOrDefault(c => c.CouponId == orderRequestDto.CouponId);
                             if (customerSavedCoupon != null && customerSavedCoupon.IsUsedOrExpired == false)
                             {
-                                if (customerSavedCoupon.Coupon != null)
+                                if (customerSavedCoupon.Coupon != null && customerSavedCoupon.Coupon.MinimumAmount < orderRequestDto.Total)
                                 {
-                                    data.CouponDiscount = orderRequestDto.Total * (customerSavedCoupon.Coupon.DiscountPercent / 100);
+                                    data.CouponDiscount = orderRequestDto.Total * (customerSavedCoupon.Coupon.DiscountPercent * 0.01);
+                                }
+                                else
+                                {
+                                    result.Messages.Add($"Coupon {customerSavedCoupon.Coupon.Code} yều cầu hoá đơn phải trên {customerSavedCoupon.Coupon.MinimumAmount}");
                                 }
 
                             }
