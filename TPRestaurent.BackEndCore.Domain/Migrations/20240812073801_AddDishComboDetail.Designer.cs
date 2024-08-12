@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240812073801_AddDishComboDetail")]
+    partial class AddDishComboDetail
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -385,10 +387,10 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid>("DishComboId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("OrderDetailId")
+                    b.Property<Guid>("OrderDetailId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("ReservationDishId")
+                    b.Property<Guid>("ReservationDishId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("ComboOrderDetailId");
@@ -1793,11 +1795,15 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.OrderDetail", "OrderDetail")
                         .WithMany()
-                        .HasForeignKey("OrderDetailId");
+                        .HasForeignKey("OrderDetailId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.ReservationDish", "ReservationDish")
                         .WithMany()
-                        .HasForeignKey("ReservationDishId");
+                        .HasForeignKey("ReservationDishId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("DishCombo");
 

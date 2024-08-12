@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Domain.Enums;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
@@ -29,9 +30,28 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("add-dish-to-order/{orderId}")]
-        public async Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto)
+        public async Task<AppActionResult> AddDishToOrder([FromBody] AddDishToOrderRequestDto dto)
         {
             return await _service.AddDishToOrder(dto);
+        }
+
+        [HttpPost("create-order")]
+        public async Task<AppActionResult> CreateOrder([FromBody]OrderRequestDto dto)
+        {
+            return await _service.CreateOrder(dto);
+        }
+
+
+        [HttpGet("change-order-status/{orderId}")]
+        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool isSuccessful)
+        {
+            return await _service.ChangeOrderStatus(orderId, isSuccessful);
+        }
+
+        [HttpPost("calculate-order-total")]
+        public async Task<AppActionResult> GetOrderTotal([FromBody]CalculateOrderRequest dto)
+        {
+            return await _service.GetOrderTotal(dto);
         }
 
     }

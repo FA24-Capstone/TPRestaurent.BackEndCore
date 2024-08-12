@@ -18,7 +18,6 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public int NewBalance { get; set; }
         public Guid? OrderId { get; set; }
         [ForeignKey(nameof(OrderId))]
-        [JsonIgnore]
         public Order? Order { get; set; }
     }
 }

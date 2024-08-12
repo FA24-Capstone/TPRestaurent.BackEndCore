@@ -15,7 +15,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public double TotalAmount { get; set; }
         public string? AccountId { get; set; }
         public Guid? CustomerId { get; set; }
-        public CustomerInfoRequest? CustomerInfo { get; set; }
         public PaymentMethod PaymentMethodId { get; set; }
         public Guid? ReservationId { get; set; }
         public Guid? LoyalPointsHistoryId { get; set; }
@@ -24,6 +23,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public bool? isDelivering { get; set; }
         public List<OrderDetailsDto> OrderDetailsDtos { get; set; } = new List<OrderDetailsDto>();
         public int? LoyalPointsToUse { get; set; }
+        public Guid? TableId { get; set; }
     }
 
     public class CustomerInfoRequest 
