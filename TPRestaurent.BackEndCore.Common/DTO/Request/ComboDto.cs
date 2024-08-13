@@ -16,7 +16,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public List<DishComboDto> DishComboDtos { get; set; } = new List<DishComboDto>();
-        public List<IFormFile>? ImageFiles { get; set; }
+        public List<IFormFile>? ImageFiles { get; set; } = new List<IFormFile>();
     }
 
     public class DishComboDto

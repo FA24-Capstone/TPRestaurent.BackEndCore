@@ -42,6 +42,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 try
                 {
                     var firebaseService = Resolve<IFirebaseService>();
+                    var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                     var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
                     var dishExsted = await _dishRepository.GetByExpression(p => p.Name == dto.Name);
                     if (dishExsted != null)
@@ -57,6 +58,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         DishItemTypeId = dto.DishItemType,
                         isAvailable = true,
                     };
+                    List<DishSizeDetail> dishSizeDetails = new List<DishSizeDetail>();
+                    if (dto.DishSizeDetailDtos.Count > 0)
+                    {
+                        if(dto.DishSizeDetailDtos.Count(d => d.DishSize == DishSize.SMALL) > 1 
+                        || dto.DishSizeDetailDtos.Count(d => d.DishSize == DishSize.MEDIUM) > 1
+                        || dto.DishSizeDetailDtos.Count(d => d.DishSize == DishSize.LARGE) > 1)
+                        {
+                            result = BuildAppActionResultError(result, $"Món ăn tồn tại kích thước trùng. Vui lòng kiểm tra lại");
+                        }
+                        dto.DishSizeDetailDtos.ForEach(d =>
+                            dishSizeDetails.Add(new DishSizeDetail
+                            {
+                                DishSizeDetailId = Guid.NewGuid(),
+                                DishId = dish.DishId,
+                                Discount = d.Discount,
+                                DishSizeId = d.DishSize,
+                                IsAvailable = true,
+                                Price = d.Price                                
+                            }));
+                    }
+
                     List<StaticFile> staticList = new List<StaticFile>();
 
                     var mainFile = dto.MainImageFile;
@@ -94,6 +116,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (!BuildAppActionResultIsError(result))
                     {
                         await _dishRepository.Insert(dish);
+                        if(dto.DishSizeDetailDtos.Count > 0)
+                        {
+                            await dishSizeDetailRepository!.InsertRange(dishSizeDetails);
+                        }
                         await staticFileRepository!.InsertRange(staticList);
                         await _unitOfWork.SaveChangesAsync();
                         scope.Complete();
@@ -207,6 +233,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var firebaseService = Resolve<IFirebaseService>();
                     var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
+                    var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                     var dishDb = await _dishRepository.GetById(dto.DishId);
                     if (dishDb == null)
                     {
@@ -279,10 +306,59 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     //dishDb.Price = dto.Price;
                     dishDb.DishItemTypeId = dto.DishItemType;
                     //dishDb.Discount = dto.Discount;
-                    dishDb.isAvailable = dto.isAvailable;
+                    dishDb.isAvailable = dto.IsAvailable;
+
+                    List<DishSizeDetail> updateDishSizeDetails = new List<DishSizeDetail>();
+                    List<DishSizeDetail> addDishSizeDetails = new List<DishSizeDetail>();
+                    if (dto.UpdateDishSizeDetailDtos.Count > 0)
+                    {
+                        dto.UpdateDishSizeDetailDtos.ForEach(d =>
+                        {
+                            if (dto.UpdateDishSizeDetailDtos.Count(d => d.DishSize == DishSize.SMALL) > 1
+                       || dto.UpdateDishSizeDetailDtos.Count(d => d.DishSize == DishSize.MEDIUM) > 1
+                       || dto.UpdateDishSizeDetailDtos.Count(d => d.DishSize == DishSize.LARGE) > 1)
+                            {
+                                result = BuildAppActionResultError(result, $"Món ăn tồn tại kích thước trùng. Vui lòng kiểm tra lại");
+                            }
+                            if (d.DishSizeDetailId.HasValue)
+                            {
+                                updateDishSizeDetails.Add(new DishSizeDetail
+                                {
+                                    DishSizeDetailId = (Guid)d.DishSizeDetailId,
+                                    DishId = dishDb.DishId,
+                                    DishSizeId = d.DishSize,
+                                    Discount = d.Discount,
+                                    IsAvailable = d.IsAvailable,
+                                    Price = d.Price
+                                });
+                            }
+                            else
+                            {
+                                addDishSizeDetails.Add(new DishSizeDetail
+                                {
+                                    DishSizeDetailId = Guid.NewGuid(),
+                                    DishId = dishDb.DishId,
+                                    DishSizeId = d.DishSize,
+                                    Discount = d.Discount,
+                                    IsAvailable = d.IsAvailable,
+                                    Price = d.Price
+                                });
+                            }
+                        });
+                    }
+                    
+
                     if (!BuildAppActionResultIsError(result))
                     {
                         await _dishRepository.Update(dishDb!);
+                        if (dto.UpdateDishSizeDetailDtos.Count > 0)
+                        {
+                            await dishSizeDetailRepository!.UpdateRange(updateDishSizeDetails);
+                        }
+                        if(addDishSizeDetails.Count > 0)
+                        {
+                            await dishSizeDetailRepository!.InsertRange(addDishSizeDetails);
+                        }
                         await staticFileRepository.InsertRange(staticList);
                         await _unitOfWork.SaveChangesAsync();
                         result.Messages.Add("Update dish successfully");

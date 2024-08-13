@@ -12,12 +12,20 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
     {
         public Guid DishId { get; set; }
         public string Name { get; set; } = null!;
+        public bool IsAvailable { get; set; }
         public string Description { get; set; } = null!;
         public IFormFile? MainImageFile { get; set; }
-        public List<IFormFile>? ImageFiles { get; set; }
+        public List<IFormFile>? ImageFiles { get; set; } = new List<IFormFile>();
+        public List<UpdateDishSizeDetailDto> UpdateDishSizeDetailDtos { get; set; } = new List<UpdateDishSizeDetailDto> { };
+        public DishItemType DishItemType { get; set; }
+    }
+
+    public class UpdateDishSizeDetailDto
+    {
+        public Guid? DishSizeDetailId { get; set; }
+        public DishSize DishSize { get; set; }
+        public bool IsAvailable { get; set; }
         public double Price { get; set; }
         public double Discount { get; set; }
-        public DishItemType DishItemType { get; set; }
-        public bool isAvailable { get; set; }
     }
 }

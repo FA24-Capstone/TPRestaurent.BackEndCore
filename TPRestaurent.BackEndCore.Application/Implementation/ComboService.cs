@@ -34,7 +34,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 try
                 {
                     var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
-                    var dishRepository = Resolve<IGenericRepository<Dish>>();
+                    var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                     var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
                     var firebaseService = Resolve<IFirebaseService>();
 
@@ -79,10 +79,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         foreach (var dishId in dishComboDto.ListDishId)
                         {
-                            var dishExisted = await dishRepository!.GetById(dishId);
+                            var dishExisted = await dishSizeDetailRepository!.GetById(dishId);
                             if (dishExisted == null)
                             {
-                                result = BuildAppActionResultError(result, $"Món ăn với id {dishId} không tồn tại");
+                                result = BuildAppActionResultError(result, $"Size món ăn với id {dishId} không tồn tại");
                             }
                             var dishCombo = new DishCombo
                             {
@@ -191,7 +191,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
 
 
-                    var oldFiles = await staticFileRepository!.GetAllDataByExpression(p => p.ComboId == comboDto.ComboId, 0, 0, null, false, p => p.Combo!);
+                    var oldFiles = await staticFileRepository!.GetAllDataByExpression(p => p.ComboId == comboDto.ComboId, 0, 0, null, false,null);
                     if (oldFiles.Items == null || !oldFiles.Items.Any())
                     {
                         return BuildAppActionResultError(result, $"Các file hình ảnh của combo với id {comboDto.ComboId} không tồn tại");
