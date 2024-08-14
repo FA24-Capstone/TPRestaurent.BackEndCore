@@ -18,6 +18,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> UpdateAccountPhoneNumber(UpdatePhoneRequestDto applicationUser);
         Task<AppActionResult> UpdateAccountInformation(UpdateAccountInformationRequest request);
         Task<AppActionResult> SendOTP(string phoneNumber, OTPType otp);
+        Task<AppActionResult> VerifyForReservation(string phoneNumber, string code);
         Task<AppActionResult> ChangePassword(ChangePasswordDto changePasswordDto);
         Task<AppActionResult> GetAccountByUserId(string id);
         Task<AppActionResult> GetAllAccount(int pageIndex, int pageSize);

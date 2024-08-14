@@ -35,10 +35,16 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.GetAllReservationDetail(reservationId);
         }
 
-        [HttpPost("add-reservation")]
+        [HttpPost("create-reservation")]
         public async Task<AppActionResult> AddReservation([FromBody] ReservationDto dto)
         {
             return await _service.AddReservation(dto);
+        }
+
+        [HttpPut("update-reservation")]
+        public async Task<AppActionResult> UpdateReservation([FromBody] UpdateReservationDto dto)
+        {
+            return await _service.UpdateReservation(dto);
         }
 
         [HttpPost("suggest-table")]
@@ -58,5 +64,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _service.UpdateReservationStatus(reservationId, status);
         }
+
+
     }
 }

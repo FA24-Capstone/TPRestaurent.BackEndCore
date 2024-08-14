@@ -12,6 +12,5 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public DateTime? EndTime { get; set; }
         public int NumOfPeople { get; set; }
         public bool IsPrivate { get; set; }
-        public bool RequiredAirConditioner { get; set; }
     }
 }

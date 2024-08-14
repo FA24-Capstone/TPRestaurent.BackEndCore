@@ -650,7 +650,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-
         public async Task<AppActionResult> SendEmailForActiveCode(string email)
         {
             var result = new AppActionResult();
@@ -1097,10 +1096,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                var accountDb = await _accountRepository.GetByExpression(p => p.Id == customerInforRequest.AccountId);
-                if (accountDb == null)
+                if (string.IsNullOrEmpty(customerInforRequest.AccountId))
                 {
-                    result = BuildAppActionResultError(result, $"Tài khoản với số điện thoại {customerInforRequest.AccountId} không tồn tại!");
+                    var accountDb = await _accountRepository.GetByExpression(p => p.Id == customerInforRequest.AccountId);
+                    if (accountDb == null)
+                    {
+                        result = BuildAppActionResultError(result, $"Tài khoản với số điện thoại {customerInforRequest.AccountId} không tồn tại!");
+                    }
                 }
 
                  var customerInfor = new CustomerInfo
@@ -1218,5 +1220,45 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> VerifyForReservation(string phoneNumber, string code)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var user = await _accountRepository.GetByExpression(p => p.PhoneNumber == phoneNumber && p.IsDeleted == false);
+                if (user == null)
+                {
+                    result = BuildAppActionResultError(result, $"Số điện thoại này không tồn tại!");
+                }
+
+                var optUser = await _otpRepository.GetByExpression(p => p!.Code == code && p.Type == OTPType.VerifyForReservation, p => p.Account!);
+                if (optUser == null)
+                {
+                    result = BuildAppActionResultError(result, $"Mã Otp không tồn tại!");
+                }
+                else if (optUser.IsUsed == true)
+                {
+                    result = BuildAppActionResultError(result, $"Mã Otp này đã được sử dụng!");
+                }
+                else if (optUser.Code != code && user.VerifyCode != code)
+                {
+                    result = BuildAppActionResultError(result, $"Mã Otp không đúng!");
+                }
+
+                if (!BuildAppActionResultIsError(result))
+                {
+                    user!.VerifyCode = null;
+                    optUser.IsUsed = true;
+                    await _otpRepository.Update(optUser);
+                    await _accountRepository.Update(user);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
     }
 }

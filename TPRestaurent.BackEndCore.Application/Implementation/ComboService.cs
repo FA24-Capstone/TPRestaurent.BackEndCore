@@ -55,6 +55,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         StartDate = comboDto.StartDate,
                     };
 
+                    var mainFile = comboDto.MainImg;
+                    if (mainFile == null)
+                    {
+                        result = BuildAppActionResultError(result, $"The main picture of the dish is empty");
+                    }
+                    var mainPathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDb.ComboId}_main.jpg";
+                    var uploadMainPicture = await firebaseService!.UploadFileToFirebase(mainFile, mainPathName);
+                   
+                    comboDb.Image = uploadMainPicture!.Result!.ToString()!;
+
                     List<StaticFile> staticList = new List<StaticFile>();
 
 
@@ -191,6 +201,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
 
 
+
+
+                    var mainPathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDto!.ComboId}.jpg";
+                    var mainImageResult = firebaseService!.DeleteFileFromFirebase(mainPathName);
+                    if (mainImageResult != null)
+                    {
+                        result.Messages.Add("Xóa các file hình ảnh trên cloud thành công");
+                    }
+
+                    var mainFile = comboDto.MainImg;
+                    if (mainFile == null)
+                    {
+                        result = BuildAppActionResultError(result, $"The main picture of the dish is empty");
+                    }
+
+                    var uploadMainPicture = await firebaseService!.UploadFileToFirebase(mainFile, mainPathName);
+
                     var oldFiles = await staticFileRepository!.GetAllDataByExpression(p => p.ComboId == comboDto.ComboId, 0, 0, null, false,null);
                     if (oldFiles.Items == null || !oldFiles.Items.Any())
                     {
@@ -225,6 +252,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     comboDb.StartDate = comboDto.StartDate;
                     comboDb.EndDate = comboDto.EndDate;
                     comboDb.Price = comboDto.Price;
+                    comboDb.Image = uploadMainPicture!.Result!.ToString()!;
 
                     List<StaticFile> staticList = new List<StaticFile>();
                     foreach (var file in comboDto!.ImageFiles!)

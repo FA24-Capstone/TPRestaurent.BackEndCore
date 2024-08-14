@@ -56,11 +56,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         return result;
                     }
 
-                    if (dto.ReservationTableIds.Count() == 0)
-                    {
-                        result = BuildAppActionResultError(result, $"Danh sách đặt bàn không được phép trống");
-                        return result;
-                    }
+                    //if (dto.ReservationTableIds.Count() == 0)
+                    //{
+                    //    result = BuildAppActionResultError(result, $"Danh sách đặt bàn không được phép trống");
+                    //    return result;
+                    //}
 
                     //Add busniness rule for reservation time(if needed)
                     var utility = Resolve<Utility>();
@@ -77,15 +77,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         return result;
                     }
 
-                    var tableRepository = Resolve<IGenericRepository<Table>>();
-                    foreach (var tableId in dto.ReservationTableIds)
-                    {
-                        if ((await tableRepository!.GetById(tableId)) == null)
-                        {
-                            result = BuildAppActionResultError(result, $"Không tìm thấy bàn với id {tableId}");
-                            return result;
-                        }
-                    }
+                    //var tableRepository = Resolve<IGenericRepository<Table>>();
+                    //foreach (var tableId in dto.ReservationTableIds)
+                    //{
+                    //    if ((await tableRepository!.GetById(tableId)) == null)
+                    //    {
+                    //        result = BuildAppActionResultError(result, $"Không tìm thấy bàn với id {tableId}");
+                    //        return result;
+                    //    }
+                    //}
 
                     //var collidedTable = await CheckTableBooking(dto.ReservationTableIds, dto.ReservationDate, dto.EndTime);
 
@@ -132,16 +132,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await _reservationDishRepository.InsertRange(reservationDishes);
                     }
 
-                    List<ReservationTableDetail> reservationTableDetails = new List<ReservationTableDetail>();
-                    dto.ReservationTableIds.ForEach(r => reservationTableDetails.Add(new ReservationTableDetail
-                    {
-                        ReservationTableDetailId = Guid.NewGuid(),
-                        ReservationId = reservation.ReservationId,
-                        TableId = r
-                    }));
+                    //List<ReservationTableDetail> reservationTableDetails = new List<ReservationTableDetail>();
+                    //dto.ReservationTableIds.ForEach(r => reservationTableDetails.Add(new ReservationTableDetail
+                    //{
+                    //    ReservationTableDetailId = Guid.NewGuid(),
+                    //    ReservationId = reservation.ReservationId,
+                    //    TableId = r
+                    //}));
 
-                    var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
-                    await reservationTableDetailRepository!.InsertRange(reservationTableDetails);
+                    //var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
+                    //await reservationTableDetailRepository!.InsertRange(reservationTableDetails);
                     await _unitOfWork.SaveChangesAsync();
                     scope.Complete();
                 }
@@ -206,46 +206,42 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetAvailableTable(DateTime? startTime, DateTime? endTime, int? numOfPeople, int pageNumber, int pageSize)
+        public async Task<AppActionResult> GetAvailableTable(DateTime startTime, DateTime? endTime, int? numOfPeople, int pageNumber, int pageSize)
         {
             AppActionResult result = new AppActionResult();
             try
             {
                 var conditions = new List<Func<Expression<Func<Reservation, bool>>>>();
-                if (startTime.HasValue)
+
+                // !(endTime < r.ReservationDate || r.EndTime < startTime)
+                if (!endTime.HasValue)
                 {
-                    if (endTime.HasValue)
-                    {
-                        conditions.Add(() => r => (r.ReservationDate < endTime
-                                                    && (r.EndTime != null && r.EndTime < startTime || r.EndTime == null
-                                                        && r.ReservationDate.AddHours(SD.DefaultValue.AVERAGE_MEAL_DURATION) < startTime)));
-                    }
-                    else
-                    {
-                        conditions.Add(() => r => (r.ReservationDate < startTime.Value.AddHours(SD.DefaultValue.AVERAGE_MEAL_DURATION)
-                                                    && (r.EndTime != null && r.EndTime < startTime || r.EndTime == null
-                                                        && r.ReservationDate.AddHours(SD.DefaultValue.AVERAGE_MEAL_DURATION) < startTime)));
-                    }
+                    endTime = startTime.AddHours(SD.DefaultValue.AVERAGE_MEAL_DURATION);
                 }
 
-                Expression expression = DynamicLinqBuilder<Reservation>.BuildExpression(conditions);
+                conditions.Add(() => r => !(endTime < r.ReservationDate || (r.EndTime.HasValue && r.EndTime.Value < startTime || !r.EndTime.HasValue && r.ReservationDate.AddHours(SD.DefaultValue.AVERAGE_MEAL_DURATION) < startTime)));
 
-                //Get all collided reservations
+                Expression<Func<Reservation, bool>> expression = r => true; // Default expression to match all
 
-                var unavailableReservation = await _reservationRepository.GetAllDataByExpression((Expression<Func<Reservation, bool>>?)expression, pageNumber, pageSize, null, false, null);
+                if (conditions.Count > 0)
+                {
+                    expression = DynamicLinqBuilder<Reservation>.BuildExpression(conditions);
+                }
 
+                // Get all collided reservations
+                var unavailableReservation = await _reservationRepository.GetAllDataByExpression(expression, pageNumber, pageSize, null, false, null);
                 var tableRepository = Resolve<IGenericRepository<Table>>();
                 if (unavailableReservation!.Items.Count > 0)
                 {
                     var unavailableReservationIds = unavailableReservation.Items.Select(x => x.ReservationId);
                     var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
-                    var reservedTableDb = await reservationTableDetailRepository!.GetAllDataByExpression(r => unavailableReservationIds.Contains(r.ReservationId), 0, 0, null, false, r => r.Table);
+                    var reservedTableDb = await reservationTableDetailRepository!.GetAllDataByExpression(r => unavailableReservationIds.Contains(r.ReservationId), 0, 0, null, false, r => r.Table.TableRating);
                     var reservedTableIds = reservedTableDb.Items!.Select(x => x.TableId);
                     var availableTableDb = await tableRepository!.GetAllDataByExpression(t => !reservedTableIds.Contains(t.TableId), 0, 0, null, false, null);
                     result.Result = availableTableDb;
                 } else
                 {
-                    result.Result = await tableRepository!.GetAllDataByExpression(null, 0, 0, null, false, null);
+                    result.Result = await tableRepository!.GetAllDataByExpression(null, 0, 0, null, false, r => r.TableRating);
                 }
                 //result.Result = availableReservation.Items.Select(x => x.Table);
             }
@@ -256,15 +252,152 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public Task<AppActionResult> RemoveReservation(Guid reservationId)
+        public async Task<AppActionResult> UpdateReservation(UpdateReservationDto dto)
         {
-            throw new NotImplementedException();
-        }
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            {
+                AppActionResult result = new AppActionResult();
+                try
+                {
+                    //Validate
+                    var reservationRepository = Resolve<IGenericRepository<Reservation>>();
+                    var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
+                    var reservationDishRepository = Resolve<IGenericRepository<ReservationDish>>();
+                    var tableRepository = Resolve<IGenericRepository<Table>>();
+                    var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+
+                    var reservationDb = await reservationRepository!.GetById(dto.ReservationId);
+                    if (reservationDb == null)
+                    {
+                        result = BuildAppActionResultError(result, $"Không tìm thấy lịch đặt bàn với id {reservationDb!.ReservationId}");
+                        return result;
+                    }
+
+                    if (dto.AdditionalDeposit.HasValue && dto.AdditionalDeposit < 0)
+                    {
+                        result = BuildAppActionResultError(result, $"Số tiền cọc không hợp lệ");
+                        return result;
+                    }
+
+                    //Add busniness rule for reservation time(if needed)
+                    var utility = Resolve<Utility>();
+                    if (dto.ReservationDate < utility!.GetCurrentDateTimeInTimeZone())
+                    {
+                        result = BuildAppActionResultError(result, "Thời gian đặt bàn không hợp lệ");
+                        return result;
+                    }
+
+                    var accountRepository = Resolve<IGenericRepository<CustomerInfo>>();
+                    if ((await accountRepository!.GetById(reservationDb.CustomerInfoId!)) == null)
+                    {
+                        result = BuildAppActionResultError(result, $"Không tìm thấy  thông tin khách hàng với id {reservationDb.CustomerInfoId}");
+                        return result;
+                    }
+
+                    foreach (var tableId in dto.ReservationTableIds)
+                    {
+                        if ((await tableRepository!.GetById(tableId)) == null)
+                        {
+                            result = BuildAppActionResultError(result, $"Không tìm thấy bàn với id {tableId}");
+                            return result;
+                        }
+                    }
+
+                    var reservationTableDb = await reservationTableDetailRepository!.GetAllDataByExpression(r => r.ReservationId == dto.ReservationId, 0, 0, null, false, null);
+                    //Not yet has table => first time add table from 
+                    if(reservationTableDb.Items.Count == 0)
+                    {
+                        if (dto.ReservationTableIds.Count() == 0)
+                        {
+                            result = BuildAppActionResultError(result, $"Danh sách đặt bàn không được phép trống");
+                            return result;
+                        } 
+                    } else
+                    {
+                        //Already has table reservation -> delete old ones
+                        if(dto.ReservationDishDtos.Count() > 0)
+                        {
+                            await reservationTableDetailRepository.DeleteRange(reservationTableDb.Items);
+                        }
+                    }
+
+                    
+                    reservationDb.NumberOfPeople = dto.NumberOfPeople;
+                    reservationDb.ReservationDate = dto.ReservationDate;
+                    reservationDb.EndTime = dto.EndTime;
+                    reservationDb.Deposit += Math.Max(0, (double)dto.AdditionalDeposit);
+
+                    await _reservationRepository.Update(reservationDb);
 
 
-        public Task<AppActionResult> UpdateReservation(ReservationDto dto)
-        {
-            throw new NotImplementedException();
+
+                    if (dto.ReservationDishDtos.Count() > 0)
+                    {
+                        //Remove old dishes
+                        var reservationDishDetailDb = await reservationDishRepository!.GetAllDataByExpression(r => r.ReservationId == dto.ReservationId, 0, 0, null, false, null);
+                        if(reservationDishDetailDb.Items.Count > 0)
+                        {
+                            var reservationComboIds = reservationDishDetailDb.Items.Where(r => r.ComboId.HasValue).Select(r => r.ReservationDishId).ToList();
+                            var comboOrderDetailDb = await comboOrderDetailRepository!.GetAllDataByExpression(r => reservationComboIds.Contains((Guid)r.ReservationDishId), 0, 0, null, false, null);
+                            if(comboOrderDetailDb.Items.Count > 0)
+                            {
+                                await comboOrderDetailRepository.DeleteRange(comboOrderDetailDb.Items);
+                            }
+                            await reservationDishRepository.DeleteRange(reservationDishDetailDb.Items);
+                        }
+
+
+                        var reservationDishes = new List<ReservationDish>();
+                        var dishComboComboDetailList = new List<ComboOrderDetail>();
+                        Guid reservationDishId = Guid.NewGuid();
+                        dto.ReservationDishDtos.ForEach(r =>
+                        {
+                            reservationDishId = Guid.NewGuid();
+                            reservationDishes.Add(new ReservationDish
+                            {
+                                DishSizeDetailId = r.DishSizeDetailId,
+                                ComboId = (r.Combo != null) ? r.Combo.ComboId : (Guid?)null,
+                                Note = r.Note,
+                                Quantity = r.Quantity,
+                                ReservationId = reservationDb.ReservationId,
+                                ReservationDishId = reservationDishId
+                            });
+
+                            if (r.Combo != null)
+                            {
+                                r.Combo.DishComboIds.ForEach(d => dishComboComboDetailList.Add(new ComboOrderDetail
+                                {
+                                    ComboOrderDetailId = Guid.NewGuid(),
+                                    DishComboId = d,
+                                    ReservationDishId = reservationDishId
+                                }));
+                            }
+                        });
+
+                        await _comboOrderDetailRepository.InsertRange(dishComboComboDetailList);
+                        await _reservationDishRepository.InsertRange(reservationDishes);
+                    }
+
+                    if(dto.ReservationTableIds.Count > 0)
+                    {
+                        var reservationTableDetails = new List<ReservationTableDetail>();
+                        dto.ReservationTableIds.ForEach(r => reservationTableDetails.Add(new ReservationTableDetail
+                        {
+                            TableId = r,
+                            ReservationTableDetailId = Guid.NewGuid(),
+                            ReservationId = dto.ReservationId
+                        }));
+                        await reservationTableDetailRepository!.InsertRange(reservationTableDetails);
+                    }
+                    await _unitOfWork.SaveChangesAsync();
+                    scope.Complete();
+                }
+                catch (Exception ex)
+                {
+                    result = BuildAppActionResultError(result, ex.Message);
+                }
+                return result;
+            }
         }
 
         public async Task<AppActionResult> SuggestTable(SuggestTableDto dto)
@@ -275,14 +408,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 //Validate
                 List<Guid> guids = new List<Guid>();
                 var conditions = new List<Func<Expression<Func<Reservation, bool>>>>();
+                if(dto.NumOfPeople <= 0)
+                {
+                    return BuildAppActionResultError(result, "Số người phải lớn hơn 0!");
+                }
                 //Get All Available Table
-                var availableTableResult = await GetAvailableTable(dto.StartTime, dto.EndTime, null, 0, 0);
+                var availableTableResult = await GetAvailableTable(dto.StartTime, dto.EndTime, dto.NumOfPeople, 0, 0);
                 if (availableTableResult.IsSuccess)
                 {
                     var availableTable = (PagedResult<Table>)availableTableResult.Result!;
                     if (availableTable.Items!.Count > 0)
                     {
-                        result.Result = await GetTables(availableTable.Items, dto.NumOfPeople, dto.RequiredAirConditioner, dto.IsPrivate);
+                        result.Result = await GetTables(availableTable.Items, dto.NumOfPeople, dto.IsPrivate);
                     }
                 }
 
@@ -291,13 +428,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
-
+                result = BuildAppActionResultError(result, ex.Message);
             }
 
             return result;
         }
 
-        public async Task<List<Table>> GetTables(List<Table> allAvailableTables, int quantity, bool requiredAirCondition, bool isPrivate)
+        public async Task<List<Table>> GetTables(List<Table> allAvailableTables, int quantity, bool isPrivate)
         {
             List<Table> result = new List<Table>();
             try
@@ -306,10 +443,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (isPrivate)
                 {
                     tableCode = "V";
-                }
-                else if (requiredAirCondition)
-                {
-                    tableCode = "L";
                 }
 
                 var tableType = allAvailableTables.Where(t => t.TableName.Contains(tableCode)).GroupBy(t => t.TableSizeId)
@@ -321,7 +454,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         if (tableType.ContainsKey(TableSize.TWO) && tableType[TableSize.TWO].Count > 0)
                         {
-                            result.Add(tableType[TableSize.TWO].FirstOrDefault());
+                            result.AddRange(tableType[TableSize.TWO].ToList());
                             return result;
                         }
                     }
@@ -330,7 +463,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         if (tableType.ContainsKey(TableSize.FOUR) && tableType[TableSize.SIX].Count > 0)
                         {
-                            result.Add(tableType[TableSize.FOUR].FirstOrDefault());
+                            result.AddRange(tableType[TableSize.FOUR]);
                             return result;
                         }
                     }
@@ -339,7 +472,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         if (tableType.ContainsKey(TableSize.SIX) && tableType[TableSize.SIX].Count > 0)
                         {
-                            result.Add(tableType[TableSize.SIX].FirstOrDefault());
+                            result.AddRange(tableType[TableSize.SIX]);
                             return result;
                         }
                     }
@@ -349,7 +482,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     if (tableType.ContainsKey(TableSize.EIGHT) && tableType[TableSize.EIGHT].Count > 0)
                     {
-                        result.Add(tableType[TableSize.EIGHT].FirstOrDefault());
+                        result.AddRange(tableType[TableSize.EIGHT]);
                         return result;
                     }
                 }
@@ -358,7 +491,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     if (tableType.ContainsKey(TableSize.TEN) && tableType[TableSize.TEN].Count > 0)
                     {
-                        result.Add(tableType[TableSize.TEN].FirstOrDefault());
+                        result.AddRange(tableType[TableSize.TEN]);
                         return result;
                     }
                 }

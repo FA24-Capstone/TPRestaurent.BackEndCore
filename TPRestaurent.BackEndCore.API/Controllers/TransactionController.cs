@@ -16,7 +16,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             _service = service;
         }
 
-        [HttpPost()]
+        [HttpPost("create-vpn-payment")]
         public async Task<AppActionResult> CreateReservationDepositWithPayment([FromBody]PaymentInformationRequest dto)
         {
             return await _service.CreateReservationDepositWithPayment(dto, HttpContext);

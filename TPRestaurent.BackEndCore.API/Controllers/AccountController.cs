@@ -37,6 +37,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.SendOTP(phoneNumber, otp); 
         }
 
+        [HttpPost("verify-for-reservation")]
+        public async Task<AppActionResult> VerifyForReservation(string phoneNumber, string code)
+        {
+            return await _accountService.VerifyForReservation(phoneNumber, code);
+        }
+
         [HttpGet("get-account-by-user-id/{id}")]
         public async Task<AppActionResult> GetAccountByUserId(string id)
         {

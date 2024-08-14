@@ -17,6 +17,6 @@ namespace TPRestaurent.BackEndCore.Domain.Enums
         ConfirmEmail = 6,
         ConfirmPhone = 7,
         ConfirmPayment = 8,
-
+        VerifyForReservation = 9
     }
 }
