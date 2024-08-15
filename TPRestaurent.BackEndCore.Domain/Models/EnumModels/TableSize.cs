@@ -12,5 +12,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models.EnumModels
         [Key]
         public TPRestaurent.BackEndCore.Domain.Enums.TableSize Id { get; set; }
         public string Name { get; set; } = null!;
+        public string? VietnameseName { get; set; } = null!;
+
     }
 }
