@@ -176,7 +176,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var dishComboDb = await dishComboRepository!.GetAllDataByExpression(p => p.ComboId == comboId, 0, 0, null, false, p => p.DishSizeDetail.Dish!);
                 var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.ComboId == comboId, 0, 0, null, false, null);
 
-                comboResponse.DishCombo = dishComboDb.Items!;
+                comboResponse.DishCombo = dishComboDb.Items.GroupBy(d => d.OptionSetNumber.Value)!.ToDictionary(g => g.Key, g => g.ToList());
                 comboResponse.Imgs = staticFileDb.Items!.Select(s => s.Path).ToList();
                 comboResponse.Combo = comboDb!;
                 result.Result = comboResponse;

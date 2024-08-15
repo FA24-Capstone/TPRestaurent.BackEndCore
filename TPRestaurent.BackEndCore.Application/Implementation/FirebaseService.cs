@@ -58,10 +58,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return _result;
         }
-
-
-
-        public async Task<string> GetUrlImageFromFirebase(string pathFileName)
+       public async Task<string> GetUrlImageFromFirebase(string pathFileName)
         {
             var a = pathFileName.Split("/");
             pathFileName = $"{a[0]}%2F{a[1]}";

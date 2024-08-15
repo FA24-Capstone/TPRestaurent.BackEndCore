@@ -78,6 +78,15 @@ public class MappingConfig
            .ReverseMap();
             ;
 
+
+            config.CreateMap<ConfigurationDto, Configuration>()
+            .ForMember(desc => desc.Name, act => act.MapFrom(src => src.Name))
+            .ForMember(desc => desc.PreValue, act => act.MapFrom(src => src.PreValue))
+            .ForMember(desc => desc.ActiveValue, act => act.MapFrom(src => src.ActiveValue))
+            .ForMember(desc => desc.ActiveDate, act => act.MapFrom(src => src.ActiveDate))
+            .ReverseMap();
+            ;
+
         });
         // Trong class MappingConfig
 

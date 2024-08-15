@@ -10,7 +10,8 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
     public class ComboResponseDto
     {
         public Combo Combo { get; set; } = null!;
-        public List<DishCombo> DishCombo { get; set; } = new List<DishCombo>();
+        public Dictionary<int, List<DishCombo>> DishCombo { get; set; } = new Dictionary<int, List<DishCombo>>();
         public List<string> Imgs { get; set; } = new List<string>();
     }
+
 }
