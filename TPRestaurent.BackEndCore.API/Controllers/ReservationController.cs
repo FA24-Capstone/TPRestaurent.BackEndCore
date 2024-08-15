@@ -54,9 +54,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("calculate-deposit")]
-        public async Task<AppActionResult> CalculateDeposit([FromBody] List<ReservationDishDto> reservationDishDtos)
+        public async Task<AppActionResult> CalculateDeposit([FromBody] CalculateDepositRequest dto)
         {
-            return await _service.CalculateDeposit(reservationDishDtos);
+            return await _service.CalculateDeposit(dto);
         }
 
         [HttpPost("update-reservation-status/{reservationId}/{status}")]

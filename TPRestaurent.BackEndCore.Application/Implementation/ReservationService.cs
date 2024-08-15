@@ -27,17 +27,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly IGenericRepository<Reservation> _reservationRepository;
         private readonly IGenericRepository<ReservationDish> _reservationDishRepository;
         private readonly IGenericRepository<ComboOrderDetail> _comboOrderDetailRepository;
+        private readonly IGenericRepository<Configuration> _configurationRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         public ReservationService(IGenericRepository<Reservation> reservationRepository, 
                                   IGenericRepository<ReservationDish> reservationDishRepository, 
                                   IGenericRepository<ComboOrderDetail> comboOrderDetailRepository,
+                                  IGenericRepository<Configuration> configurationRepository,
                                   IUnitOfWork unitOfWork, 
                                   IMapper mapper, IServiceProvider service) : base(service)
         {
             _reservationRepository = reservationRepository;
             _reservationDishRepository = reservationDishRepository;
             _comboOrderDetailRepository = comboOrderDetailRepository;
+            _configurationRepository = configurationRepository;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
@@ -158,13 +161,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             throw new NotImplementedException();
         }
 
-        public async Task<AppActionResult> CalculateDeposit(List<ReservationDishDto> reservationDishDtos)
+        public async Task<AppActionResult> CalculateDeposit(CalculateDepositRequest dto)
         {
             AppActionResult result = new AppActionResult();
             try
             {
                 double total = 0;
-                if (reservationDishDtos!.Count() > 0)
+                if (dto.reservationDishDtos!.Count() > 0)
                 {
                     var dishRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                     var comboRepository = Resolve<IGenericRepository<Combo>>();
@@ -173,7 +176,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     DishSizeDetail dishDb = null;
                     Combo comboDb = null;
 
-                    foreach (var reservationDish in reservationDishDtos!)
+                    foreach (var reservationDish in dto.reservationDishDtos!)
                     {
                         if (reservationDish.Combo != null)
                         {
@@ -197,7 +200,30 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                     }
                 }
-                result.Result = total * SD.DefaultValue.DEPOSIT_PERCENT;
+                var configurationDb = await _configurationRepository.GetAllDataByExpression(c => c.Name.Equals(SD.DefaultValue.DEPOSIT_PERCENT), 0, 0, null, false, null);
+                if (configurationDb.Items.Count == 0 || configurationDb.Items.Count > 1)
+                {
+                    return BuildAppActionResultError(result, $"Xảy ra lỗi khi lấy thông số cấu hình {SD.DefaultValue.DEPOSIT_PERCENT}");
+                }
+
+                double deposit = total * double.Parse(configurationDb.Items[0].PreValue);
+                string tableTypeDeposit = "";
+                if (dto.IsPrivate)
+                {
+                    tableTypeDeposit = SD.DefaultValue.DEPOSIT_FOR_PRIVATE_TABLE;
+                } else
+                {
+                    tableTypeDeposit = SD.DefaultValue.DEPOSIT_FOR_NORMAL_TABLE;
+
+                }
+                var tableConfigurationDb = await _configurationRepository.GetAllDataByExpression(c => c.Name.Equals(tableTypeDeposit), 0, 0, null, false, null);
+                    if (tableConfigurationDb.Items.Count == 0 || tableConfigurationDb.Items.Count > 1)
+                    {
+                        return BuildAppActionResultError(result, $"Xảy ra lỗi khi lấy thông số cấu hình {tableTypeDeposit}");
+                    }
+                deposit += double.Parse(tableConfigurationDb.Items[0].PreValue);
+
+                result.Result = deposit;
             }
             catch (Exception ex)
             {
@@ -214,12 +240,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var conditions = new List<Func<Expression<Func<Reservation, bool>>>>();
 
                 // !(endTime < r.ReservationDate || r.EndTime < startTime)
+                var configurationDb = await _configurationRepository.GetAllDataByExpression(c => c.Name.Equals(SD.DefaultValue.AVERAGE_MEAL_DURATION), 0, 0, null, false, null);
+                if (configurationDb.Items.Count == 0 || configurationDb.Items.Count > 1)
+                {
+                    return BuildAppActionResultError(result, $"Xảy ra lỗi khi lấy thông số cấu hình {SD.DefaultValue.AVERAGE_MEAL_DURATION}");
+                }
                 if (!endTime.HasValue)
                 {
-                    endTime = startTime.AddHours(SD.DefaultValue.AVERAGE_MEAL_DURATION);
+                    
+                    endTime = startTime.AddHours(double.Parse(configurationDb.Items[0].PreValue));
                 }
 
-                conditions.Add(() => r => !(endTime < r.ReservationDate || (r.EndTime.HasValue && r.EndTime.Value < startTime || !r.EndTime.HasValue && r.ReservationDate.AddHours(SD.DefaultValue.AVERAGE_MEAL_DURATION) < startTime)));
+                conditions.Add(() => r => !(endTime < r.ReservationDate || (r.EndTime.HasValue && r.EndTime.Value < startTime || !r.EndTime.HasValue && r.ReservationDate.AddHours(double.Parse(configurationDb.Items[0].PreValue)) < startTime)));
 
                 Expression<Func<Reservation, bool>> expression = r => true; // Default expression to match all
 

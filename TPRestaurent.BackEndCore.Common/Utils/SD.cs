@@ -82,8 +82,10 @@ public class SD
 
     public class DefaultValue
     {
-        public static double AVERAGE_MEAL_DURATION = 1.5;
-        public static double DEPOSIT_PERCENT = 0.4;
+        public static string AVERAGE_MEAL_DURATION = "AVERAGE_MEAL_DURATION";
+        public static string DEPOSIT_PERCENT = "DEPOSIT_PERCENT";
+        public static string DEPOSIT_FOR_NORMAL_TABLE= "DEPOSIT_FOR_NORMAL_TABLE";
+        public static string DEPOSIT_FOR_PRIVATE_TABLE= "DEPOSIT_FOR_PRIVATE_TABLE";
     }
 
     public class SubjectMail
