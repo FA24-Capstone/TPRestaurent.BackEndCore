@@ -160,10 +160,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
+                List<DishSizeResponse> dishSizeList = new List<DishSizeResponse>();
+                var dishDetailsRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                 var dishList = await _dishRepository
                    .GetAllDataByExpression(p => (p.Name.Contains(keyword) && !string.IsNullOrEmpty(keyword) || string.IsNullOrEmpty(keyword))
                                              && (type.HasValue && p.DishItemTypeId == type || !type.HasValue), pageNumber, pageSize, null, false, p => p.DishItemType!);
-                result.Result = dishList;
+                foreach (var item in dishList.Items!)
+                {
+                    var dishDetailsListDb = await dishDetailsRepository!.GetAllDataByExpression(p => p.DishId == item.DishId, 0, 0, null, false, p => p.DishSize!);
+                    var dishSizeResponse = new DishSizeResponse();
+                    dishSizeResponse.Dish = item;
+                    dishSizeResponse.dishSizeDetails = dishDetailsListDb.Items!;
+                    dishSizeList.Add(dishSizeResponse); 
+                }
+                result.Result = new PagedResult<DishSizeResponse>
+                {
+                    Items = dishSizeList,
+                    TotalPages = dishList.TotalPages,
+                };
             }
             catch (Exception ex)
             {
