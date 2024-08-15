@@ -14,6 +14,9 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public string DevicePassword { get; set; } = null!;     
         public Guid TableId { get; set; }
         [ForeignKey(nameof(TableId))]
-        public Table? Table { get; set; }   
+        public Table? Table { get; set; }
+        public string? AccountId { get; set; }
+        [ForeignKey(nameof(AccountId))]
+        public Account? Account { get; set; }
     }
 }
