@@ -19,6 +19,5 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public string? AccountId { get; set; }
         [ForeignKey(nameof(AccountId))]
         public Account? Account { get; set; }
-
     }
 }

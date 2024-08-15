@@ -19,5 +19,8 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid? CustomerId { get; set; }
         [ForeignKey(nameof(CustomerId))]
         public CustomerInfo? Customer { get; set; }
+        public Guid? TableId { get; set; }  
+        [ForeignKey(nameof(TableId))]       
+        public Table? Table { get; set; }   
     }
 }
