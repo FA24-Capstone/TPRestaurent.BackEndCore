@@ -78,6 +78,47 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return string.Empty;
         }
 
+        public async Task<string> GenerateAccessToken(LoginDeviceRequestDto loginDeviceRequest)
+        {
+            try
+            {
+                var accountRepository = Resolve<IGenericRepository<Account>>();
+                var utility = Resolve<Common.Utils.Utility>();
+                var user = await accountRepository!.GetByExpression(u =>
+                    u!.PhoneNumber.ToLower() == loginRequest.PhoneNumber.ToLower());
+
+                if (user != null)
+                {
+                    var roles = await _userManager.GetRolesAsync(user);
+                    if (roles != null)
+                    {
+                        var claims = new List<Claim>
+                    {
+                        new(ClaimTypes.MobilePhone, loginRequest.PhoneNumber),
+                        new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                        new("AccountId", user.Id)
+                    };
+                        claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role.ToUpper())));
+                        var authenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfiguration.Key!));
+                        var token = new JwtSecurityToken(
+                            _jwtConfiguration.Issuer,
+                            _jwtConfiguration.Audience,
+                            expires: utility!.GetCurrentDateInTimeZone().AddDays(1),
+                            claims: claims,
+                            signingCredentials: new SigningCredentials(authenKey, SecurityAlgorithms.HmacSha512Signature)
+                        );
+                        return new JwtSecurityTokenHandler().WriteToken(token);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, this);
+            }
+
+            return string.Empty;
+        }
+
         public string GenerateRefreshToken()
         {
             var randomNumber = new byte[64];
