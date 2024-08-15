@@ -78,6 +78,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return string.Empty;
         }
 
+        public Task<string> GenerateAccessTokenForDevice(LoginDeviceRequestDto loginDeviceRequestDto)
+        {
+            throw new NotImplementedException();
+        }
+
         public string GenerateRefreshToken()
         {
             var randomNumber = new byte[64];

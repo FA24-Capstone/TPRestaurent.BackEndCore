@@ -20,5 +20,8 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid? TableRatingId { get; set; }
         [ForeignKey(nameof(TableRatingId))]
         public TableRating? TableRating { get; set; }
+        public string? AccountId { get; set; }
+        [ForeignKey(nameof(AccountId))]
+        public Account? Account { get; set; }
     }
 }

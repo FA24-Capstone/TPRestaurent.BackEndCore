@@ -37,5 +37,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GetCustomerInfo(Guid customerId);
         Task<AppActionResult> DeleteCustomerInfo(Guid customerId);
         Task<AppActionResult> SendEmailForActiveCode(string email);
+        Task<AppActionResult> LoginDevice(LoginDeviceRequestDto loginDeviceRequestDto);
     }
 }

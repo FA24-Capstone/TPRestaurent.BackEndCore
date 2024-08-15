@@ -1260,5 +1260,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+        public Task<AppActionResult> LoginDevice(LoginDeviceRequestDto loginDeviceRequestDto)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

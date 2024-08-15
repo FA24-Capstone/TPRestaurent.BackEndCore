@@ -13,7 +13,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         string GenerateRefreshToken();
 
         Task<string> GenerateAccessToken(LoginRequestDto loginRequest);
-
+        Task<string> GenerateAccessTokenForDevice(LoginDeviceRequestDto loginDeviceRequestDto);
         Task<TokenDto> GetNewToken(string refreshToken, string accountId);
     }
 }
