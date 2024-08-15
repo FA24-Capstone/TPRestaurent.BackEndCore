@@ -91,7 +91,14 @@ namespace TPRestaurent.BackEndCore.Domain.Data
                 ConcurrencyStamp = "02962efa-1273-46c0-b103-7167b1742ef3",
                 NormalizedName = "customer"
             });
-           
+            builder.Entity<IdentityRole>().HasData(new IdentityRole
+            {
+                Id = "12962efa-1273-46c0-b103-7167b1742ef3",
+                Name = "DEVICE",
+                ConcurrencyStamp = "12962efa-1273-46c0-b103-7167b1742ef3",
+                NormalizedName = "device"
+            });
+
 
             base.OnModelCreating(builder);
 
