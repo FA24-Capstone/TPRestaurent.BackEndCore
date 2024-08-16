@@ -19,7 +19,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPost("upload")]
         public async Task<AppActionResult> UpdloadFileToFireBase(IFormFile file)
         {
-            string path = $"{SD.FirebasePathName.BASE_URL}{SD.FirebasePathName.DISH_PREFIX}/{Guid.NewGuid()}.jpg";
+            string path = $"{SD.FirebasePathName.DISH_PREFIX}{Guid.NewGuid()}.jpg";
             return await _service.UploadFileToFirebase(file, path);
         }
     }
