@@ -10,6 +10,5 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
     public interface IDeviceService
     {
-        public Task<AppActionResult> AccessDevice(DeviceAccessRequest dto);
     }
 }

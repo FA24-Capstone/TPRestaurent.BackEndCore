@@ -25,7 +25,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly UserManager<Account> _userManager;
         private BackEndLogger _logger;
         private JWTConfiguration _jwtConfiguration;
-        
+
         public JwtService(IUnitOfWork unitOfWork,
             UserManager<Account> userManager,
             IServiceProvider serviceProvider,
@@ -78,9 +78,41 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return string.Empty;
         }
 
-        public Task<string> GenerateAccessTokenForDevice(LoginDeviceRequestDto loginDeviceRequestDto)
+        public async Task<string> GenerateAccessTokenForDevice(LoginDeviceRequestDto loginDeviceRequestDto)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var deviceRepository = Resolve<IGenericRepository<Device>>();
+                var utility = Resolve<Common.Utils.Utility>();
+                var device = await deviceRepository!.GetByExpression(u => u.DeviceCode == loginDeviceRequestDto.DeviceCode, null);
+
+                if (device != null)
+                {
+
+                    var claims = new List<Claim>
+                    {
+                        new(ClaimTypes.NameIdentifier, loginDeviceRequestDto.DeviceCode),
+                        new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                        new("DeviceCode", device.DeviceCode.ToString())
+                    };
+                    claims.Add(new(ClaimTypes.Role, "Device"));
+                    var authenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfiguration.Key!));
+                    var token = new JwtSecurityToken(
+                        _jwtConfiguration.Issuer,
+                        _jwtConfiguration.Audience,
+                        expires: utility!.GetCurrentDateInTimeZone().AddYears(1),
+                        claims: claims,
+                        signingCredentials: new SigningCredentials(authenKey, SecurityAlgorithms.HmacSha512Signature)
+                    );
+                    return new JwtSecurityTokenHandler().WriteToken(token);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, this);
+            }
+
+            return string.Empty;
         }
 
         public string GenerateRefreshToken()

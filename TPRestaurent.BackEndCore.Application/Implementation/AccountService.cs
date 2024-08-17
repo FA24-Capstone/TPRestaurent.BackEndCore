@@ -60,12 +60,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _signInManager = signInManager;
             _emailService = emailService;
             _excelService = excelService;
-            _otpRepository = otpRepository; 
+            _otpRepository = otpRepository;
             _tokenDto = new TokenDto();
             _mapper = mapper;
             _userRoleRepository = userRoleRepository;
             _otpRepository = otpRepository;
-            _customerInfoRepository = customerInfoRepository;   
+            _customerInfoRepository = customerInfoRepository;
         }
 
         public async Task<AppActionResult> Login(LoginRequestDto loginRequest)
@@ -74,18 +74,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var utility = Resolve<Utility>();
-                var currentTime = utility.GetCurrentDateTimeInTimeZone(); 
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
                 var user = await _accountRepository.GetByExpression(u =>
                     u!.PhoneNumber!.ToLower() == loginRequest.PhoneNumber.ToLower() && u.IsDeleted == false);
                 var otpCodeListDb = await _otpRepository.GetAllDataByExpression(p => p.Code == loginRequest.OTPCode && (p.Type == OTPType.Login || p.Type == OTPType.ConfirmPhone) && p.ExpiredTime > currentTime && !p.IsUsed, 0, 0, null, false, null);
 
-                if(otpCodeListDb.Items.Count > 1)
+                if (otpCodeListDb.Items.Count > 1)
                 {
                     result = BuildAppActionResultError(result, "Xảy ra lỗi trong quá trình xử lí, có nhiều hơn 1 otp khả dụng. Vui lòng thử lại sau ít phút");
                     return result;
                 }
 
-                if(otpCodeListDb.Items.Count == 0)
+                if (otpCodeListDb.Items.Count == 0)
                 {
                     result = BuildAppActionResultError(result, "Mã otp đã nhập không khả dụng. Vui lòng thử lại");
                     return result;
@@ -94,10 +94,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if (user == null)
                     result = BuildAppActionResultError(result, $" {loginRequest.PhoneNumber} này không tồn tại trong hệ thống");
-                
+
                 if (user.IsVerified == false)
-                {                  
-                    user.IsVerified= true;
+                {
+                    user.IsVerified = true;
                     user.VerifyCode = null;
                 }
                 if (otpCodeDb!.IsUsed == true)
@@ -169,10 +169,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (!BuildAppActionResultIsError(result))
                 {
                     var emailService = Resolve<IEmailService>();
-                    var smsService = Resolve<ISmsService>();    
+                    var smsService = Resolve<ISmsService>();
                     var random = new Random();
                     var verifyCode = string.Empty;
-                    verifyCode = random.Next(100000, 999999).ToString(); 
+                    verifyCode = random.Next(100000, 999999).ToString();
 
                     var user = new Account
                     {
@@ -236,7 +236,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var customerRepository = Resolve<IGenericRepository<CustomerInfo>>();
                 await customerRepository!.Insert(customer);
                 await _unitOfWork.SaveChangesAsync();
-                isSuccessful = true;    
+                isSuccessful = true;
             }
             catch (Exception ex)
             {
@@ -251,7 +251,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var utility = Resolve<Utility>();
-                var currentTime = utility.GetCurrentDateTimeInTimeZone(); 
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
                 var account =
                     await _accountRepository.GetByExpression(
                         a => a!.PhoneNumber == accountRequest.PhoneNumber!.ToLower());
@@ -296,13 +296,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var utility = Resolve<Utility>();
                 var availableOtp = await _otpRepository.GetAllDataByExpression(o => o.Account.PhoneNumber.Equals(phoneNumber) && otp == o.Type && o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && !o.IsUsed, 0, 0, null, false, null);
-                if (availableOtp.Items.Count > 1) 
+                if (availableOtp.Items.Count > 1)
                 {
                     result = BuildAppActionResultError(result, "Xảy ra lỗi trong quá trình xử lí, có nhiều hơn 1 otp khả dụng. Vui lòng thử lại sau ít phút");
                     return result;
                 }
 
-                if(availableOtp.Items.Count == 1)
+                if (availableOtp.Items.Count == 1)
                 {
                     result.Result = availableOtp.Items[0];
                     return result;
@@ -312,7 +312,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                   a!.PhoneNumber == phoneNumber && a.IsDeleted == false);
                 if (user == null)
                 {
-                    if(otp != OTPType.Register && otp != OTPType.Login)
+                    if (otp != OTPType.Register && otp != OTPType.Login)
                     {
                         result = BuildAppActionResultError(result, "Tài khoản không tồn tại hoặc chưa được xác thực");
                     }
@@ -321,7 +321,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var smsService = Resolve<ISmsService>();
                     string code = "";
-                    
+
                     if ((otp == OTPType.Register || otp == OTPType.Login) && user == null)
                     {
                         var createAccountResult = await RegisterAccountByPhoneNumber(phoneNumber);
@@ -331,7 +331,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return result;
                         }
                         user = (Account?)createAccountResult.Result;
-                        if (user == null) 
+                        if (user == null)
                         {
                             result = BuildAppActionResultError(result, $"Đăng tài khoản cho số điện thoại {phoneNumber} thất bại. Vui lòng thử lại");
                             return result;
@@ -576,16 +576,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var utility = Resolve<Utility>();
                 var user = _userManager.Users.FirstOrDefault(a =>
                     a!.PhoneNumber == dto.PhoneNumber && a.IsDeleted == false && a.IsVerified == true);
-                if (user == null) { 
+                if (user == null)
+                {
                     result = BuildAppActionResultError(result, "Tài khoản không tồn tại hoặc chưa được xác thực!");
                     return result;
                 }
-                var otpCodeListDb = await _otpRepository.GetAllDataByExpression(p => p!.AccountId == user!.Id && p.Type == OTPType.ForgotPassword && p.ExpiredTime > utility.GetCurrentDateTimeInTimeZone(), 0,0, null, false, null);
-                if (otpCodeListDb.Items.Count == 0) 
+                var otpCodeListDb = await _otpRepository.GetAllDataByExpression(p => p!.AccountId == user!.Id && p.Type == OTPType.ForgotPassword && p.ExpiredTime > utility.GetCurrentDateTimeInTimeZone(), 0, 0, null, false, null);
+                if (otpCodeListDb.Items.Count == 0)
                 {
                     result = BuildAppActionResultError(result, "Không tìm thấy mã xác nhận");
                     return result;
-                } else if(otpCodeListDb.Items.Count > 1)
+                }
+                else if (otpCodeListDb.Items.Count > 1)
                 {
                     result = BuildAppActionResultError(result, "Có nhiều hơn 1 mã xác nhận còn hiệu lực. Vui lòng thử lại sau 5 phút");
                     return result;
@@ -700,7 +702,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var code = string.Empty;
 
             var user = await _accountRepository.GetByExpression(a =>
-                a!.PhoneNumber == phoneNumber && a.IsDeleted == false );
+                a!.PhoneNumber == phoneNumber && a.IsDeleted == false);
 
             if (user != null)
             {
@@ -813,7 +815,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var roleListDb = await _userRoleRepository.GetAllDataByExpression(r => r.UserId.Equals(user.Id), 0, 0, null, false, null);
             if (roleListDb.Items == null || roleListDb.Items.Count == 0)
             {
-                roleList = new List<string>();  
+                roleList = new List<string>();
             }
             roleList = roleListDb.Items!.Select(r => r.RoleId).ToList();
 
@@ -822,13 +824,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var roleNameDb = await roleRepository!.GetAllDataByExpression(p => roleList.Contains(p.Id), 0, 0, null, false, null);
             if (roleNameDb.Items!.Count == 0)
             {
-                roleNameList = new List<string>();  
+                roleNameList = new List<string>();
             }
             roleNameList = roleNameDb.Items!.DistinctBy(i => i.Id).Select(i => i.Name).ToList();
             if (roleNameList.Contains("MANAGER"))
             {
                 _tokenDto.MainRole = "MANAGER";
-            }else if (roleNameList.Contains("STAFF"))
+            }
+            else if (roleNameList.Contains("STAFF"))
             {
                 _tokenDto.MainRole = "STAFF";
             }
@@ -1019,7 +1022,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> VerifyNumberAccount(string phoneNumber, string optCode)
         {
             var result = new AppActionResult();
-            try 
+            try
             {
                 var user = await _accountRepository.GetByExpression(p => p.PhoneNumber == phoneNumber && p.IsDeleted == false);
                 if (user == null)
@@ -1028,14 +1031,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var optUser = await _otpRepository.GetByExpression(p => p!.Code == optCode && p.Type == OTPType.ConfirmPhone, p => p.Account!);
-                if (optUser == null) 
+                if (optUser == null)
                 {
                     result = BuildAppActionResultError(result, $"Mã Otp không tồn tại!");
                 }
                 else if (optUser.IsUsed == true)
                 {
                     result = BuildAppActionResultError(result, $"Mã Otp này đã được sử dụng!");
-                }else if (optUser.Code != optCode && user.VerifyCode != optCode)
+                }
+                else if (optUser.Code != optCode && user.VerifyCode != optCode)
                 {
                     result = BuildAppActionResultError(result, $"Mã Otp không đúng!");
                 }
@@ -1105,18 +1109,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                 }
 
-                 var customerInfor = new CustomerInfo
-                 {
+                var customerInfor = new CustomerInfo
+                {
                     CustomerId = Guid.NewGuid(),
-                    Name = customerInforRequest.Name,       
+                    Name = customerInforRequest.Name,
                     PhoneNumber = customerInforRequest.PhoneNumber,
                     AccountId = customerInforRequest.AccountId,
                     Address = customerInforRequest.Address,
                 };
 
                 await _customerInfoRepository.Insert(customerInfor);
-                await _unitOfWork.SaveChangesAsync();   
-                result.Result = customerInfor;  
+                await _unitOfWork.SaveChangesAsync();
+                result.Result = customerInfor;
             }
             catch (Exception ex)
             {
@@ -1141,13 +1145,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result = BuildAppActionResultError(result, $"Thông tin và địa chỉ của {customerInforRequest.CustomerId} không tồn tại!");
                 }
 
-                updateCustomerInfo.Address = customerInforRequest.Address;  
-                updateCustomerInfo.PhoneNumber = customerInforRequest.PhoneNumber;  
+                updateCustomerInfo.Address = customerInforRequest.Address;
+                updateCustomerInfo.PhoneNumber = customerInforRequest.PhoneNumber;
                 updateCustomerInfo.Name = customerInforRequest.Name;
 
                 await _customerInfoRepository.Update(updateCustomerInfo);
-                await _unitOfWork.SaveChangesAsync();   
-                result.Result = updateCustomerInfo;       
+                await _unitOfWork.SaveChangesAsync();
+                result.Result = updateCustomerInfo;
             }
             catch (Exception ex)
             {
@@ -1170,7 +1174,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var customerInforList = await _customerInfoRepository.GetAllDataByExpression(p => p.AccountId == accountId, pageNumber, pageSize, null, false, null);
                 customerInfoResponse.Account = accountDb;
                 customerInfoResponse.CustomerInfo = customerInforList.Items!;
-                result.Result = customerInfoResponse;       
+                result.Result = customerInfoResponse;
             }
             catch (Exception ex)
             {
@@ -1189,7 +1193,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, $"Thông tin và địa chỉ của khách với id {customerId} không tồn tại");
                 }
-                result.Result = customerInfoDb;     
+                result.Result = customerInfoDb;
             }
             catch (Exception ex)
             {
@@ -1261,9 +1265,44 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public Task<AppActionResult> LoginDevice(LoginDeviceRequestDto loginDeviceRequestDto)
+        public async Task<AppActionResult> LoginDevice(LoginDeviceRequestDto loginDeviceRequestDto)
         {
-            throw new NotImplementedException();
+            var result = new AppActionResult();
+            try
+            {
+                var deviceRepository = Resolve<IGenericRepository<Device>>();
+                var device = await deviceRepository!.GetByExpression(p => p.DeviceCode == loginDeviceRequestDto.DeviceCode, null);
+                if (device == null)
+                    result = BuildAppActionResultError(result, $" Thiết bị với {loginDeviceRequestDto.DeviceCode} này không tồn tại trong hệ thống");
+
+                var passwordSignIn = await deviceRepository.GetByExpression(p => p.DeviceCode == loginDeviceRequestDto.DeviceCode && p.DevicePassword == loginDeviceRequestDto.Password);
+                if (passwordSignIn == null) result = BuildAppActionResultError(result, "Đăng nhâp thất bại");
+                if (!BuildAppActionResultIsError(result)) result = await LoginDefaultDevice(loginDeviceRequestDto.DeviceCode, device);
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        private async Task<AppActionResult> LoginDefaultDevice(string deviceCode, Device? device)
+        {
+            var result = new AppActionResult();
+
+            var jwtService = Resolve<IJwtService>();
+            var utility = Resolve<Utility>();
+            var token = await jwtService!.GenerateAccessTokenForDevice(new LoginDeviceRequestDto { DeviceCode = deviceCode });
+
+            _tokenDto.Token = token;
+            _tokenDto.DeviceResponse = _mapper.Map<DeviceResponse>(device);
+            _tokenDto.MainRole = "DEVICE";
+
+            _tokenDto.Account.MainRole = _tokenDto.MainRole;
+            result.Result = _tokenDto;
+            await _unitOfWork.SaveChangesAsync();
+
+            return result;
         }
     }
 }

@@ -12,5 +12,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public string? RefreshToken { get; set; }
         public string? MainRole { get; set; }
         public AccountResponse Account { get; set; }
+        public DeviceResponse? DeviceResponse { get; set; }     
     }
 }
