@@ -78,32 +78,31 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return string.Empty;
         }
 
-        public async Task<string> GenerateAccessToken(LoginDeviceRequestDto loginDeviceRequest)
+        public async Task<string> GenerateAccessTokenForDevice(LoginDeviceRequestDto loginDeviceRequestDto)
         {
             try
             {
-                var accountRepository = Resolve<IGenericRepository<Account>>();
+                var deviceRepository = Resolve<IGenericRepository<Device>>();
                 var utility = Resolve<Common.Utils.Utility>();
-                var user = await accountRepository!.GetByExpression(u =>
-                    u!.PhoneNumber.ToLower() == loginRequest.PhoneNumber.ToLower());
+                var device = await deviceRepository!.GetByExpression(u => u.DeviceCode == loginDeviceRequestDto.DeviceCode, p => p.Account!);
 
-                if (user != null)
+                if (device != null)
                 {
-                    var roles = await _userManager.GetRolesAsync(user);
+                    var roles = await _userManager.GetRolesAsync(device.Account!);
                     if (roles != null)
                     {
                         var claims = new List<Claim>
                     {
-                        new(ClaimTypes.MobilePhone, loginRequest.PhoneNumber),
+                        new(ClaimTypes.NameIdentifier, loginDeviceRequestDto.DeviceCode),
                         new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                        new("AccountId", user.Id)
+                        new("AccountId", device.Account!.Id)
                     };
                         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role.ToUpper())));
                         var authenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfiguration.Key!));
                         var token = new JwtSecurityToken(
                             _jwtConfiguration.Issuer,
                             _jwtConfiguration.Audience,
-                            expires: utility!.GetCurrentDateInTimeZone().AddDays(1),
+                            expires: utility!.GetCurrentDateInTimeZone().AddYears(1),
                             claims: claims,
                             signingCredentials: new SigningCredentials(authenKey, SecurityAlgorithms.HmacSha512Signature)
                         );
