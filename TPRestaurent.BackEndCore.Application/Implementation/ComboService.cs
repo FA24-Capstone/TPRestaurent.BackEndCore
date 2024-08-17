@@ -101,10 +101,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         foreach (var dishId in dishComboDto.ListDishId)
                         {
-                            var dishExisted = await dishSizeDetailRepository!.GetById(dishId);
+                            var dishExisted = await dishSizeDetailRepository!.GetById(dishId.DishSizeDetailId);
                             if (dishExisted == null)
                             {
-                                result = BuildAppActionResultError(result, $"Size món ăn với id {dishId} không tồn tại");
+                                result = BuildAppActionResultError(result, $"Size món ăn với id {dishId.DishSizeDetailId} không tồn tại");
                             }
                             var dishCombo = new DishCombo
                             {
