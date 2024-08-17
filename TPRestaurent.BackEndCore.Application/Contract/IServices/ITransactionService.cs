@@ -11,7 +11,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
     public interface ITransactionService
     {
-        public Task<AppActionResult> CreateReservationDepositWithPayment(PaymentInformationRequest dto, HttpContext context);
-
+        Task<AppActionResult> CreatePayment(PaymentInformationRequest paymentInformationRequest, HttpContext context);
     }
 }
