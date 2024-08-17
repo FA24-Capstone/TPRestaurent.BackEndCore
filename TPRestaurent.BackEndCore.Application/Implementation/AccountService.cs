@@ -1271,22 +1271,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var deviceRepository = Resolve<IGenericRepository<Device>>();
-                var device = await deviceRepository.GetByExpression(p => p.DeviceCode == loginDeviceRequestDto.DeviceCode, p => p.Account!);
-                var user = await _accountRepository.GetByExpression(u => u.Id == device.AccountId && u.IsDeleted == false);
-                if (user == null)
+                var device = await deviceRepository!.GetByExpression(p => p.DeviceCode == loginDeviceRequestDto.DeviceCode, null);
+                if (device == null)
                     result = BuildAppActionResultError(result, $" Thiết bị với {loginDeviceRequestDto.DeviceCode} này không tồn tại trong hệ thống");
 
-                var passwordSignIn = await _signInManager.PasswordSignInAsync(loginRequest.Email, loginRequest.Password, false, false);
-                if (!passwordSignIn.Succeeded) result = BuildAppActionResultError(result, "Đăng nhâp thất bại");
-                if (!BuildAppActionResultIsError(result)) result = await LoginDefaultDevice(loginDeviceRequestDto.DeviceCode, user);
+                var passwordSignIn = await deviceRepository.GetByExpression(p => p.DeviceCode == loginDeviceRequestDto.DeviceCode && p.DevicePassword == loginDeviceRequestDto.Password);
+                if (passwordSignIn == null) result = BuildAppActionResultError(result, "Đăng nhâp thất bại");
+                if (!BuildAppActionResultIsError(result)) result = await LoginDefaultDevice(loginDeviceRequestDto.DeviceCode, device);
             }
             catch (Exception ex)
             {
                 result = BuildAppActionResultError(result, ex.Message);
             }
+            return result;
         }
 
-        private async Task<AppActionResult> LoginDefaultDevice(string deviceCode, Account? user)
+        private async Task<AppActionResult> LoginDefaultDevice(string deviceCode, Device? device)
         {
             var result = new AppActionResult();
 
@@ -1295,7 +1295,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var token = await jwtService!.GenerateAccessTokenForDevice(new LoginDeviceRequestDto { DeviceCode = deviceCode });
 
             _tokenDto.Token = token;
-            _tokenDto.Account = _mapper.Map<AccountResponse>(user);
+            _tokenDto.DeviceResponse = _mapper.Map<DeviceResponse>(device);
             _tokenDto.MainRole = "DEVICE";
 
             _tokenDto.Account.MainRole = _tokenDto.MainRole;

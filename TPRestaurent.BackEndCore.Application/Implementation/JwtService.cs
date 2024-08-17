@@ -25,7 +25,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly UserManager<Account> _userManager;
         private BackEndLogger _logger;
         private JWTConfiguration _jwtConfiguration;
-        
+
         public JwtService(IUnitOfWork unitOfWork,
             UserManager<Account> userManager,
             IServiceProvider serviceProvider,
@@ -84,30 +84,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var deviceRepository = Resolve<IGenericRepository<Device>>();
                 var utility = Resolve<Common.Utils.Utility>();
-                var device = await deviceRepository!.GetByExpression(u => u.DeviceCode == loginDeviceRequestDto.DeviceCode, p => p.Account!);
+                var device = await deviceRepository!.GetByExpression(u => u.DeviceCode == loginDeviceRequestDto.DeviceCode, null);
 
                 if (device != null)
                 {
-                    var roles = await _userManager.GetRolesAsync(device.Account!);
-                    if (roles != null)
-                    {
-                        var claims = new List<Claim>
+
+                    var claims = new List<Claim>
                     {
                         new(ClaimTypes.NameIdentifier, loginDeviceRequestDto.DeviceCode),
                         new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                        new("AccountId", device.Account!.Id)
+                        new("DeviceCode", device.DeviceCode.ToString())
                     };
-                        claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role.ToUpper())));
-                        var authenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfiguration.Key!));
-                        var token = new JwtSecurityToken(
-                            _jwtConfiguration.Issuer,
-                            _jwtConfiguration.Audience,
-                            expires: utility!.GetCurrentDateInTimeZone().AddYears(1),
-                            claims: claims,
-                            signingCredentials: new SigningCredentials(authenKey, SecurityAlgorithms.HmacSha512Signature)
-                        );
-                        return new JwtSecurityTokenHandler().WriteToken(token);
-                    }
+                    claims.Add(new(ClaimTypes.Role, "Device"));
+                    var authenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfiguration.Key!));
+                    var token = new JwtSecurityToken(
+                        _jwtConfiguration.Issuer,
+                        _jwtConfiguration.Audience,
+                        expires: utility!.GetCurrentDateInTimeZone().AddYears(1),
+                        claims: claims,
+                        signingCredentials: new SigningCredentials(authenKey, SecurityAlgorithms.HmacSha512Signature)
+                    );
+                    return new JwtSecurityTokenHandler().WriteToken(token);
                 }
             }
             catch (Exception ex)

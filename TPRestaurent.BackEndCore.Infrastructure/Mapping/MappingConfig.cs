@@ -25,6 +25,14 @@ public class MappingConfig
                 .ForMember(desc => desc.Avatar, act => act.MapFrom(src => src.Avatar))
                 ;
 
+            config.CreateMap<Device, DeviceResponse>()
+            .ForMember(desc => desc.DeviceId, act => act.MapFrom(src => src.DeviceId))
+            .ForMember(desc => desc.DeviceCode, act => act.MapFrom(src => src.DeviceCode))
+            .ForMember(desc => desc.DevicePassword, act => act.MapFrom(src => src.DevicePassword))
+            .ForMember(desc => desc.TableId, act => act.MapFrom(src => src.TableId))
+            .ReverseMap()   
+            ;
+
             config.CreateMap<Dish, DishDto>()
              .ForMember(desc => desc.Name, act => act.MapFrom(src => src.Name))
              .ForMember(desc => desc.Description, act => act.MapFrom(src => src.Description))
