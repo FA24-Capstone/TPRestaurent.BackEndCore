@@ -16,10 +16,10 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             _service = service;
         }
 
-        [HttpPost("access-device")]
-        public async Task<AppActionResult> AccessDevice([FromBody] DeviceAccessRequest dto)
-        {
-            return await _service.AccessDevice(dto);
-        }
+        //[HttpPost("access-device")]
+        //public async Task<AppActionResult> AccessDevice([FromBody] DeviceAccessRequest dto)
+        //{
+        //    return await _service.AccessDevice(dto);
+        //}
     }
 }
