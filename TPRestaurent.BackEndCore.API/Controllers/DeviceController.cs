@@ -18,7 +18,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             _service = service;
         }
 
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "DEVICE")]
+        [HttpGet("get-all-device")]
+        public async Task<AppActionResult> GetAllDevice(int pageNumber = 1, int pageIndex = 10)
+        {
+            return await _service.GetAllDevice(pageNumber, pageIndex);      
+        }
+
         [HttpGet("get-device-by-id/{deviceId}")]
         public async Task<AppActionResult> GetDeviceById(Guid deviceId)
         {
