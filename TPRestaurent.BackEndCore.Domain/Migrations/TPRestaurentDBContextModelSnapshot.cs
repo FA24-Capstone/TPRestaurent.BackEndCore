@@ -210,9 +210,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid?>("CustomerId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("DeviceId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -280,8 +277,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
-
-                    b.HasIndex("DeviceId");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -582,9 +577,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("AccountId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("DeviceCode")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -597,8 +589,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("DeviceId");
-
-                    b.HasIndex("AccountId");
 
                     b.HasIndex("TableId");
 
@@ -1802,13 +1792,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .WithMany()
                         .HasForeignKey("CustomerId");
 
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Device", "Device")
-                        .WithMany()
-                        .HasForeignKey("DeviceId");
-
                     b.Navigation("Customer");
-
-                    b.Navigation("Device");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Blog", b =>
@@ -1926,17 +1910,11 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Device", b =>
                 {
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "Account")
-                        .WithMany()
-                        .HasForeignKey("AccountId");
-
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Table", "Table")
                         .WithMany()
                         .HasForeignKey("TableId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Account");
 
                     b.Navigation("Table");
                 });

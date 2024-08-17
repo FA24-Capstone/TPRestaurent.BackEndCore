@@ -12,8 +12,8 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    [Migration("20240817050934_initData")]
-    partial class initData
+    [Migration("20240817070006_Init")]
+    partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -212,9 +212,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid?>("CustomerId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("DeviceId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -282,8 +279,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
-
-                    b.HasIndex("DeviceId");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -1799,13 +1794,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .WithMany()
                         .HasForeignKey("CustomerId");
 
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Device", "Device")
-                        .WithMany()
-                        .HasForeignKey("DeviceId");
-
                     b.Navigation("Customer");
-
-                    b.Navigation("Device");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Blog", b =>
