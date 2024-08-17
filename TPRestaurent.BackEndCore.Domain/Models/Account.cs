@@ -19,8 +19,5 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid? CustomerId { get; set; }
         [ForeignKey(nameof(CustomerId))]
         public CustomerInfo? Customer { get; set; }
-        public Guid? DeviceId { get; set; }  
-        [ForeignKey(nameof(DeviceId))]       
-        public Device? Device { get; set; }   
     }
 }
