@@ -12,7 +12,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
     public interface IComboService
     {
         Task<AppActionResult> CreateCombo(ComboDto comboDto);
-        Task<AppActionResult> UpdateCombo(UpdateComboDto comboDto);
+        //Task<AppActionResult> UpdateCombo(UpdateComboDto comboDto);
         Task<AppActionResult> DeleteComboById(Guid comboId);
         Task<AppActionResult> GetComboById(Guid comboId);
         public Task<AppActionResult> GetAllCombo(string? keyword, int pageNumber, int pageSize);

@@ -40,10 +40,10 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _comboService.DeleteComboById(comboId);        
         }
 
-        [HttpPut("update-combo")]
-        public async Task<AppActionResult> UpdateCombo([FromForm] UpdateComboDto comboDto)
-        {
-            return await _comboService.UpdateCombo(comboDto);   
-        }
+        //[HttpPut("update-combo")]
+        //public async Task<AppActionResult> UpdateCombo([FromForm] UpdateComboDto comboDto)
+        //{
+        //    return await _comboService.UpdateCombo(comboDto);   
+        //}
     }
 }
