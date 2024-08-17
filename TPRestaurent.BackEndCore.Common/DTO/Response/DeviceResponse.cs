@@ -14,7 +14,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public string DeviceCode { get; set; } = null!;
         public string DevicePassword { get; set; } = null!;
         public Guid TableId { get; set; }
-        public List<IdentityRole> Roles { get; set; }
         public string MainRole { get; set; }
     }
 }

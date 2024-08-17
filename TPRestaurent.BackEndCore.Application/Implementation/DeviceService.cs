@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
@@ -109,7 +110,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _tokenDto.DeviceResponse = _mapper.Map<DeviceResponse>(device);
             _tokenDto.MainRole = "DEVICE";
 
-            _tokenDto.Account.MainRole = _tokenDto.MainRole;
+            _tokenDto.DeviceResponse.MainRole = _tokenDto.MainRole;
             result.Result = _tokenDto;
             await _unitOfWork.SaveChangesAsync();
 

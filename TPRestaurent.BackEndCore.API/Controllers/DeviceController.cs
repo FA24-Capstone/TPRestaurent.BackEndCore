@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
@@ -16,6 +18,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             _service = service;
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "DEVICE")]
         [HttpGet("get-device-by-id/{deviceId}")]
         public async Task<AppActionResult> GetDeviceById(Guid deviceId)
         {
