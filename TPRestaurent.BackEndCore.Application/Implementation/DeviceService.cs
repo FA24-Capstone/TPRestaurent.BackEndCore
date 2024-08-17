@@ -58,6 +58,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> GetAllDevice(int pageNumber, int pageIndex)
+        {
+            var result = new AppActionResult();     
+            try
+            {
+                var deviceDb = await _repository.GetAllDataByExpression(null, pageNumber, pageIndex, null, false, p => p.Table!);
+                result.Result = deviceDb;       
+            }
+            catch (Exception ex) 
+            { 
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
         public async Task<AppActionResult> GetDeviceById(Guid deviceId)
         {
             var result = new AppActionResult();
