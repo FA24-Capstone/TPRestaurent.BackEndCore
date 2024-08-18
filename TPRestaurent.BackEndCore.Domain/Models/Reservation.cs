@@ -20,6 +20,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public CustomerInfo? CustomerInfo { get; set; }
         public double Deposit { get; set; }
         public string? Note { get; set; }
+        public bool IsPrivate { get; set; }
         public Enums.ReservationStatus StatusId { get; set; }
         [ForeignKey(nameof(StatusId))]
         public EnumModels.ReservationStatus? ReservationStatus { get; set; }

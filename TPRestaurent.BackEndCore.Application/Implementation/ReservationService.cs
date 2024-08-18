@@ -208,14 +208,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 double deposit = total * double.Parse(configurationDb.Items[0].PreValue);
                 string tableTypeDeposit = SD.DefaultValue.DEPOSIT_FOR_NORMAL_TABLE;
-                //if (dto.IsPrivate)
-                //{
-                //    tableTypeDeposit = SD.DefaultValue.DEPOSIT_FOR_PRIVATE_TABLE;
-                //} else
-                //{
-                //    tableTypeDeposit = SD.DefaultValue.DEPOSIT_FOR_NORMAL_TABLE;
+                if (dto.IsPrivate)
+                {
+                    tableTypeDeposit = SD.DefaultValue.DEPOSIT_FOR_PRIVATE_TABLE;
+                }
+                else
+                {
+                    tableTypeDeposit = SD.DefaultValue.DEPOSIT_FOR_NORMAL_TABLE;
 
-                //}
+                }
                 var tableConfigurationDb = await _configurationRepository.GetAllDataByExpression(c => c.Name.Equals(tableTypeDeposit), 0, 0, null, false, null);
                     if (tableConfigurationDb.Items.Count == 0 || tableConfigurationDb.Items.Count > 1)
                     {
