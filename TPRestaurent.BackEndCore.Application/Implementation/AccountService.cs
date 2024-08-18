@@ -1112,9 +1112,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var customerInfoDb = await _customerInfoRepository.GetAllDataByExpression(c => c.PhoneNumber.Equals(customerInforRequest.PhoneNumber), 0, 0, null, false, null);
-                if (customerInfoDb.Items.Count > 0)
+                if (customerInfoDb.Items.Count > 1)
+                {
+                    result = BuildAppActionResultError(result, $"Có nhiều hơn 1 thông tin người dùng với sđt {customerInforRequest.PhoneNumber} đã tồn tại");
+                    return result;
+                }
+
+                if (customerInfoDb.Items.Count == 1)
                 {
                     result = BuildAppActionResultError(result, $"Thông tin người dùng với sđt {customerInforRequest.PhoneNumber} đã tồn tại");
+                    result.Result = customerInfoDb;
                     return result;
                 }
 
@@ -1132,7 +1139,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 
                 await _customerInfoRepository.Insert(customerInfor);
                 await _unitOfWork.SaveChangesAsync();
-                await SendCustomerInfoOTP(customerInfor.CustomerId, OTPType.Register);
+                await SendCustomerInfoOTP(customerInfor.PhoneNumber, OTPType.Register);
                 result.Result = customerInfor;
             }
             catch (Exception ex)
@@ -1142,20 +1149,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GenerateCustomerInfoOTP(Guid CustomerInfoId, OTPType otpType)
+        public async Task<AppActionResult> GenerateCustomerInfoOTP(CustomerInfo customerDb, OTPType otpType)
         {
             AppActionResult result = new AppActionResult();
             try
             {
                 //Check Customermust be unverified
-                var customerDb = await _customerInfoRepository.GetById(CustomerInfoId);
                 if (customerDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"Không tìm thấy thông tin người dùng với id {CustomerInfoId}");
+                    result = BuildAppActionResultError(result, $"Không tìm thấy thông tin người dùng với id {customerDb.CustomerId}");
                     return result;
                 }
 
-                if (customerDb.IsVerified)
+                if (customerDb.IsVerified && otpType == OTPType.Register)
                 {
                     result = BuildAppActionResultError(result, $"Thông tin người dùng đã được xác thực");
                     return result;
@@ -1168,7 +1174,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     OTPId = Guid.NewGuid(),
                     Type = otpType,
-                    CustomerInfoId = CustomerInfoId,
+                    CustomerInfoId = customerDb.CustomerId,
                     Code = code,
                     ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
                     IsUsed = false,
@@ -1184,17 +1190,25 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> SendCustomerInfoOTP(Guid CustomerInfoId, OTPType otpType)
+        public async Task<AppActionResult> SendCustomerInfoOTP(string phoneNumber, OTPType otpType)
         {
             AppActionResult result = new AppActionResult();
             try
             {
-                var customerDb = await _customerInfoRepository.GetById(CustomerInfoId);
-                if (customerDb == null)
+                var customerListDb = await _customerInfoRepository.GetAllDataByExpression(c => c.PhoneNumber.Equals(phoneNumber), 0,0, null, false, null);
+
+                if (customerListDb.Items.Count > 1)
                 {
-                    result = BuildAppActionResultError(result, $"Không tìm thấy thông tin người dùng với id {CustomerInfoId}");
+                    result = BuildAppActionResultError(result, $"Xảy ra lỗi khi tìm thông tin người dùng với sđt {phoneNumber}");
                     return result;
                 }
+
+                if (customerListDb.Items.Count == 0)
+                {
+                    result = BuildAppActionResultError(result, $"Không tìm thấy thông tin người dùng với sđt {phoneNumber}");
+                    return result;
+                }
+                var customerDb = customerListDb.Items[0];
                 if (otpType == OTPType.Register) 
                 {
                     if (customerDb.IsVerified)
@@ -1214,10 +1228,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var otpRepository = Resolve<IGenericRepository<OTP>>();
                 var utility = Resolve<Utility>();
-                var availableOTPDb = await otpRepository.GetAllDataByExpression(o => o.CustomerInfoId == CustomerInfoId && !o.IsUsed && o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && o.Type == otpType, 0,0, null, false, null);
+                var availableOTPDb = await otpRepository.GetAllDataByExpression(o => o.CustomerInfo.PhoneNumber == phoneNumber && !o.IsUsed && o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && o.Type == otpType, 0,0, null, false, null);
                 if (availableOTPDb.Items.Count > 1)
                 {
-                    result = BuildAppActionResultError(result, $"Xảy ra lỗi vì có nhiều hơn  mã OTP hữu dụng tồn tại trong hệ thống. Vui lòng thử lại sau");
+                    result = BuildAppActionResultError(result, $"Xảy ra lỗi vì có nhiều hơn mã OTP hữu dụng tồn tại trong hệ thống. Vui lòng thử lại sau");
                     return result;
                 }
 
@@ -1227,7 +1241,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return result;
                 }
 
-                var otp = await GenerateCustomerInfoOTP(customerDb.CustomerId, otpType);
+                var otp = await GenerateCustomerInfoOTP(customerDb, otpType);
                 if (!otp.IsSuccess)
                 {
                     return BuildAppActionResultError(result, $"Tạo OTP thất bại. Vui lòng thử lại");
@@ -1239,7 +1253,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var smsService = Resolve<ISmsService>();
                 var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {customerDb.VerifyCode}",
                     customerDb.PhoneNumber);
-                result.Result = customerDb.VerifyCode;
+                result.Result = customerDb;
             }
             catch (Exception ex)
             {
@@ -1417,12 +1431,40 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (!BuildAppActionResultIsError(result))
                 {
                     user!.VerifyCode = null;
+                    if (otpType == OTPType.Register)
+                    {
+                        user.IsVerified = true;
+                    }
                     await _customerInfoRepository.Update(user);
 
                     optUser.IsUsed = true;
                     await _otpRepository.Update(optUser);
                     await _unitOfWork.SaveChangesAsync();
                 }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetCustomerInfoByPhoneNumber(string phoneNumber)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var customerInfoDb = await _customerInfoRepository.GetAllDataByExpression(c => c.PhoneNumber.Equals(phoneNumber), 0, 0, null, false, null);
+                if (customerInfoDb.Items.Count > 0)
+                {
+                    return BuildAppActionResultError(result, $"Có nhiều hơn 1 thông tin người dùng với số điện thoại {phoneNumber}");
+                }
+
+                if (customerInfoDb.Items.Count == 0)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy thông tin người dùng với số điện thoại {phoneNumber}");
+                }
+                result.Result = customerInfoDb;
             }
             catch (Exception ex)
             {

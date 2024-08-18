@@ -159,9 +159,15 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("send-customer-info-otp")]
-        public async Task<AppActionResult> SendCustomerInfoOTP(Guid customerInfoId, OTPType otpType)
+        public async Task<AppActionResult> SendCustomerInfoOTP(string phoneNumber, OTPType otpType)
         {
-            return await _accountService.SendCustomerInfoOTP(customerInfoId, otpType);
+            return await _accountService.SendCustomerInfoOTP(phoneNumber, otpType);
+        }
+
+        [HttpPost("get-customer-info-by-phonenumber")]
+        public async Task<AppActionResult> GetCustomerInfoByPhoneNumber(string phoneNumber)
+        {
+            return await _accountService.GetCustomerInfoByPhoneNumber(phoneNumber);
         }
 
 

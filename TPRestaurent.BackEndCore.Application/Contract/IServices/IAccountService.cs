@@ -38,9 +38,10 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GetCustomerInfo(Guid customerId);
         Task<AppActionResult> DeleteCustomerInfo(Guid customerId);
         Task<AppActionResult> SendEmailForActiveCode(string email);
-        Task<AppActionResult> GenerateCustomerInfoOTP(Guid CustomerInfoId, OTPType otpType);
+        Task<AppActionResult> GenerateCustomerInfoOTP(CustomerInfo customerInfo, OTPType otpType);
         Task<AppActionResult> VerifyCustomerInfoOTP(string phoneNUmber, string code, OTPType otpType);
-        Task<AppActionResult> SendCustomerInfoOTP(Guid CustomerInfoId, OTPType otpType);
+        Task<AppActionResult> SendCustomerInfoOTP(string phoneNumber, OTPType otpType);
+        Task<AppActionResult> GetCustomerInfoByPhoneNumber(string phoneNumber);
 
     }
 }
