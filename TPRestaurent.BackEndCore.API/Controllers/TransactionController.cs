@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Payment.PaymentRequest;
 using TPRestaurent.BackEndCore.Common.DTO.Payment.PaymentRespone;
+using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
@@ -18,9 +19,21 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("create-vpn-payment")]
-        public async Task<AppActionResult> CreateReservationDepositWithPayment([FromBody] PaymentInformationRequest dto)
+        public async Task<AppActionResult> CreateReservationDepositWithPayment([FromBody] PaymentRequestDto paymentRequest)
         {
-            return await _service.CreatePayment(dto, HttpContext);
+            return await _service.CreatePayment(paymentRequest, HttpContext);
+        }
+
+        [HttpGet("get-all-payment/{pageIndex}/{pageSize}")]
+        public async Task<AppActionResult> GetAllPayment(int pageIndex, int pageSize)
+        {
+            return await _service.GetAllPayment(pageIndex, pageSize);       
+        }
+
+        [HttpGet("get-payment-by-id/{paymentId}")]
+        public async Task<AppActionResult> GetPaymentById(Guid paymentId)
+        {
+            return await _service.GetPaymentById(paymentId);    
         }
 
         [HttpGet("VNPayIpn")]

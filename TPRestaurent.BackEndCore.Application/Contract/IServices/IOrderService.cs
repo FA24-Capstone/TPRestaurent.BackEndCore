@@ -13,6 +13,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
     public interface IOrderService
     {
         public Task<AppActionResult> GetAllOrderByAccountId(string accountId, Domain.Enums.OrderStatus? status, int pageNumber, int paeSize);
+        public Task<AppActionResult> GetAllOrderByPhoneNumber(string phoneNumber, int pageNumber, int pageSize);
         public Task<AppActionResult> GetOrderDetail(Guid orderId);
         public Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto);
         public Task<AppActionResult> CompleteOrder(OrderPaymentRequestDto orderRequestDto);

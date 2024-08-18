@@ -1,4 +1,5 @@
 ﻿using Castle.Core.Internal;
+using MailKit.Search;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
@@ -16,9 +17,11 @@ using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.ConfigurationModel;
 using TPRestaurent.BackEndCore.Common.DTO.Payment.PaymentLibrary;
 using TPRestaurent.BackEndCore.Common.DTO.Payment.PaymentRequest;
+using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Models;
+using Twilio.Rest.Verify.V2.Service.Entity;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -40,7 +43,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         }
 
 
-        public async Task<AppActionResult> CreatePayment(PaymentInformationRequest paymentInformationRequest, HttpContext context)
+        public async Task<AppActionResult> CreatePayment(PaymentRequestDto paymentRequest, HttpContext context)
         {
             AppActionResult result = new AppActionResult();
             using (var scope = new System.Transactions.TransactionScope(System.Transactions.TransactionScopeAsyncFlowOption.Enabled))
@@ -48,28 +51,41 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 try
                 {
                     var paymentGatewayService = Resolve<IPaymentGatewayService>();
+                    var reservationRepository = Resolve<IGenericRepository<Reservation>>();
+                    var orderRepository = Resolve<IGenericRepository<Order>>();     
                     var utility = Resolve<Utility>();
                     var transaction = new Transaction();
                     string paymentUrl = "";
-                    if (paymentInformationRequest.OrderID == null || paymentInformationRequest.ReservationID == null)
+                    if (paymentRequest.OrderId == null || paymentRequest.ReservationId == null)
                     {
-                        result = BuildAppActionResultError(result, $"Hóa đơn với khách hàng tên {paymentInformationRequest.CustomerName}");
+                        result = BuildAppActionResultError(result, $"Đơn hàng này không tồn tại");
                     }
                     if (!BuildAppActionResultIsError(result))
                     {
 
-                        switch (paymentInformationRequest.PaymentMethod)
+                        switch (paymentRequest.PaymentMethod)
                         {
                             case Domain.Enums.PaymentMethod.VNPAY:
-                                if (!string.IsNullOrEmpty(paymentInformationRequest.ReservationID))
+                                if (paymentRequest.ReservationId.HasValue)
                                 {
+                                    var reservationDb = await reservationRepository!.GetById(paymentRequest.ReservationId);
+
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
-                                        Amount = paymentInformationRequest.Amount,
+                                        Amount = reservationDb.Deposit,
                                         PaymentMethodId = Domain.Enums.PaymentMethod.VNPAY,
-                                        ReservationId = Guid.Parse(paymentInformationRequest.ReservationID),
+                                        ReservationId =  reservationDb.ReservationId,   
                                         Date = utility!.GetCurrentDateTimeInTimeZone()
+                                    };
+
+                                    PaymentInformationRequest paymentInformationRequest = new Common.DTO.Payment.PaymentRequest.PaymentInformationRequest
+                                    {
+                                        ReservationID = reservationDb.ReservationId.ToString(),
+                                        Amount = reservationDb.Deposit,
+                                        CustomerName = reservationDb.CustomerInfo.Name,
+                                        AccountID = reservationDb.CustomerInfo.AccountId,   
+                                        PaymentMethod = paymentRequest.PaymentMethod,   
                                     };
 
                                     await _repository.Insert(transaction);
@@ -77,16 +93,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                     result.Result = paymentUrl;
                                 }
-                                else if (!string.IsNullOrEmpty(paymentInformationRequest.OrderID))
+                                else if (paymentRequest.OrderId.HasValue)
                                 {
+                                    var orderDb = await orderRepository!.GetById(paymentRequest.OrderId);       
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
-                                        Amount = paymentInformationRequest.Amount,
+                                        Amount = orderDb.TotalAmount,
                                         PaymentMethodId = Domain.Enums.PaymentMethod.VNPAY,
-                                        OrderId = Guid.Parse(paymentInformationRequest.OrderID),
+                                        OrderId = orderDb.OrderId,
                                         Date = utility!.GetCurrentDateTimeInTimeZone()
                                     };
+
+                                    var paymentInformationRequest = new PaymentInformationRequest
+                                    {
+                                        OrderID = orderDb.OrderId.ToString(),
+                                        PaymentMethod = paymentRequest.PaymentMethod,
+                                        Amount = orderDb.TotalAmount,
+                                        CustomerName = orderDb!.CustomerInfo!.Name,
+                                        AccountID = orderDb.CustomerInfo.AccountId,
+                                    };
+
 
                                     await _repository.Insert(transaction);
                                     paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest, context);
@@ -96,15 +123,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 break;
 
                             case Domain.Enums.PaymentMethod.MOMO:
-                                if (!string.IsNullOrEmpty(paymentInformationRequest.ReservationID))
+                                if (paymentRequest.ReservationId.HasValue)
                                 {
+                                    var reservationDb = await reservationRepository!.GetById(paymentRequest.ReservationId);
+
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
-                                        Amount = paymentInformationRequest.Amount,
+                                        Amount = reservationDb.Deposit,
                                         PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
-                                        ReservationId = Guid.Parse(paymentInformationRequest.ReservationID),
+                                        ReservationId = reservationDb.ReservationId,    
                                         Date = utility!.GetCurrentDateTimeInTimeZone()
+                                    };
+
+                                    var paymentInformationRequest = new PaymentInformationRequest
+                                    {
+                                        ReservationID = reservationDb.ReservationId.ToString(),     
+                                        PaymentMethod = paymentRequest.PaymentMethod,
+                                        Amount = reservationDb.Deposit,
+                                        CustomerName = reservationDb.CustomerInfo!.Name,
+                                        AccountID = reservationDb.CustomerInfo.AccountId,
                                     };
 
                                     string endpoint = _momoConfiguration.Api;
@@ -163,29 +201,31 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         result.Result = jmessage.GetValue("payUrl").ToString();
                                     }
                                 }
-                                else if (!string.IsNullOrEmpty(paymentInformationRequest.OrderID))
+                                else if (paymentRequest.OrderId.HasValue)
                                 {
+                                    var orderDb = await orderRepository!.GetById(paymentRequest.OrderId);
+
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
-                                        Amount = paymentInformationRequest.Amount,
+                                        Amount = orderDb.TotalAmount,
                                         PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
-                                        OrderId = Guid.Parse(paymentInformationRequest.OrderID),
+                                        OrderId = orderDb.OrderId,
                                         Date = utility!.GetCurrentDateTimeInTimeZone()
                                     };
                                     string endpoint = _momoConfiguration.Api;
                                     string partnerCode = _momoConfiguration.PartnerCode;
                                     string accessKey = _momoConfiguration.AccessKey;
                                     string secretkey = _momoConfiguration.Secretkey;
-                                    string orderInfo = $"Khach hang: {transaction.Reservation.CustomerInfo.Name} thanh toan hoa don {transaction.ReservationId}";
-                                    string redirectUrl = $"{_momoConfiguration.RedirectUrl}/{transaction.ReservationId}";
+                                    string orderInfo = $"Khach hang: {transaction.Order.CustomerInfo.Name} thanh toan hoa don {orderDb.OrderId}";
+                                    string redirectUrl = $"{_momoConfiguration.RedirectUrl}/{transaction.OrderId}";
                                     string ipnUrl = _momoConfiguration.IPNUrl;
                                     string requestType = "captureWallet";
 
                                     string amount = Math.Ceiling(transaction.Amount).ToString();
                                     string orderId = Guid.NewGuid().ToString();
                                     string requestId = Guid.NewGuid().ToString();
-                                    string extraData = transaction.ReservationId.ToString();
+                                    string extraData = transaction.OrderId.ToString();
 
                                     string rawHash = "accessKey=" + accessKey +
                                                      "&amount=" + amount +
@@ -233,26 +273,30 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                             default:
                                 // Handle other payment methods if needed
-                                if (!string.IsNullOrEmpty(paymentInformationRequest.ReservationID))
+                                if (paymentRequest.ReservationId.HasValue)
                                 {
+                                    var reservationDb = await reservationRepository!.GetById(paymentRequest.ReservationId);
+
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
-                                        Amount = paymentInformationRequest.Amount,
-                                        PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
-                                        OrderId = Guid.Parse(paymentInformationRequest.OrderID),
+                                        Amount = reservationDb.Deposit,
+                                        PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
+                                        ReservationId = reservationDb.ReservationId,    
                                         Date = utility!.GetCurrentDateTimeInTimeZone()
                                     };
                                     await _repository.Insert(transaction);
                                 }
-                                else if (!string.IsNullOrEmpty(paymentInformationRequest.OrderID))
+                                else if (paymentRequest.OrderId.HasValue)
                                 {
+                                    var orderDb = await orderRepository!.GetById(paymentRequest.OrderId);
+
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
-                                        Amount = paymentInformationRequest.Amount,
-                                        PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
-                                        OrderId = Guid.Parse(paymentInformationRequest.OrderID),
+                                        Amount = orderDb.TotalAmount,
+                                        PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
+                                        OrderId = orderDb.OrderId,
                                         Date = utility!.GetCurrentDateTimeInTimeZone()
                                     };
                                     await _repository.Insert(transaction);

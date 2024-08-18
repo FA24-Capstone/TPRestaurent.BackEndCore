@@ -17,10 +17,16 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             _service = service;
         }
 
-        [HttpGet("get-order-by-account-id/{accountId}")]
+        [HttpGet("get-order-by-account-id/{accountId}/{pageNumber}/{pageSize}")]
         public async Task<AppActionResult> GetAllOrderByAccountId(string accountId, Domain.Enums.OrderStatus? status, int pageNumber = 1, int pageSize = 10)
         {
             return await _service.GetAllOrderByAccountId(accountId, status, 1, 10);
+        }
+
+        [HttpGet("get-all-order-by-phone-number/{pageNumber}/{pageSize}")]
+        public async Task<AppActionResult> GetAllOrderByPhoneNumber(string phoneNumber, int pageNumber = 1, int pageSize = 10)
+        {
+            return await _service.GetAllOrderByPhoneNumber(phoneNumber, pageNumber, pageSize);      
         }
 
         [HttpGet("get-order-detail/{orderId}")]
