@@ -40,6 +40,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 string hashedPassword = BCrypt.Net.BCrypt.HashPassword(deviceAccess.DevicePassword);
+                var isExistedDevice = await _repository.GetByExpression(p => p.DeviceCode == deviceAccess.DeviceCode);
+                if (isExistedDevice != null)
+                {
+                    result = BuildAppActionResultError(result, $"Thiết bị với code {isExistedDevice.DeviceCode} đã tồn tại");
+                }
                 var newDeviceDb = new Device
                 {
                     DeviceId = Guid.NewGuid(),
@@ -97,13 +102,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                var device = await _repository!.GetByExpression(p => p.DeviceCode == loginDeviceRequestDto.DeviceCode, null);
+                var device = await _repository!.GetByExpression(p => p.DeviceCode == loginDeviceRequestDto.DeviceCode, p => p.Table);
                 if (device == null)
                     result = BuildAppActionResultError(result, $" Thiết bị với {loginDeviceRequestDto.DeviceCode} này không tồn tại trong hệ thống");
 
-                var verifyPasswordHashed = BCrypt.Net.BCrypt.Verify(loginDeviceRequestDto.Password, device!.DevicePassword);
-                var passwordSignIn = await _repository.GetByExpression(p => p.DeviceCode == loginDeviceRequestDto.DeviceCode && verifyPasswordHashed == true);
-                if (passwordSignIn == null) result = BuildAppActionResultError(result, "Đăng nhâp thất bại");
+                var verifyPasswordHashed = BCrypt.Net.BCrypt.Verify(loginDeviceRequestDto.Password, device.DevicePassword);
+                var passwordSignIn = await _repository.GetByExpression(p => p.DeviceCode == loginDeviceRequestDto.DeviceCode);
+                if (passwordSignIn == null && verifyPasswordHashed == true) result = BuildAppActionResultError(result, "Đăng nhâp thất bại");
                 if (!BuildAppActionResultIsError(result)) result = await LoginDefaultDevice(loginDeviceRequestDto.DeviceCode, device);
             }
             catch (Exception ex)
