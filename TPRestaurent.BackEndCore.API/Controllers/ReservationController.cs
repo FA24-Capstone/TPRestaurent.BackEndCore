@@ -54,7 +54,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("calculate-deposit")]
-        public async Task<AppActionResult> CalculateDeposit([FromBody] CalculateDepositRequest dto)
+        public async Task<AppActionResult> CalculateDeposit([FromBody] ReservationDto dto)
         {
             return await _service.CalculateDeposit(dto);
         }
