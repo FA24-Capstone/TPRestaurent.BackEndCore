@@ -660,7 +660,28 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
-            
+                result  =BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetAllReservationByPhoneNumber(string phoneNumber, Domain.Enums.ReservationStatus? status, int pageNumber, int pageSize)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                if (status.HasValue)
+                {
+                    result.Result = await _reservationRepository.GetAllDataByExpression(o => o.CustomerInfo!.PhoneNumber == phoneNumber && o.StatusId == status, pageNumber, pageSize, o => o.ReservationDate, false, null);
+                }
+                else
+                {
+                    result.Result = await _reservationRepository.GetAllDataByExpression(o => o.CustomerInfo!.PhoneNumber == phoneNumber, pageNumber, pageSize, o => o.ReservationDate, false, null);
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
