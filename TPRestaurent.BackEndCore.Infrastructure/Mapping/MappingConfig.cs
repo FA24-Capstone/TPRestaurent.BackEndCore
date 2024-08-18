@@ -69,7 +69,7 @@ public class MappingConfig
              .ReverseMap();
             ;
 
-            config.CreateMap<ReservationDishDto, ReservationDish>()
+            config.CreateMap<Common.DTO.Request.ReservationDishDto, ReservationDish>()
             .ForMember(dest => dest.ComboId, opt => opt.MapFrom(src => src.Combo == null ? (Guid?)null : src.Combo.ComboId))
             .ForMember(desc => desc.DishSizeDetailId, act => act.MapFrom(src => src.DishSizeDetailId))
             .ForMember(desc => desc.Quantity, act => act.MapFrom(src => src.Quantity))
