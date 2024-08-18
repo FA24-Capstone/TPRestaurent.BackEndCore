@@ -12,8 +12,8 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    [Migration("20240817070006_Init")]
-    partial class Init
+    [Migration("20240818033947_AddIsPrivatetoReservation")]
+    partial class AddIsPrivatetoReservation
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -385,6 +385,33 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.ToTable("Combos");
                 });
 
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.ComboOptionSet", b =>
+                {
+                    b.Property<Guid>("ComboOptionSetId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ComboId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("DishItemTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NumOfChoice")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OptionSetNumber")
+                        .HasColumnType("int");
+
+                    b.HasKey("ComboOptionSetId");
+
+                    b.HasIndex("ComboId");
+
+                    b.HasIndex("DishItemTypeId");
+
+                    b.ToTable("ComboOptionSets");
+                });
+
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.ComboOrderDetail", b =>
                 {
                     b.Property<Guid>("ComboOrderDetailId")
@@ -634,24 +661,18 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("ComboId")
+                    b.Property<Guid?>("ComboOptionSetId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("DishSizeDetailId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("HasOptions")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("OptionSetNumber")
-                        .HasColumnType("int");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
                     b.HasKey("DishComboId");
 
-                    b.HasIndex("ComboId");
+                    b.HasIndex("ComboOptionSetId");
 
                     b.HasIndex("DishSizeDetailId");
 
@@ -1409,6 +1430,12 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("IsPrivate")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("NumberOfPeople")
                         .HasColumnType("int");
 
@@ -1825,6 +1852,25 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.ComboOptionSet", b =>
+                {
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Combo", "Combo")
+                        .WithMany()
+                        .HasForeignKey("ComboId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.DishItemType", "DishItemType")
+                        .WithMany()
+                        .HasForeignKey("DishItemTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Combo");
+
+                    b.Navigation("DishItemType");
+                });
+
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.ComboOrderDetail", b =>
                 {
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.DishCombo", "DishCombo")
@@ -1934,15 +1980,15 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.DishCombo", b =>
                 {
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Combo", "Combo")
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.ComboOptionSet", "ComboOptionSet")
                         .WithMany()
-                        .HasForeignKey("ComboId");
+                        .HasForeignKey("ComboOptionSetId");
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.DishSizeDetail", "DishSizeDetail")
                         .WithMany()
                         .HasForeignKey("DishSizeDetailId");
 
-                    b.Navigation("Combo");
+                    b.Navigation("ComboOptionSet");
 
                     b.Navigation("DishSizeDetail");
                 });

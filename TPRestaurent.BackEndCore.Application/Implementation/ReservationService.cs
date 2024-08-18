@@ -161,13 +161,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             throw new NotImplementedException();
         }
 
-        public async Task<AppActionResult> CalculateDeposit(CalculateDepositRequest dto)
+        public async Task<AppActionResult> CalculateDeposit(ReservationDto dto)
         {
             AppActionResult result = new AppActionResult();
             try
             {
                 double total = 0;
-                if (dto.reservationDishDtos!.Count() > 0)
+                if (dto.ReservationDishDtos!.Count() > 0)
                 {
                     var dishRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                     var comboRepository = Resolve<IGenericRepository<Combo>>();
@@ -176,7 +176,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     DishSizeDetail dishDb = null;
                     Combo comboDb = null;
 
-                    foreach (var reservationDish in dto.reservationDishDtos!)
+                    foreach (var reservationDish in dto.ReservationDishDtos!)
                     {
                         if (reservationDish.Combo != null)
                         {
@@ -207,7 +207,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 double deposit = total * double.Parse(configurationDb.Items[0].PreValue);
-                string tableTypeDeposit = "";
+                string tableTypeDeposit = SD.DefaultValue.DEPOSIT_FOR_NORMAL_TABLE;
                 if (dto.IsPrivate)
                 {
                     tableTypeDeposit = SD.DefaultValue.DEPOSIT_FOR_PRIVATE_TABLE;
@@ -223,8 +223,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return BuildAppActionResultError(result, $"Xảy ra lỗi khi lấy thông số cấu hình {tableTypeDeposit}");
                 }
                 deposit += double.Parse(tableConfigurationDb.Items[0].PreValue);
-
-                result.Result = deposit;
+                dto.Deposit = deposit;
+                result.Result = dto;
             }
             catch (Exception ex)
             {

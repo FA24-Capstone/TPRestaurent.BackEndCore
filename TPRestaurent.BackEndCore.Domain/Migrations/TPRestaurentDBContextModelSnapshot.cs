@@ -1428,6 +1428,12 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("IsPrivate")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("NumberOfPeople")
                         .HasColumnType("int");
 

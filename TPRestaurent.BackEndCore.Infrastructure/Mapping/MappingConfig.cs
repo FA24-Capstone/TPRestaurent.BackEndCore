@@ -63,6 +63,8 @@ public class MappingConfig
              .ForMember(desc => desc.EndTime, act => act.MapFrom(src => src.EndTime))
              .ForMember(desc => desc.CustomerInfoId, act => act.MapFrom(src => src.CustomerInfoId))
              .ForMember(desc => desc.Deposit, act => act.MapFrom(src => src.Deposit))
+             .ForMember(desc => desc.IsPrivate, act => act.MapFrom(src => src.IsPrivate))
+             .ForMember(desc => desc.Note, act => act.MapFrom(src => src.Note))
              .ReverseMap();
             ;
 

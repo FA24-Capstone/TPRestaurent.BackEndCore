@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
-    public partial class Init : Migration
+    public partial class Init2 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -317,6 +317,33 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ComboOptionSets",
+                columns: table => new
+                {
+                    ComboOptionSetId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    OptionSetNumber = table.Column<int>(type: "int", nullable: false),
+                    NumOfChoice = table.Column<int>(type: "int", nullable: false),
+                    DishItemTypeId = table.Column<int>(type: "int", nullable: false),
+                    ComboId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ComboOptionSets", x => x.ComboOptionSetId);
+                    table.ForeignKey(
+                        name: "FK_ComboOptionSets_Combos_ComboId",
+                        column: x => x.ComboId,
+                        principalTable: "Combos",
+                        principalColumn: "ComboId",
+                        onDelete: ReferentialAction.NoAction);
+                    table.ForeignKey(
+                        name: "FK_ComboOptionSets_DishItemTypes_DishItemTypeId",
+                        column: x => x.DishItemTypeId,
+                        principalTable: "DishItemTypes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.NoAction);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "DishSizeDetails",
                 columns: table => new
                 {
@@ -391,20 +418,18 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 columns: table => new
                 {
                     DishComboId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    HasOptions = table.Column<bool>(type: "bit", nullable: false),
-                    OptionSetNumber = table.Column<int>(type: "int", nullable: true),
                     Quantity = table.Column<int>(type: "int", nullable: false),
                     DishSizeDetailId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    ComboId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    ComboOptionSetId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_DishCombos", x => x.DishComboId);
                     table.ForeignKey(
-                        name: "FK_DishCombos_Combos_ComboId",
-                        column: x => x.ComboId,
-                        principalTable: "Combos",
-                        principalColumn: "ComboId");
+                        name: "FK_DishCombos_ComboOptionSets_ComboOptionSetId",
+                        column: x => x.ComboOptionSetId,
+                        principalTable: "ComboOptionSets",
+                        principalColumn: "ComboOptionSetId");
                     table.ForeignKey(
                         name: "FK_DishCombos_DishSizeDetails_DishSizeDetailId",
                         column: x => x.DishSizeDetailId,
@@ -734,6 +759,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     EndTime = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CustomerInfoId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Deposit = table.Column<double>(type: "float", nullable: false),
+                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     StatusId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -1292,6 +1318,16 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 column: "UpdateBy");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ComboOptionSets_ComboId",
+                table: "ComboOptionSets",
+                column: "ComboId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ComboOptionSets_DishItemTypeId",
+                table: "ComboOptionSets",
+                column: "DishItemTypeId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Combos_CategoryId",
                 table: "Combos",
                 column: "CategoryId");
@@ -1352,9 +1388,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 column: "ReservationDishId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DishCombos_ComboId",
+                name: "IX_DishCombos_ComboOptionSetId",
                 table: "DishCombos",
-                column: "ComboId");
+                column: "ComboOptionSetId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DishCombos_DishSizeDetailId",
@@ -1748,13 +1784,16 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 name: "StoreCredits");
 
             migrationBuilder.DropTable(
+                name: "ComboOptionSets");
+
+            migrationBuilder.DropTable(
                 name: "DishSizeDetails");
 
             migrationBuilder.DropTable(
-                name: "Combos");
+                name: "RatingPoints");
 
             migrationBuilder.DropTable(
-                name: "RatingPoints");
+                name: "Combos");
 
             migrationBuilder.DropTable(
                 name: "Dishes");
