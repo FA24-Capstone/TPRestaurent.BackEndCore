@@ -1111,6 +1111,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                 }
 
+                var customerInfoDb = await _customerInfoRepository.GetAllDataByExpression(c => c.PhoneNumber.Equals(customerInforRequest.PhoneNumber), 0, 0, null, false, null);
+                if (customerInfoDb.Items.Count > 0)
+                {
+                    result = BuildAppActionResultError(result, $"Thông tin người dùng với sđt {customerInforRequest.PhoneNumber} đã tồn tại");
+                    return result;
+                }
+
                 var customerInfor = new CustomerInfo
                 {
                     CustomerId = Guid.NewGuid(),
@@ -1210,7 +1217,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var availableOTPDb = await otpRepository.GetAllDataByExpression(o => o.CustomerInfoId == CustomerInfoId && !o.IsUsed && o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && o.Type == otpType, 0,0, null, false, null);
                 if (availableOTPDb.Items.Count > 1)
                 {
-                    result = BuildAppActionResultError(result, $"Xảy ra lỗi vì có nhiều hớn  mã OTP hữu dụng tồn tại trong hệ thống. Vui lòng thử lại sau");
+                    result = BuildAppActionResultError(result, $"Xảy ra lỗi vì có nhiều hơn  mã OTP hữu dụng tồn tại trong hệ thống. Vui lòng thử lại sau");
                     return result;
                 }
 
@@ -1388,7 +1395,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result = BuildAppActionResultError(result, $"Số điện thoại này không tồn tại!");
                 }
 
-                var optUser = await _otpRepository.GetByExpression(p => p!.Code == code && p.Type == otpType, p => p.Account!);
+                var utility = Resolve<Utility>();
+
+                var optUser = await _otpRepository.GetByExpression(p => p!.Code == code && p.Type == otpType && !p.IsUsed && p.ExpiredTime > utility.GetCurrentDateTimeInTimeZone(), p => p.Account!);
                 if (optUser == null)
                 {
                     result = BuildAppActionResultError(result, $"Mã Otp không tồn tại!");
