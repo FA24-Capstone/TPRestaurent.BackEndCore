@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using NPOI.SS.Formula.Functions;
 using OfficeOpenXml.FormulaParsing.FormulaExpressions;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,7 @@ using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
 using Twilio.Types;
+using static System.Net.WebRequestMethods;
 using Utility = TPRestaurent.BackEndCore.Common.Utils.Utility;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
@@ -1100,7 +1102,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                if (string.IsNullOrEmpty(customerInforRequest.AccountId))
+                if (!string.IsNullOrEmpty(customerInforRequest.AccountId))
                 {
                     var accountDb = await _accountRepository.GetByExpression(p => p.Id == customerInforRequest.AccountId);
                     if (accountDb == null)
@@ -1116,11 +1118,121 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     PhoneNumber = customerInforRequest.PhoneNumber,
                     AccountId = customerInforRequest.AccountId,
                     Address = customerInforRequest.Address,
+                    DOB = customerInforRequest.DOB,
+                    Gender = customerInforRequest.Gender,
+                    IsVerified = false
                 };
-
+                
                 await _customerInfoRepository.Insert(customerInfor);
                 await _unitOfWork.SaveChangesAsync();
+                await SendCustomerInfoOTP(customerInfor.CustomerId, OTPType.Register);
                 result.Result = customerInfor;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GenerateCustomerInfoOTP(Guid CustomerInfoId, OTPType otpType)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                //Check Customermust be unverified
+                var customerDb = await _customerInfoRepository.GetById(CustomerInfoId);
+                if (customerDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Không tìm thấy thông tin người dùng với id {CustomerInfoId}");
+                    return result;
+                }
+
+                if (customerDb.IsVerified)
+                {
+                    result = BuildAppActionResultError(result, $"Thông tin người dùng đã được xác thực");
+                    return result;
+                }
+                Random random = new Random();
+                string code = random.Next(100000, 999999).ToString();
+                var utility = Resolve<Utility>();
+
+                var otpsDb = new OTP
+                {
+                    OTPId = Guid.NewGuid(),
+                    Type = otpType,
+                    CustomerInfoId = CustomerInfoId,
+                    Code = code,
+                    ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
+                    IsUsed = false,
+                };
+                await _otpRepository.Insert(otpsDb);
+                await _unitOfWork.SaveChangesAsync();
+                result.Result = otpsDb.Code;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> SendCustomerInfoOTP(Guid CustomerInfoId, OTPType otpType)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var customerDb = await _customerInfoRepository.GetById(CustomerInfoId);
+                if (customerDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Không tìm thấy thông tin người dùng với id {CustomerInfoId}");
+                    return result;
+                }
+                if (otpType == OTPType.Register) 
+                {
+                    if (customerDb.IsVerified)
+                    {
+                        result = BuildAppActionResultError(result, $"Thông tin người dùng đã được xác thực");
+                        return result;
+                    }
+                }
+                else
+                {
+                    if (!customerDb.IsVerified)
+                    {
+                        result = BuildAppActionResultError(result, $"Thông tin người dùng đã chưa được xác thực");
+                        return result;
+                    }
+                }
+
+                var otpRepository = Resolve<IGenericRepository<OTP>>();
+                var utility = Resolve<Utility>();
+                var availableOTPDb = await otpRepository.GetAllDataByExpression(o => o.CustomerInfoId == CustomerInfoId && !o.IsUsed && o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && o.Type == otpType, 0,0, null, false, null);
+                if (availableOTPDb.Items.Count > 1)
+                {
+                    result = BuildAppActionResultError(result, $"Xảy ra lỗi vì có nhiều hớn  mã OTP hữu dụng tồn tại trong hệ thống. Vui lòng thử lại sau");
+                    return result;
+                }
+
+                if(availableOTPDb.Items.Count == 1)
+                {
+                    result.Result = availableOTPDb.Items[0].Code;
+                    return result;
+                }
+
+                var otp = await GenerateCustomerInfoOTP(customerDb.CustomerId, otpType);
+                if (!otp.IsSuccess)
+                {
+                    return BuildAppActionResultError(result, $"Tạo OTP thất bại. Vui lòng thử lại");
+                }
+
+                customerDb.VerifyCode = otp.Result.ToString();
+                await _customerInfoRepository.Update(customerDb);
+                await _unitOfWork.SaveChangesAsync();
+                var smsService = Resolve<ISmsService>();
+                var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {customerDb.VerifyCode}",
+                    customerDb.PhoneNumber);
+                result.Result = customerDb.VerifyCode;
             }
             catch (Exception ex)
             {
@@ -1255,6 +1367,51 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     optUser.IsUsed = true;
                     await _otpRepository.Update(optUser);
                     await _accountRepository.Update(user);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> VerifyCustomerInfoOTP(string phoneNumber, string code, OTPType otpType)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var user = await _customerInfoRepository.GetByExpression(p => p.PhoneNumber == phoneNumber, null);
+                if (user == null)
+                {
+                    result = BuildAppActionResultError(result, $"Số điện thoại này không tồn tại!");
+                }
+
+                var optUser = await _otpRepository.GetByExpression(p => p!.Code == code && p.Type == otpType, p => p.Account!);
+                if (optUser == null)
+                {
+                    result = BuildAppActionResultError(result, $"Mã Otp không tồn tại!");
+                }
+                else if (optUser.IsUsed == true)
+                {
+                    result = BuildAppActionResultError(result, $"Mã Otp này đã được sử dụng!");
+                } else if(optUser.Type != OTPType.Register && !user.IsVerified)
+                {
+                    result = BuildAppActionResultError(result, $"Thông tin người dùng chưa được xác thực");
+                }
+                else if (optUser.Code != code && user.VerifyCode != code)
+                {
+                    result = BuildAppActionResultError(result, $"Mã Otp không đúng!");
+                }
+
+                if (!BuildAppActionResultIsError(result))
+                {
+                    user!.VerifyCode = null;
+                    await _customerInfoRepository.Update(user);
+
+                    optUser.IsUsed = true;
+                    await _otpRepository.Update(optUser);
                     await _unitOfWork.SaveChangesAsync();
                 }
             }

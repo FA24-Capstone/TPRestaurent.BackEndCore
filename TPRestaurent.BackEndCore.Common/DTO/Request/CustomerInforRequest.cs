@@ -12,7 +12,9 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
     {
         public string Name { get; set; } = null!;
         public string PhoneNumber { get; set; } = null!;
-        public string Address { get; set; } = null!;
+        public string? Address { get; set; } = null!;
+        public DateTime DOB { get; set; }
+        public bool Gender { get; set; }
         public string? AccountId { get; set; }
     }
 }

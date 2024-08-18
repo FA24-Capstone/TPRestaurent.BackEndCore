@@ -28,12 +28,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly IGenericRepository<ReservationDish> _reservationDishRepository;
         private readonly IGenericRepository<ComboOrderDetail> _comboOrderDetailRepository;
         private readonly IGenericRepository<Configuration> _configurationRepository;
+        private readonly IAccountService _accountService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         public ReservationService(IGenericRepository<Reservation> reservationRepository, 
                                   IGenericRepository<ReservationDish> reservationDishRepository, 
                                   IGenericRepository<ComboOrderDetail> comboOrderDetailRepository,
                                   IGenericRepository<Configuration> configurationRepository,
+                                  IAccountService accountService,
                                   IUnitOfWork unitOfWork, 
                                   IMapper mapper, IServiceProvider service) : base(service)
         {
@@ -41,6 +43,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _reservationDishRepository = reservationDishRepository;
             _comboOrderDetailRepository = comboOrderDetailRepository;
             _configurationRepository = configurationRepository;
+            _accountService = accountService;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
