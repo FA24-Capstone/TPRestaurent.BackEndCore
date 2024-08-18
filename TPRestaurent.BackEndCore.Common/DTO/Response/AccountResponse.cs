@@ -20,5 +20,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public string? Avatar { get; set; }
         public List<IdentityRole> Roles { get; set; }
         public string MainRole { get; set; }
+        public Guid CustomerInfoId { get; set; }
     }
 }

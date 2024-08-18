@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Domain.Enums;
+using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
@@ -37,5 +38,10 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GetCustomerInfo(Guid customerId);
         Task<AppActionResult> DeleteCustomerInfo(Guid customerId);
         Task<AppActionResult> SendEmailForActiveCode(string email);
+        Task<AppActionResult> GenerateCustomerInfoOTP(CustomerInfo customerInfo, OTPType otpType);
+        Task<AppActionResult> VerifyCustomerInfoOTP(string phoneNUmber, string code, OTPType otpType);
+        Task<AppActionResult> SendCustomerInfoOTP(string phoneNumber, OTPType otpType);
+        Task<AppActionResult> GetCustomerInfoByPhoneNumber(string phoneNumber);
+
     }
 }

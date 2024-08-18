@@ -20,4 +20,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public List<ReservationDishDto> ReservationDishDtos { get; set; } = new List<ReservationDishDto>();
         //public List<Guid> ReservationTableIds { get; set; } = new List<Guid>();
     }
+
+    
 }
