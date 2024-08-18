@@ -613,14 +613,44 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
+                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
                 var reservationTableDetailDb = await reservationTableDetailRepository!.GetAllDataByExpression(o => o.ReservationId == reservationId, 0, 0, null, false, o => o.Table);
-                var reservationDishDb = await _reservationDishRepository!.GetAllDataByExpression(o => o.ReservationId == reservationId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo);
-                result.Result = new ReservationReponse
+                var reservationDishDb = await _reservationDishRepository!.GetAllDataByExpression(o => o.ReservationId == reservationId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.DishSizeDetail.DishSize, o => o.Combo);
+                var reservationDish = new List<Common.DTO.Response.ReservationDishDto>();
+                reservationDishDb.Items.ForEach(async r =>
+                {
+                    if(r.Combo != null)
+                    {
+                        var comboDishDto = new ComboDishDto()
+                        {
+                            ComboId = r.Combo.ComboId,
+                            Combo = r.Combo,
+                            DishCombos = (await comboOrderDetailRepository.GetAllDataByExpression(d => d.ReservationDishId == r.ReservationDishId, 0, 0, null, false, d => d.DishCombo.DishSizeDetail.Dish, d => d.DishCombo.DishSizeDetail.DishSize))
+                                         .Items.Select(d => d.DishCombo).ToList()
+                        };
+                        reservationDish.Add(new Common.DTO.Response.ReservationDishDto()
+                        {
+                            ReservationDishId = r.ReservationDishId,
+                            ComboDish = comboDishDto
+                        });
+                    } else
+                    {
+                        reservationDish.Add(new Common.DTO.Response.ReservationDishDto()
+                        {
+                            ReservationDishId = r.ReservationDishId,
+                            DishSizeDetailId = r.DishSizeDetailId,
+                            DishSizeDetail = r.DishSizeDetail
+                        });
+                    }
+                });
+                var data = new ReservationReponse
                 {
                     Reservation = reservationDb,
-                    ReservationDishes = reservationDishDb.Items!,
                     ReservationTableDetails = reservationTableDetailDb.Items!
                 };
+                data.ReservationDishes = reservationDish;
+                result.Result = data;
+
             }
             catch (Exception ex)
             {
@@ -672,11 +702,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 if (status.HasValue)
                 {
-                    result.Result = await _reservationRepository.GetAllDataByExpression(o => o.CustomerInfo!.PhoneNumber == phoneNumber && o.StatusId == status, pageNumber, pageSize, o => o.ReservationDate, false, null);
+                    result.Result = await _reservationRepository.GetAllDataByExpression(o => o.CustomerInfo!.PhoneNumber == phoneNumber && o.StatusId == status, pageNumber, pageSize, o => o.ReservationDate, false, r => r.CustomerInfo.Account);
                 }
                 else
                 {
-                    result.Result = await _reservationRepository.GetAllDataByExpression(o => o.CustomerInfo!.PhoneNumber == phoneNumber, pageNumber, pageSize, o => o.ReservationDate, false, null);
+                    result.Result = await _reservationRepository.GetAllDataByExpression(o => o.CustomerInfo!.PhoneNumber == phoneNumber, pageNumber, pageSize, o => o.ReservationDate, false, r => r.CustomerInfo.Account);
                 }
             }
             catch (Exception ex)
