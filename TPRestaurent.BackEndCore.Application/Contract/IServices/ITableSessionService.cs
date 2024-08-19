@@ -14,6 +14,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> AddNewPrelistOrder(PrelistOrderDto dto);
         public Task<AppActionResult> GetTableSessionById(Guid Id);
         public Task<AppActionResult> UpdatePrelistOrderStatus(List<Guid> prelistOrderIds);
-        public Task<AppActionResult> GetLatestPrelistOrder(double? minute, bool IsOrdered);
+        public Task<AppActionResult> GetLatestPrelistOrder(double? minute, bool IsReadyToServed, int pageNumber, int pageSize);
     }
 }
