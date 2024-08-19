@@ -29,12 +29,39 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<AppActionResult> AddNewPrelistOrder(List<PrelistOrderDto> dto)
+        public async Task<AppActionResult> AddNewPrelistOrder(PrelistOrderDto dto)
         {
             AppActionResult result = new AppActionResult();
             try
             {
-                
+                var tableSessionDb = await _tableSessionRepository.GetById(dto.TableSessionId);
+                if (tableSessionDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy phiên dùng bữa với id {dto.TableSessionId}");
+                }
+
+                var preOrderListList = new List<PrelistOrder>();
+
+                dto.PrelistOrderDtos.ForEach(p =>
+                {
+                    if (p.Combo != null)
+                    {
+
+                    }
+                    else
+                    {
+                        preOrderListList.Add(new PrelistOrder()
+                        {
+                            PrelistOrderId= Guid.NewGuid(), 
+                            DishSizeDetailId = p.DishSizeDetailId,
+                            ReservationDishId = p.ReservationDishId,
+                            ComboId = null,
+                            OrderTime = dto.OrderTime,
+                            TableSessionId = dto.TableSessionId,
+                            Quantity = p.Quantity
+                        });
+                    }
+                });
             }
             catch (Exception ex)
             {
