@@ -50,6 +50,8 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.Device> Devices { get; set; } = null!;
         public DbSet<Models.ComboOrderDetail> DishComboComboDetails { get; set; } = null!;
         public DbSet<Models.ComboOptionSet> ComboOptionSets { get; set; } = null!;
+        public DbSet<Models.TableSession> TableSessions { get; set; } = null!;
+        public DbSet<Models.PrelistOrder> PrelistOrders { get; set; } = null!;
         public DbSet<Models.EnumModels.OrderStatus> OrderStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.OTPType> OTPTypes { get; set; } = null!;
         public DbSet<Models.EnumModels.PaymentMethod> PaymentMethods { get; set; } = null!;

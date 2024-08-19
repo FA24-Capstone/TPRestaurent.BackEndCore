@@ -19,6 +19,8 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid? OrderDetailId { get; set; }
         [ForeignKey(nameof(OrderDetailId))]
         public OrderDetail? OrderDetail { get; set; }
-        //Add PreListOrder
+        public Guid? PrelistOrderId { get; set; }
+        [ForeignKey(nameof(PrelistOrderId))]
+        public PrelistOrder? PrelistOrder { get; set; }
     }
 }
