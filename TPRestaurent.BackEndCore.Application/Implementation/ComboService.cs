@@ -17,8 +17,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 {
     public class ComboService : GenericBackendService , IComboService
     {
-        private readonly IGenericRepository<Combo> _comboRepository;
-        private readonly IUnitOfWork _unitOfWork;
+        private  IGenericRepository<Combo> _comboRepository;
+        private  IUnitOfWork _unitOfWork;
 
         public ComboService(IServiceProvider serviceProvider, IGenericRepository<Combo> comboRepository, IUnitOfWork unitOfWork) : base(serviceProvider)
         {

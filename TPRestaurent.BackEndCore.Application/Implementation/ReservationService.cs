@@ -600,65 +600,99 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetAllReservationDetail(Guid reservationId)
+       public async Task<AppActionResult> GetAllReservationDetail(Guid reservationId)
+{
+    try
+    {
+        var reservation = await _reservationRepository.GetById(reservationId);
+        if (reservation == null)
         {
-            AppActionResult result = new AppActionResult();
-            try
-            {
-                var reservationDb = await _reservationRepository.GetById(reservationId);
-                if (reservationDb == null)
-                {
-                    result = BuildAppActionResultError(result, $"Không tìm thấy thông tin đặt bàn với id {reservationId}");
-                    return result;
-                }
-
-                var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
-                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
-                var reservationTableDetailDb = await reservationTableDetailRepository!.GetAllDataByExpression(o => o.ReservationId == reservationId, 0, 0, null, false, o => o.Table);
-                var reservationDishDb = await _reservationDishRepository!.GetAllDataByExpression(o => o.ReservationId == reservationId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.DishSizeDetail.DishSize, o => o.Combo);
-                var reservationDish = new List<Common.DTO.Response.ReservationDishDto>();
-                reservationDishDb.Items.ForEach(async r =>
-                {
-                    if(r.Combo != null)
-                    {
-                        var comboDishDto = new ComboDishDto()
-                        {
-                            ComboId = r.Combo.ComboId,
-                            Combo = r.Combo,
-                            DishCombos = (await comboOrderDetailRepository.GetAllDataByExpression(d => d.ReservationDishId == r.ReservationDishId, 0, 0, null, false, d => d.DishCombo.DishSizeDetail.Dish, d => d.DishCombo.DishSizeDetail.DishSize))
-                                         .Items.Select(d => d.DishCombo).ToList()
-                        };
-                        reservationDish.Add(new Common.DTO.Response.ReservationDishDto()
-                        {
-                            ReservationDishId = r.ReservationDishId,
-                            ComboDish = comboDishDto
-                        });
-                    } else
-                    {
-                        reservationDish.Add(new Common.DTO.Response.ReservationDishDto()
-                        {
-                            ReservationDishId = r.ReservationDishId,
-                            DishSizeDetailId = r.DishSizeDetailId,
-                            DishSizeDetail = r.DishSizeDetail
-                        });
-                    }
-                });
-                var data = new ReservationReponse
-                {
-                    Reservation = reservationDb,
-                    ReservationTableDetails = reservationTableDetailDb.Items!
-                };
-                data.ReservationDishes = reservationDish;
-                result.Result = data;
-
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
+            return BuildAppActionResultError(new AppActionResult(), $"Không tìm thấy thông tin đặt bàn với id {reservationId}");
         }
 
+        var reservationTableDetails = await GetReservationTableDetails(reservationId);
+        var reservationDishes = await GetReservationDishes(reservationId);
+
+        var data = new ReservationReponse
+        {
+            Reservation = reservation,
+            ReservationTableDetails = reservationTableDetails,
+            ReservationDishes = reservationDishes
+        };
+
+        return new AppActionResult { Result = data };
+    }
+    catch (Exception ex)
+    {
+        return BuildAppActionResultError(new AppActionResult(), ex.Message);
+    }
+}
+
+private async Task<List<ReservationTableDetail>> GetReservationTableDetails(Guid reservationId)
+{
+    var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
+    var result = await reservationTableDetailRepository!.GetAllDataByExpression(
+        o => o.ReservationId == reservationId, 
+        0, 0, null, false, 
+        o => o.Table
+    );
+    return result.Items!;
+}
+
+private async Task<List<Common.DTO.Response.ReservationDishDto>> GetReservationDishes(Guid reservationId)
+{
+    var reservationDishDb = await _reservationDishRepository!.GetAllDataByExpression(
+        o => o.ReservationId == reservationId, 
+        0, 0, null, false, 
+        o => o.DishSizeDetail.Dish, 
+        o => o.DishSizeDetail.DishSize, 
+        o => o.Combo
+    );
+
+    var reservationDishes = new List<Common.DTO.Response.ReservationDishDto>();
+    var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+
+    foreach (var r in reservationDishDb.Items)
+    {
+        if (r.Combo != null)
+        {
+            var comboDishDto = await CreateComboDishDto(r, comboOrderDetailRepository);
+            reservationDishes.Add(new Common.DTO.Response.ReservationDishDto
+            {
+                ReservationDishId = r.ReservationDishId,
+                ComboDish = comboDishDto
+            });
+        }
+        else
+        {
+            reservationDishes.Add(new Common.DTO.Response.ReservationDishDto
+            {
+                ReservationDishId = r.ReservationDishId,
+                DishSizeDetailId = r.DishSizeDetailId,
+                DishSizeDetail = r.DishSizeDetail
+            });
+        }
+    }
+
+    return reservationDishes;
+}
+
+private async Task<ComboDishDto> CreateComboDishDto(ReservationDish r, IGenericRepository<ComboOrderDetail> comboOrderDetailRepository)
+{
+    var comboOrderDetails = await comboOrderDetailRepository!.GetAllDataByExpression(
+        d => d.ReservationDishId == r.ReservationDishId, 
+        0, 0, null, false, 
+        d => d.DishCombo.DishSizeDetail!.Dish, 
+        d => d.DishCombo.DishSizeDetail.DishSize
+    );
+
+    return new ComboDishDto
+    {
+        ComboId = r.Combo.ComboId,
+        Combo = r.Combo,
+        DishCombos = comboOrderDetails.Items.Select(d => d.DishCombo).ToList()
+    };
+}
         public async Task<AppActionResult> UpdateReservationStatus(Guid reservationId, ReservationStatus status)
         {
             AppActionResult result = new AppActionResult();
@@ -702,11 +736,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 if (status.HasValue)
                 {
-                    result.Result = await _reservationRepository.GetAllDataByExpression(o => o.CustomerInfo!.PhoneNumber == phoneNumber && o.StatusId == status, pageNumber, pageSize, o => o.ReservationDate, false, r => r.CustomerInfo.Account);
+                    result.Result = await _reservationRepository.GetAllDataByExpression(o => o.CustomerInfo!.PhoneNumber == phoneNumber && o.StatusId == status, pageNumber, pageSize, o => o.ReservationDate, false, r => r.CustomerInfo);
                 }
                 else
                 {
-                    result.Result = await _reservationRepository.GetAllDataByExpression(o => o.CustomerInfo!.PhoneNumber == phoneNumber, pageNumber, pageSize, o => o.ReservationDate, false, r => r.CustomerInfo.Account);
+                    result.Result = await _reservationRepository.GetAllDataByExpression(o => o.CustomerInfo!.PhoneNumber == phoneNumber, pageNumber, pageSize, o => o.ReservationDate, false, r => r.CustomerInfo);
                 }
             }
             catch (Exception ex)
