@@ -13,17 +13,22 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public Guid TableId { get; set; }
         public DateTime StartTime { get; set; }
         public Guid? ReservationId { get; set; }
-        public List<PrelistOrderDto> PrelistOrderDtos { get; set; } = new List<PrelistOrderDto>();
+        public List<PrelistOrderItemDto>? PrelistOrderDtos { get; set; } = new List<PrelistOrderItemDto>();
     }
 
     public class PrelistOrderDto
+    {
+        public Guid TableSessionId { get; set; }
+        public List<PrelistOrderItemDto>? PrelistOrderDtos { get; set; } = new List<PrelistOrderItemDto>();
+    }
+
+    public class PrelistOrderItemDto
     {
         public int Quantity { get; set; }
         public DateTime OrderTime { get; set; }
         public Guid? ReservationDishId { get; set; }
         public Guid? DishSizeDetailId { get; set; }
-        public Guid? ComboId { get; set; }
-        public Guid? TableSessionId { get; set; }
-        public List<Guid>? DichComboIds { get; set; } = new List<Guid> { };
+        public ComboOrderDto? ComboId { get; set; }
     }
+
 }

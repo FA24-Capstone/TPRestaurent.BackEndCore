@@ -29,14 +29,30 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _unitOfWork = unitOfWork;
         }
 
-        public Task<AppActionResult> AddNewPrelistOrder(List<PrelistOrderDto> dto)
+        public async Task<AppActionResult> AddNewPrelistOrder(List<PrelistOrderDto> dto)
         {
-            throw new NotImplementedException();
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                
+            }
+            catch (Exception ex)
+            {
+            }
+            return result;
         }
 
-        public Task<AppActionResult> AddTableSession(TableSessionDto dto)
+        public async Task<AppActionResult> AddTableSession(TableSessionDto dto)
         {
-            throw new NotImplementedException();
+            AppActionResult result = new AppActionResult();
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+            }
+            return result;
         }
 
         public Task<AppActionResult> GetLatestPrelistOrder(double? minute, bool IsOrdered)
