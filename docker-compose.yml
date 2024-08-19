@@ -1,8 +1,8 @@
 version: '3.4'
 
 services:
- tprestaurent.backend.db:
-    image: mcr.microsoft.com/mssql/server:2019-latest
+  tprestaurent.backend.db:
+    image: mcr.microsoft.com/mssql/server:latest
     container_name: tprestaurent.backend.db
     environment:
       ACCEPT_EULA: "Y"
@@ -12,7 +12,7 @@ services:
     ports:
       - "1433:1433"
 
- tprestaurent.backendcore.api:
+  tprestaurent.backendcore.api:
     image: ${DOCKER_REGISTRY-}tprestaurentbackendcoreapi
     container_name: tprestaurent.backend.api
     build:
@@ -22,5 +22,5 @@ services:
       tprestaurent.backend.db:
         condition: service_started
     ports:
-    - "3000:80"
-    - "3001:443"
+      - "3000:80"
+      - "3001:443"

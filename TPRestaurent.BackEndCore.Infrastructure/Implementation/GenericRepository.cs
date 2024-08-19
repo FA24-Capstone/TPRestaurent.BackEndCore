@@ -8,8 +8,8 @@ namespace TPRestaurent.BackEndCore.Infrastructure.Implementation
 {
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
-        private readonly IDBContext _context;
-        private readonly DbSet<T> _dbSet;
+        private  IDBContext _context;
+        private  DbSet<T> _dbSet;
 
         public GenericRepository(IDBContext context)
         {

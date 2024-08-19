@@ -11,10 +11,9 @@ public class ServiceInstaller : IInstaller
 {
     public void InstallService(IServiceCollection services, IConfiguration configuration)
     {
-        services.AddHttpClient();
+        services.AddScoped<IDBContext, TPRestaurentDBContext>();
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         //========//
-        services.AddScoped<IDBContext, TPRestaurentDBContext>();
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IDishService, DishService>();
         services.AddScoped<IAccountService, AccountService>();
