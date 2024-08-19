@@ -33,6 +33,7 @@ public class ServiceInstaller : IInstaller
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IExcelService, ExcelService>();
         services.AddScoped<IDeviceService, DeviceService>();
+        services.AddScoped<ITableSessionService, TableSessionService>();
 
     }
 }
