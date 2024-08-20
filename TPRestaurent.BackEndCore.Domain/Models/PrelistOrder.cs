@@ -24,7 +24,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid? ComboId { get; set; }
         [ForeignKey(nameof(ComboId))]
         public Combo? Combo { get; set; }
-        public Guid TableSessionId { get; set; }
+        public Guid? TableSessionId { get; set; }
         [ForeignKey(nameof(TableSessionId))]
         public TableSession? TableSession { get; set; } 
     }

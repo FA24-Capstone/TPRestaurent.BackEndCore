@@ -790,5 +790,45 @@ private async Task<ComboDishDto> CreateComboDishDto(ReservationDish r, IGenericR
             }
             return result;
         }
+
+        public async Task<AppActionResult> AddTableToReservation(Guid reservationId, List<Guid> tableIds)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var reservationDb = await _reservationRepository.GetById(reservationId);
+                if (reservationDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy đặt bàn với id {reservationId}");
+                }
+
+                var tableRepository = Resolve<IGenericRepository<Table>>();
+                var tableDb = await tableRepository.GetAllDataByExpression(t => tableIds.Contains(t.TableId), 0, 0, null, false, null);
+                if (tableIds.Count != tableDb.Items.Count)
+                {
+                    return BuildAppActionResultError(result, $"Một số id bàn không tồn tại trong hệ thống. Vui lòng kiểm tra lại");
+                }
+
+                var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
+                var reservationTableDetail = new List<ReservationTableDetail>();
+
+                foreach (var tableId in tableIds)
+                {
+                    reservationTableDetail.Add(new ReservationTableDetail()
+                    {
+                        ReservationId = reservationId,
+                        TableId = tableId,
+                        ReservationTableDetailId = Guid.NewGuid()
+                    });
+                }
+
+                await reservationTableDetailRepository!.InsertRange(reservationTableDetail);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+            }
+            return result;
+        }
     }
 }
