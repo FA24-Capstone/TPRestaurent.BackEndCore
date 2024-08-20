@@ -211,6 +211,45 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> GetComboById2(Guid comboId)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
+                var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
+                var comboResponse = new ComboResponseDto();
+                var comboDb = await _comboRepository.GetByExpression(p => p!.ComboId == comboId, p => p.Category);
+                if (comboDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Combo với id {comboId} không tồn tại");
+                }
+                var dishComboDb = await dishComboRepository!.GetAllDataByExpression(p => p.ComboOptionSet.ComboId == comboId, 0, 0, null, false, p => p.DishSizeDetail.Dish!, p => p.ComboOptionSet);
+                var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.ComboId == comboId, 0, 0, null, false, null);
+
+                var optionSetDictionary = dishComboDb.Items.GroupBy(d => d.ComboOptionSetId).ToDictionary(g => g.Key, g => g.ToList());
+                var optionSetList = dishComboDb.Items.Where(d => d.ComboOptionSetId.HasValue).Select(d => d.ComboOptionSet!).DistinctBy(d => d.ComboOptionSetId);
+                foreach (var item in optionSetDictionary)
+                {
+                    comboResponse.DishCombo.Add(new Common.DTO.Response.DishComboDto
+                    {
+                        ComboOptionSet = optionSetList.FirstOrDefault(o => o.ComboOptionSetId == item.Key),
+                        DishCombo = item.Value
+
+                    });
+                }
+                comboResponse.DishCombo = comboResponse.DishCombo.OrderBy(c => c.ComboOptionSet.OptionSetNumber).ToList();
+                comboResponse.Imgs = staticFileDb.Items!.Select(s => s.Path).ToList();
+                comboResponse.Combo = comboDb!;
+                result.Result = comboResponse;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
         //public async Task<AppActionResult> UpdateCombo(UpdateComboDto comboDto)
         //{
         //    var result = new AppActionResult();

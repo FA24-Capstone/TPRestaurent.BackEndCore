@@ -27,6 +27,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _comboService.GetComboById(comboId);   
         }
+        [HttpGet("get-combo-by-id-ver-2/{comboId}")]
+        public async Task<AppActionResult> GetComboById2(Guid comboId)
+        {
+            return await _comboService.GetComboById2(comboId);
+        }
 
         [HttpPost("create-combo")]
         public async Task<AppActionResult> CreateCombo([FromForm] ComboDto comboDto)

@@ -827,6 +827,7 @@ private async Task<ComboDishDto> CreateComboDishDto(ReservationDish r, IGenericR
             }
             catch (Exception ex)
             {
+                result = BuildAppActionResultError(result, ex.Message );
             }
             return result;
         }
