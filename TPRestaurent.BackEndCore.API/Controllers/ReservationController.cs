@@ -70,7 +70,5 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _service.UpdateReservationStatus(reservationId, status);
         }
-
-
     }
 }

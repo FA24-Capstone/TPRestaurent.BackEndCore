@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,6 +11,12 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
     public class TableSessionResponse
     {
         public TableSession TableSession { get; set; } = null!;
-        public List<PrelistOrder> PrelistOrders { get; set; } = new List<PrelistOrder>();       
+        public List<PrelistOrderDetails> PrelistOrderDetails { get; set; } = new List<PrelistOrderDetails>();       
+    }
+
+    public class PrelistOrderDetails
+    {
+        public PrelistOrder PrelistOrder { get; set; } = null!;
+        public List<ComboOrderDetail>? ComboOrderDetails { get; set; } = new List<ComboOrderDetail>();
     }
 }
