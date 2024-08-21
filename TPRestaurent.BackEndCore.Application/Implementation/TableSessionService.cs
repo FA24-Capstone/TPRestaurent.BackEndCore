@@ -185,7 +185,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var tableSessionDb = await _tableSessionRepository.GetAllDataByExpression(t => !t.EndTime.HasValue, 0, 0, null, false, t => t.Table);
-                var latestSessionByTable = tableSessionDb.Items.GroupBy(t => t.TableId).Select(t => t.FirstOrDefault()).Select(s => s);
+                if(tableSessionDb.Items.Count > 0)
+                {
+                    var latestSessionByTable = tableSessionDb.Items.GroupBy(t => t.TableId).Select(t => t.OrderByDescending(ta => ta.StartTime).FirstOrDefault());
+                    List<KitchenTableSimpleResponse> data = new List<KitchenTableSimpleResponse>();
+                    foreach (var item in latestSessionByTable)
+                    {
+                        var uncheckedPreorderList = await _prelistOrderRepository.GetAllDataByExpression(p => p.TableSessionId == item.TableSessionId, 0, 0, null, false, null);
+                        data.Add(new KitchenTableSimpleResponse
+                        {
+                            TableId = item.TableId,
+                            TableSessionId = item.TableSessionId,
+                            TableName = item.Table.TableName,
+                            UnCheckedNumberOfDishes = uncheckedPreorderList.Items.Count
+                        });
+                    }
+                    result.Result = data;
+                }
             }
             catch (Exception ex)
             {
@@ -282,7 +298,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             );
                         preListOrderDetail.ComboOrderDetails = reservationComboListDb.Items;    
                     }
-                    tableSessionResponse.PrelistOrderDetails.Add(preListOrderDetail); 
+                    if (list.StatusId == Domain.Enums.PreListOrderStatus.UNCHECKED)
+                    {
+                        tableSessionResponse.UncheckedPrelistOrderDetails.Add(preListOrderDetail);
+                    }
+                    else if (list.StatusId == Domain.Enums.PreListOrderStatus.READ)
+                    {
+                        tableSessionResponse.ReadPrelistOrderDetails.Add(preListOrderDetail);
+                    }
+                    else
+                    {
+                        tableSessionResponse.ReadyToServePrelistOrderDetails.Add(preListOrderDetail);
+                    }
                 }
                 tableSessionResponse.TableSession = tableSessionDb;
                 result.Result = tableSessionResponse;

@@ -45,6 +45,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _service.GetTableSessionById(id);
         }
-       
+
+        [HttpGet("get-current-table-session")]
+        public async Task<AppActionResult> GetCurrentTableSession()
+        {
+            return await _service.GetCurrentTableSession();
+        }
     }
 }

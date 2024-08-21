@@ -17,6 +17,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             _service = service;
         }
 
+        [HttpGet("get-all-order-by-status/{pageNumber}/{pageSize}")]
+        public async Task<AppActionResult> GetAllOrderByStatus(Domain.Enums.OrderStatus? status, int pageNumber = 1, int pageSize = 10)
+        {
+            return await _service.GetAllOrderByStatus(status, 1, 10);
+        }
+
         [HttpGet("get-order-by-account-id/{accountId}/{pageNumber}/{pageSize}")]
         public async Task<AppActionResult> GetAllOrderByAccountId(string accountId, Domain.Enums.OrderStatus? status, int pageNumber = 1, int pageSize = 10)
         {

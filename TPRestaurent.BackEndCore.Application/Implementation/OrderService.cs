@@ -979,5 +979,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+        public async Task<AppActionResult> GetAllOrderByStatus(OrderStatus? status, int pageNumber, int pageSize)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                if (status.HasValue)
+                {
+                    result.Result = await _repository.GetAllDataByExpression(o => o.Status == status, pageNumber, pageSize, o => o.OrderDate, false, null);
+                }
+                else
+                {
+                    result.Result = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, o => o.OrderDate, false, null);
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
     }
 }

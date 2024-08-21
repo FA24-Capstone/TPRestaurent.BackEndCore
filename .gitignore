@@ -396,3 +396,4 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/TPRestaurent.BackEndCore.Domain/Migrations/20240818033044_Init2.Designer.cs

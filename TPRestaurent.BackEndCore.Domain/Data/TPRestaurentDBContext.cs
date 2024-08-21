@@ -62,6 +62,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.EnumModels.ComboCategory> ComboCategories { get; set; } = null!;
         public DbSet<Models.EnumModels.DishSize> DishSizes { get; set; } = null!;
         public DbSet<Models.EnumModels.ReservationStatus> ReservationStatuses { get; set; } = null!;
+        public DbSet<Models.EnumModels.PreListOrderStatus> PreListOrderStatuses { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

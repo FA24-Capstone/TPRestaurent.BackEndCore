@@ -11,7 +11,9 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
     public class TableSessionResponse
     {
         public TableSession TableSession { get; set; } = null!;
-        public List<PrelistOrderDetails> PrelistOrderDetails { get; set; } = new List<PrelistOrderDetails>();       
+        public List<PrelistOrderDetails> UncheckedPrelistOrderDetails { get; set; } = new List<PrelistOrderDetails>();       
+        public List<PrelistOrderDetails> ReadPrelistOrderDetails { get; set; } = new List<PrelistOrderDetails>();       
+        public List<PrelistOrderDetails> ReadyToServePrelistOrderDetails { get; set; } = new List<PrelistOrderDetails>();
     }
 
     public class PrelistOrderDetails

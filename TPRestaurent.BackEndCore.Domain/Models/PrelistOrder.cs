@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TPRestaurent.BackEndCore.Domain.Enums;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
 {
@@ -15,6 +16,9 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public int Quantity { get; set; }
         public DateTime OrderTime { get; set; }
         public DateTime? ReadyToServeTime { get; set; }
+        public PreListOrderStatus StatusId { get; set; }
+        [ForeignKey(nameof(StatusId))]
+        public EnumModels.PreListOrderStatus OrderStatus { get; set; }
         public Guid? ReservationDishId { get; set; }
         [ForeignKey(nameof(ReservationDishId))]
         public ReservationDish? ReservationDish { get; set; }
