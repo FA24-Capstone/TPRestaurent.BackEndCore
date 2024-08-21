@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Humanizer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,13 +43,36 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return BuildAppActionResultError(result, $"Không tìm thấy phiên dùng bữa với id {dto.TableSessionId}");
                 }
 
-                var preOrderListList = new List<PrelistOrder>();
+                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
 
-                dto.PrelistOrderDtos.ForEach(p =>
+                var preOrderListList = new List<PrelistOrder>();
+                var comboOrderDetailList = new List<ComboOrderDetail>();
+                var prelistOrderId = Guid.NewGuid();
+                dto.PrelistOrderDtos!.ForEach(p =>
                 {
                     if (p.Combo != null)
                     {
-
+                        prelistOrderId = Guid.NewGuid();
+                        preOrderListList.Add(new PrelistOrder()
+                        {
+                            PrelistOrderId = prelistOrderId,
+                            DishSizeDetailId = p.DishSizeDetailId,
+                            ReservationDishId = p.ReservationDishId,
+                            ComboId = p.Combo.ComboId,
+                            OrderTime = dto.OrderTime,
+                            TableSessionId = dto.TableSessionId,
+                            Quantity = p.Quantity
+                        });
+                        p.Combo.DishComboIds.ForEach(
+                            c => comboOrderDetailList.Add(
+                                new ComboOrderDetail
+                                {
+                                    ComboOrderDetailId = Guid.NewGuid(),
+                                    DishComboId = c,
+                                    PrelistOrderId = prelistOrderId
+                                }
+                            )
+                        );
                     }
                     else
                     {
@@ -64,9 +88,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         });
                     }
                 });
+                await _prelistOrderRepository.InsertRange(preOrderListList);
+                await comboOrderDetailRepository!.InsertRange(comboOrderDetailList);
+
+                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
+                result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
@@ -76,10 +105,76 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
+                var tableRepository = Resolve<IGenericRepository<Table>>();
+                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+                var tableDb = await tableRepository!.GetById(dto.TableId);
+                if(tableDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy bàn với id {dto.TableId}");
+                }
+
+                var tableSessionDb = new TableSession
+                {
+                    TableSessionId = Guid.NewGuid(),
+                    TableId = dto.TableId,
+                    ReservationId = dto.ReservationId,
+                    StartTime = dto.StartTime,
+                };
+
+                var preOrderListList = new List<PrelistOrder>();
+                var comboOrderDetailList = new List<ComboOrderDetail>();
+                var prelistOrderId = Guid.NewGuid();
+
+                dto.PrelistOrderDtos!.ForEach(p =>
+                {
+                    if (p.Combo != null)
+                    {
+                        prelistOrderId = Guid.NewGuid();
+                        preOrderListList.Add(new PrelistOrder()
+                        {
+                            PrelistOrderId = prelistOrderId,
+                            DishSizeDetailId = p.DishSizeDetailId,
+                            ReservationDishId = p.ReservationDishId,
+                            ComboId = p.Combo.ComboId,
+                            OrderTime = dto.StartTime,
+                            TableSessionId = tableSessionDb.TableSessionId,
+                            Quantity = p.Quantity
+                        });
+                        p.Combo.DishComboIds.ForEach(
+                            c => comboOrderDetailList.Add(
+                                new ComboOrderDetail
+                                {
+                                    ComboOrderDetailId = Guid.NewGuid(),
+                                    DishComboId = c,
+                                    PrelistOrderId = prelistOrderId
+                                }
+                            )
+                        );
+                    }
+                    else
+                    {
+                        preOrderListList.Add(new PrelistOrder()
+                        {
+                            PrelistOrderId = Guid.NewGuid(),
+                            DishSizeDetailId = p.DishSizeDetailId,
+                            ReservationDishId = p.ReservationDishId,
+                            ComboId = null,
+                            OrderTime = dto.StartTime,
+                            TableSessionId = tableSessionDb.TableSessionId,
+                            Quantity = p.Quantity
+                        });
+                    }
+                });
+                await _tableSessionRepository.Insert(tableSessionDb);
+                await _prelistOrderRepository.InsertRange(preOrderListList);
+                await comboOrderDetailRepository!.InsertRange(comboOrderDetailList);
+
+                await _unitOfWork.SaveChangesAsync();
 
             }
             catch (Exception ex)
             {
+                result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
@@ -181,11 +276,29 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-      
-
-        public Task<AppActionResult> UpdatePrelistOrderStatus(List<Guid> prelistOrderIds)
+        public async Task<AppActionResult> UpdatePrelistOrderStatus(List<Guid> prelistOrderIds)
         {
-            throw new NotImplementedException();
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var prelistOrderDb = await _prelistOrderRepository.GetAllDataByExpression(p => prelistOrderIds.Contains(p.PrelistOrderId), 0, 0, null, false, null);
+                if (prelistOrderDb.Items.Count != prelistOrderIds.Count)
+                {
+                    return BuildAppActionResultError(result, $"Tồn tại id gọi món hông nằm trong hệ thống");
+                }
+
+                var utility = Resolve<Utility>();
+                var time = utility.GetCurrentDateTimeInTimeZone();
+                prelistOrderDb.Items.ForEach(p => p.ReadyToServeTime = time);
+                await _prelistOrderRepository.UpdateRange(prelistOrderDb.Items);
+                await _unitOfWork.SaveChangesAsync();
+                result.Result = prelistOrderDb;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         }
     }
 }

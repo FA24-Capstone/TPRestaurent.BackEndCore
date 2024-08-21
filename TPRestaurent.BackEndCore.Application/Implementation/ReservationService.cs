@@ -752,5 +752,87 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+        public async Task<AppActionResult> GetTableReservationWithTime(Guid tableId, DateTime? time)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var tableRepository = Resolve<IGenericRepository<Table>>();
+                var reservationTableRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
+                var tableDb = await tableRepository!.GetById(tableId);
+                if(tableDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy bàn với id {tableId}");
+                }
+
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var configDb = await configurationRepository!.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TIME_TO_LOOK_UP_FOR_RESERVATION), null);
+                if (configDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy cấu hình với id {tableId}");
+                }
+
+                if (!time.HasValue)
+                {
+                    var utility = Resolve<Utility>();
+                    time = utility.GetCurrentDateTimeInTimeZone();
+                }
+                var nearReservationDb = await reservationTableRepository.GetAllDataByExpression(r => r.TableId == tableId
+                                                                && r.Reservation.ReservationDate <= time.Value.AddHours(double.Parse(configDb.PreValue)) 
+                                                                && r.Reservation.ReservationDate.AddHours(double.Parse(configDb.PreValue)) >= time, 0, 0, r => r.Reservation.ReservationDate, true, null);
+                if(nearReservationDb.Items.Count > 0)
+                {
+                    result = await GetAllReservationDetail(nearReservationDb.Items[0].ReservationId);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> AddTableToReservation(Guid reservationId, List<Guid> tableIds)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var reservationDb = await _reservationRepository.GetById(reservationId);
+                if (reservationDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy đặt bàn với id {reservationId}");
+                }
+
+                var tableRepository = Resolve<IGenericRepository<Table>>();
+                var tableDb = await tableRepository.GetAllDataByExpression(t => tableIds.Contains(t.TableId), 0, 0, null, false, null);
+                if (tableIds.Count != tableDb.Items.Count)
+                {
+                    return BuildAppActionResultError(result, $"Một số id bàn không tồn tại trong hệ thống. Vui lòng kiểm tra lại");
+                }
+
+                var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
+                var reservationTableDetail = new List<ReservationTableDetail>();
+
+                foreach (var tableId in tableIds)
+                {
+                    reservationTableDetail.Add(new ReservationTableDetail()
+                    {
+                        ReservationId = reservationId,
+                        TableId = tableId,
+                        ReservationTableDetailId = Guid.NewGuid()
+                    });
+                }
+
+                await reservationTableDetailRepository!.InsertRange(reservationTableDetail);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message );
+            }
+            return result;
+        }
     }
 }

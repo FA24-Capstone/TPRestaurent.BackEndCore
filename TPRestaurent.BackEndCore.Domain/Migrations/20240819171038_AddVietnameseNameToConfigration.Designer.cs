@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240819171038_AddVietnameseNameToConfigration")]
+    partial class AddVietnameseNameToConfigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1404,7 +1406,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid?>("ReservationDishId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("TableSessionId")
+                    b.Property<Guid>("TableSessionId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("PrelistOrderId");
@@ -2223,7 +2225,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.TableSession", "TableSession")
                         .WithMany()
-                        .HasForeignKey("TableSessionId");
+                        .HasForeignKey("TableSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Combo");
 

@@ -70,5 +70,18 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _service.UpdateReservationStatus(reservationId, status);
         }
+
+        [HttpGet("get-table-reservation-with-time")]
+        public async Task<AppActionResult> GetTableReservationWithTime(Guid tableId, DateTime? time)
+        {
+            return await _service.GetTableReservationWithTime(tableId, time);
+        }
+
+        [HttpPost("add-table-to-reservation")]
+        public async Task<AppActionResult> AddTableToReservation(Guid reservationId, List<Guid> tableIds)
+        {
+            return await _service.AddTableToReservation(reservationId, tableIds);
+        }
+
     }
 }

@@ -86,6 +86,7 @@ public class SD
         public static string DEPOSIT_PERCENT = "DEPOSIT_PERCENT";
         public static string DEPOSIT_FOR_NORMAL_TABLE= "DEPOSIT_FOR_NORMAL_TABLE";
         public static string DEPOSIT_FOR_PRIVATE_TABLE= "DEPOSIT_FOR_PRIVATE_TABLE";
+        public static string TIME_TO_LOOK_UP_FOR_RESERVATION = "TIME_TO_LOOK_UP_FOR_RESERVATION";
     }
 
     public class SubjectMail

@@ -15,6 +15,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         //Task<AppActionResult> UpdateCombo(UpdateComboDto comboDto);
         Task<AppActionResult> DeleteComboById(Guid comboId);
         Task<AppActionResult> GetComboById(Guid comboId);
+        Task<AppActionResult> GetComboById2(Guid comboId);
         public Task<AppActionResult> GetAllCombo(string? keyword, int pageNumber, int pageSize);
     }
 }

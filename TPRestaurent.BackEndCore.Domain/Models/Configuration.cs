@@ -12,6 +12,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         [Key] 
         public Guid ConfigurationId { get; set; }
         public string Name { get; set; } = null!;
+        public string? VietnameseName { get; set; } = null!;
         public string PreValue { get; set; } = null!;
         public string? ActiveValue { get; set; } = null!;
         public DateTime? ActiveDate { get; set; }
