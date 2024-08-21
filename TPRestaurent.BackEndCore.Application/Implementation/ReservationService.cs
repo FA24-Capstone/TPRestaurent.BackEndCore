@@ -606,7 +606,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             try
             {
-                var reservation = await _reservationRepository.GetById(reservationId);
+                var reservation = await _reservationRepository.GetByExpression(r => r.ReservationId == reservationId, r => r.CustomerInfo);
                 if (reservation == null)
                 {
                     return BuildAppActionResultError(new AppActionResult(), $"Không tìm thấy thông tin đặt bàn với id {reservationId}");
@@ -770,7 +770,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var configDb = await configurationRepository!.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TIME_TO_LOOK_UP_FOR_RESERVATION), null);
                 if (configDb == null)
                 {
-                    return BuildAppActionResultError(result, $"Không tìm thấy cấu hình với id {tableId}");
+                    return BuildAppActionResultError(result, $"Không tìm thấy cấu hình với tên {SD.DefaultValue.TIME_TO_LOOK_UP_FOR_RESERVATION}");
                 }
 
                 if (!time.HasValue)

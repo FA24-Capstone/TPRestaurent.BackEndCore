@@ -11,6 +11,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
+using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
@@ -138,7 +139,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             ComboId = p.Combo.ComboId,
                             OrderTime = dto.StartTime,
                             TableSessionId = tableSessionDb.TableSessionId,
-                            Quantity = p.Quantity
+                            Quantity = p.Quantity,
+                            StatusId = Domain.Enums.PreListOrderStatus.UNCHECKED
                         });
                         p.Combo.DishComboIds.ForEach(
                             c => comboOrderDetailList.Add(
@@ -334,7 +336,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var utility = Resolve<Utility>();
                 var time = utility.GetCurrentDateTimeInTimeZone();
-                prelistOrderDb.Items.ForEach(p => p.ReadyToServeTime = time);
+                if (prelistOrderDb.Items[0].StatusId == PreListOrderStatus.UNCHECKED)
+                {
+                    prelistOrderDb.Items.ForEach(p => p.StatusId = PreListOrderStatus.READ);
+                } else if(prelistOrderDb.Items[0].StatusId == PreListOrderStatus.READ)
+                {
+                    prelistOrderDb.Items.ForEach(p => p.StatusId = PreListOrderStatus.READY_TO_SERVE);
+                }
+
                 await _prelistOrderRepository.UpdateRange(prelistOrderDb.Items);
                 await _unitOfWork.SaveChangesAsync();
                 result.Result = prelistOrderDb;

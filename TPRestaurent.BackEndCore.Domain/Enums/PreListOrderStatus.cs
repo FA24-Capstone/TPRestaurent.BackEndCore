@@ -10,6 +10,6 @@ namespace TPRestaurent.BackEndCore.Domain.Enums
     {
         UNCHECKED,
         READ,
-        READY_TOS_ERVE
+        READY_TO_SERVE
     }
 }

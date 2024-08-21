@@ -116,6 +116,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             SeedEnumTable<Models.EnumModels.ComboCategory, Enums.ComboCategory>(builder);
             SeedEnumTable<Models.EnumModels.DishSize, Enums.DishSize>(builder);
             SeedEnumTable<Models.EnumModels.ReservationStatus, Enums.ReservationStatus>(builder);
+            SeedEnumTable<Models.EnumModels.PreListOrderStatus, Enums.PreListOrderStatus>(builder);
 
         }
 

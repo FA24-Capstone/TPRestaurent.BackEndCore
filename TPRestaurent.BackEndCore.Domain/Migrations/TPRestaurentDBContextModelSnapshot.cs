@@ -1066,6 +1066,40 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         });
                 });
 
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.PreListOrderStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("VietnameseName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PreListOrderStatuses");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 0,
+                            Name = "UNCHECKED"
+                        },
+                        new
+                        {
+                            Id = 1,
+                            Name = "READ"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "READY_TOS_ERVE"
+                        });
+                });
+
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.RatingPoint", b =>
                 {
                     b.Property<int>("Id")
@@ -1409,6 +1443,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid?>("ReservationDishId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("StatusId")
+                        .HasColumnType("int");
+
                     b.Property<Guid?>("TableSessionId")
                         .HasColumnType("uniqueidentifier");
 
@@ -1419,6 +1456,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasIndex("DishSizeDetailId");
 
                     b.HasIndex("ReservationDishId");
+
+                    b.HasIndex("StatusId");
 
                     b.HasIndex("TableSessionId");
 
@@ -1752,7 +1791,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("EndTime")
+                    b.Property<DateTime?>("EndTime")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid?>("ReservationId")
@@ -2226,6 +2265,12 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .WithMany()
                         .HasForeignKey("ReservationDishId");
 
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.PreListOrderStatus", "OrderStatus")
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.TableSession", "TableSession")
                         .WithMany()
                         .HasForeignKey("TableSessionId");
@@ -2233,6 +2278,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Navigation("Combo");
 
                     b.Navigation("DishSizeDetail");
+
+                    b.Navigation("OrderStatus");
 
                     b.Navigation("ReservationDish");
 

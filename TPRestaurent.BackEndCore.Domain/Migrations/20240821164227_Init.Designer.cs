@@ -12,8 +12,8 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    [Migration("20240821163300_AddPrelistOrderStatus")]
-    partial class AddPrelistOrderStatus
+    [Migration("20240821164227_Init")]
+    partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -1886,7 +1886,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
@@ -1895,7 +1895,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
@@ -1904,7 +1904,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
@@ -1913,13 +1913,13 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
@@ -1928,7 +1928,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
@@ -1946,7 +1946,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "CreateByAccount")
                         .WithMany()
                         .HasForeignKey("CreateBy")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "UpdateByAccount")
@@ -1963,7 +1963,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.ComboCategory", "Category")
                         .WithMany()
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Category");
@@ -1974,13 +1974,13 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Combo", "Combo")
                         .WithMany()
                         .HasForeignKey("ComboId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.DishItemType", "DishItemType")
                         .WithMany()
                         .HasForeignKey("DishItemTypeId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Combo");
@@ -1993,7 +1993,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.DishCombo", "DishCombo")
                         .WithMany()
                         .HasForeignKey("DishComboId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.OrderDetail", "OrderDetail")
@@ -2031,7 +2031,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.CustomerInfo", "CustomerInfo")
                         .WithMany()
                         .HasForeignKey("CustomerInfoId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("CustomerInfo");
@@ -2046,7 +2046,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.CustomerInfo", "CustomerInfo")
                         .WithMany()
                         .HasForeignKey("CustomerInfoId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Dish", "Dish")
@@ -2065,13 +2065,13 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Coupon", "Coupon")
                         .WithMany()
                         .HasForeignKey("CouponId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.CustomerInfo", "CustomerInfo")
                         .WithMany()
                         .HasForeignKey("CustomerInfoId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Coupon");
@@ -2084,7 +2084,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Table", "Table")
                         .WithMany()
                         .HasForeignKey("TableId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Table");
@@ -2095,7 +2095,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.DishItemType", "DishItemType")
                         .WithMany()
                         .HasForeignKey("DishItemTypeId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("DishItemType");
@@ -2125,7 +2125,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.DishSize", "DishSize")
                         .WithMany()
                         .HasForeignKey("DishSizeId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Dish");
@@ -2174,7 +2174,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.PaymentMethod", "PaymentMethod")
                         .WithMany()
                         .HasForeignKey("PaymentMethodId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Reservation", "Reservation")
@@ -2211,7 +2211,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Order", "Order")
                         .WithMany()
                         .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Combo");
@@ -2253,7 +2253,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.PreListOrderStatus", "OrderStatus")
                         .WithMany()
                         .HasForeignKey("StatusId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.TableSession", "TableSession")
@@ -2280,7 +2280,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "CreateByAccount")
                         .WithMany()
                         .HasForeignKey("CreateBy")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Dish", "Dish")
@@ -2294,7 +2294,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.RatingPoint", "Point")
                         .WithMany()
                         .HasForeignKey("PointId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "UpdateByAccount")
@@ -2323,7 +2323,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.ReservationStatus", "ReservationStatus")
                         .WithMany()
                         .HasForeignKey("StatusId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("CustomerInfo");
@@ -2357,13 +2357,13 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "CreateByAccount")
                         .WithMany()
                         .HasForeignKey("CreateBy")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.ReservationRequestStatus", "ReservationRequestStatus")
                         .WithMany()
                         .HasForeignKey("StatusId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "UpdateByAccount")
@@ -2382,13 +2382,13 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Reservation", "Reservation")
                         .WithMany()
                         .HasForeignKey("ReservationId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Table", "Table")
                         .WithMany()
                         .HasForeignKey("TableId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Reservation");
@@ -2428,7 +2428,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.CustomerInfo", "CustomerInfo")
                         .WithMany()
                         .HasForeignKey("CustomerInfoId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("CustomerInfo");
@@ -2439,7 +2439,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.StoreCredit", "StoreCredit")
                         .WithMany()
                         .HasForeignKey("StoreCreditId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("StoreCredit");
@@ -2454,7 +2454,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.TableSize", "TableSize")
                         .WithMany()
                         .HasForeignKey("TableSizeId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("TableRating");
@@ -2471,7 +2471,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Table", "Table")
                         .WithMany()
                         .HasForeignKey("TableId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Reservation");
@@ -2484,7 +2484,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "Account")
                         .WithMany()
                         .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Account");
@@ -2499,7 +2499,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.PaymentMethod", "PaymentMethod")
                         .WithMany()
                         .HasForeignKey("PaymentMethodId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Reservation", "Reservation")
