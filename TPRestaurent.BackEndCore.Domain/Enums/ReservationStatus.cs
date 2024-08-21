@@ -9,8 +9,9 @@ namespace TPRestaurent.BackEndCore.Domain.Enums
     public enum ReservationStatus
     {
         PENDING,
+        TABLEASSIGNED,
         PAID,
         DINING,
-        CANCELLED
+        CANCELLED,
     }
 }

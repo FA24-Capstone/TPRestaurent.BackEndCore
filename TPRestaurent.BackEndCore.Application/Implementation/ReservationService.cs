@@ -824,8 +824,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         ReservationTableDetailId = Guid.NewGuid()
                     });
                 }
-
+                reservationDb.StatusId = ReservationStatus.TABLEASSIGNED;
                 await reservationTableDetailRepository!.InsertRange(reservationTableDetail);
+                await _reservationRepository.Update(reservationDb);
                 await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)

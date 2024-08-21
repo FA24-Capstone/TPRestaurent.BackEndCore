@@ -190,13 +190,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var targetTimeCompleted = currentTime.AddMinutes(-minute.GetValueOrDefault(0));
                 if (IsReadyToServed)
                 {
-                    var preOrderListDb = await preOrderListRepository!.GetAllDataByExpression(p => p.ReadyToServeTime >= targetTimeCompleted, pageNumber, pageSize, null, false, p => p.TableSession!.Table!.TableRating!);
+                    var preOrderListDb = await preOrderListRepository!.
+                        GetAllDataByExpression(p => p.ReadyToServeTime >= targetTimeCompleted, 
+                        pageNumber, pageSize, null, false, p => p.TableSession!.Table!.TableRating!);
                     result.Result = preOrderListDb;
                 }
                 else if (!IsReadyToServed)
                 {
                        var preOrderListDb = await preOrderListRepository!.GetAllDataByExpression(
-                       p => p.OrderTime <= targetTimeCompleted,
+                       p => p.OrderTime >= targetTimeCompleted,
                        pageNumber,
                        pageSize,
                        null,
@@ -245,6 +247,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 foreach (var list in preOrderListDb.Items)
                 {
                     var preListOrderDetail = new PrelistOrderDetails();
+                    preListOrderDetail.PrelistOrder = list; 
                      if (list.ComboId.HasValue)
                      {
                         var comboOrderDetailsDb = await comboOrderDetailRepository!.
