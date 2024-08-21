@@ -128,6 +128,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             _tokenDto.Token = token;
             _tokenDto.DeviceResponse = _mapper.Map<DeviceResponse>(device);
+            _tokenDto.DeviceResponse.TableName = device.Table.TableName;
             _tokenDto.MainRole = "DEVICE";
 
             _tokenDto.DeviceResponse.MainRole = _tokenDto.MainRole;

@@ -179,6 +179,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> GetCurrentTableSession()
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var tableSessionDb = await _tableSessionRepository.GetAllDataByExpression(t => !t.EndTime.HasValue, 0, 0, null, false, t => t.Table);
+                var latestSessionByTable = tableSessionDb.Items.GroupBy(t => t.TableId).Select(t => t.FirstOrDefault()).Select(s => s);
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
         public async Task<AppActionResult> GetLatestPrelistOrder(double? minute, bool IsReadyToServed, int pageNumber, int pageSize)
         {
             var result = new AppActionResult();

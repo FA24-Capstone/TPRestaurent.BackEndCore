@@ -13,7 +13,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         [Key]
         public Guid TableSessionId { get; set; }
         public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
+        public DateTime? EndTime { get; set; }
         public Guid? ReservationId { get; set; }
         [ForeignKey(nameof(ReservationId))]
         public Reservation? Reservation { get; set; }
