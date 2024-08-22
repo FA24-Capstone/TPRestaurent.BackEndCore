@@ -11,7 +11,7 @@ public class DbInstaller : IInstaller
     {
         services.AddDbContext<TPRestaurentDBContext>(option =>
         {
-            option.UseSqlServer(configuration["ConnectionStrings:DB"]);
+            option.UseSqlServer(configuration["ConnectionStrings:DBDocker"]);
         });
 
         services.AddIdentity<Account, IdentityRole>().AddEntityFrameworkStores<TPRestaurentDBContext>()

@@ -193,7 +193,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     List<KitchenTableSimpleResponse> data = new List<KitchenTableSimpleResponse>();
                     foreach (var item in latestSessionByTable)
                     {
-                        var uncheckedPreorderList = await _prelistOrderRepository.GetAllDataByExpression(p => p.TableSessionId == item.TableSessionId, 0, 0, null, false, null);
+                        var uncheckedPreorderList = await _prelistOrderRepository.GetAllDataByExpression(p => p.TableSessionId == item.TableSessionId && p.StatusId == PreListOrderStatus.UNCHECKED, 0, 0, null, false, null);
                         data.Add(new KitchenTableSimpleResponse
                         {
                             TableId = item.TableId,
