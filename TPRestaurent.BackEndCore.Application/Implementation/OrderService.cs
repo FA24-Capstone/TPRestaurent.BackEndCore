@@ -336,10 +336,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     if (customerSavedCoupon != null && customerSavedCoupon.IsUsedOrExpired == false)
                                     {
                                         var coupon = await couponRepository!.GetById(customerSavedCoupon.CouponId);
-                                        if (coupon != null)
+                                        if (coupon != null && coupon.ExpiryDate > utility.GetCurrentDateTimeInTimeZone())
                                         {
                                             double discountMoney = money * (coupon.DiscountPercent * 0.01);
                                             money -= discountMoney;
+                                        }else if (coupon!.ExpiryDate < utility.GetCurrentDateTimeInTimeZone())
+                                        {
+                                            return BuildAppActionResultError(result, $"Mã giảm giá của bạn đã hết hạn");
                                         }
                                         //NEED BUSINESS RULE HERE
                                         money = Math.Max(0, money);
@@ -487,10 +490,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         if (customerSavedCoupon != null && customerSavedCoupon.IsUsedOrExpired == false)
                                         {
                                             var coupon = await couponRepository!.GetById(customerSavedCoupon.CouponId);
-                                            if (coupon != null)
+                                            if (coupon != null && coupon.ExpiryDate > utility.GetCurrentDateTimeInTimeZone())
                                             {
                                                 double discountMoney = money * (coupon.DiscountPercent * 0.01);
                                                 money -= discountMoney;
+                                            }else if (coupon!.ExpiryDate < utility.GetCurrentDateTimeInTimeZone())
+                                            {
+                                                return BuildAppActionResultError(result, $"Mã giảm giá của bạn đã hết hạn");
                                             }
 
                                             money = Math.Max(0, money);
@@ -629,6 +635,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (orderRequestDto.CustomerId.HasValue)
                         {
                             var customerInfoDb = await customerInfoRepository!.GetByExpression(p => p.CustomerId == orderRequestDto.CustomerId, p => p.Account!);
+                            if (string.IsNullOrEmpty(customerInfoDb!.Address))
+                            {
+                                return BuildAppActionResultError(result, $"Địa chỉ của bạn không tồn tại. Vui lòng cập nhập địa chỉ");
+                            }
                             var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => p.CustomerInfoId == orderRequestDto.CustomerId, 0, 0, null, false, p => p.Coupon!);
 
                             if (customerSavedCouponDb.Items!.Count < 0 && customerSavedCouponDb.Items != null)
@@ -639,10 +649,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     if (customerSavedCoupon != null && customerSavedCoupon.IsUsedOrExpired == false)
                                     {
                                         var coupon = await couponRepository!.GetById(customerSavedCoupon.CouponId);
-                                        if (coupon != null)
+                                        if (coupon != null && coupon.ExpiryDate > utility.GetCurrentDateTimeInTimeZone())
                                         {
                                             double discountMoney = money * (coupon.DiscountPercent * 0.01);
                                             money -= discountMoney;
+                                        }
+                                        else if (coupon.ExpiryDate < utility.GetCurrentDateTimeInTimeZone())
+                                        {
+                                            return BuildAppActionResultError(result, $"Mã giảm giá của bạn đã hết hạn");     
                                         }
 
                                         money = Math.Max(0, money);
@@ -806,10 +820,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 if (customerSavedCoupon != null && customerSavedCoupon.IsUsedOrExpired == false)
                                 {
                                     var coupon = await couponRepository!.GetById(customerSavedCoupon.CouponId);
-                                    if (coupon != null)
+                                    if (coupon != null && coupon.ExpiryDate > utility!.GetCurrentDateTimeInTimeZone())
                                     {
                                         double discountAmount = orderDb.TotalAmount * (coupon.DiscountPercent * 0.01);
                                         orderDb.TotalAmount -= discountAmount;
+                                    }
+                                    else if (coupon.ExpiryDate < utility!.GetCurrentDateTimeInTimeZone())
+                                    {
+                                        return BuildAppActionResultError(result, $"Mã giảm giá của bạn đã hết hạn");
                                     }
                                     //NEED BUSINESS RULE HERE
                                     orderDb.TotalAmount = Math.Max(0, orderDb.TotalAmount);
@@ -891,6 +909,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
+                var utility = Resolve<Utility>();
                 var customerInfoRepository = Resolve<IGenericRepository<CustomerInfo>>();
                 if (orderRequestDto.CustomerId.HasValue)
                 {
@@ -917,9 +936,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             var customerSavedCoupon = customerSavedCouponDb.Items.FirstOrDefault(c => c.CouponId == orderRequestDto.CouponId);
                             if (customerSavedCoupon != null && customerSavedCoupon.IsUsedOrExpired == false)
                             {
-                                if (customerSavedCoupon.Coupon != null && customerSavedCoupon.Coupon.MinimumAmount < orderRequestDto.Total)
+                                if (customerSavedCoupon.Coupon != null && customerSavedCoupon.Coupon.MinimumAmount < orderRequestDto.Total && customerSavedCoupon.Coupon.ExpiryDate > utility!.GetCurrentDateTimeInTimeZone())
                                 {
                                     data.CouponDiscount = orderRequestDto.Total * (customerSavedCoupon.Coupon.DiscountPercent * 0.01);
+                                } 
+                                else if (customerSavedCoupon.Coupon.ExpiryDate < utility!.GetCurrentDateTimeInTimeZone())
+                                {
+                                    return BuildAppActionResultError(result, $"Mã giảm giá của bạn đã hết hạn");
                                 }
                                 else
                                 {
