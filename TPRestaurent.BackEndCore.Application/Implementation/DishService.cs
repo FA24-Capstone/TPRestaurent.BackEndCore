@@ -110,7 +110,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         staticList.Add(staticImg);
                         if (!upload.IsSuccess)
                         {
-                            result = BuildAppActionResultError(result, "Upload failed");
+                            result = BuildAppActionResultError(result, "Upload hình ảnh không thành công");
                         }
                     }
                     if (!BuildAppActionResultIsError(result))

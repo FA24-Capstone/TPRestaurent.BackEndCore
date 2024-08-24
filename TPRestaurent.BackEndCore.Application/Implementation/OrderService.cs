@@ -217,7 +217,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 OrderId = Guid.NewGuid(),
                                 CustomerId = customerInfoDb!.CustomerId,
                                 Note = orderRequestDto.Note,
-                                OrderDate = orderRequestDto.OrderDate,
+                                OrderDate = utility.GetCurrentDateTimeInTimeZone(),
                                 Status = OrderStatus.Processing,
                                 ReservationId = reservationDb.ReservationId,
                                 PaymentMethodId = orderRequestDto.PaymentMethodId,
@@ -417,7 +417,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 Note = orderRequestDto.Note,
                                 PaymentMethodId = orderRequestDto.PaymentMethodId,
                                 Status = OrderStatus.Processing,
-                                OrderDate = orderRequestDto.OrderDate,
+                                OrderDate = utility.GetCurrentDateTimeInTimeZone(),
                             };
 
                             List<OrderDetail> orderDetailsDto = new List<OrderDetail>();
@@ -562,7 +562,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             OrderId = Guid.NewGuid(),
                             Note = orderRequestDto.Note,
-                            OrderDate = orderRequestDto.OrderDate,
+                            OrderDate = utility.GetCurrentDateTimeInTimeZone(),
                             Status = OrderStatus.Pending,
                             PaymentMethodId = orderRequestDto.PaymentMethodId,
                             IsDelivering = true,

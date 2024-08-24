@@ -11,7 +11,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
 {
     public class OrderRequestDto
     {
-        public DateTime OrderDate { get; set; }
         public Guid? CustomerId { get; set; }
         public PaymentMethod PaymentMethodId { get; set; }
         public Guid? ReservationId { get; set; }
