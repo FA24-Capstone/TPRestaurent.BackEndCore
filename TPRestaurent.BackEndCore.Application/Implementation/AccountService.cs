@@ -1267,19 +1267,71 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                var accountDb = await _accountRepository.GetByExpression(p => p.Id == customerInforRequest.AccountId);
-                if (accountDb == null)
+                //var accountDb = await _accountRepository.GetByExpression(p => p.Id == customerInforRequest.AccountId);
+                //if (accountDb == null)
+                //{
+                //    result = BuildAppActionResultError(result, $"Tài khoản với số điện thoại {customerInforRequest.AccountId} không tồn tại!");
+                //}
+                var updateCustomerInfoList = await _customerInfoRepository.GetAllDataByExpression(p => p.CustomerId == customerInforRequest.CustomerId && p.PhoneNumber.Equals(customerInforRequest.PhoneNumber), 0, 0, null, false, null);
+
+                if (updateCustomerInfoList.Items!.Count == 0)
                 {
-                    result = BuildAppActionResultError(result, $"Tài khoản với số điện thoại {customerInforRequest.AccountId} không tồn tại!");
-                }
-                var updateCustomerInfo = await _customerInfoRepository.GetByExpression(p => p.CustomerId == customerInforRequest.CustomerId);
-                if (updateCustomerInfo == null)
-                {
-                    result = BuildAppActionResultError(result, $"Thông tin và địa chỉ của {customerInforRequest.CustomerId} không tồn tại!");
+                    return BuildAppActionResultError(result, $"Thông tin khách hàng với id {customerInforRequest.CustomerId} không tồn tại!");
                 }
 
-                updateCustomerInfo.Address = customerInforRequest.Address;
-                updateCustomerInfo.PhoneNumber = customerInforRequest.PhoneNumber;
+                if (updateCustomerInfoList.Items.Count > 1)
+                {
+                    return BuildAppActionResultError(result, $"Xảy ra lỗi khi tìm kiếm thông tin khách hàng! Vui lòng kiểm tra lại thông tin");
+                }
+
+                var updateCustomerInfo = updateCustomerInfoList.Items[0];
+                var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+                if (customerInforRequest.AddressId.HasValue)
+                {
+                    var customerInfoAddressDb = await customerInfoAddressRepository!.GetById(customerInforRequest.AddressId.Value);
+                    if (customerInfoAddressDb == null)
+                    {
+                        return BuildAppActionResultError(result, $"Thông tin địa chỉ khách hàng với id {customerInforRequest.AddressId.Value} không tồn tại!");
+                    }
+                    if (!customerInfoAddressDb.IsCurrentUsed)
+                    {
+                        updateCustomerInfo.Address = customerInfoAddressDb.CustomerInfoAddressName;
+                        customerInfoAddressDb.IsCurrentUsed = true;
+                        var currentCustomerInfoAddressListDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.CustomerInfoId == updateCustomerInfo.CustomerId 
+                                                                                                                && c.IsCurrentUsed, 0,0, null, false, null);
+                        if(currentCustomerInfoAddressListDb.Items.Count > 1)
+                        {
+                            return BuildAppActionResultError(result, "Xảy ra lỗi khi cập nhật thông tin khách hàng!");
+                        }
+
+                        var currentCustomerInfoAddressDb = currentCustomerInfoAddressListDb.Items[0];
+                        currentCustomerInfoAddressDb.IsCurrentUsed = false;
+                        await customerInfoAddressRepository.Update(customerInfoAddressDb);
+                        await customerInfoAddressRepository.Update(currentCustomerInfoAddressDb);
+                    }
+                } else
+                {
+                    await customerInfoAddressRepository!.Insert(new CustomerInfoAddress
+                    {
+                        CustomerInfoAddressId = Guid.NewGuid(),
+                        CustomerInfoAddressName = customerInforRequest.Address!,
+                        CustomerInfoId = updateCustomerInfo.CustomerId,
+                        IsCurrentUsed = true
+                    });
+
+                    var currentCustomerInfoAddressListDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.CustomerInfoId == updateCustomerInfo.CustomerId
+                                                                                                                && c.IsCurrentUsed, 0, 0, null, false, null);
+                    if (currentCustomerInfoAddressListDb.Items.Count > 1)
+                    {
+                        return BuildAppActionResultError(result, "Xảy ra lỗi khi cập nhật thông tin khách hàng!");
+                    }
+
+                    var currentCustomerInfoAddressDb = currentCustomerInfoAddressListDb.Items[0];
+                    currentCustomerInfoAddressDb.IsCurrentUsed = false;
+                    updateCustomerInfo.Address = customerInforRequest.Address;
+                    await customerInfoAddressRepository.Update(currentCustomerInfoAddressDb);
+                }
+                updateCustomerInfo.DOB = customerInforRequest.DOB;
                 updateCustomerInfo.Name = customerInforRequest.Name;
 
                 await _customerInfoRepository.Update(updateCustomerInfo);
@@ -1454,17 +1506,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var customerInfoDb = await _customerInfoRepository.GetAllDataByExpression(c => c.PhoneNumber.Equals(phoneNumber), 0, 0, null, false, c => c.Account);
-                if (customerInfoDb.Items.Count > 1)
+                var customerInfoListDb = await _customerInfoRepository.GetAllDataByExpression(c => c.PhoneNumber.Equals(phoneNumber), 0, 0, null, false, c => c.Account);
+                if (customerInfoListDb.Items.Count > 1)
                 {
                     return BuildAppActionResultError(result, $"Có nhiều hơn 1 thông tin người dùng với số điện thoại {phoneNumber}");
                 }
 
-                if (customerInfoDb.Items.Count == 0)
+                if (customerInfoListDb.Items.Count == 0)
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy thông tin người dùng với số điện thoại {phoneNumber}");
                 }
-                result.Result = customerInfoDb;
+
+                var customerInfo = customerInfoListDb.Items[0];
+
+                var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+                var customerInfoAddressDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.CustomerInfoId == customerInfo.CustomerId, 0, 0, null, false, null);
+
+                var data = new CustomerInfoAddressResponse();
+                data.CustomerInfo = customerInfo;
+                data.CustomerAddresses = customerInfoAddressDb.Items;
+                
+                result.Result = data;
             }
             catch (Exception ex)
             {
