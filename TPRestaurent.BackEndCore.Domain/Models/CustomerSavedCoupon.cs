@@ -13,9 +13,9 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         [Key] 
         public Guid CustomerSavedCouponId { get; set; }
         public bool IsUsedOrExpired { get; set; }
-        public Guid CustomerInfoId { get; set; }
-        [ForeignKey(nameof(CustomerInfoId))]
-        public CustomerInfo? CustomerInfo { get; set; }
+        public string AccountId { get; set; }
+        [ForeignKey(nameof(AccountId))]
+        public Account? Account { get; set; }
         public Guid CouponId { get; set; }
         [ForeignKey(nameof(CouponId))]
         public Coupon? Coupon { get; set; }

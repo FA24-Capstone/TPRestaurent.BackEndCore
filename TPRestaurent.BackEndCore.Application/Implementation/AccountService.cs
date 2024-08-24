@@ -185,6 +185,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         PhoneNumber = signUpRequest.PhoneNumber,
                         Gender = signUpRequest.Gender,
                         VerifyCode = verifyCode,
+                        LoyaltyPoint = 0,
                         IsVerified = isGoogle ? true : false
                     };
                     var resultCreateUser = await _userManager.CreateAsync(user, signUpRequest.Password);
@@ -232,8 +233,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     Name = user.LastName + " " + user.FirstName,
                     PhoneNumber = user.PhoneNumber,
                     Address = "",
-                    AccountId = user.Id,
-                    LoyaltyPoint = 0
+                    AccountId = user.Id
                 };
                 var customerRepository = Resolve<IGenericRepository<CustomerInfo>>();
                 await customerRepository!.Insert(customer);

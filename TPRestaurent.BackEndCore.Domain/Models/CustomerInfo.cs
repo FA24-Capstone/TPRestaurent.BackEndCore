@@ -17,7 +17,6 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public DateTime? DOB { get; set; }
         public bool? Gender { get; set; }
         public string? Address { get; set; } = null!;
-        public int LoyaltyPoint { get; set; }
         public bool IsVerified { get; set; }
         public string? VerifyCode { get; set; }
         public string? AccountId { get; set; }

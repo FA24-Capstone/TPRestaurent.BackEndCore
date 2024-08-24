@@ -11,6 +11,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public string? LastName { get; set; }
         public bool Gender { get; set; }
         public bool IsDeleted { get; set; } = false;
+        public int LoyaltyPoint { get; set; }
         public bool IsVerified { get; set; } = false;
         public string? Avatar {  get; set; }
         public string? VerifyCode { get; set; }

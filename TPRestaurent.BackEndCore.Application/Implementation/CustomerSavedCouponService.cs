@@ -28,7 +28,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var couponDb = await _repository.GetAllDataByExpression(c => c.CustomerInfo.AccountId.Equals(accountId) && !c.IsUsedOrExpired, pageNumber, pageSize, c => c.Coupon.ExpiryDate, true, c => c.Coupon);
+                var couponDb = await _repository.GetAllDataByExpression(c => c.AccountId.Equals(accountId) && !c.IsUsedOrExpired, pageNumber, pageSize, c => c.Coupon.ExpiryDate, true, c => c.Coupon);
                 result.Result = couponDb;
             }
             catch (Exception ex)

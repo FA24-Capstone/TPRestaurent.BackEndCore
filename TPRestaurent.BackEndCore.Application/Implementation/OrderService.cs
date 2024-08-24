@@ -210,7 +210,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             var customerInfoDb = await customerInfoRepository!.GetByExpression(p => p.CustomerId == orderRequestDto.CustomerId, p => p.Account!);
                             var reservationDishDb = await reservationDishRepository!.GetAllDataByExpression(p => p.ReservationId == orderRequestDto.ReservationId, 0, 0, null, false, p => p.DishSizeDetail!.Dish!);
-                            var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => p.CustomerInfoId == orderRequestDto.CustomerId, 0, 0, null, false, p => p.Coupon!);
+                            var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => p.AccountId == customerInfoDb.AccountId, 0, 0, null, false, p => p.Coupon!);
 
                             var orderDb = new Order
                             {
@@ -355,10 +355,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     }
                                 }
                             }
-                            if (orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse > 0)
+                            if (customerInfoDb.Account != null && orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse > 0)
                             {
                                 // Check if the user has enough points
-                                if (customerInfoDb.LoyaltyPoint >= orderRequestDto.LoyalPointsToUse)
+                                if (customerInfoDb.Account.LoyaltyPoint >= orderRequestDto.LoyalPointsToUse)
                                 {
                                     // Calculate the discount (assuming 1 point = 1 currency unit)
                                     double loyaltyDiscount = Math.Min(orderRequestDto.LoyalPointsToUse.Value, money);
@@ -368,7 +368,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     money = Math.Max(0, money);
 
                                     // Update the customer's loyalty points
-                                    customerInfoDb.LoyaltyPoint -= (int)loyaltyDiscount;
+                                    customerInfoDb.Account.LoyaltyPoint -= (int)loyaltyDiscount;
 
                                     // Create a new loyalty point history entry for the point usage
                                     var loyalPointUsageHistory = new LoyalPointsHistory
@@ -377,7 +377,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
                                         OrderId = orderDb.OrderId,
                                         PointChanged = -(int)loyaltyDiscount,
-                                        NewBalance = customerInfoDb.LoyaltyPoint
+                                        NewBalance = customerInfoDb.Account.LoyaltyPoint
                                     };
 
                                     await loyalPointsHistoryRepository!.Insert(loyalPointUsageHistory);
@@ -399,14 +399,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
                                 OrderId = orderDb.OrderId,
                                 PointChanged = (int)money / 100,
-                                NewBalance = customerInfoDb.LoyaltyPoint + (int)money / 100
+                                NewBalance = customerInfoDb.Account.LoyaltyPoint + (int)money / 100
                             };
 
                             await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
 
                             //orderDb.LoyalPointsHistoryId = newLoyalPointHistory.LoyalPointsHistoryId;
-
-                            customerInfoDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
+                            if(customerInfoDb.Account != null)
+                            {
+                                customerInfoDb.Account.LoyaltyPoint = newLoyalPointHistory.NewBalance;
+                            }
                             await customerInfoRepository.Update(customerInfoDb);
 
                             await _repository.Insert(orderDb);
@@ -477,10 +479,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await comboOrderDetailRepository!.InsertRange(comboOrderDetails);
                             orderDb.TotalAmount = money;
 
-                            if (orderRequestDto.CustomerId.HasValue)
+                            var customerInfoDb = await customerInfoRepository!.GetByExpression(p => p.CustomerId == orderRequestDto.CustomerId, p => p.Account!);
+                            if (customerInfoDb.Account != null && orderRequestDto.CustomerId.HasValue)
                             {
-                                var customerInfoDb = await customerInfoRepository!.GetByExpression(p => p.CustomerId == orderRequestDto.CustomerId, p => p.Account!);
-                                var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => p.CustomerInfoId == orderRequestDto.CustomerId, 0, 0, null, false, p => p.Coupon!);
+                                var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => string.IsNullOrEmpty(customerInfoDb.AccountId) && p.AccountId == customerInfoDb.AccountId, 0, 0, null, false, p => p.Coupon!);
 
                                 if (customerSavedCouponDb.Items!.Count > 0 && customerSavedCouponDb.Items != null)
                                 {
@@ -509,10 +511,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         }
                                     }
                                 }
-                                if (orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse > 0)
+                                if (customerInfoDb.Account != null && orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse > 0)
                                 {
                                     // Check if the user has enough points
-                                    if (customerInfoDb.LoyaltyPoint >= orderRequestDto.LoyalPointsToUse)
+                                    if (customerInfoDb.Account.LoyaltyPoint >= orderRequestDto.LoyalPointsToUse)
                                     {
                                         // Calculate the discount (assuming 1 point = 1 currency unit)
                                         double loyaltyDiscount = Math.Min(orderRequestDto.LoyalPointsToUse.Value, money);
@@ -522,7 +524,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         money = Math.Max(0, money);
 
                                         // Update the customer's loyalty points
-                                        customerInfoDb.LoyaltyPoint -= (int)loyaltyDiscount;
+                                        customerInfoDb.Account.LoyaltyPoint -= (int)loyaltyDiscount;
 
                                         // Create a new loyalty point history entry for the point usage
                                         var loyalPointUsageHistory = new LoyalPointsHistory
@@ -531,7 +533,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
                                             OrderId = orderDb.OrderId,
                                             PointChanged = -(int)loyaltyDiscount,
-                                            NewBalance = customerInfoDb.LoyaltyPoint
+                                            NewBalance = customerInfoDb.Account.LoyaltyPoint
                                         };
 
                                         await loyalPointsHistoryRepository!.Insert(loyalPointUsageHistory);
@@ -549,14 +551,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
                                     OrderId = orderDb.OrderId,
                                     PointChanged = (int)money / 100,
-                                    NewBalance = customerInfoDb!.LoyaltyPoint + (int)money / 100
+                                    NewBalance = customerInfoDb!.Account.LoyaltyPoint + (int)money / 100
                                 };
 
                                 await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
 
                                 //orderDb.LoyalPointsHistoryId = newLoyalPointHistory.LoyalPointsHistoryId;
 
-                                customerInfoDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
+                                customerInfoDb.Account.LoyaltyPoint = newLoyalPointHistory.NewBalance;
                                 await customerInfoRepository.Update(customerInfoDb);
                             }
                             await _repository.Insert(orderDb);
@@ -639,7 +641,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 return BuildAppActionResultError(result, $"Địa chỉ của bạn không tồn tại. Vui lòng cập nhập địa chỉ");
                             }
-                            var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => p.CustomerInfoId == orderRequestDto.CustomerId, 0, 0, null, false, p => p.Coupon!);
+                            var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => string.IsNullOrEmpty(customerInfoDb.AccountId) && p.AccountId == customerInfoDb.AccountId, 0, 0, null, false, p => p.Coupon!);
 
                             if (customerSavedCouponDb.Items!.Count < 0 && customerSavedCouponDb.Items != null)
                             {
@@ -669,10 +671,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     }
                                 }
                             }
-                            if (orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse > 0)
+                            if (customerInfoDb.Account != null && orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse > 0)
                             {
                                 // Check if the user has enough points
-                                if (customerInfoDb!.LoyaltyPoint >= orderRequestDto.LoyalPointsToUse)
+                                if (customerInfoDb.Account!.LoyaltyPoint >= orderRequestDto.LoyalPointsToUse)
                                 {
                                     // Calculate the discount (assuming 1 point = 1 currency unit)
                                     double loyaltyDiscount = Math.Min(orderRequestDto.LoyalPointsToUse.Value, money);
@@ -682,7 +684,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     money = Math.Max(0, money);
 
                                     // Update the customer's loyalty points
-                                    customerInfoDb.LoyaltyPoint -= (int)loyaltyDiscount;
+                                    customerInfoDb.Account.LoyaltyPoint -= (int)loyaltyDiscount;
 
                                     // Create a new loyalty point history entry for the point usage
                                     var loyalPointUsageHistory = new LoyalPointsHistory
@@ -691,7 +693,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
                                         OrderId = orderDb.OrderId,
                                         PointChanged = -(int)loyaltyDiscount,
-                                        NewBalance = customerInfoDb.LoyaltyPoint
+                                        NewBalance = customerInfoDb.Account.LoyaltyPoint
                                     };
 
                                     await loyalPointsHistoryRepository!.Insert(loyalPointUsageHistory);
@@ -703,20 +705,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
                             }
 
-                            var newLoyalPointHistory = new LoyalPointsHistory
+                            if(customerInfoDb.Account != null)
                             {
-                                LoyalPointsHistoryId = Guid.NewGuid(),
-                                TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
-                                OrderId = orderDb.OrderId,
-                                PointChanged = (int)money / 100,
-                                NewBalance = customerInfoDb!.LoyaltyPoint + (int)money / 100
-                            };
+                                var newLoyalPointHistory = new LoyalPointsHistory
+                                {
+                                    LoyalPointsHistoryId = Guid.NewGuid(),
+                                    TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
+                                    OrderId = orderDb.OrderId,
+                                    PointChanged = (int)money / 100,
+                                    NewBalance = customerInfoDb!.Account.LoyaltyPoint + (int)money / 100
+                                };
 
-                            await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
+                                await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
 
-                            //orderDb.LoyalPointsHistoryId = newLoyalPointHistory.LoyalPointsHistoryId;
+                                //orderDb.LoyalPointsHistoryId = newLoyalPointHistory.LoyalPointsHistoryId;
 
-                            customerInfoDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
+                                customerInfoDb.Account.LoyaltyPoint = newLoyalPointHistory.NewBalance;
+                            }
                             await customerInfoRepository.Update(customerInfoDb);
                         }
                         await _repository.Insert(orderDb);
@@ -804,14 +809,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     if (orderDb.CustomerId.HasValue)
                     {
-
                         var couponRepository = Resolve<IGenericRepository<Coupon>>();
                         var customerSavedCouponRepository = Resolve<IGenericRepository<CustomerSavedCoupon>>();
                         var customerInfoRepository = Resolve<IGenericRepository<CustomerInfo>>();
                         var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
                         var customerInfoDb = await customerInfoRepository!.GetByExpression(p => p.CustomerId == orderDb.CustomerId, p => p.Account!);
                         var utility = Resolve<Utility>();
-                        var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => p.CustomerInfoId == orderDb.CustomerId, 0, 0, null, false, p => p.Coupon!);
+                        var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => string.IsNullOrEmpty(customerInfoDb.AccountId) && p.AccountId == customerInfoDb.AccountId, 0, 0, null, false, p => p.Coupon!);
                         if (customerSavedCouponDb.Items!.Count < 0 && customerSavedCouponDb.Items != null)
                         {
                             if (orderRequestDto.CouponId.HasValue)
@@ -840,10 +844,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
                             }
                         }
-                        if (orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse > 0)
+                        if (customerInfoDb.Account != null && orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse > 0)
                         {
                             // Check if the user has enough points
-                            if (customerInfoDb.LoyaltyPoint >= orderRequestDto.LoyalPointsToUse)
+                            if (customerInfoDb.Account.LoyaltyPoint >= orderRequestDto.LoyalPointsToUse)
                             {
                                 // Calculate the discount (assuming 1 point = 1 currency unit)
                                 double loyaltyDiscount = Math.Min(orderRequestDto.LoyalPointsToUse.Value, orderDb.TotalAmount);
@@ -853,7 +857,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 orderDb.TotalAmount = Math.Max(0, orderDb.TotalAmount);
 
                                 // Update the customer's loyalty points
-                                customerInfoDb.LoyaltyPoint -= (int)loyaltyDiscount;
+                                customerInfoDb.Account.LoyaltyPoint -= (int)loyaltyDiscount;
 
                                 // Create a new loyalty point history entry for the point usage
                                 var loyalPointUsageHistory = new LoyalPointsHistory
@@ -862,7 +866,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
                                     OrderId = orderDb.OrderId,
                                     PointChanged = -(int)loyaltyDiscount,
-                                    NewBalance = customerInfoDb.LoyaltyPoint
+                                    NewBalance = customerInfoDb.Account.LoyaltyPoint
                                 };
 
                                 await loyalPointsHistoryRepository!.Insert(loyalPointUsageHistory);
@@ -882,14 +886,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
                             OrderId = orderDb.OrderId,
                             PointChanged = (int)orderDb.TotalAmount / 100,
-                            NewBalance = customerInfoDb.LoyaltyPoint + (int)orderDb.TotalAmount / 100
+                            NewBalance = customerInfoDb.Account.LoyaltyPoint + (int)orderDb.TotalAmount / 100
                         };
 
                         await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
 
                         //orderDb.LoyalPointsHistoryId = newLoyalPointHistory.LoyalPointsHistoryId;
-
-                        customerInfoDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
+                        if (customerInfoDb.Account != null)
+                        {
+                            customerInfoDb.Account.LoyaltyPoint = newLoyalPointHistory.NewBalance;
+                        }
                         await customerInfoRepository.Update(customerInfoDb);
                         await _repository.Update(orderDb);
                         await _unitOfWork.SaveChangesAsync();
@@ -928,7 +934,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         data.PaidDeposit = reservationDb.Deposit;
                     }
-                    var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => p.CustomerInfoId == orderRequestDto.CustomerId, 0, 0, null, false, p => p.Coupon!);
+                    var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => string.IsNullOrEmpty(customerInfoDb.AccountId) && p.AccountId == customerInfoDb.AccountId, 0, 0, null, false, p => p.Coupon!);
                     if (customerSavedCouponDb.Items!.Count > 0 && customerSavedCouponDb.Items != null)
                     {
                         if (orderRequestDto.CouponId.HasValue)
@@ -952,10 +958,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                         }
                     }
-                    if (orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse > 0)
+                    if (customerInfoDb.Account != null && orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse > 0)
                     {
                         // Check if the user has enough points
-                        if (customerInfoDb.LoyaltyPoint >= orderRequestDto.LoyalPointsToUse)
+                        if (customerInfoDb.Account.LoyaltyPoint >= orderRequestDto.LoyalPointsToUse)
                         {
                             // Calculate the discount (assuming 1 point = 1 currency unit)
                             data.LoyalPointUsed = (double)orderRequestDto.LoyalPointsToUse;
@@ -963,7 +969,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         else
                         {
                             // Handle the case where the user doesn't have enough points
-                            return BuildAppActionResultError(result, $"Không đủ điểm tích lũy để sử dụng. Bạn còn {customerInfoDb.LoyaltyPoint} điểm");
+                            return BuildAppActionResultError(result, $"Không đủ điểm tích lũy để sử dụng. Bạn còn {customerInfoDb.Account.LoyaltyPoint} điểm");
                         }
                     }
 
