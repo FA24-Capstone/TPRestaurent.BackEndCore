@@ -764,8 +764,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var orderDb = await _repository.GetById(orderId);
-                if (orderDb == null)
+                var orderDb = await _repository.GetAllDataByExpression(p => p.OrderId == orderId, 0, 0 , null, false, p => p.CustomerInfo!.Account!,
+                    p => p.PaymentMethod!,
+                    p => p.Reservation!.ReservationStatus!,
+                    p => p.LoyalPointsHistory!,
+                    p => p.CustomerSavedCoupon!.Coupon!,
+                    p => p.CustomerSavedCoupon!.Account!,
+                    p => p.Table!.TableRating!,
+                    p => p.Table!.TableSize!);
+                if (orderDb.Items! == null && orderDb.Items.Count == 0)
                 {
                     result = BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {orderId}");
                     return result;
@@ -773,19 +780,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                 var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
-                var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(o => o.OrderId == orderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo);
+                var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(o => o.OrderId == orderId, 0, 0, null, false, o => o.DishSizeDetail!.Dish!, o => o.Combo!);
                 var orderDetailReponseList = new List<OrderDetailResponse>();
-                orderDetailDb.Items.ForEach(async o =>
+                foreach (var o in orderDetailDb!.Items!)
                 {
+                    var comboOrderDetailsDb = await comboOrderDetailRepository!.GetAllDataByExpression(
+                        c => c.OrderDetailId == o.OrderDetailId,
+                        0,
+                        0,
+                        null,
+                        false,
+                        c => c.DishCombo!.DishSizeDetail!.Dish!
+                    );
                     orderDetailReponseList.Add(new OrderDetailResponse
                     {
                         OrderDetail = o,
-                        ComboOrderDetails = (await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == o.OrderDetailId, 0, 0, null, false, c => c.DishCombo.DishSizeDetail.Dish)).Items
+                        ComboOrderDetails = comboOrderDetailsDb.Items!
                     });
-                });
+                }
                 result.Result = new OrderReponse
                 {
-                    Order = orderDb,
+                    Order = orderDb.Items!.FirstOrDefault()!,
                     OrderDetails = orderDetailReponseList
                 };
             }
@@ -999,7 +1014,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                var orderListDb = await _repository.GetAllDataByExpression(p => p.CustomerInfo!.PhoneNumber == phoneNumber, pageNumber, pageSize, p => p.OrderDate, false, null);
+                var orderListDb = await 
+                    _repository.GetAllDataByExpression(p => p.CustomerInfo!.PhoneNumber == phoneNumber, pageNumber, pageSize, p => p.OrderDate, false,
+                    p => p.CustomerInfo!.Account!,
+                    p => p.PaymentMethod!,
+                    p => p.Reservation!.ReservationStatus!,
+                    p => p.LoyalPointsHistory!,
+                    p => p.CustomerSavedCoupon!.Coupon!,
+                    p => p.CustomerSavedCoupon!.Account!,
+                    p => p.Table!.TableRating!,
+                    p => p.Table!.TableSize!
+                    );
                 result.Result = orderListDb;
             }
             catch (Exception ex)
