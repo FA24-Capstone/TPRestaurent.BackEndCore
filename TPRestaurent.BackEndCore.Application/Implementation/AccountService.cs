@@ -1304,7 +1304,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, $"Tài khoản với số điện thoại {accountId} không tồn tại!");
                 }
-                var customerInforList = await _customerInfoRepository.GetAllDataByExpression(p => p.AccountId == accountId, pageNumber, pageSize, null, false, null);
+                var customerInforList = await _customerInfoRepository.GetAllDataByExpression(p => p.AccountId == accountId, pageNumber, pageSize, null, false, a => a.Account);
                 customerInfoResponse.Account = accountDb;
                 customerInfoResponse.CustomerInfo = customerInforList.Items!;
                 result.Result = customerInfoResponse;
@@ -1454,7 +1454,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var customerInfoDb = await _customerInfoRepository.GetAllDataByExpression(c => c.PhoneNumber.Equals(phoneNumber), 0, 0, null, false, null);
+                var customerInfoDb = await _customerInfoRepository.GetAllDataByExpression(c => c.PhoneNumber.Equals(phoneNumber), 0, 0, null, false, c => c.Account);
                 if (customerInfoDb.Items.Count > 1)
                 {
                     return BuildAppActionResultError(result, $"Có nhiều hơn 1 thông tin người dùng với số điện thoại {phoneNumber}");
