@@ -1304,6 +1304,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, "Xảy ra lỗi khi cập nhật thông tin khách hàng!");
                         }
 
+                        if (currentCustomerInfoAddressListDb.Items.Count == 0)
+                        {
+                            return BuildAppActionResultError(result, "Xảy ra lỗi khi cập nhật thông tin khách hàng vì không tìm được địa chỉ đang sử dụng!");
+                        }
+
                         var currentCustomerInfoAddressDb = currentCustomerInfoAddressListDb.Items[0];
                         currentCustomerInfoAddressDb.IsCurrentUsed = false;
                         await customerInfoAddressRepository.Update(customerInfoAddressDb);
@@ -1326,10 +1331,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         return BuildAppActionResultError(result, "Xảy ra lỗi khi cập nhật thông tin khách hàng!");
                     }
 
-                    var currentCustomerInfoAddressDb = currentCustomerInfoAddressListDb.Items[0];
-                    currentCustomerInfoAddressDb.IsCurrentUsed = false;
+                    if(currentCustomerInfoAddressListDb.Items.Count == 0)
+                    {
+                        var currentCustomerInfoAddressDb = currentCustomerInfoAddressListDb.Items[0];
+                        currentCustomerInfoAddressDb.IsCurrentUsed = false;
+                        await customerInfoAddressRepository.Update(currentCustomerInfoAddressDb);
+                    }
                     updateCustomerInfo.Address = customerInforRequest.Address;
-                    await customerInfoAddressRepository.Update(currentCustomerInfoAddressDb);
                 }
                 updateCustomerInfo.DOB = customerInforRequest.DOB;
                 updateCustomerInfo.Name = customerInforRequest.Name;
