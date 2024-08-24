@@ -160,10 +160,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> GetAllCombo(string? keyword, int pageNumber, int pageSize)
         {
             var result = new AppActionResult();
+            var utility = Resolve<Utility>();
             try
             {
                 var comboDb = 
-                    await _comboRepository.GetAllDataByExpression((p => p.Name.Contains(keyword) || string.IsNullOrEmpty(keyword)), pageNumber, pageSize, null, false, c => c.Category);
+                    await _comboRepository.GetAllDataByExpression((p => (p.Name.Contains(keyword) || string.IsNullOrEmpty(keyword)) && p.EndDate > utility.GetCurrentDateTimeInTimeZone()), pageNumber, pageSize, null, false, c => c.Category);
                 result.Result = comboDb;        
             }
             catch (Exception ex) 
