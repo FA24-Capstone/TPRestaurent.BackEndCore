@@ -641,8 +641,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 return BuildAppActionResultError(result, $"Địa chỉ của bạn không tồn tại. Vui lòng cập nhập địa chỉ");
                             }
+                            orderDb.CustomerId = customerInfoDb.CustomerId;
                             var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => string.IsNullOrEmpty(customerInfoDb.AccountId) && p.AccountId == customerInfoDb.AccountId, 0, 0, null, false, p => p.Coupon!);
-
                             if (customerSavedCouponDb.Items!.Count < 0 && customerSavedCouponDb.Items != null)
                             {
                                 if (orderRequestDto.CouponId.HasValue)
