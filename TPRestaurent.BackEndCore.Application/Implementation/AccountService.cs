@@ -1331,7 +1331,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         return BuildAppActionResultError(result, "Xảy ra lỗi khi cập nhật thông tin khách hàng!");
                     }
 
-                    if(currentCustomerInfoAddressListDb.Items.Count == 0)
+                    if(currentCustomerInfoAddressListDb.Items.Count == 1)
                     {
                         var currentCustomerInfoAddressDb = currentCustomerInfoAddressListDb.Items[0];
                         currentCustomerInfoAddressDb.IsCurrentUsed = false;
