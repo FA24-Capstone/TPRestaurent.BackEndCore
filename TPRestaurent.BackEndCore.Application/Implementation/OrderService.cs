@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using MailKit.Search;
+using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Utilities;
 using System;
@@ -179,7 +180,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-        public async Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto)
+        public async Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto, HttpContext httpContext)
         {
             var result = new AppActionResult();
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
@@ -199,6 +200,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var comboRepository = Resolve<IGenericRepository<Combo>>();
                     var couponRepository = Resolve<IGenericRepository<Coupon>>();
                     var tableRepository = Resolve<IGenericRepository<Table>>();
+                    var transcationService = Resolve<ITransactionService>();
+                    var createdOrderId = new Guid();
+                    var orderWithPayment = new OrderWithPaymentResponse();
 
                     if (orderRequestDto.isDelivering == false)
                     {
@@ -232,6 +236,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 IsDelivering = false,
                                 TableId = orderRequestDto.TableId
                             };
+                            createdOrderId = orderDb.OrderId;
 
                             List<OrderDetail> orderDetailsDto = new List<OrderDetail>();
                             List<ComboOrderDetail> comboOrderDetails = new List<ComboOrderDetail>();
@@ -425,7 +430,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await accountRepository.Update(accountDb);
 
                             await _repository.Insert(orderDb);
-                            result.Result = orderDb;
+                            orderWithPayment.Order = orderDb;
                         }
                         else if (reservationDb == null)
                         {
@@ -438,6 +443,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 StatusId = OrderStatus.Processing,
                                 OrderDate = utility.GetCurrentDateTimeInTimeZone(),
                             };
+                            createdOrderId = orderDb.OrderId;
 
                             List<OrderDetail> orderDetailsDto = new List<OrderDetail>();
                             List<ComboOrderDetail> comboOrderDetails = new List<ComboOrderDetail>();
@@ -575,10 +581,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 customerInfoDb.Account.LoyaltyPoint = newLoyalPointHistory.NewBalance;
                                 await customerInfoRepository.Update(customerInfoDb);
-                                result.Result = orderDb;
                             }
-                            await _repository.Insert(orderDb);
-                            result.Result = orderDb;
+
+
                         }
                     }
                     else if (orderRequestDto.isDelivering == true)
@@ -592,6 +597,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             PaymentMethodId = orderRequestDto.PaymentMethodId,
                             IsDelivering = true,
                         };
+                        createdOrderId = orderDb.OrderId;
+
                         List<OrderDetail> orderDetailsDto = new List<OrderDetail>();
                         List<ComboOrderDetail> comboOrderDetails = new List<ComboOrderDetail>();
 
@@ -757,11 +764,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             //await customerInfoRepository.Update(customerInfoDb);
                         }
                         await _repository.Insert(orderDb);
-                        result.Result = orderDb;
+                        orderWithPayment.Order = orderDb;
                     }
                     if (!BuildAppActionResultIsError(result))
                     {
                         await _unitOfWork.SaveChangesAsync();
+                        if (orderRequestDto.PaymentMethodId != PaymentMethod.Cash)
+                        {
+
+                            var paymentRequest = new PaymentRequestDto
+                            {
+                                OrderId = createdOrderId,
+                                PaymentMethod = orderRequestDto.PaymentMethodId,
+                            };
+                            var linkPaymentDb = await transcationService!.CreatePayment(paymentRequest, httpContext);
+                            if (!linkPaymentDb.IsSuccess)
+                            {
+                                return BuildAppActionResultError(result, "Tạo thanh toán thất bại");
+                            }
+                            orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
+                        }
+                        result.Result = orderWithPayment;
                         scope.Complete();
                     }
                 }

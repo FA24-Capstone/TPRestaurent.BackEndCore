@@ -50,7 +50,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPost("create-order")]
         public async Task<AppActionResult> CreateOrder([FromBody]OrderRequestDto dto)
         {
-            return await _service.CreateOrder(dto);
+            return await _service.CreateOrder(dto, HttpContext);
         }
 
 
