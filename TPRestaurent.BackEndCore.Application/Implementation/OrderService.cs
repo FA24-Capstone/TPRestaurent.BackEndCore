@@ -568,6 +568,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 customerInfoDb.Account.LoyaltyPoint = newLoyalPointHistory.NewBalance;
                                 await customerInfoRepository.Update(customerInfoDb);
+                                result.Result = orderDb;
                             }
                             await _repository.Insert(orderDb);
                         }
@@ -941,6 +942,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await _repository.Update(orderDb);
                         await _unitOfWork.SaveChangesAsync();
                         scope.Complete();
+                        result.Result = orderDb;
                     }
 
                 }
