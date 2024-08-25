@@ -35,5 +35,6 @@ public class ServiceInstaller : IInstaller
         services.AddScoped<IDeviceService, DeviceService>();
         services.AddScoped<ITableSessionService, TableSessionService>();
         services.AddScoped<ICouponService, CouponService>();
+        services.AddScoped<IHashingService, HashingService>();
     }
 }

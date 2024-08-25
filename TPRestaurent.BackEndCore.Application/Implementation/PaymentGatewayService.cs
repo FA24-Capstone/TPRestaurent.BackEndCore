@@ -14,12 +14,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     public class PaymentGatewayService : IPaymentGatewayService
     {
         private readonly IConfiguration _configuration;
-        public PaymentGatewayService(IConfiguration configuration)
+        private IHashingService _hashingService;
+        public PaymentGatewayService(IConfiguration configuration, IHashingService hashingService)
         {
             _configuration = configuration;
+            _hashingService = hashingService;
         }
         public async Task<string> CreatePaymentUrlVnpay(PaymentInformationRequest requestDto, HttpContext httpContext)
         {
+            IConfiguration config = new ConfigurationBuilder()
+                           .SetBasePath(Directory.GetCurrentDirectory())
+                           .AddJsonFile("appsettings.json", true, true)
+                           .Build();
+            string key = config["HashingKeys:PaymentLink"];
             var paymentUrl = "";
             var momo = new PaymentInformationRequest
             {
@@ -52,15 +59,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             if (!string.IsNullOrEmpty(requestDto.OrderID))
             {
                 pay.AddRequestData("vnp_OrderInfo",
-                $"OR");
+                _hashingService.Hashing("OR", key));
             } else if (!string.IsNullOrEmpty(requestDto.ReservationID))
             {
                 pay.AddRequestData("vnp_OrderInfo",
-                $"RE");
+                _hashingService.Hashing("RE", key));
             } else
             {
                 pay.AddRequestData("vnp_OrderInfo",
-                $"CR_{requestDto.TransactionID}");
+                _hashingService.Hashing($"CR_{requestDto.TransactionID}", key));
             }
             pay.AddRequestData("vnp_OrderType", "other");
             pay.AddRequestData("vnp_ReturnUrl", urlCallBack);

@@ -2,6 +2,8 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using Formatting = System.Xml.Formatting;
 
 namespace TPRestaurent.BackEndCore.Common.Utils;
@@ -237,5 +239,8 @@ public class Utility
             string[] excelExtensions = { ".xls", ".xlsx" };
             return Array.Exists(excelExtensions, ext => ext.Equals(fileExtension));
         }
+
+        
+
     }
 }

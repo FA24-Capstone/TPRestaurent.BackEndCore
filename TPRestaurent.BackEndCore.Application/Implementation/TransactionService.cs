@@ -54,8 +54,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var reservationRepository = Resolve<IGenericRepository<Reservation>>();
                     var orderRepository = Resolve<IGenericRepository<Order>>();     
                     var storeCreditRepository = Resolve<IGenericRepository<StoreCredit>>();
+                    var hasingService = Resolve<IHashingService>();
                     var utility = Resolve<Utility>();
                     var transaction = new Transaction();
+                    IConfiguration config = new ConfigurationBuilder()
+                          .SetBasePath(Directory.GetCurrentDirectory())
+                          .AddJsonFile("appsettings.json", true, true)
+                          .Build();
+                    string key = config["HashingKeys:PaymentLink"];
                     string paymentUrl = "";
                     if (!paymentRequest.OrderId.HasValue && !paymentRequest.ReservationId.HasValue && !paymentRequest.StoreCreditId.HasValue)
                     {
@@ -154,6 +160,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 break;
 
                             case Domain.Enums.PaymentMethod.MOMO:
+
                                 if (paymentRequest.ReservationId.HasValue)
                                 {
                                     var reservationDb = await reservationRepository!.GetByExpression(p => p.ReservationId == paymentRequest.ReservationId, p => p.CustomerInfo!.Account!);
@@ -180,7 +187,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     string partnerCode = _momoConfiguration.PartnerCode;
                                     string accessKey = _momoConfiguration.AccessKey;
                                     string secretkey = _momoConfiguration.Secretkey;
-                                    string orderInfo = $"RE";
+                                    string orderInfo = hasingService.Hashing("RE", key);
                                     string redirectUrl = $"{_momoConfiguration.RedirectUrl}/{transaction.ReservationId}";
                                     string ipnUrl = _momoConfiguration.IPNUrl;
                                     string requestType = "captureWallet";
@@ -248,7 +255,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     string partnerCode = _momoConfiguration.PartnerCode;
                                     string accessKey = _momoConfiguration.AccessKey;
                                     string secretkey = _momoConfiguration.Secretkey;
-                                    string orderInfo = $"OR";
+                                    string orderInfo = hasingService.Hashing("OR", key);
                                     string redirectUrl = $"{_momoConfiguration.RedirectUrl}/{transaction.OrderId}";
                                     string ipnUrl = _momoConfiguration.IPNUrl;
                                     string requestType = "captureWallet";
@@ -317,7 +324,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         string partnerCode = _momoConfiguration.PartnerCode;
                                         string accessKey = _momoConfiguration.AccessKey;
                                         string secretkey = _momoConfiguration.Secretkey;
-                                        string orderInfo = $"CR_{transaction.Id}";
+                                        string orderInfo = hasingService.Hashing($"CR_{transaction.Id}", key);
                                         string redirectUrl = $"{_momoConfiguration.RedirectUrl}/{transaction.OrderId}";
                                         string ipnUrl = _momoConfiguration.IPNUrl;
                                         string requestType = "captureWallet";
