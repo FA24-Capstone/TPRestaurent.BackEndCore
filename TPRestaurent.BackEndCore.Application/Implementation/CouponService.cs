@@ -91,7 +91,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var pathName = SD.FirebasePathName.COUPON_PREFIX + $"{coupon.CouponId}{Guid.NewGuid()}.jpg";
                 var upload = await firebaseService!.UploadFileToFirebase(couponDto.File, pathName);
-                couponDto.Img = pathName;
+                coupon.Img = pathName;
                 if (!upload.IsSuccess)
                 {
                     return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
@@ -106,12 +106,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetAllAvailableCoupon(DateTime startTime, DateTime endTime,int pageNumber, int pageSize)
-        { 
+        public async Task<AppActionResult> GetAllAvailableCoupon(int pageNumber, int pageSize)
+        {
+            var utility = Resolve<Utility>();
             var result = new AppActionResult();     
             try
             {
-                var couponDb = await _couponRepository.GetAllDataByExpression(p => p.StartDate < startTime && p.ExpiryDate > endTime, pageNumber, pageSize, p => p.ExpiryDate, false, null);
+                var couponDb = await _couponRepository.GetAllDataByExpression(p => p.ExpiryDate > utility.GetCurrentDateTimeInTimeZone(), pageNumber, pageSize, p => p.ExpiryDate, false, null);
                  result.Result = couponDb;      
             }
             catch (Exception ex)

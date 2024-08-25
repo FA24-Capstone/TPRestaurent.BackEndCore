@@ -15,7 +15,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public DateTime ExpiryDate { get; set; }
         public double MinimumAmount { get; set; }
         public int Quantity { get; set; }
-        public string? Img { get; set; }
         public IFormFile File { get; set; } = null!;
     }
 }

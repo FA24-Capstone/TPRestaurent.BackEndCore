@@ -11,7 +11,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
     public interface ICouponService
     {
-        public Task<AppActionResult> GetAllAvailableCoupon(DateTime startTime, DateTime endTime, int pageNumber, int pageSize);
+        public Task<AppActionResult> GetAllAvailableCoupon(int pageNumber, int pageSize);
         public Task<AppActionResult> GetCouponById(Guid couponId);
         public Task<AppActionResult> ApplyCoupon(Guid orderId);
         public Task<AppActionResult> CreateCoupon(CouponDto couponDto);
