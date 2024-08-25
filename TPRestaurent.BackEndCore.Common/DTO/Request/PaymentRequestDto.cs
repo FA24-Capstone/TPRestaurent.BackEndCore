@@ -10,6 +10,9 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
     {
         public Guid? OrderId { get; set; }   
         public Guid? ReservationId { get; set; }
+        public Guid? StoreCreditId { get; set; }
+        public double? StoreCreditAmount { get; set; }
         public Domain.Enums.PaymentMethod PaymentMethod { get; set; } 
+
     }
 }

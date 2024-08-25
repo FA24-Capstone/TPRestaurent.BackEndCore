@@ -87,6 +87,8 @@ public class SD
         public static string DEPOSIT_FOR_NORMAL_TABLE= "DEPOSIT_FOR_NORMAL_TABLE";
         public static string DEPOSIT_FOR_PRIVATE_TABLE= "DEPOSIT_FOR_PRIVATE_TABLE";
         public static string TIME_TO_LOOK_UP_FOR_RESERVATION = "TIME_TO_LOOK_UP_FOR_RESERVATION";
+        public static string EXPIRE_TIME_FOR_STORE_CREDIT = "EXPIRE_TIME_FOR_STORE_CREDIT";
+        public static string REFUND_APPLYING_TIME_FOR_RESEVATION_CANCELATION = "REFUND_APPLYING_TIME_FOR_RESEVATION_CANCELATION";
     }
 
     public class SubjectMail

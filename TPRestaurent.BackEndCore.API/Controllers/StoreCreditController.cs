@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
+using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
@@ -19,6 +21,18 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         public async Task<AppActionResult> Get(string accountId)
         {
             return await _service.GetStoreCreditByAccountId(accountId);
+        }
+
+        [HttpPost("add-store-credit")]
+        public async Task<AppActionResult> AddStoreCredit(Guid transactionId)
+        {
+            return await _service.AddStoreCredit(transactionId);
+        }
+
+        [HttpPost("refund-reservation")]
+        public async Task<AppActionResult> RefundReservation(Guid reservationId)
+        {
+            return await _service.RefundReservation(reservationId);
         }
     }
 }

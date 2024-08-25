@@ -53,12 +53,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var paymentGatewayService = Resolve<IPaymentGatewayService>();
                     var reservationRepository = Resolve<IGenericRepository<Reservation>>();
                     var orderRepository = Resolve<IGenericRepository<Order>>();     
+                    var storeCreditRepository = Resolve<IGenericRepository<StoreCredit>>();
                     var utility = Resolve<Utility>();
                     var transaction = new Transaction();
                     string paymentUrl = "";
-                    if (paymentRequest.OrderId == null && paymentRequest.ReservationId == null)
+                    if (!paymentRequest.OrderId.HasValue && !paymentRequest.ReservationId.HasValue && !paymentRequest.StoreCreditId.HasValue)
                     {
-                        result = BuildAppActionResultError(result, $"Đơn hàng này không tồn tại");
+                        result = BuildAppActionResultError(result, $"Đơn hàng/Đặt bàn/Ví này không tồn tại");
                     }
                     if (!BuildAppActionResultIsError(result))
                     {
@@ -119,6 +120,36 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest, context);
 
                                     result.Result = paymentUrl;
+                                } 
+                                else if (paymentRequest.StoreCreditId.HasValue)
+                                {
+                                    if (paymentRequest.StoreCreditAmount.HasValue)
+                                    {
+                                        var storeCreditDb = await storeCreditRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p!.Account!);
+                                        transaction = new Transaction
+                                        {
+                                            Id = Guid.NewGuid(),
+                                            Amount = paymentRequest.StoreCreditAmount.Value,
+                                            PaymentMethodId = Domain.Enums.PaymentMethod.VNPAY,
+                                            StoreCreditId = paymentRequest.StoreCreditId.Value,
+                                            Date = utility!.GetCurrentDateTimeInTimeZone()
+                                        };
+
+                                        var paymentInformationRequest = new PaymentInformationRequest
+                                        {
+                                            TransactionID = transaction.Id.ToString(),
+                                            PaymentMethod = paymentRequest.PaymentMethod,
+                                            Amount = paymentRequest.StoreCreditAmount.Value,
+                                            CustomerName = "",
+                                            AccountID = storeCreditDb.AccountId,
+                                        };
+
+
+                                        await _repository.Insert(transaction);
+                                        paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest, context);
+
+                                        result.Result = paymentUrl;
+                                    }
                                 }
                                 break;
 
@@ -149,7 +180,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     string partnerCode = _momoConfiguration.PartnerCode;
                                     string accessKey = _momoConfiguration.AccessKey;
                                     string secretkey = _momoConfiguration.Secretkey;
-                                    string orderInfo = $"Khach hang: {reservationDb.CustomerInfo.Name} thanh toan hoa don {transaction.ReservationId}";
+                                    string orderInfo = $"RE";
                                     string redirectUrl = $"{_momoConfiguration.RedirectUrl}/{transaction.ReservationId}";
                                     string ipnUrl = _momoConfiguration.IPNUrl;
                                     string requestType = "captureWallet";
@@ -217,7 +248,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     string partnerCode = _momoConfiguration.PartnerCode;
                                     string accessKey = _momoConfiguration.AccessKey;
                                     string secretkey = _momoConfiguration.Secretkey;
-                                    string orderInfo = $"Khach hang: {orderDb.CustomerInfo.Name} thanh toan hoa don {orderDb.OrderId}";
+                                    string orderInfo = $"OR";
                                     string redirectUrl = $"{_momoConfiguration.RedirectUrl}/{transaction.OrderId}";
                                     string ipnUrl = _momoConfiguration.IPNUrl;
                                     string requestType = "captureWallet";
@@ -269,6 +300,76 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         result.Result = jmessage.GetValue("payUrl").ToString();
                                     }
                                 }
+                                else if (paymentRequest.StoreCreditId.HasValue)
+                                {
+                                    if (paymentRequest.StoreCreditAmount.HasValue)
+                                    {
+                                        var storeCreditDb = await storeCreditRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p!.Account!);
+                                        transaction = new Transaction
+                                        {
+                                            Id = Guid.NewGuid(),
+                                            Amount = paymentRequest.StoreCreditAmount.Value,
+                                            PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
+                                            StoreCreditId = storeCreditDb.StoreCreditId,
+                                            Date = utility!.GetCurrentDateTimeInTimeZone()
+                                        };
+                                        string endpoint = _momoConfiguration.Api;
+                                        string partnerCode = _momoConfiguration.PartnerCode;
+                                        string accessKey = _momoConfiguration.AccessKey;
+                                        string secretkey = _momoConfiguration.Secretkey;
+                                        string orderInfo = $"CR_{transaction.Id}";
+                                        string redirectUrl = $"{_momoConfiguration.RedirectUrl}/{transaction.OrderId}";
+                                        string ipnUrl = _momoConfiguration.IPNUrl;
+                                        string requestType = "captureWallet";
+
+                                        string amount = Math.Ceiling(transaction.Amount).ToString();
+                                        string orderId = Guid.NewGuid().ToString();
+                                        string requestId = Guid.NewGuid().ToString();
+                                        string extraData = transaction.OrderId.ToString();
+
+                                        string rawHash = "accessKey=" + accessKey +
+                                                         "&amount=" + amount +
+                                                         "&extraData=" + extraData +
+                                                         "&ipnUrl=" + ipnUrl +
+                                                         "&orderId=" + orderId +
+                                                         "&orderInfo=" + orderInfo +
+                                                         "&partnerCode=" + partnerCode +
+                                                         "&redirectUrl=" + redirectUrl +
+                                                         "&requestId=" + requestId +
+                                                         "&requestType=" + requestType;
+
+                                        MomoSecurity crypto = new MomoSecurity();
+                                        string signature = crypto.signSHA256(rawHash, secretkey);
+
+                                        JObject message = new JObject
+                                {
+                                    { "partnerCode", partnerCode },
+                                    { "partnerName", "Test" },
+                                    { "storeId", "MomoTestStore" },
+                                    { "requestId", requestId },
+                                    { "amount", amount },
+                                    { "orderId", orderId },
+                                    { "orderInfo", orderInfo },
+                                    { "redirectUrl", redirectUrl },
+                                    { "ipnUrl", ipnUrl },
+                                    { "lang", "en" },
+                                    { "extraData", extraData },
+                                    { "requestType", requestType },
+                                    { "signature", signature }
+                                };
+
+                                        var client = new RestClient();
+                                        var request = new RestRequest(endpoint, Method.Post);
+                                        request.AddJsonBody(message.ToString());
+                                        RestResponse response = await client.ExecuteAsync(request);
+                                        if (response.StatusCode == HttpStatusCode.OK)
+                                        {
+                                            JObject jmessage = JObject.Parse(response.Content);
+                                            await _repository.Insert(transaction);
+                                            result.Result = jmessage.GetValue("payUrl").ToString();
+                                        }
+                                    }
+                                }
                                 break;
 
                             default:
@@ -282,7 +383,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         Id = Guid.NewGuid(),
                                         Amount = reservationDb.Deposit,
                                         PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
-                                        ReservationId = reservationDb.ReservationId,    
+                                        ReservationId = reservationDb.ReservationId,
                                         Date = utility!.GetCurrentDateTimeInTimeZone()
                                     };
                                     await _repository.Insert(transaction);
@@ -301,7 +402,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         Date = utility!.GetCurrentDateTimeInTimeZone()
                                     };
                                     await _repository.Insert(transaction);
-                                    result.Result = transaction;        
+                                    result.Result = transaction;
+                                }
+                                else if (paymentRequest.StoreCreditId.HasValue)
+                                {
+                                    if (paymentRequest.StoreCreditAmount.HasValue)
+                                    {
+                                        var storeCreditDb = await storeCreditRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p!.Account!);
+                                        transaction = new Transaction
+                                        {
+                                            Id = Guid.NewGuid(),
+                                            Amount = paymentRequest.StoreCreditAmount.Value,
+                                            PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
+                                            StoreCreditId = storeCreditDb.StoreCreditId,
+                                            Date = utility!.GetCurrentDateTimeInTimeZone()
+                                        };
+                                        await _repository.Insert(transaction);
+                                        result.Result = transaction;
+                                    }
                                 }
                                 break;
                         }

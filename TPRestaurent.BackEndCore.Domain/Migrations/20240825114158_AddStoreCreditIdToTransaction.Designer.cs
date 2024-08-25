@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240825114158_AddStoreCreditIdToTransaction")]
+    partial class AddStoreCreditIdToTransaction
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1739,14 +1741,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid>("StoreCreditId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("TransactionId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("StoreCreditHistoryId");
 
                     b.HasIndex("StoreCreditId");
-
-                    b.HasIndex("TransactionId");
 
                     b.ToTable("StoreCreditHistories");
                 });
@@ -2479,13 +2476,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Transaction", "Transaction")
-                        .WithMany()
-                        .HasForeignKey("TransactionId");
-
                     b.Navigation("StoreCredit");
-
-                    b.Navigation("Transaction");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Table", b =>

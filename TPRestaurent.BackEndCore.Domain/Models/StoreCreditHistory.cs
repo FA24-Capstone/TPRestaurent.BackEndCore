@@ -18,5 +18,8 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid StoreCreditId { get; set; }
         [ForeignKey(nameof(StoreCreditId))]
         public StoreCredit? StoreCredit { get; set; }
+        public Guid? TransactionId { get; set; }
+        [ForeignKey(nameof(TransactionId))]
+        public Transaction? Transaction { get; set; }
     }
 }

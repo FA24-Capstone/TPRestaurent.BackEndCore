@@ -4,9 +4,11 @@
     {
         public string? OrderID { get; set; }
         public string? ReservationID { get; set; }
+        public string? StoreCreditID { get; set; }
+        public string? TransactionID {  get; set; }
+        public double Amount { get; set; }
         public string? AccountID { get; set; }
         public string CustomerName { get; set; }
-        public double Amount { get; set; }
         public Domain.Enums.PaymentMethod PaymentMethod { get; set; }
     }
 }

@@ -52,11 +52,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             if (!string.IsNullOrEmpty(requestDto.OrderID))
             {
                 pay.AddRequestData("vnp_OrderInfo",
-                $"Khach hang: {requestDto.CustomerName} thanh toan hoa don {requestDto.OrderID}");
+                $"OR");
+            } else if (!string.IsNullOrEmpty(requestDto.ReservationID))
+            {
+                pay.AddRequestData("vnp_OrderInfo",
+                $"RE");
             } else
             {
                 pay.AddRequestData("vnp_OrderInfo",
-                $"Khach hang: {requestDto.CustomerName} thanh toan dat coc {requestDto.ReservationID}");
+                $"CR_{requestDto.TransactionID}");
             }
             pay.AddRequestData("vnp_OrderType", "other");
             pay.AddRequestData("vnp_ReturnUrl", urlCallBack);
@@ -64,9 +68,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 pay.AddRequestData("vnp_TxnRef", requestDto.OrderID);
             }
-            else
+            else if (!string.IsNullOrEmpty(requestDto.ReservationID))
             {
                 pay.AddRequestData("vnp_TxnRef", requestDto.ReservationID);
+            }
+            else
+            {
+                pay.AddRequestData("vnp_TxnRef", requestDto.StoreCreditID);
             }
             paymentUrl = pay.CreateRequestUrl(_configuration["Vnpay:BaseUrl"], _configuration["Vnpay:HashSecret"]);
 
