@@ -34,6 +34,6 @@ public class ServiceInstaller : IInstaller
         services.AddScoped<IExcelService, ExcelService>();
         services.AddScoped<IDeviceService, DeviceService>();
         services.AddScoped<ITableSessionService, TableSessionService>();
-
+        services.AddScoped<ICouponService, CouponService>();
     }
 }

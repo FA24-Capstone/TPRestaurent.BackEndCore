@@ -17,9 +17,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-available-coupon/{pageNumber}/{pageSize}")]
-        public async Task<AppActionResult> GetAllAvailableCoupon(DateTime startTime, DateTime endTime, int pageNumber = 1, int pageSize = 10)
+        public async Task<AppActionResult> GetAllAvailableCoupon(int pageNumber = 1, int pageSize = 10)
         {
-            return await _couponService.GetAllAvailableCoupon(startTime, endTime, pageNumber, pageSize);    
+            return await _couponService.GetAllAvailableCoupon(pageNumber, pageSize);    
         }
 
         [HttpGet("get-combo-by-id/{comboId}")]
@@ -29,7 +29,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("create-coupon")]
-        public async Task<AppActionResult> CreateCoupon(CouponDto couponDto)
+        public async Task<AppActionResult> CreateCoupon([FromForm]CouponDto couponDto)
         {
             return await _couponService.CreateCoupon(couponDto);        
         }
