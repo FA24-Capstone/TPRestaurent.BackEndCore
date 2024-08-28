@@ -89,6 +89,7 @@ public class SD
         public static string TIME_TO_LOOK_UP_FOR_RESERVATION = "TIME_TO_LOOK_UP_FOR_RESERVATION";
         public static string EXPIRE_TIME_FOR_STORE_CREDIT = "EXPIRE_TIME_FOR_STORE_CREDIT";
         public static string REFUND_APPLYING_TIME_FOR_RESEVATION_CANCELATION = "REFUND_APPLYING_TIME_FOR_RESEVATION_CANCELATION";
+        public static string TIME_TO_KEEP_RESERVATION = "TIME_TO_KEEP_RESERVATION";
     }
 
     public class SubjectMail

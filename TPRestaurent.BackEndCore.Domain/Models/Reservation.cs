@@ -17,6 +17,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public DateTime? EndTime { get; set; }
         public Guid? CustomerInfoId { get; set; } = null!;
         [ForeignKey(nameof(CustomerInfoId))]
+        public DateTime CreateDate { get; set; }
         public CustomerInfo? CustomerInfo { get; set; }
         public double Deposit { get; set; }
         public string? Note { get; set; }

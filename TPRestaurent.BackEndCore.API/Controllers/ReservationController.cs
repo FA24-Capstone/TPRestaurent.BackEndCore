@@ -83,5 +83,10 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.AddTableToReservation(reservationId, tableIds);
         }
 
+        [HttpPost("update-expire-reservation")]
+        public async Task<AppActionResult> UpdateExpireReservation()
+        {
+            return await _service.UpdateExpireReservation();
+        }
     }
 }

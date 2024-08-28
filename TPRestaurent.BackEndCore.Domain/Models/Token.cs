@@ -13,6 +13,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         [Key]
         public Guid TokenId { get; set; }
         public string AccessTokenValue { get; set; } = null!;
+        public string DeviceIP { get; set; } = null!;
         public DateTime CreateDateAccessToken { get; set; }
         public DateTime ExpiryTimeAccessToken { get; set; }
         public string RefreshTokenValue { get; set; } = null!;
