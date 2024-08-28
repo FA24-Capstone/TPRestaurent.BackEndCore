@@ -1146,5 +1146,76 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+        public async Task<AppActionResult> GetOrderJsonByTableSessionId(Guid tableSessionId)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                //public List<OrderDetailsDto> OrderDetailsDtos { get; set; } = new List<OrderDetailsDto>();
+
+                //public Guid? DishSizeDetailId { get; set; }
+                //public ComboOrderDto? Combo { get; set; }
+                //public int Quantity { get; set; }
+                //public string? Note { get; set; }
+
+                //public Guid ComboId { get; set; }
+                //public List<Guid> DishComboIds { get; set; } = new List<Guid>();
+                var data = new OrderRequestDto();
+                var tableSessionRepository = Resolve<IGenericRepository<TableSession>>();
+                var tableSessionService = Resolve<ITableSessionService>();
+                var tableSessionDb = await tableSessionRepository.GetById(tableSessionId);
+                if(tableSessionDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy phiên dùng bữa với id {tableSessionId}");
+                }
+
+                data.ReservationId = tableSessionDb.ReservationId;
+                data.TableId = tableSessionDb.TableId;
+
+                var tableSessionResponse = await tableSessionService.GetTableSessionById(tableSessionId);
+                if (!tableSessionResponse.IsSuccess) {
+                    return BuildAppActionResultError(result, $"Xảy ra lỗi khi lấy thông tin của phiên đặt bàn với id {tableSessionId}");
+                }
+                var tableSessionResponseResult = (TableSessionResponse) tableSessionResponse.Result;
+                var orderList = new List<PrelistOrderDetails>();
+
+                orderList.AddRange(tableSessionResponseResult.UncheckedPrelistOrderDetails);
+                orderList.AddRange(tableSessionResponseResult.ReadPrelistOrderDetails);
+                orderList.AddRange(tableSessionResponseResult.ReadyToServePrelistOrderDetails);
+
+                var orderDetailsDtoList = new List<OrderDetailsDto>();
+
+                foreach (var orderItem in orderList)
+                {
+                    var orderDetailDto = new OrderDetailsDto
+                    {
+                        DishSizeDetailId = orderItem.PrelistOrder.DishSizeDetailId,
+                        Quantity = orderItem.PrelistOrder.Quantity,
+                        Note = orderItem.PrelistOrder.Note
+                    };
+
+                    if(orderItem.ComboOrderDetails.Count > 0)
+                    {
+                        var comboDto = new ComboOrderDto
+                        {
+                            ComboId = (Guid)orderItem.PrelistOrder.ComboId,
+                            DishComboIds = orderItem.ComboOrderDetails.Select(c => c.DishComboId).ToList()
+                        };
+                        orderDetailDto.Combo = comboDto;
+                    }
+                    orderDetailsDtoList.Add(orderDetailDto);
+                }
+
+                data.OrderDetailsDtos = orderDetailsDtoList;
+
+                result.Result = data;
+
+            } catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
     }
 }

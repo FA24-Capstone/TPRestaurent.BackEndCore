@@ -22,5 +22,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful);
         public Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto);
         public Task<AppActionResult> GetOrderTotal(CalculateOrderRequest orderRequestDto);
+        public Task<AppActionResult> GetOrderJsonByTableSessionId(Guid TableSessionId);
+
     }
 }

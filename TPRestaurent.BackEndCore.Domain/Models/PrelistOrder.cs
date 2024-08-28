@@ -16,6 +16,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public int Quantity { get; set; }
         public DateTime OrderTime { get; set; }
         public DateTime? ReadyToServeTime { get; set; }
+        public string? Note { get; set; }
         public PreListOrderStatus StatusId { get; set; }
         [ForeignKey(nameof(StatusId))]
         public EnumModels.PreListOrderStatus OrderStatus { get; set; }

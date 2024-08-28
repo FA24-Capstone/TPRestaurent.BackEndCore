@@ -51,5 +51,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _service.GetCurrentTableSession();
         }
+
+        [HttpPost("end-table-session")]
+        public async Task<AppActionResult> EndTableSession(Guid tableSessionId)
+        {
+            return await _service.EndTableSession(tableSessionId);
+        }
     }
 }

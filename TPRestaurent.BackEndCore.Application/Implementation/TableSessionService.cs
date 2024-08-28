@@ -181,6 +181,35 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> EndTableSession(Guid tableSessionId)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var tableSessionDb = await _tableSessionRepository.GetById(tableSessionId);
+                if (tableSessionDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Phiên đặt bàn với {tableSessionId} không tồn tại");
+                }
+
+                if (tableSessionDb.EndTime.HasValue)
+                {
+                    return BuildAppActionResultError(result, $"Phiên đặt bàn với {tableSessionId} đã kết thúc trước đó");
+                }
+
+                var utility = Resolve<Utility>();
+                tableSessionDb.EndTime = utility.GetCurrentDateTimeInTimeZone();
+
+                await _tableSessionRepository.Update(tableSessionDb);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex) 
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
         public async Task<AppActionResult> GetCurrentTableSession()
         {
             AppActionResult result = new AppActionResult();

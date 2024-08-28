@@ -66,5 +66,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.GetOrderTotal(dto);
         }
 
+        [HttpGet("get-order-json-by-table-session-id")]
+        public async Task<AppActionResult> GetOrderJsonByTableSessionId(Guid tableSessionId)
+        {
+            return await _service.GetOrderJsonByTableSessionId(tableSessionId);
+        }
+
     }
 }
