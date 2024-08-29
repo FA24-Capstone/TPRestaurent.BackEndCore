@@ -6,7 +6,7 @@ using TPRestaurent.BackEndCore.Application.Contract.IServices;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
-    [Route("hashing")]
+    [Route("api/hashing")]
     [ApiController]
     public class HashingController : ControllerBase
     {

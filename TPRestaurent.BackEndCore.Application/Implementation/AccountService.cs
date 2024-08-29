@@ -1138,7 +1138,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (customerInfoDb.Items.Count == 1)
                 {
                     result = BuildAppActionResultError(result, $"Thông tin người dùng với sđt {customerInforRequest.PhoneNumber} đã tồn tại");
-                    result.Result = customerInfoDb.Items.FirstOrDefault();
+                    result.Result = customerInfoDb.Items.SingleOrDefault();
                     return result;
                 }
 
