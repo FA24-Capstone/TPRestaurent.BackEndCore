@@ -744,16 +744,31 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 bool updated = false;
                 if (reservationDb.StatusId == ReservationStatus.PENDING)
                 {
-                    if (status == ReservationStatus.DINING)
+                    if (status != ReservationStatus.TABLEASSIGNED && status != ReservationStatus.CANCELLED)
                     {
-                        result = BuildAppActionResultError(result, $"Yêu cầu đặt bàn với id {reservationId} chưa được xử lí,không thể diễn ra");
+                        result = BuildAppActionResultError(result, $"Yêu cầu đặt bàn với id {reservationId} chưa được xử lí, không thể diễn ra");
                         return result;
                     }
                     reservationDb.StatusId = status;
                     updated = true;
                 }
-                else if (reservationDb.StatusId == ReservationStatus.PAID && status != ReservationStatus.PENDING && status != ReservationStatus.PAID)
+                else if (reservationDb.StatusId == ReservationStatus.TABLEASSIGNED)
                 {
+                    if (status != ReservationStatus.PAID && status != ReservationStatus.CANCELLED)
+                    {
+                        result = BuildAppActionResultError(result, $"Yêu cầu đặt bàn với id {reservationId} chưa được thanh toán cọc, không thể diễn ra");
+                        return result;
+                    }
+                    reservationDb.StatusId = status;
+                    updated = true;
+                }
+                else if (reservationDb.StatusId == ReservationStatus.PAID)
+                {
+                    if (status != ReservationStatus.DINING && status != ReservationStatus.CANCELLED)
+                    {
+                        result = BuildAppActionResultError(result, $"Yêu cầu đặt bàn với id {reservationId} đã được thanh toán cọc,không thể diễn ra");
+                        return result;
+                    }
                     reservationDb.StatusId = status;
                     updated = true;
                 }

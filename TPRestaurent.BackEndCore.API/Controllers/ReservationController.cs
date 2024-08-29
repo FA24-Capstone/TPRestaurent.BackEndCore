@@ -18,19 +18,19 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-reservation/{pageNumber}/{pageSize}")]
-        public async Task<AppActionResult> GetAllReservaton(int? time, Domain.Enums.ReservationStatus status, int pageNumber = 1, int pageSize = 10)
+        public async Task<AppActionResult> GetAllReservaton(int? time, Domain.Enums.ReservationStatus? status, int pageNumber = 1, int pageSize = 10)
         {
             return await _service.GetAllReservation(time, status,pageNumber, pageSize);
         }
 
         [HttpGet("get-all-reservation-by-account-id/{pageNumber}/{pageSize}")]
-        public async Task<AppActionResult> GetAllReservatonByAccountId(Guid customerInfoId, Domain.Enums.ReservationStatus status, int pageNumber = 1, int pageSize = 10)
+        public async Task<AppActionResult> GetAllReservatonByAccountId(Guid customerInfoId, Domain.Enums.ReservationStatus? status, int pageNumber = 1, int pageSize = 10)
         {
             return await _service.GetAllReservationByAccountId(customerInfoId, status, pageNumber, pageSize);
         }
 
         [HttpGet("get-all-reservation-by-phone-number/{pageNumber}/{pageSize}")]
-        public async Task<AppActionResult> GetAllReservationByPhoneNumber(string phoneNumber, Domain.Enums.ReservationStatus status, int pageNumber = 1, int pageSize = 10)
+        public async Task<AppActionResult> GetAllReservationByPhoneNumber(string phoneNumber, Domain.Enums.ReservationStatus? status, int pageNumber = 1, int pageSize = 10)
         {
             return await _service.GetAllReservationByPhoneNumber(phoneNumber, status ,pageNumber, pageSize);
         }

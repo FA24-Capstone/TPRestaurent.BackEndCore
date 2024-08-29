@@ -6,7 +6,7 @@ using TPRestaurent.BackEndCore.Application.Contract.IServices;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("hashing")]
     [ApiController]
     public class HashingController : ControllerBase
     {
@@ -17,15 +17,15 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("hashing")]
-        public string GetHashedHMAC(string password, string key)
+        public string GetHashedHMAC(string value, string key)
         {
-           return _hashingService.Hashing(password, key);
+           return _hashingService.Hashing(value, key);
         }
 
         [HttpGet("decode-hashing")]
-        public string GetUnHashedHMAC(string password, string key)
+        public string GetUnHashedHMAC(string value, string key)
         {
-            return _hashingService.DeHashing(password, key);
+            return _hashingService.DeHashing(value, key);
         }
     }
 }
