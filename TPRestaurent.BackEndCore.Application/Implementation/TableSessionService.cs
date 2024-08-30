@@ -172,7 +172,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 await comboOrderDetailRepository!.InsertRange(comboOrderDetailList);
 
                 await _unitOfWork.SaveChangesAsync();
-
+                result.Result = tableSessionDb;
             }
             catch (Exception ex)
             {

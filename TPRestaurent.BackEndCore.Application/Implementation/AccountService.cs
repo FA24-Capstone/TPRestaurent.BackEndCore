@@ -3,6 +3,7 @@ using Castle.DynamicProxy.Generators;
 using Firebase.Auth;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -70,12 +71,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _customerInfoRepository = customerInfoRepository;
         }
 
-        public async Task<AppActionResult> Login(LoginRequestDto loginRequest)
+        public async Task<AppActionResult> Login(LoginRequestDto loginRequest, HttpContext httpContext)
         {
             var result = new AppActionResult();
             try
             {
                 var utility = Resolve<Utility>();
+                var tokenRepository = Resolve<IGenericRepository<Token>>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
                 var user = await _accountRepository.GetByExpression(u =>
                     u!.PhoneNumber!.ToLower() == loginRequest.PhoneNumber.ToLower() && u.IsDeleted == false);
@@ -115,19 +117,39 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result = BuildAppActionResultError(result, $"Mã OTP không tồn tại");
                 }
 
-                if (otpCodeDb.Code != loginRequest.OTPCode) result = BuildAppActionResultError(result, "Đăng nhâp thất bại");
+                if (otpCodeDb!.Code != loginRequest.OTPCode) result = BuildAppActionResultError(result, "Đăng nhâp thất bại");
                 if (!BuildAppActionResultIsError(result)) result = await LoginDefault(loginRequest.PhoneNumber, user);
 
-                otpCodeDb!.IsUsed = true;
-                await _accountRepository.Update(user);
-                await _otpRepository.Update(otpCodeDb);
+                var tokenDto = result.Result as TokenDto;
+
+                if (tokenDto != null)
+                {
+                    // Create Token object
+                    var token = new Token
+                    {
+                        TokenId = Guid.NewGuid(),
+                        DeviceIP = httpContext.Connection.RemoteIpAddress.ToString(),
+                        AccountId = user.Id,
+                        CreateDateAccessToken = utility.GetCurrentDateTimeInTimeZone(),
+                        CreateRefreshToken = utility.GetCurrentDateTimeInTimeZone(),
+                        ExpiryTimeAccessToken = utility.GetCurrentDateTimeInTimeZone().AddDays(30),
+                        ExpiryTimeRefreshToken = utility.GetCurrentDateTimeInTimeZone().AddDays(30),
+                        AccessTokenValue = tokenDto.Token!,
+                        RefreshTokenValue = tokenDto.RefreshToken!
+                    };
+
+                    otpCodeDb!.IsUsed = true;
+                    await _accountRepository.Update(user);
+                    await _otpRepository.Update(otpCodeDb);
+                    await tokenRepository!.Insert(token);
+                  
+                }
                 await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
                 result = BuildAppActionResultError(result, ex.Message);
             }
-
             return result;
         }
 
@@ -213,7 +235,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     var configurationRepository = Resolve<IGenericRepository<Configuration>>();
                     var configurationDb = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.EXPIRE_TIME_FOR_STORE_CREDIT), null);
-                    if(configurationDb == null)
+                    if (configurationDb == null)
                     {
                         result = BuildAppActionResultError(result, $"Tạo ví không thành công");
                     }
@@ -1153,7 +1175,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     Gender = customerInforRequest.Gender,
                     IsVerified = false
                 };
-                
+
                 await _customerInfoRepository.Insert(customerInfor);
                 await _unitOfWork.SaveChangesAsync();
                 await SendCustomerInfoOTP(customerInfor.PhoneNumber, OTPType.Register);
@@ -1212,7 +1234,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var customerListDb = await _customerInfoRepository.GetAllDataByExpression(c => c.PhoneNumber.Equals(phoneNumber), 0,0, null, false, null);
+                var customerListDb = await _customerInfoRepository.GetAllDataByExpression(c => c.PhoneNumber.Equals(phoneNumber), 0, 0, null, false, null);
 
                 if (customerListDb.Items.Count > 1)
                 {
@@ -1226,7 +1248,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return result;
                 }
                 var customerDb = customerListDb.Items[0];
-                if (otpType == OTPType.Register) 
+                if (otpType == OTPType.Register)
                 {
                     if (customerDb.IsVerified)
                     {
@@ -1245,14 +1267,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var otpRepository = Resolve<IGenericRepository<OTP>>();
                 var utility = Resolve<Utility>();
-                var availableOTPDb = await otpRepository.GetAllDataByExpression(o => o.CustomerInfo.PhoneNumber == phoneNumber && !o.IsUsed && o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && o.Type == otpType, 0,0, null, false, null);
+                var availableOTPDb = await otpRepository.GetAllDataByExpression(o => o.CustomerInfo.PhoneNumber == phoneNumber && !o.IsUsed && o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && o.Type == otpType, 0, 0, null, false, null);
                 if (availableOTPDb.Items.Count > 1)
                 {
                     result = BuildAppActionResultError(result, $"Xảy ra lỗi vì có nhiều hơn mã OTP hữu dụng tồn tại trong hệ thống. Vui lòng thử lại sau");
                     return result;
                 }
 
-                if(availableOTPDb.Items.Count == 1)
+                if (availableOTPDb.Items.Count == 1)
                 {
                     result.Result = availableOTPDb.Items[0].Code;
                     return result;
@@ -1314,9 +1336,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         updateCustomerInfo.Address = customerInfoAddressDb.CustomerInfoAddressName;
                         customerInfoAddressDb.IsCurrentUsed = true;
-                        var currentCustomerInfoAddressListDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.CustomerInfoId == updateCustomerInfo.CustomerId 
-                                                                                                                && c.IsCurrentUsed, 0,0, null, false, null);
-                        if(currentCustomerInfoAddressListDb.Items.Count > 1)
+                        var currentCustomerInfoAddressListDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.CustomerInfoId == updateCustomerInfo.CustomerId
+                                                                                                                && c.IsCurrentUsed, 0, 0, null, false, null);
+                        if (currentCustomerInfoAddressListDb.Items.Count > 1)
                         {
                             return BuildAppActionResultError(result, "Xảy ra lỗi khi cập nhật thông tin khách hàng!");
                         }
@@ -1331,7 +1353,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await customerInfoAddressRepository.Update(customerInfoAddressDb);
                         await customerInfoAddressRepository.Update(currentCustomerInfoAddressDb);
                     }
-                } else
+                }
+                else
                 {
                     await customerInfoAddressRepository!.Insert(new CustomerInfoAddress
                     {
@@ -1348,7 +1371,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         return BuildAppActionResultError(result, "Xảy ra lỗi khi cập nhật thông tin khách hàng!");
                     }
 
-                    if(currentCustomerInfoAddressListDb.Items.Count == 1)
+                    if (currentCustomerInfoAddressListDb.Items.Count == 1)
                     {
                         var currentCustomerInfoAddressDb = currentCustomerInfoAddressListDb.Items[0];
                         currentCustomerInfoAddressDb.IsCurrentUsed = false;
@@ -1496,7 +1519,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 else if (optUser.IsUsed == true)
                 {
                     result = BuildAppActionResultError(result, $"Mã Otp này đã được sử dụng!");
-                } else if(optUser.Type != OTPType.Register && !user.IsVerified)
+                }
+                else if (optUser.Type != OTPType.Register && !user.IsVerified)
                 {
                     result = BuildAppActionResultError(result, $"Thông tin người dùng chưa được xác thực");
                 }
@@ -1550,7 +1574,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var data = new CustomerInfoAddressResponse();
                 data.CustomerInfo = customerInfo;
                 data.CustomerAddresses = customerInfoAddressDb.Items;
-                
+
                 result.Result = data;
             }
             catch (Exception ex)

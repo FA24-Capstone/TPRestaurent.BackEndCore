@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +13,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
     public interface IAccountService
     {
-        Task<AppActionResult> Login(LoginRequestDto loginRequest);
+        Task<AppActionResult> Login(LoginRequestDto loginRequest, HttpContext httpContext);
         Task<AppActionResult> VerifyLoginGoogle(string email, string verifyCode);
         Task<AppActionResult> CreateAccount(SignUpRequestDto signUpRequest, bool isGoogle);
         Task<AppActionResult> VerifyNumberAccount(string phoneNumber, string optCode);
