@@ -13,6 +13,7 @@ using OfficeOpenXml.FormulaParsing.FormulaExpressions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
@@ -128,14 +129,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var token = new Token
                     {
                         TokenId = Guid.NewGuid(),
-                        DeviceIP = httpContext.Connection.RemoteIpAddress.ToString(),
+                        DeviceIP = GetClientIpAddress(httpContext),
                         AccountId = user.Id,
                         CreateDateAccessToken = utility.GetCurrentDateTimeInTimeZone(),
                         CreateRefreshToken = utility.GetCurrentDateTimeInTimeZone(),
                         ExpiryTimeAccessToken = utility.GetCurrentDateTimeInTimeZone().AddDays(30),
                         ExpiryTimeRefreshToken = utility.GetCurrentDateTimeInTimeZone().AddDays(30),
                         AccessTokenValue = tokenDto.Token!,
-                        RefreshTokenValue = tokenDto.RefreshToken!
+                        RefreshTokenValue = tokenDto.RefreshToken!,
+                        IsActive = true,    
                     };
 
                     otpCodeDb!.IsUsed = true;
@@ -153,6 +155,63 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+
+        public string GetClientIpAddress(HttpContext context)
+        {
+            string ip = null;
+
+            // Try to get IP from X-Forwarded-For header
+            var forwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(forwardedFor))
+            {
+                ip = forwardedFor.Split(',')[0].Trim();
+            }
+
+            // If not found, try X-Real-IP header
+            if (string.IsNullOrEmpty(ip) && context.Request.Headers.ContainsKey("X-Real-IP"))
+            {
+                ip = context.Request.Headers["X-Real-IP"].FirstOrDefault();
+            }
+
+            // If not found, try CF-Connecting-IP header (Cloudflare)
+            if (string.IsNullOrEmpty(ip) && context.Request.Headers.ContainsKey("CF-Connecting-IP"))
+            {
+                ip = context.Request.Headers["CF-Connecting-IP"].FirstOrDefault();
+            }
+
+            // If still not found, use RemoteIpAddress
+            if (string.IsNullOrEmpty(ip) && context.Connection.RemoteIpAddress != null)
+            {
+                ip = context.Connection.RemoteIpAddress.ToString();
+            }
+
+            // If IP is a loopback address, try to get the local IP
+            if (string.IsNullOrEmpty(ip) || ip == "::1")
+            {
+                ip = GetLocalIpAddress();
+            }
+
+            // If still empty, return UNKNOWN
+            if (string.IsNullOrEmpty(ip))
+            {
+                ip = "UNKNOWN";
+            }
+
+            return ip;
+        }
+
+        private string GetLocalIpAddress()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ipAddress in host.AddressList)
+            {
+                if (ipAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                {
+                    return ipAddress.ToString();
+                }
+            }
+            return string.Empty;
+        }
         public async Task<AppActionResult> VerifyLoginGoogle(string email, string verifyCode)
         {
             var result = new AppActionResult();
@@ -528,6 +587,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var utility = Resolve<Utility>();
+                var tokenService = Resolve<ITokenService>();
                 var otpCodeListDb = await _otpRepository.GetAllDataByExpression(p => p.Code == changePasswordDto.OTPCode && p.Type == OTPType.ChangePassword && p.ExpiredTime > utility.GetCurrentDateTimeInTimeZone(), 0, 0, null, false, null);
                 if (otpCodeListDb.Items.Count == 0)
                 {
@@ -565,7 +625,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (!changePassword.Succeeded)
                         result = BuildAppActionResultError(result, "Thay đổi mật khẩu thất bại");
 
-
+                    var userTokenDb = await tokenService!.InvalidateTokensForUser(user.Id);
                     otpCodeDb.IsUsed = true;
                     await _otpRepository.Update(otpCodeDb);
                 }
