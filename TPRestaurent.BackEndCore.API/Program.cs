@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TPRestaurent.BackEndCore.API.Installers;
+using TPRestaurent.BackEndCore.API.Middlewares;
 using TPRestaurent.BackEndCore.Domain.Data;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -35,6 +36,8 @@ app.UseCors(MyAllowSpecificOrigins);
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<TokenValidationMiddleware>();
 
 app.MapControllers();
 //ApplyMigration();
