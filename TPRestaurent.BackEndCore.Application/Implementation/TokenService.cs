@@ -50,12 +50,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, $"Danh sách token của tài khoản {accountId} không tồn tại");
                 }
-                if (accountTokenList.Items.Count < 0 && accountTokenList.Items != null)
+                if (accountTokenList!.Items!.Count < 0 && accountTokenList.Items != null)
                 {
                     foreach (var token in accountTokenList.Items)
                     {
                         token.IsActive = false;     
-                        token.ExpiryTimeAccessToken = utility.GetCurrentDateTimeInTimeZone();
+                        token.ExpiryTimeAccessToken = utility!.GetCurrentDateTimeInTimeZone();
                         token.ExpiryTimeRefreshToken = utility.GetCurrentDateTimeInTimeZone();      
                     }
                 }
