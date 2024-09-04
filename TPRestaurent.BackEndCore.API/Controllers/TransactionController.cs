@@ -40,6 +40,13 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.GetPaymentById(paymentId);    
         }
 
+
+        [HttpPut("update-transaction-status/{transactionId}/{transactionStatus}")]
+        public async Task<AppActionResult> UpdateTransactionStatus(Guid transactionId, Domain.Enums.TransationStatus transactionStatus)
+        {
+            return await _service.UpdateTransactionStatus(transactionId, transactionStatus);
+        }
+
         [HttpGet("VNPayIpn")]
         public async Task<IActionResult> VNPayIPN()
         {

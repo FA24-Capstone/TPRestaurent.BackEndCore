@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Domain.Enums
 {
-    public enum TranscationStatus
+    public enum TransationStatus
     {
         PENDING,
         FAILED,
-        SUCCESSFUL
+        SUCCESSFUL,
+        APPLIED
     }
 }

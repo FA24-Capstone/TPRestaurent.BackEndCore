@@ -1267,7 +1267,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         });
                 });
 
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.TranscationStatus", b =>
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.TransationStatus", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("int");
@@ -1281,7 +1281,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TranscationStatus");
+                    b.ToTable("TransationStatus");
 
                     b.HasData(
                         new
@@ -1298,6 +1298,11 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         {
                             Id = 2,
                             Name = "SUCCESSFUL"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "APPLIED"
                         });
                 });
 
@@ -1944,6 +1949,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid?>("StoreCreditHistoryId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("TransationStatusId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OrderId");
@@ -1953,6 +1961,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasIndex("ReservationId");
 
                     b.HasIndex("StoreCreditHistoryId");
+
+                    b.HasIndex("TransationStatusId");
 
                     b.ToTable("Transactions");
                 });
@@ -2600,6 +2610,12 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .WithMany()
                         .HasForeignKey("StoreCreditHistoryId");
 
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.TransationStatus", "TransationStatus")
+                        .WithMany()
+                        .HasForeignKey("TransationStatusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Order");
 
                     b.Navigation("PaymentMethod");
@@ -2607,6 +2623,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Navigation("Reservation");
 
                     b.Navigation("StoreCreditHistory");
+
+                    b.Navigation("TransationStatus");
                 });
 #pragma warning restore 612, 618
         }

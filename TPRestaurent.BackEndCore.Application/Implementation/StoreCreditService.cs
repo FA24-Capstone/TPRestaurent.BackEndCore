@@ -37,24 +37,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     //Validate in transaction
                     var transactionRepository = Resolve<IGenericRepository<Transaction>>();
-                    var transactionDb = await transactionRepository.GetById(transactionId);
-                    if (!transactionDb.StoreCreditHistoryId.HasValue)
+                    var transactionDb = await transactionRepository.GetByExpression(t => t.Id == transactionId && t.TransationStatusId == Domain.Enums.TransationStatus.SUCCESSFUL, null);
+                    if (transactionDb == null || !transactionDb.StoreCreditHistoryId.HasValue)
                     {
                         return BuildAppActionResultError(result, $"Không tìm thấy thông tin giao dịch cho việc nộp ví");
                     }
-                    var storeCreditDb = await _historyRepository.GetById(transactionDb.StoreCreditHistoryId);
+                    var storeCreditDb = await _historyRepository.GetByExpression(t => t.StoreCreditHistoryId == transactionDb.StoreCreditHistoryId, t => t.StoreCredit);
                     if (storeCreditDb == null)
                     {
                         return BuildAppActionResultError(result, $"Không tìm thấy thông tin ví với id {storeCreditDb.StoreCredit}");
                     }
 
                     var appliedTransactionDb = await _historyRepository.GetAllDataByExpression(h =>  h.TransactionId == transactionId,0,0, null, false, null);
-                    if (appliedTransactionDb.Items.Count > 0)
+                    if (appliedTransactionDb.Items.Count == 0)
                     {
-                        return BuildAppActionResultError(result, $"Giao dịch với id {transactionId} đã được áp dụng");
+                        return BuildAppActionResultError(result, $"Giao dịch với id {transactionId} không được áp dụng cho bất kì lịch sử nạp ví nào");
                     }
 
-                    storeCreditDb.Amount += transactionDb.Amount;
+                    storeCreditDb.StoreCredit.Amount += transactionDb.Amount;
 
                     var utility = Resolve<Utility>();
                     var configurationRepository = Resolve<IGenericRepository<Configuration>>();
@@ -67,18 +67,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     storeCreditDb.StoreCredit!.ExpiredDate = utility.GetCurrentDateInTimeZone().AddDays(expireTimeInDay);
 
-                    var storeCreditHistory = new StoreCreditHistory
-                    {
-                        StoreCreditHistoryId = Guid.NewGuid(),
-                        StoreCreditId = storeCreditDb.StoreCreditId,
-                        Date = utility.GetCurrentDateInTimeZone(),
-                        Amount = transactionDb.Amount,
-                        IsInput = true,
-                        TransactionId = transactionId,
-                    };
-
+                    //var storeCreditHistory = new StoreCreditHistory
+                    //{
+                    //    StoreCreditHistoryId = Guid.NewGuid(),
+                    //    StoreCreditId = storeCreditDb.StoreCreditId,
+                    //    Date = utility.GetCurrentDateInTimeZone(),
+                    //    Amount = transactionDb.Amount,
+                    //    IsInput = true,
+                    //    TransactionId = transactionId,
+                    //};
+                    transactionDb.TransationStatusId = Domain.Enums.TransationStatus.APPLIED;
+                    await transactionRepository.Update(transactionDb);
                     await _repository.Update(storeCreditDb.StoreCredit!);
-                    await _historyRepository.Insert(storeCreditHistory);
                     await _unitOfWork.SaveChangesAsync();
                     scope.Complete();
                 }

@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Domain.Models.EnumModels
 {
-    public class TranscationStatus
+    public class TransationStatus
     {
         [Key]
-        public TPRestaurent.BackEndCore.Domain.Enums.TranscationStatus Id { get; set; }
+        public TPRestaurent.BackEndCore.Domain.Enums.TransationStatus Id { get; set; }
         public string Name { get; set; } = null!;
         public string? VietnameseName { get; set; } = null!;
     }
