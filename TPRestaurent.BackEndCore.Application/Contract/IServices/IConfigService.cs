@@ -14,5 +14,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> GetAll(int pageNumber, int pageSize);
         public Task<AppActionResult> CreateConfiguration(ConfigurationDto dto);
         public Task<AppActionResult> UpdateConfiguration(UpdateConfigurationDto dto);
+        public Task ChangeConfigurationJob();
     }
 }

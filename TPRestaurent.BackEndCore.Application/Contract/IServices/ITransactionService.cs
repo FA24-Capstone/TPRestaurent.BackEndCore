@@ -15,5 +15,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> CreatePayment(PaymentRequestDto paymentRequest, HttpContext context);
         Task<AppActionResult> GetAllPayment(int pageIndex, int pageSize);
         Task<AppActionResult> GetPaymentById(Guid paymentId);
+        Task<AppActionResult> GetAllTranscation(int pageNumber, int pageSize);
     }
 }

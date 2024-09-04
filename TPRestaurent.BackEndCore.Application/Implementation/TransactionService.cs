@@ -53,7 +53,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var paymentGatewayService = Resolve<IPaymentGatewayService>();
                     var reservationRepository = Resolve<IGenericRepository<Reservation>>();
                     var orderRepository = Resolve<IGenericRepository<Order>>();     
-                    var storeCreditRepository = Resolve<IGenericRepository<StoreCredit>>();
+                    var storeCreditHistoryRepository = Resolve<IGenericRepository<StoreCreditHistory>>();
                     var hasingService = Resolve<IHashingService>();
                     var utility = Resolve<Utility>();
                     var transaction = new Transaction();
@@ -131,15 +131,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 {
                                     if (paymentRequest.StoreCreditAmount.HasValue)
                                     {
-                                        var storeCreditDb = await storeCreditRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p!.Account!);
+                                        var storeCreditDb = await storeCreditHistoryRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p.StoreCredit!.Account!);
+
+                                        var storeCreditHistory = new StoreCreditHistory
+                                        {
+                                            StoreCreditHistoryId = Guid.NewGuid(),
+                                            IsInput = true,
+                                            Date = utility!.GetCurrentDateTimeInTimeZone(),
+                                            Amount = paymentRequest.StoreCreditAmount.Value
+                                        };
+
                                         transaction = new Transaction
                                         {
                                             Id = Guid.NewGuid(),
                                             Amount = paymentRequest.StoreCreditAmount.Value,
                                             PaymentMethodId = Domain.Enums.PaymentMethod.VNPAY,
-                                            StoreCreditId = paymentRequest.StoreCreditId.Value,
+                                            StoreCreditHistoryId = storeCreditHistory.StoreCreditHistoryId,
                                             Date = utility!.GetCurrentDateTimeInTimeZone()
                                         };
+
+                                        storeCreditHistory.TransactionId = transaction.Id;
 
                                         var paymentInformationRequest = new PaymentInformationRequest
                                         {
@@ -147,11 +158,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             PaymentMethod = paymentRequest.PaymentMethod,
                                             Amount = paymentRequest.StoreCreditAmount.Value,
                                             CustomerName = "",
-                                            AccountID = storeCreditDb.AccountId,
+                                            AccountID = storeCreditDb!.StoreCredit!.AccountId,
                                         };
 
 
                                         await _repository.Insert(transaction);
+                                        await storeCreditHistoryRepository.Insert(storeCreditHistory);
                                         paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest, context);
 
                                         result.Result = paymentUrl;
@@ -311,15 +323,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 {
                                     if (paymentRequest.StoreCreditAmount.HasValue)
                                     {
-                                        var storeCreditDb = await storeCreditRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p!.Account!);
+                                        var storeCreditDb = await storeCreditHistoryRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p.StoreCredit!.Account!);
+                                        var storeCreditHistory = new StoreCreditHistory
+                                        {
+                                            StoreCreditHistoryId = Guid.NewGuid(),
+                                            IsInput = true,
+                                            Date = utility!.GetCurrentDateTimeInTimeZone(),
+                                            Amount = paymentRequest.StoreCreditAmount.Value
+                                        };
+
                                         transaction = new Transaction
                                         {
                                             Id = Guid.NewGuid(),
                                             Amount = paymentRequest.StoreCreditAmount.Value,
                                             PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
-                                            StoreCreditId = storeCreditDb.StoreCreditId,
+                                            StoreCreditHistoryId = storeCreditDb.StoreCreditHistoryId,
                                             Date = utility!.GetCurrentDateTimeInTimeZone()
                                         };
+
+                                        storeCreditHistory.TransactionId = transaction.Id;
+                                        
                                         string endpoint = _momoConfiguration.Api;
                                         string partnerCode = _momoConfiguration.PartnerCode;
                                         string accessKey = _momoConfiguration.AccessKey;
@@ -373,6 +396,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         {
                                             JObject jmessage = JObject.Parse(response.Content);
                                             await _repository.Insert(transaction);
+                                            await storeCreditHistoryRepository.Insert(storeCreditHistory);
                                             result.Result = jmessage.GetValue("payUrl").ToString();
                                         }
                                     }
@@ -415,16 +439,30 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 {
                                     if (paymentRequest.StoreCreditAmount.HasValue)
                                     {
-                                        var storeCreditDb = await storeCreditRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p!.Account!);
+                                        var storeCreditDb = await storeCreditHistoryRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p.StoreCredit!.Account!);
+
+                                        var storeCreditHistory = new StoreCreditHistory
+                                        {
+                                            StoreCreditHistoryId = Guid.NewGuid(),
+                                            IsInput = true,
+                                            Date = utility!.GetCurrentDateTimeInTimeZone(),
+                                            Amount = paymentRequest.StoreCreditAmount.Value
+                                        };
+
                                         transaction = new Transaction
                                         {
                                             Id = Guid.NewGuid(),
                                             Amount = paymentRequest.StoreCreditAmount.Value,
                                             PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
-                                            StoreCreditId = storeCreditDb.StoreCreditId,
+                                            StoreCreditHistoryId = storeCreditDb.StoreCreditId,
                                             Date = utility!.GetCurrentDateTimeInTimeZone()
                                         };
+
+                                        storeCreditHistory.TransactionId = transaction.Id;
+
+                                        
                                         await _repository.Insert(transaction);
+                                        await storeCreditHistoryRepository.Insert(storeCreditHistory);
                                         result.Result = transaction;
                                     }
                                 }
@@ -451,7 +489,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                var transactionListDb = await _repository.GetAllDataByExpression(null, pageIndex, pageSize, null, false, p => p.Order!, p => p.Reservation!, p => p.PaymentMethod!);
+                var transactionListDb = await _repository.GetAllDataByExpression(null, pageIndex, pageSize, null, false, p => p.Order!, p => p.Reservation!,
+                    p => p.PaymentMethod!,
+                    p => p.TranscationStatus!,
+                    p => p.StoreCreditHistory!.StoreCredit!.Account!,
+                    p => p.Reservation!.CustomerInfo!,
+                    p => p.Reservation!.ReservationStatus!,
+                    p => p.Order!.Status!,
+                    p => p.Order!.LoyalPointsHistory!,
+                    p => p.Order!.CustomerSavedCoupon!.Coupon!
+                    );
                 result.Result = transactionListDb;  
             } 
             catch (Exception ex)
@@ -460,6 +507,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             }
             return result;
+        }
+
+        public Task<AppActionResult> GetAllTranscation(int pageNumber, int pageSize)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<AppActionResult> GetPaymentById(Guid paymentId)

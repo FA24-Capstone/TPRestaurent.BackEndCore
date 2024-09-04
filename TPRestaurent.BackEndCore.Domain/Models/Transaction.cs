@@ -14,20 +14,23 @@ namespace TPRestaurent.BackEndCore.Domain.Models
     {
         [Key] 
         public Guid Id { get; set; }
-
         public double Amount { get; set; }
         public DateTime Date { get; set; }
         public Enums.PaymentMethod PaymentMethodId { get; set; }
         [ForeignKey(nameof(PaymentMethodId))]
         public PaymentMethod? PaymentMethod { get; set; }
+        public Enums.TranscationStatus TranscationStatusId { get; set; }
+        [ForeignKey(nameof(TranscationStatusId))]
+        public EnumModels.TranscationStatus TranscationStatus { get; set; }
         public Guid? ReservationId { get; set; }
         [ForeignKey(nameof(ReservationId))]
         public Reservation? Reservation { get; set; }
         public Guid? OrderId { get; set; }
         [ForeignKey(nameof(OrderId))]
         public Order? Order { get; set; }
-        public Guid? StoreCreditId { get; set; }
-        [ForeignKey(nameof(StoreCreditId))]
-        public StoreCredit? StoreCredit { get; set; }
+        public Guid? StoreCreditHistoryId { get; set; }
+        [ForeignKey(nameof(StoreCreditHistoryId))]
+        public StoreCreditHistory? StoreCreditHistory { get; set; }
+
     }
 }

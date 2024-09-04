@@ -2,6 +2,7 @@
 using MailKit.Search;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json;
+using NPOI.SS.Formula.Functions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -901,7 +902,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if(configurationDb == null)
                     {
                         return BuildAppActionResultError(result, $"Không tìm thấy cấu hình cho {SD.DefaultValue.TIME_TO_KEEP_RESERVATION}");
-                        return result;
                     }
 
                     var timeToKeepReservation = double.Parse(configurationDb.PreValue);
@@ -911,6 +911,31 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await _unitOfWork.SaveChangesAsync();
                 }
             } catch(Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> CancelOverdueReservations()
+        {
+            var result = new AppActionResult();
+            var utility = Resolve<Utility>();
+            try
+            {
+                var currentTime = utility!.GetCurrentDateTimeInTimeZone().AddHours(24);
+                var pastReservationDb = await _reservationRepository.GetAllDataByExpression(
+                    (p => p.ReservationDate.AddHours(24) < currentTime && (p.StatusId == ReservationStatus.PENDING || p.StatusId == ReservationStatus.TABLEASSIGNED)), 0, 0, null, false, null);
+                if (pastReservationDb!.Items!.Count > 0 && pastReservationDb.Items != null)
+                {
+                    foreach (var reservation in pastReservationDb.Items)
+                    {
+                        reservation.StatusId = ReservationStatus.CANCELLED;
+                    }
+                }
+                await _unitOfWork.SaveChangesAsync();   
+            }  
+            catch(Exception ex)
             {
                 result = BuildAppActionResultError(result, ex.Message);
             }

@@ -38,14 +38,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     //Validate in transaction
                     var transactionRepository = Resolve<IGenericRepository<Transaction>>();
                     var transactionDb = await transactionRepository.GetById(transactionId);
-                    if (!transactionDb.StoreCreditId.HasValue)
+                    if (!transactionDb.StoreCreditHistoryId.HasValue)
                     {
                         return BuildAppActionResultError(result, $"Không tìm thấy thông tin giao dịch cho việc nộp ví");
                     }
-                    var storeCreditDb = await _repository.GetById(transactionDb.StoreCreditId);
+                    var storeCreditDb = await _historyRepository.GetById(transactionDb.StoreCreditHistoryId);
                     if (storeCreditDb == null)
                     {
-                        return BuildAppActionResultError(result, $"Không tìm thấy thông tin ví với id {transactionDb.StoreCreditId.Value}");
+                        return BuildAppActionResultError(result, $"Không tìm thấy thông tin ví với id {storeCreditDb.StoreCredit}");
                     }
 
                     var appliedTransactionDb = await _historyRepository.GetAllDataByExpression(h =>  h.TransactionId == transactionId,0,0, null, false, null);
@@ -65,7 +65,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     var expireTimeInDay = double.Parse(configurationDb.PreValue);
 
-                    storeCreditDb.ExpiredDate = utility.GetCurrentDateInTimeZone().AddDays(expireTimeInDay);
+                    storeCreditDb.StoreCredit!.ExpiredDate = utility.GetCurrentDateInTimeZone().AddDays(expireTimeInDay);
 
                     var storeCreditHistory = new StoreCreditHistory
                     {
@@ -77,7 +77,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         TransactionId = transactionId,
                     };
 
-                    await _repository.Update(storeCreditDb);
+                    await _repository.Update(storeCreditDb.StoreCredit!);
                     await _historyRepository.Insert(storeCreditHistory);
                     await _unitOfWork.SaveChangesAsync();
                     scope.Complete();

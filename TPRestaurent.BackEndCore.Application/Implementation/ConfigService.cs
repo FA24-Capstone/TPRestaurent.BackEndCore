@@ -16,12 +16,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 {
     public class ConfigService : GenericBackendService, IConfigService
     {
+        private BackEndLogger _logger;
         private IGenericRepository<Configuration> _repository;
         private IUnitOfWork _unitOfWork;
-        public ConfigService(IGenericRepository<Configuration> repository, IUnitOfWork unitOfWork, IServiceProvider service) : base(service) 
+        public ConfigService(IGenericRepository<Configuration> repository, IUnitOfWork unitOfWork, BackEndLogger logger, IServiceProvider service) : base(service) 
         {
             _repository = repository;
             _unitOfWork = unitOfWork;
+        }
+
+        public async Task ChangeConfigurationJob()
+        {
+            try 
+            {
+                var utility = Resolve<Utility>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, this);
+            }
+            Task.CompletedTask.Wait();
         }
 
         public async Task<AppActionResult> CreateConfiguration(ConfigurationDto dto)
@@ -123,5 +137,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
     }
 }

@@ -29,7 +29,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-payment/{pageIndex}/{pageSize}")]
-        public async Task<AppActionResult> GetAllPayment(int pageIndex, int pageSize)
+        public async Task<AppActionResult> GetAllPayment(int pageIndex = 1, int pageSize = 10)
         {
             return await _service.GetAllPayment(pageIndex, pageSize);       
         }
