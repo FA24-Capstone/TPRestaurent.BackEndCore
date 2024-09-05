@@ -91,7 +91,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
 
                     var customerInfoRepository = Resolve<IGenericRepository<CustomerInfo>>();
-                    if ((await customerInfoRepository!.GetById(dto.CustomerInfoId!)) == null)
+
+                    var customerInfoDb = await customerInfoRepository!.GetById(dto.CustomerInfoId!);
+
+                    if (customerInfoDb == null || !customerInfoDb.IsVerified)
                     {
                         result = BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng với id {dto.CustomerInfoId}");
                         return result;
@@ -736,6 +739,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
+                var transactionService = Resolve<ITransactionService>();
+                var transactionRepository = Resolve<IGenericRepository<Domain.Models.Transaction>>();
                 var reservationDb = await _reservationRepository.GetById(reservationId);
                 if (reservationDb == null)
                 {
@@ -759,6 +764,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         result = BuildAppActionResultError(result, $"Yêu cầu đặt bàn với id {reservationId} chưa được thanh toán cọc, không thể diễn ra");
                         return result;
+                    }
+
+                    if(status == ReservationStatus.PAID)
+                    {
+                        var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.ReservationId == reservationId && t.TransationStatusId == TransationStatus.PENDING, null);
+                        if (reservationTransactionDb == null)
+                        {
+                            result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch cho đặt bàn với id {reservationId}");
+                            return result;
+                        }
+
+                        var transactionUpdatedSuccessFully = await transactionService.UpdateTransactionStatus(reservationTransactionDb.Id, TransationStatus.SUCCESSFUL);
+                        if (!transactionUpdatedSuccessFully.IsSuccess)
+                        {
+                            result = BuildAppActionResultError(result, $"Cập nhật trạng thái giao dịch {reservationTransactionDb.Id} cho đặt bàn {reservationId} thất bại. Vui lòng cập nhật lại sau");
+                        }
                     }
                     reservationDb.StatusId = status;
                     updated = true;

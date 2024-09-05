@@ -95,12 +95,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var storeCreditDb = await _repository.GetByExpression(s => s.AccountId == accountId, null);
+                var storeCreditDb = await _repository.GetByExpression(s => s.AccountId == accountId, s => s.Account.Customer);
                 if (storeCreditDb != null) 
                 {
                     var storeCreditHistoryDb = await _historyRepository.GetAllDataByExpression(s => s.StoreCreditId == storeCreditDb.StoreCreditId, 0, 0, s => s.Date, false, null);
                     result.Result = new StoreCreditResponse
                     {
+                        CustomerInfo = storeCreditDb.Account.Customer,
                         StoreCredit = storeCreditDb,
                         StoreCreditHistories = storeCreditHistoryDb.Items
                     };

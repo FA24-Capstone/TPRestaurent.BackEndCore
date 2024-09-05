@@ -147,6 +147,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             if (IsSuccessful)
                             {
                                 orderDb.StatusId = OrderStatus.Completed;
+                                var transactionService = Resolve<ITransactionService>();
+                                var transactionRepository = Resolve<IGenericRepository<Domain.Models.Transaction>>();
+                                var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.PENDING, null);
+                                if (reservationTransactionDb == null)
+                                {
+                                    result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch cho đơn hàng với id {orderId}");
+                                    return result;
+                                }
+
+                                var transactionUpdatedSuccessFully = await transactionService.UpdateTransactionStatus(reservationTransactionDb.Id, TransationStatus.SUCCESSFUL);
+                                if (!transactionUpdatedSuccessFully.IsSuccess)
+                                {
+                                    result = BuildAppActionResultError(result, $"Cập nhật trạng thái giao dịch {reservationTransactionDb.Id} cho đơn hàng {orderId} thất bại. Vui lòng cập nhật lại sau");
+                                }
                             }
                             else
                             {
@@ -220,7 +234,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var reservationDb = await reservationRepository!.GetById(orderRequestDto.ReservationId!);
                         if (reservationDb != null)
                         {
-                            var customerInfoDb = await customerInfoRepository!.GetByExpression(p => p.CustomerId == orderRequestDto.CustomerId, null);
+                            CustomerInfo customerInfoDb = await customerInfoRepository!.GetByExpression(p => p.CustomerId == orderRequestDto.CustomerId, null);
+
                             var reservationDishDb = await reservationDishRepository!.GetAllDataByExpression(p => p.ReservationId == orderRequestDto.ReservationId, 0, 0, null, false, p => p.DishSizeDetail!.Dish!);
                             var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => !string.IsNullOrEmpty(customerInfoDb.AccountId) && p.AccountId == customerInfoDb.AccountId, 0, 0, null, false, p => p.Coupon!);
 
