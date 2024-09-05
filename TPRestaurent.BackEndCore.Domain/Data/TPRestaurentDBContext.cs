@@ -117,7 +117,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             SeedEnumTable<Models.EnumModels.DishSize, Enums.DishSize>(builder);
             SeedEnumTable<Models.EnumModels.ReservationStatus, Enums.ReservationStatus>(builder);
             SeedEnumTable<Models.EnumModels.PreListOrderStatus, Enums.PreListOrderStatus>(builder);
-            SeedEnumTable<Models.EnumModels.TranscationStatus, Enums.TranscationStatus>(builder);
+            SeedEnumTable<Models.EnumModels.TransationStatus, Enums.TransationStatus>(builder);
 
         }
 

@@ -20,6 +20,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Payment.PaymentRequest;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
+using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
 using Twilio.Rest.Verify.V2.Service.Entity;
 
@@ -53,6 +54,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var paymentGatewayService = Resolve<IPaymentGatewayService>();
                     var reservationRepository = Resolve<IGenericRepository<Reservation>>();
                     var orderRepository = Resolve<IGenericRepository<Order>>();     
+                    var storeCreditRepository = Resolve<IGenericRepository<StoreCredit>>();
                     var storeCreditHistoryRepository = Resolve<IGenericRepository<StoreCreditHistory>>();
                     var hasingService = Resolve<IHashingService>();
                     var utility = Resolve<Utility>();
@@ -66,6 +68,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (!paymentRequest.OrderId.HasValue && !paymentRequest.ReservationId.HasValue && !paymentRequest.StoreCreditId.HasValue)
                     {
                         result = BuildAppActionResultError(result, $"Đơn hàng/Đặt bàn/Ví này không tồn tại");
+                        return result;
                     }
                     if (!BuildAppActionResultIsError(result))
                     {
@@ -131,16 +134,25 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 {
                                     if (paymentRequest.StoreCreditAmount.HasValue)
                                     {
-                                        var storeCreditDb = await storeCreditHistoryRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p.StoreCredit!.Account!);
+                                        var storeCreditDb = await storeCreditRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p.Account!);
+                                        if(storeCreditDb == null)
+                                        {
+                                            result = BuildAppActionResultError(result, $"Khong tìm thấy thông tin ví với id {paymentRequest.StoreCreditId}");
+                                            return result;
+                                        }
 
                                         var storeCreditHistory = new StoreCreditHistory
                                         {
                                             StoreCreditHistoryId = Guid.NewGuid(),
                                             IsInput = true,
                                             Date = utility!.GetCurrentDateTimeInTimeZone(),
-                                            Amount = paymentRequest.StoreCreditAmount.Value
+                                            Amount = paymentRequest.StoreCreditAmount.Value,
+                                            StoreCreditId = paymentRequest.StoreCreditId.Value,
                                         };
-
+                                    
+                                        await storeCreditHistoryRepository.Insert(storeCreditHistory);
+                                        await _unitOfWork.SaveChangesAsync();
+                                        
                                         transaction = new Transaction
                                         {
                                             Id = Guid.NewGuid(),
@@ -158,12 +170,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             PaymentMethod = paymentRequest.PaymentMethod,
                                             Amount = paymentRequest.StoreCreditAmount.Value,
                                             CustomerName = "",
-                                            AccountID = storeCreditDb!.StoreCredit!.AccountId,
+                                            AccountID = storeCreditDb!.AccountId,
                                         };
 
 
                                         await _repository.Insert(transaction);
-                                        await storeCreditHistoryRepository.Insert(storeCreditHistory);
+                                        await storeCreditHistoryRepository.Update(storeCreditHistory);
                                         paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest, context);
 
                                         result.Result = paymentUrl;
@@ -324,13 +336,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     if (paymentRequest.StoreCreditAmount.HasValue)
                                     {
                                         var storeCreditDb = await storeCreditHistoryRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p.StoreCredit!.Account!);
+
+                                        if (storeCreditDb == null)
+                                        {
+                                            result = BuildAppActionResultError(result, $"Khong tìm thấy thông tin ví với id {paymentRequest.StoreCreditId}");
+                                            return result;
+                                        }
+
                                         var storeCreditHistory = new StoreCreditHistory
                                         {
                                             StoreCreditHistoryId = Guid.NewGuid(),
                                             IsInput = true,
                                             Date = utility!.GetCurrentDateTimeInTimeZone(),
-                                            Amount = paymentRequest.StoreCreditAmount.Value
+                                            Amount = paymentRequest.StoreCreditAmount.Value,
+                                            StoreCreditId = paymentRequest.StoreCreditId.Value,
                                         };
+
+                                        await storeCreditHistoryRepository.Insert(storeCreditHistory);
+                                        await _unitOfWork.SaveChangesAsync();
 
                                         transaction = new Transaction
                                         {
@@ -396,7 +419,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         {
                                             JObject jmessage = JObject.Parse(response.Content);
                                             await _repository.Insert(transaction);
-                                            await storeCreditHistoryRepository.Insert(storeCreditHistory);
+                                            await storeCreditHistoryRepository.Update(storeCreditHistory);
                                             result.Result = jmessage.GetValue("payUrl").ToString();
                                         }
                                     }
@@ -439,22 +462,32 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 {
                                     if (paymentRequest.StoreCreditAmount.HasValue)
                                     {
-                                        var storeCreditDb = await storeCreditHistoryRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p.StoreCredit!.Account!);
+                                        var storeCreditDb = await storeCreditRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p.Account!);
+
+                                        if (storeCreditDb == null)
+                                        {
+                                            result = BuildAppActionResultError(result, $"Khong tìm thấy thông tin ví với id {paymentRequest.StoreCreditId}");
+                                            return result;
+                                        }
 
                                         var storeCreditHistory = new StoreCreditHistory
                                         {
                                             StoreCreditHistoryId = Guid.NewGuid(),
                                             IsInput = true,
                                             Date = utility!.GetCurrentDateTimeInTimeZone(),
-                                            Amount = paymentRequest.StoreCreditAmount.Value
+                                            Amount = paymentRequest.StoreCreditAmount.Value,
+                                            StoreCreditId = paymentRequest.StoreCreditId.Value,
                                         };
+
+                                        await storeCreditHistoryRepository.Insert(storeCreditHistory);
+                                        await _unitOfWork.SaveChangesAsync();
 
                                         transaction = new Transaction
                                         {
                                             Id = Guid.NewGuid(),
                                             Amount = paymentRequest.StoreCreditAmount.Value,
                                             PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
-                                            StoreCreditHistoryId = storeCreditDb.StoreCreditId,
+                                            StoreCreditHistoryId = storeCreditHistory.StoreCreditId,
                                             Date = utility!.GetCurrentDateTimeInTimeZone()
                                         };
 
@@ -462,7 +495,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                         
                                         await _repository.Insert(transaction);
-                                        await storeCreditHistoryRepository.Insert(storeCreditHistory);
+                                        await storeCreditHistoryRepository.Update(storeCreditHistory);
                                         result.Result = transaction;
                                     }
                                 }
@@ -484,14 +517,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetAllPayment(int pageIndex, int pageSize)
+        public async Task<AppActionResult> GetAllPayment(int pageIndex, int pageSize, Domain.Enums.TransationStatus transationStatus)
         {
             var result = new AppActionResult();
             try
             {
-                var transactionListDb = await _repository.GetAllDataByExpression(null, pageIndex, pageSize, null, false, p => p.Order!, p => p.Reservation!,
+                var transactionListDb = await _repository.GetAllDataByExpression(p => p.TransationStatusId == transationStatus, pageIndex, pageSize, null, false, p => p.Order!, p => p.Reservation!,
                     p => p.PaymentMethod!,
-                    p => p.TranscationStatus!,
+                    p => p.TransationStatus!,
                     p => p.StoreCreditHistory!.StoreCredit!.Account!,
                     p => p.Reservation!.CustomerInfo!,
                     p => p.Reservation!.ReservationStatus!,
@@ -509,7 +542,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public Task<AppActionResult> GetAllTranscation(int pageNumber, int pageSize)
+        public Task<AppActionResult> GetAllTransaction(int pageNumber, int pageSize)
         {
             throw new NotImplementedException();
         }
@@ -525,6 +558,29 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result = BuildAppActionResultError(result, $"Hóa đơn với id {paymentId} không tồn tại");
                 }
                 result.Result = transactionDb;      
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> UpdateTransactionStatus(Guid transactionId, TransationStatus transactionStatus)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var transactionDb = await _repository.GetById(transactionId);
+                if(transactionDb.TransationStatusId == TransationStatus.PENDING && transactionStatus != TransationStatus.PENDING)
+                {
+                    transactionDb.TransationStatusId = transactionStatus;
+                    await _repository.Update(transactionDb);
+                    await _unitOfWork.SaveChangesAsync();
+                } else
+                {
+                    result = BuildAppActionResultError(result, $"Để cập nhật, Trạn thanh toán phải chờ xử l1 và trạng thái mong muốn phải khác chờ xử lí");
+                }
             }
             catch (Exception ex)
             {

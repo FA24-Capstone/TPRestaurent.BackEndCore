@@ -13,8 +13,9 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
     public interface ITransactionService
     {
         Task<AppActionResult> CreatePayment(PaymentRequestDto paymentRequest, HttpContext context);
-        Task<AppActionResult> GetAllPayment(int pageIndex, int pageSize);
+        Task<AppActionResult> GetAllPayment(int pageIndex, int pageSize, Domain.Enums.TransationStatus transationStatus);
         Task<AppActionResult> GetPaymentById(Guid paymentId);
-        Task<AppActionResult> GetAllTranscation(int pageNumber, int pageSize);
+        Task<AppActionResult> GetAllTransaction(int pageNumber, int pageSize);
+        Task<AppActionResult> UpdateTransactionStatus(Guid transactionId, Domain.Enums.TransationStatus transactionStatus);
     }
 }

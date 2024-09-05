@@ -186,7 +186,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-     
+
 
         public async Task<AppActionResult> GetDishById(Guid dishId)
         {
@@ -211,8 +211,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, null);
 
                 var ratingDb = await ratingRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.CreateByAccount, p => p.UpdateByAccount);
-                
-                if(ratingDb.Items.Count > 0)
+
+                if (ratingDb.Items.Count > 0)
                 {
                     foreach (var rating in ratingDb.Items!)
                     {
@@ -230,6 +230,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 dishResponse.DishImgs = staticFileDb.Items!;
 
                 result.Result = dishResponse;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetAllDishType(int pageNumber, int pagesize)
+        {
+            var result = new AppActionResult();
+            var dishTypeRepository = Resolve<IGenericRepository<TPRestaurent.BackEndCore.Domain.Models.EnumModels.DishItemType>>();
+            try
+            {
+                result.Result = await dishTypeRepository!.GetAllDataByExpression(null, 0, 0, null, false, null);
             }
             catch (Exception ex)
             {
