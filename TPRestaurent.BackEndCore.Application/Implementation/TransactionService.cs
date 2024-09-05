@@ -517,12 +517,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetAllPayment(int pageIndex, int pageSize)
+        public async Task<AppActionResult> GetAllPayment(int pageIndex, int pageSize, Domain.Enums.TransationStatus transationStatus)
         {
             var result = new AppActionResult();
             try
             {
-                var transactionListDb = await _repository.GetAllDataByExpression(null, pageIndex, pageSize, null, false, p => p.Order!, p => p.Reservation!,
+                var transactionListDb = await _repository.GetAllDataByExpression(p => p.TransationStatusId == transationStatus, pageIndex, pageSize, null, false, p => p.Order!, p => p.Reservation!,
                     p => p.PaymentMethod!,
                     p => p.TransationStatus!,
                     p => p.StoreCreditHistory!.StoreCredit!.Account!,

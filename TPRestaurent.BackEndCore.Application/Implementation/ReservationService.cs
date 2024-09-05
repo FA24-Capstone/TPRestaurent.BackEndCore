@@ -33,6 +33,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly IAccountService _accountService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private BackEndLogger _logger;
+
         public ReservationService(IGenericRepository<Reservation> reservationRepository,
                                   IGenericRepository<ReservationTableDetail> reservationTableDetailRepository,
                                   IGenericRepository<ReservationDish> reservationDishRepository,
@@ -40,7 +42,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                   IGenericRepository<Configuration> configurationRepository,
                                   IAccountService accountService,
                                   IUnitOfWork unitOfWork,
-                                  IMapper mapper, IServiceProvider service) : base(service)
+                                  IMapper mapper, IServiceProvider service,
+                                  BackEndLogger logger) : base(service)
         {
             _reservationRepository = reservationRepository;
             _reservationTableDetailRepository = reservationTableDetailRepository;
@@ -50,6 +53,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _accountService = accountService;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _logger = logger;       
         }
 
         public async Task<AppActionResult> AddReservation(ReservationDto dto)
@@ -938,9 +942,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> CancelOverdueReservations()
+        public async Task CancelOverdueReservations()
         {
-            var result = new AppActionResult();
             var utility = Resolve<Utility>();
             try
             {
@@ -952,15 +955,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     foreach (var reservation in pastReservationDb.Items)
                     {
                         reservation.StatusId = ReservationStatus.CANCELLED;
+                        await _reservationRepository.Update(reservation);
                     }
                 }
                 await _unitOfWork.SaveChangesAsync();   
             }  
             catch(Exception ex)
             {
-                result = BuildAppActionResultError(result, ex.Message);
+                _logger.LogError(ex.Message, this);
             }
-            return result;
+            Task.CompletedTask.Wait();
         }
     }
 }

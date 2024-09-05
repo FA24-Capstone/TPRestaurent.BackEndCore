@@ -1,4 +1,5 @@
 ﻿using Hangfire;
+using TPRestaurent.BackEndCore.Application.Implementation;
 
 namespace TPRestaurent.BackEndCore.API.Installers;
 
@@ -8,6 +9,6 @@ public class HangfireInstaller : IInstaller
     {
         services.AddHangfire(x => x.UseSqlServerStorage(configuration["ConnectionStrings:Host"]));
         services.AddHangfireServer();
-        //services.AddScoped<>();
+        services.AddScoped<WorkerService>();
     }
 }

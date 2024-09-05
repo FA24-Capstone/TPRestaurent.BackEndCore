@@ -1,6 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Hangfire;
+using Microsoft.EntityFrameworkCore;
 using TPRestaurent.BackEndCore.API.Installers;
 using TPRestaurent.BackEndCore.API.Middlewares;
+using TPRestaurent.BackEndCore.Application.Implementation;
 using TPRestaurent.BackEndCore.Domain.Data;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -41,6 +43,17 @@ app.UseAuthorization();
 
 app.MapControllers();
 //ApplyMigration();
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new DashboardNoAuthorizationFilter() }
+}); ;
+
+using (var scope = app.Services.CreateScope())
+{
+    var serviceProvider = scope.ServiceProvider;
+    var workerService = serviceProvider.GetRequiredService<WorkerService>();
+    await workerService.Start();
+}
 app.Run();
 
 void ApplyMigration()

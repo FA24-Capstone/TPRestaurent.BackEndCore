@@ -23,6 +23,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             _repository = repository;
             _unitOfWork = unitOfWork;
+            _logger = logger;   
         }
 
         public async Task ChangeConfigurationJob()
@@ -30,6 +31,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try 
             {
                 var utility = Resolve<Utility>();
+                var configDb = await _repository.GetAllDataByExpression(null, 0, 0, null, false, null);
+                if (configDb.Items.Count > 0 && configDb.Items != null)
+                {
+                    foreach (var config in configDb.Items)
+                    {
+                        if (config.ActiveDate >= utility!.GetCurrentDateTimeInTimeZone())
+                        {
+                            if (config.ActiveValue != null)
+                            {
+                                config.PreValue = config!.ActiveValue!;
+                                config.ActiveValue = null;
+                                config.ActiveDate = null;
+                                await _repository.Update(config);   
+                            }
+                        }
+                    }
+                    await _unitOfWork.SaveChangesAsync();       
+                }
             }
             catch (Exception ex)
             {
