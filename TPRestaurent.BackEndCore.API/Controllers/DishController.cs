@@ -49,6 +49,10 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _dishService.UpdateDish(dto);
         }
-
+        [HttpGet("get-all-dish-type/{pageNumber}/{pageSize}")]
+        public async Task<AppActionResult> GetAllDishType(int pageNumber = 1, int pageSize = 10)
+        {
+            return await _dishService.GetAllDishType(pageNumber, pageSize);
+        }
     }
 }
