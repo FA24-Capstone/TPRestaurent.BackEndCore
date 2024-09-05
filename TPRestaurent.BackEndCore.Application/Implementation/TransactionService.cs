@@ -489,7 +489,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                var transactionListDb = await _repository.GetAllDataByExpression(null, pageIndex, pageSize, null, false, `p => p.Order!, p => p.Reservation!,
+                var transactionListDb = await _repository.GetAllDataByExpression(null, pageIndex, pageSize, null, false, p => p.Order!, p => p.Reservation!,
                     p => p.PaymentMethod!,
                     p => p.TranscationStatus!,
                     p => p.StoreCreditHistory!.StoreCredit!.Account!,

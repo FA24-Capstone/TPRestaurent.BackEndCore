@@ -934,6 +934,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     foreach (var reservation in pastReservationDb.Items)
                     {
                         reservation.StatusId = ReservationStatus.CANCELLED;
+                        await _reservationRepository.Update(reservation);
                     }
                 }
                 await _unitOfWork.SaveChangesAsync();   

@@ -36,13 +36,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     foreach (var config in configDb.Items)
                     {
-                        if (config.ActiveDate == utility!.GetCurrentDateTimeInTimeZone())
+                        if (config.ActiveDate >= utility!.GetCurrentDateTimeInTimeZone())
                         {
                             if (config.ActiveValue != null)
                             {
                                 config.PreValue = config!.ActiveValue!;
                                 config.ActiveValue = null;
-                                config.ActiveValue = null;
+                                config.ActiveDate = null;
                                 await _repository.Update(config);   
                             }
                         }
