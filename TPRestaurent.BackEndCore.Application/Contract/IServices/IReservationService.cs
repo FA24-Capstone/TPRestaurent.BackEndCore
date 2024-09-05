@@ -25,7 +25,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> AddTableToReservation(Guid reservationId, List<Guid> tableIds);
         public Task<AppActionResult> UpdateExpireReservation();
         //public Task<AppActionResult> GetCurrentReservationByPhoneNumber(string phoneNumber);
-        public Task<AppActionResult> CancelOverdueReservations();
+        public Task CancelOverdueReservations();
 
     }
 }
