@@ -11,6 +11,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
     {
         public CustomerInfo CustomerInfo { get; set; }
         public StoreCredit StoreCredit { get; set; }
-        public List<StoreCreditHistory> StoreCreditHistories { get; set; } = new List<StoreCreditHistory>();
+        //public List<StoreCreditHistory> StoreCreditHistories { get; set; } = new List<StoreCreditHistory>();
     }
 }

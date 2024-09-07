@@ -24,47 +24,47 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _unitOfWork = unitOfWork;   
         }
 
-        public async Task<AppActionResult> ApplyCoupon(Guid orderId)
-        {
-            var result = new AppActionResult();
-            var orderRepository = Resolve<IGenericRepository<Order>>();
-            var customerSavedCouponRepository = Resolve<IGenericRepository<CustomerSavedCoupon>>();
-            var utility = Resolve<Utility>();
-            try
-            {
-                var orderDb = await orderRepository!.GetAllDataByExpression(
-                    p => p.OrderId == orderId, 0, 0, null, false, 
-                    p => p.CustomerInfo!.Account!,
-                    p => p.PaymentMethod!,
-                    p => p.CustomerSavedCoupon!,
-                    p => p.Reservation!,
-                    p => p.Reservation!,
-                    p => p.LoyalPointsHistory!
-                    );
-                var couponId = orderDb.Items!.FirstOrDefault()!.CustomerSavedCoupon!.CouponId;
-                var couponDb = await _couponRepository.GetById(couponId);
-                if (couponDb.ExpiryDate > utility!.GetCurrentDateTimeInTimeZone())
-                {
-                    result = BuildAppActionResultError(result, $"Mã giảm giá với id {couponId} đã hết hạn");
-                }
-                var discount = (orderDb.Items!.FirstOrDefault()!.TotalAmount * couponDb.DiscountPercent) / 100;
-                orderDb.Items!.FirstOrDefault()!.TotalAmount -= discount;
-                var customerSavedCouponDb = orderDb.Items!.FirstOrDefault()!.CustomerSavedCoupon;
-                customerSavedCouponDb!.IsUsedOrExpired = true;
+        //public async Task<AppActionResult> ApplyCoupon(Guid orderId)
+        //{
+        //    var result = new AppActionResult();
+        //    var orderRepository = Resolve<IGenericRepository<Order>>();
+        //    var customerSavedCouponRepository = Resolve<IGenericRepository<CustomerSavedCoupon>>();
+        //    var utility = Resolve<Utility>();
+        //    try
+        //    {
+        //        var orderDb = await orderRepository!.GetAllDataByExpression(
+        //            p => p.OrderId == orderId, 0, 0, null, false, 
+        //            p => p.CustomerInfo!.Account!,
+        //            p => p.PaymentMethod!,
+        //            p => p.CustomerSavedCoupon!,
+        //            p => p.Reservation!,
+        //            p => p.Reservation!,
+        //            p => p.LoyalPointsHistory!
+        //            );
+        //        var couponId = orderDb.Items!.FirstOrDefault()!.CustomerSavedCoupon!.CouponId;
+        //        var couponDb = await _couponRepository.GetById(couponId);
+        //        if (couponDb.ExpiryDate > utility!.GetCurrentDateTimeInTimeZone())
+        //        {
+        //            result = BuildAppActionResultError(result, $"Mã giảm giá với id {couponId} đã hết hạn");
+        //        }
+        //        var discount = (orderDb.Items!.FirstOrDefault()!.TotalAmount * couponDb.DiscountPercent) / 100;
+        //        orderDb.Items!.FirstOrDefault()!.TotalAmount -= discount;
+        //        var customerSavedCouponDb = orderDb.Items!.FirstOrDefault()!.CustomerSavedCoupon;
+        //        customerSavedCouponDb!.IsUsedOrExpired = true;
 
-                await customerSavedCouponRepository!.Update(customerSavedCouponDb);
-                await orderRepository.Update(orderDb.Items!.FirstOrDefault()!);
+        //        await customerSavedCouponRepository!.Update(customerSavedCouponDb);
+        //        await orderRepository.Update(orderDb.Items!.FirstOrDefault()!);
 
-                result.Result = orderDb;
-                result.Messages.Add("Áp dụng mã giảm giá thành công");
-                await _unitOfWork.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
-        }
+        //        result.Result = orderDb;
+        //        result.Messages.Add("Áp dụng mã giảm giá thành công");
+        //        await _unitOfWork.SaveChangesAsync();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        result = BuildAppActionResultError(result, ex.Message);
+        //    }
+        //    return result;
+        //}
 
         public async Task<AppActionResult> CreateCoupon(CouponDto couponDto)
         {
