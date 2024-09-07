@@ -34,166 +34,166 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _mapper = mapper;
         }
 
-        public async Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto)
-        {
-            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-            {
-                AppActionResult result = new AppActionResult();
-                try
-                {
-                    var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-                    var dishRepository = Resolve<IGenericRepository<DishSizeDetail>>();
-                    var comboRepository = Resolve<IGenericRepository<Combo>>();
-                    var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
-                    var orderDb = await _repository.GetById(dto.OrderId);
-                    if (orderDb == null)
-                    {
-                        result = BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {dto.OrderId}");
-                        return result;
-                    }
+        //public async Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto)
+        //{
+        //    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+        //    {
+        //        AppActionResult result = new AppActionResult();
+        //        try
+        //        {
+        //            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+        //            var dishRepository = Resolve<IGenericRepository<DishSizeDetail>>();
+        //            var comboRepository = Resolve<IGenericRepository<Combo>>();
+        //            var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+        //            var orderDb = await _repository.GetById(dto.OrderId);
+        //            if (orderDb == null)
+        //            {
+        //                result = BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {dto.OrderId}");
+        //                return result;
+        //            }
 
-                    var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(o => o.OrderId == dto.OrderId, 0, 0, null, false, null);
-                    int orderBatch = 1;
-                    if (orderDetailDb.Items.Count > 0)
-                    {
-                        orderBatch = orderDetailDb.Items.OrderByDescending(o => o.OrderBatch).Select(o => o.OrderBatch).FirstOrDefault() + 1;
-                    }
-                    var orderDetails = new List<OrderDetail>();
-                    List<ComboOrderDetail> comboOrderDetails = new List<ComboOrderDetail>();
+        //            var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(o => o.OrderId == dto.OrderId, 0, 0, null, false, null);
+        //            int orderBatch = 1;
+        //            if (orderDetailDb.Items.Count > 0)
+        //            {
+        //                orderBatch = orderDetailDb.Items.OrderByDescending(o => o.OrderBatch).Select(o => o.OrderBatch).FirstOrDefault() + 1;
+        //            }
+        //            var orderDetails = new List<OrderDetail>();
+        //            List<ComboOrderDetail> comboOrderDetails = new List<ComboOrderDetail>();
 
-                    foreach (var o in dto.OrderDetailsDtos)
-                    {
-                        var orderDetail = _mapper.Map<OrderDetail>(o);
-                        orderDetail.OrderId = dto.OrderId;
-                        orderDetail.OrderDetailId = Guid.NewGuid();
-                        orderDetail.OrderBatch = orderBatch;
+        //            foreach (var o in dto.OrderDetailsDtos)
+        //            {
+        //                var orderDetail = _mapper.Map<OrderDetail>(o);
+        //                orderDetail.OrderId = dto.OrderId;
+        //                orderDetail.OrderDetailId = Guid.NewGuid();
+        //                orderDetail.OrderBatch = orderBatch;
 
-                        if (o.Combo != null)
-                        {
-                            var combo = await comboRepository!.GetById(o.Combo.ComboId);
-                            orderDetail.Price = combo.Price;
+        //                if (o.Combo != null)
+        //                {
+        //                    var combo = await comboRepository!.GetById(o.Combo.ComboId);
+        //                    orderDetail.Price = combo.Price;
 
-                            foreach (var dishComboId in o.Combo.DishComboIds)
-                            {
-                                comboOrderDetails.Add(new ComboOrderDetail
-                                {
-                                    ComboOrderDetailId = Guid.NewGuid(),
-                                    DishComboId = dishComboId,
-                                    OrderDetailId = orderDetail.OrderDetailId
-                                });
-                            }
-                        }
-                        else
-                        {
-                            var dish = await dishRepository!.GetById(o.DishSizeDetailId!);
-                            orderDetail.Price = dish.Price;
-                        }
+        //                    foreach (var dishComboId in o.Combo.DishComboIds)
+        //                    {
+        //                        comboOrderDetails.Add(new ComboOrderDetail
+        //                        {
+        //                            ComboOrderDetailId = Guid.NewGuid(),
+        //                            DishComboId = dishComboId,
+        //                            OrderDetailId = orderDetail.OrderDetailId
+        //                        });
+        //                    }
+        //                }
+        //                else
+        //                {
+        //                    var dish = await dishRepository!.GetById(o.DishSizeDetailId!);
+        //                    orderDetail.Price = dish.Price;
+        //                }
 
-                        orderDb.TotalAmount += orderDetail.Price * orderDetail.Quantity;
-                    }
+        //                orderDb.TotalAmount += orderDetail.Price * orderDetail.Quantity;
+        //            }
 
-                    await _repository.Update(orderDb);
-                    await orderDetailRepository.InsertRange(orderDetails);
-                    await comboOrderDetailRepository!.InsertRange(comboOrderDetails);
-                    await _unitOfWork.SaveChangesAsync();
-                    scope.Complete();
-                    //AddOrderMessageToChef
-                }
-                catch (Exception ex)
-                {
-                    result = BuildAppActionResultError(result, ex.Message);
-                }
-                return result;
-            }
-        }
-        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful)
-        {
-            var result = new AppActionResult();
-            try
-            {
-                var orderDb = await _repository.GetById(orderId);
-                if (orderDb == null)
-                {
-                    result = BuildAppActionResultError(result, $"Đơn hàng với id {orderId} không tồn tại");
-                }
-                else
-                {
-                    if (orderDb.IsDelivering == true)
-                    {
-                        if (orderDb.StatusId == OrderStatus.Pending)
-                        {
-                            if (IsSuccessful)
-                            {
-                                orderDb.StatusId = OrderStatus.Processing;
-                            }
-                            else
-                            {
-                                orderDb.StatusId = OrderStatus.Cancelled;
-                            }
-                        }
-                        else if (orderDb.StatusId == OrderStatus.Processing)
-                        {
-                            if (IsSuccessful)
-                            {
-                                orderDb.StatusId = OrderStatus.Delivering;
-                            }
-                            else
-                            {
-                                orderDb.StatusId = OrderStatus.Cancelled;
-                            }
-                        }
-                        else if (orderDb.StatusId == OrderStatus.Delivering)
-                        {
-                            if (IsSuccessful)
-                            {
-                                orderDb.StatusId = OrderStatus.Completed;
-                                var transactionService = Resolve<ITransactionService>();
-                                var transactionRepository = Resolve<IGenericRepository<Domain.Models.Transaction>>();
-                                var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.PENDING, null);
-                                if (reservationTransactionDb == null)
-                                {
-                                    result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch cho đơn hàng với id {orderId}");
-                                    return result;
-                                }
+        //            await _repository.Update(orderDb);
+        //            await orderDetailRepository.InsertRange(orderDetails);
+        //            await comboOrderDetailRepository!.InsertRange(comboOrderDetails);
+        //            await _unitOfWork.SaveChangesAsync();
+        //            scope.Complete();
+        //            //AddOrderMessageToChef
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            result = BuildAppActionResultError(result, ex.Message);
+        //        }
+        //        return result;
+        //    }
+        //}
+        //public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful)
+        //{
+        //    var result = new AppActionResult();
+        //    try
+        //    {
+        //        var orderDb = await _repository.GetById(orderId);
+        //        if (orderDb == null)
+        //        {
+        //            result = BuildAppActionResultError(result, $"Đơn hàng với id {orderId} không tồn tại");
+        //        }
+        //        else
+        //        {
+        //            if (orderDb.IsDelivering == true)
+        //            {
+        //                if (orderDb.StatusId == OrderStatus.Pending)
+        //                {
+        //                    if (IsSuccessful)
+        //                    {
+        //                        orderDb.StatusId = OrderStatus.Processing;
+        //                    }
+        //                    else
+        //                    {
+        //                        orderDb.StatusId = OrderStatus.Cancelled;
+        //                    }
+        //                }
+        //                else if (orderDb.StatusId == OrderStatus.Processing)
+        //                {
+        //                    if (IsSuccessful)
+        //                    {
+        //                        orderDb.StatusId = OrderStatus.Delivering;
+        //                    }
+        //                    else
+        //                    {
+        //                        orderDb.StatusId = OrderStatus.Cancelled;
+        //                    }
+        //                }
+        //                else if (orderDb.StatusId == OrderStatus.Delivering)
+        //                {
+        //                    if (IsSuccessful)
+        //                    {
+        //                        orderDb.StatusId = OrderStatus.Completed;
+        //                        var transactionService = Resolve<ITransactionService>();
+        //                        var transactionRepository = Resolve<IGenericRepository<Domain.Models.Transaction>>();
+        //                        var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.PENDING, null);
+        //                        if (reservationTransactionDb == null)
+        //                        {
+        //                            result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch cho đơn hàng với id {orderId}");
+        //                            return result;
+        //                        }
 
-                                var transactionUpdatedSuccessFully = await transactionService.UpdateTransactionStatus(reservationTransactionDb.Id, TransationStatus.SUCCESSFUL);
-                                if (!transactionUpdatedSuccessFully.IsSuccess)
-                                {
-                                    result = BuildAppActionResultError(result, $"Cập nhật trạng thái giao dịch {reservationTransactionDb.Id} cho đơn hàng {orderId} thất bại. Vui lòng cập nhật lại sau");
-                                }
-                            }
-                            else
-                            {
-                                orderDb.StatusId = OrderStatus.Cancelled;
-                            }
-                        }
-                        else
-                        {
-                            result = BuildAppActionResultError(result, $"Đơn hàng không thể cập nhật những trạng thái khác");
-                        }
-                    }
-                    else
-                    {
-                        if (IsSuccessful)
-                        {
-                            orderDb.StatusId = OrderStatus.Completed;
-                        }
-                        else
-                        {
-                            orderDb.StatusId = OrderStatus.Cancelled;
-                        }
-                    }
+        //                        var transactionUpdatedSuccessFully = await transactionService.UpdateTransactionStatus(reservationTransactionDb.Id, TransationStatus.SUCCESSFUL);
+        //                        if (!transactionUpdatedSuccessFully.IsSuccess)
+        //                        {
+        //                            result = BuildAppActionResultError(result, $"Cập nhật trạng thái giao dịch {reservationTransactionDb.Id} cho đơn hàng {orderId} thất bại. Vui lòng cập nhật lại sau");
+        //                        }
+        //                    }
+        //                    else
+        //                    {
+        //                        orderDb.StatusId = OrderStatus.Cancelled;
+        //                    }
+        //                }
+        //                else
+        //                {
+        //                    result = BuildAppActionResultError(result, $"Đơn hàng không thể cập nhật những trạng thái khác");
+        //                }
+        //            }
+        //            else
+        //            {
+        //                if (IsSuccessful)
+        //                {
+        //                    orderDb.StatusId = OrderStatus.Completed;
+        //                }
+        //                else
+        //                {
+        //                    orderDb.StatusId = OrderStatus.Cancelled;
+        //                }
+        //            }
 
-                    await _repository.Update(orderDb);
-                    await _unitOfWork.SaveChangesAsync();
-                }
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
-        }
+        //            await _repository.Update(orderDb);
+        //            await _unitOfWork.SaveChangesAsync();
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        result = BuildAppActionResultError(result, ex.Message);
+        //    }
+        //    return result;
+        //}
         //public async Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto, HttpContext httpContext)
         //{
         //    var result = new AppActionResult();

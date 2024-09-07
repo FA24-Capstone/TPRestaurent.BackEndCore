@@ -14,6 +14,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         [Key]
         public Guid OrderId { get; set; }
         public DateTime OrderDate { get; set; }
+        public DateTime? ReservationDate { get; set; }   
         public double TotalAmount { get; set; }
         public OrderStatus StatusId { get; set; }
         [ForeignKey(nameof(StatusId))]
@@ -28,8 +29,9 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         [ForeignKey(nameof(LoyalPointsHistoryId))]
         public LoyalPointsHistory? LoyalPointsHistory { get; set; }
         public string? Note { get; set; }
-        public bool? IsReservation { get; set; }
-        public bool? IsDelivering { get; set; }
+        public Enums.OrderType OrderTypeId { get; set; }
+        [ForeignKey(nameof(OrderTypeId))]
+        public EnumModels.OrderType? OrderType { get; set; }
         public int? NumOfPeople { get; set; }   
         public double? Deposit { get; set; }
         public bool? IsPrivate { get; set; }

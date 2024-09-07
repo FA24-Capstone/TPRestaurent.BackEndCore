@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TPRestaurent.BackEndCore.Domain.Enums;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
 {
@@ -23,6 +24,11 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Combo? Combo { get; set; }
         public int Quantity { get; set; }
         public double Price { get; set; }
-        public string? Note { get; set; }    
+        public string? Note { get; set; }
+        public DateTime OrderTime { get; set; }
+        public DateTime? ReadyToServeTime { get; set; }
+        public OrderDetailStatus OrderDetailStatusId { get; set; }
+        [ForeignKey(nameof(OrderDetailStatusId))]
+        public EnumModels.OrderDetailStatus? OrderDetailStatus { get; set; }     
     }
 }
