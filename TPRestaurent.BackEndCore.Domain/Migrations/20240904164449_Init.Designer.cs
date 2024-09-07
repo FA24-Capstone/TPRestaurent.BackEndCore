@@ -1684,7 +1684,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.ToTable("ReservationRequests");
                 });
 
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.ReservationTableDetail", b =>
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.TableDetail", b =>
                 {
                     b.Property<Guid>("ReservationTableDetailId")
                         .ValueGeneratedOnAdd()
@@ -1702,7 +1702,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.HasIndex("TableId");
 
-                    b.ToTable("ReservationTableDetail");
+                    b.ToTable("TableDetail");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.StaticFile", b =>
@@ -1821,7 +1821,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.ToTable("Tables");
                 });
 
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.TableRating", b =>
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Room", b =>
                 {
                     b.Property<Guid>("TableRatingId")
                         .ValueGeneratedOnAdd()
@@ -2468,7 +2468,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Navigation("UpdateByAccount");
                 });
 
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.ReservationTableDetail", b =>
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.TableDetail", b =>
                 {
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Reservation", "Reservation")
                         .WithMany()
@@ -2544,7 +2544,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Table", b =>
                 {
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.TableRating", "TableRating")
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Room", "Room")
                         .WithMany()
                         .HasForeignKey("TableRatingId");
 
@@ -2554,7 +2554,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("TableRating");
+                    b.Navigation("Room");
 
                     b.Navigation("TableSize");
                 });

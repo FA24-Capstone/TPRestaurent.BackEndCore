@@ -13,14 +13,8 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid DishComboId { get; set; }
         [ForeignKey(nameof(DishComboId))]
         public DishCombo? DishCombo { get; set; }
-        public Guid? ReservationDishId { get; set; }
-        [ForeignKey(nameof(ReservationDishId))]
-        public ReservationDish? ReservationDish { get; set; }
         public Guid? OrderDetailId { get; set; }
         [ForeignKey(nameof(OrderDetailId))]
         public OrderDetail? OrderDetail { get; set; }
-        public Guid? PrelistOrderId { get; set; }
-        [ForeignKey(nameof(PrelistOrderId))]
-        public PrelistOrder? PrelistOrder { get; set; }
     }
 }

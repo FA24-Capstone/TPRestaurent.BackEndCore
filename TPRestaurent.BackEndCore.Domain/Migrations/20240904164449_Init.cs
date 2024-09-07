@@ -870,7 +870,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ReservationTableDetail",
+                name: "TableDetail",
                 columns: table => new
                 {
                     ReservationTableDetailId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -1748,12 +1748,12 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_ReservationTableDetail_ReservationId",
-                table: "ReservationTableDetail",
+                table: "TableDetail",
                 column: "ReservationId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ReservationTableDetail_TableId",
-                table: "ReservationTableDetail",
+                table: "TableDetail",
                 column: "TableId");
 
             migrationBuilder.CreateIndex(
@@ -1994,7 +1994,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 name: "ReservationRequests");
 
             migrationBuilder.DropTable(
-                name: "ReservationTableDetail");
+                name: "TableDetail");
 
             migrationBuilder.DropTable(
                 name: "StaticFiles");
