@@ -45,37 +45,9 @@ public class MappingConfig
             config.CreateMap<Table, TableDto>()
              .ForMember(desc => desc.TableName, act => act.MapFrom(src => src.TableName))
              .ForMember(desc => desc.TableSizeId, act => act.MapFrom(src => src.TableSizeId))
-             .ForMember(desc => desc.TableRatingId, act => act.MapFrom(src => src.TableRatingId))
              .ReverseMap();
             ;
 
-            config.CreateMap<ReservationRequestDto, ReservationRequest>()
-             .ForMember(desc => desc.ReservationDate, act => act.MapFrom(src => src.ReservationDate))
-             .ForMember(desc => desc.NumberOfPeople, act => act.MapFrom(src => src.NumberOfPeople))
-             .ForMember(desc => desc.EndTime, act => act.MapFrom(src => src.EndTime))
-             .ForMember(desc => desc.CreateBy, act => act.MapFrom(src => src.CustomerAccountId))
-             .ForMember(desc => desc.Note, act => act.MapFrom(src => src.Note))
-             .ReverseMap();
-            ;
-
-            config.CreateMap<Reservation, ReservationDto>()
-             .ForMember(desc => desc.ReservationDate, act => act.MapFrom(src => src.ReservationDate))
-             .ForMember(desc => desc.NumberOfPeople, act => act.MapFrom(src => src.NumberOfPeople))
-             .ForMember(desc => desc.EndTime, act => act.MapFrom(src => src.EndTime))
-             .ForMember(desc => desc.CustomerInfoId, act => act.MapFrom(src => src.CustomerInfoId))
-             .ForMember(desc => desc.Deposit, act => act.MapFrom(src => src.Deposit))
-             .ForMember(desc => desc.IsPrivate, act => act.MapFrom(src => src.IsPrivate))
-             .ForMember(desc => desc.Note, act => act.MapFrom(src => src.Note))
-             .ReverseMap();
-            ;
-
-            config.CreateMap<Common.DTO.Request.ReservationDishDto, ReservationDish>()
-            .ForMember(dest => dest.ComboId, opt => opt.MapFrom(src => src.Combo == null ? (Guid?)null : src.Combo.ComboId))
-            .ForMember(desc => desc.DishSizeDetailId, act => act.MapFrom(src => src.DishSizeDetailId))
-            .ForMember(desc => desc.Quantity, act => act.MapFrom(src => src.Quantity))
-            .ForMember(desc => desc.Note, act => act.MapFrom(src => src.Note))
-            .ReverseMap();
-            ;
 
             config.CreateMap<OrderDetailsDto, OrderDetail>()
             .ForMember(desc => desc.ComboId, act =>

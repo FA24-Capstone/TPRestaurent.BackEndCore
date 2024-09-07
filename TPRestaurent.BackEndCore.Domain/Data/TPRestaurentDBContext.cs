@@ -18,7 +18,6 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         }
         public DbSet<Models.Account> Accounts { get; set; } = null!;
         public DbSet<Models.Blog> Blogs { get; set; } = null!;
-        public DbSet<Models.Category> Categories { get; set; } = null!;
         public DbSet<Models.Coupon> Coupons { get; set; } = null!;
         public DbSet<Models.CustomerInfo> CustomerInfos { get; set; } = null!;
         public DbSet<Models.Dish> Dishes { get; set; } = null!;
@@ -28,10 +27,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.OrderDetail> OrderDetails { get; set; } = null!;
         public DbSet<Models.OTP> OTPs { get; set; } = null!;
         public DbSet<Models.Rating> Ratings { get; set; } = null!;
-        public DbSet<Models.Reservation> Reservations { get; set; } = null!;
-        public DbSet<Models.ReservationRequest> ReservationRequests { get; set; } = null!;
         public DbSet<Models.TableDetail> ReservationTableDetail { get; set; } = null!;
-        public DbSet<Models.ReservationDish> ReservationDishes { get; set; } = null!;
         public DbSet<Models.StaticFile> StaticFiles { get; set; } = null!;
         public DbSet<Models.Table> Tables { get; set; } = null!;
         public DbSet<Models.Room> TableRatings { get; set; } = null!;
@@ -40,7 +36,6 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.Configuration> Configurations { get; set; } = null!;
         public DbSet<Models.Combo> Combos { get; set; } = null!;
         public DbSet<Models.DishCombo> DishCombos { get; set; } = null!;
-        public DbSet<Models.StoreCreditHistory> StoreCreditHistories { get; set; } = null!;
         public DbSet<Models.StoreCredit> StoreCredits { get; set; } = null!;
         public DbSet<Models.DishSizeDetail> DishSizeDetails { get; set; } = null!;
         public DbSet<Models.CustomerLovedDish> CustomerLovedDishes { get; set; } = null!;
@@ -50,8 +45,6 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.Device> Devices { get; set; } = null!;
         public DbSet<Models.ComboOrderDetail> DishComboComboDetails { get; set; } = null!;
         public DbSet<Models.ComboOptionSet> ComboOptionSets { get; set; } = null!;
-        public DbSet<Models.TableSession> TableSessions { get; set; } = null!;
-        public DbSet<Models.PrelistOrder> PrelistOrders { get; set; } = null!;
         public DbSet<Models.EnumModels.OrderStatus> OrderStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.OTPType> OTPTypes { get; set; } = null!;
         public DbSet<Models.EnumModels.PaymentMethod> PaymentMethods { get; set; } = null!;
