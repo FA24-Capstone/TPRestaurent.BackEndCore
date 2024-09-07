@@ -24,6 +24,5 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public int Quantity { get; set; }
         public double Price { get; set; }
         public string? Note { get; set; }    
-        public int OrderBatch {  get; set; }
     }
 }
