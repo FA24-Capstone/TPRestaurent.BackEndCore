@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
 {
-    public class TableRating
+    public class Room
     {
         [Key]
         public Guid TableRatingId { get; set; }

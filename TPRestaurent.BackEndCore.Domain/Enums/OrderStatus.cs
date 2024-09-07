@@ -8,13 +8,13 @@ namespace TPRestaurent.BackEndCore.Domain.Enums
 {
     public enum OrderStatus
     {
-        Pending = 1,
-        Processing = 2,
-        TableAssigned = 3,
-        Paid = 4,
-        Dining = 5, 
-        Completed = 6,
-        Cancelled = 7,
-        Delivering = 8
+        TableAssigned = 1,
+        DepositPaid = 2,
+        Dining = 3, 
+        Pending = 4,
+        Processing = 5,
+        Delivering = 6,
+        Completed = 7,
+        Cancelled = 8,
     }
 }

@@ -5,22 +5,19 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TPRestaurent.BackEndCore.Domain.Models.EnumModels;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
 {
-    public class TableSession
+    public class TableDetail
     {
         [Key]
-        public Guid TableSessionId { get; set; }
-        public DateTime StartTime { get; set; }
-        public DateTime? EndTime { get; set; }
-        public Guid? ReservationId { get; set; }
-        [ForeignKey(nameof(ReservationId))]
-        public Reservation? Reservation { get; set; }
+        public Guid TableDetailId { get; set; }
         public Guid TableId { get; set; }
         [ForeignKey(nameof(TableId))]
-        public Table? Table {  get; set; }
-
-
+        public Table? Table { get; set; }
+        public Guid OrderId { get; set; }
+        [ForeignKey(nameof(OrderId))]
+        public Order? Order { get; set; }
     }
 }

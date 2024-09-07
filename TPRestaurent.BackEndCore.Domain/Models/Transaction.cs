@@ -22,15 +22,12 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Enums.TransationStatus TransationStatusId { get; set; }
         [ForeignKey(nameof(TransationStatusId))]
         public EnumModels.TransationStatus TransationStatus { get; set; }
-        public Guid? ReservationId { get; set; }
-        [ForeignKey(nameof(ReservationId))]
-        public Reservation? Reservation { get; set; }
         public Guid? OrderId { get; set; }
         [ForeignKey(nameof(OrderId))]
         public Order? Order { get; set; }
-        public Guid? StoreCreditHistoryId { get; set; }
-        [ForeignKey(nameof(StoreCreditHistoryId))]
-        public StoreCreditHistory? StoreCreditHistory { get; set; }
+        public Guid? StoreCreditId { get; set; }
+        [ForeignKey(nameof(StoreCreditId))]
+        public StoreCredit? StoreCredit { get; set; }
 
     }
 }

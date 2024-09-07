@@ -26,7 +26,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     public class ReservationService : GenericBackendService, IReservationService
     {
         private readonly IGenericRepository<Reservation> _reservationRepository;
-        private readonly IGenericRepository<ReservationTableDetail> _reservationTableDetailRepository;
+        private readonly IGenericRepository<TableDetail> _reservationTableDetailRepository;
         private readonly IGenericRepository<ReservationDish> _reservationDishRepository;
         private readonly IGenericRepository<ComboOrderDetail> _comboOrderDetailRepository;
         private readonly IGenericRepository<Configuration> _configurationRepository;
@@ -36,7 +36,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private BackEndLogger _logger;
 
         public ReservationService(IGenericRepository<Reservation> reservationRepository,
-                                  IGenericRepository<ReservationTableDetail> reservationTableDetailRepository,
+                                  IGenericRepository<TableDetail> reservationTableDetailRepository,
                                   IGenericRepository<ReservationDish> reservationDishRepository,
                                   IGenericRepository<ComboOrderDetail> comboOrderDetailRepository,
                                   IGenericRepository<Configuration> configurationRepository,
@@ -111,7 +111,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     await _reservationRepository.Insert(reservation);
 
-                    var reservationTableDetail = new ReservationTableDetail
+                    var reservationTableDetail = new TableDetail
                     {
                         ReservationTableDetailId = Guid.NewGuid(),
                         ReservationId = reservation.ReservationId,
@@ -286,7 +286,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (unavailableReservation!.Items.Count > 0)
                 {
                     var unavailableReservationIds = unavailableReservation.Items.Select(x => x.ReservationId);
-                    var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
+                    var reservationTableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
                     var reservedTableDb = await reservationTableDetailRepository!.GetAllDataByExpression(r => unavailableReservationIds.Contains(r.ReservationId), 0, 0, null, false, r => r.Table.TableRating);
                     var reservedTableIds = reservedTableDb.Items!.Select(x => x.TableId);
                     var availableTableDb = await tableRepository!.GetAllDataByExpression(t => !reservedTableIds.Contains(t.TableId), 0, 0, null, false, null);
@@ -314,7 +314,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     //Validate
                     var reservationRepository = Resolve<IGenericRepository<Reservation>>();
-                    var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
+                    var reservationTableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
                     var reservationDishRepository = Resolve<IGenericRepository<ReservationDish>>();
                     var tableRepository = Resolve<IGenericRepository<Table>>();
                     var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
@@ -434,8 +434,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     if (dto.ReservationTableIds.Count > 0)
                     {
-                        var reservationTableDetails = new List<ReservationTableDetail>();
-                        dto.ReservationTableIds.ForEach(r => reservationTableDetails.Add(new ReservationTableDetail
+                        var reservationTableDetails = new List<TableDetail>();
+                        dto.ReservationTableIds.ForEach(r => reservationTableDetails.Add(new TableDetail
                         {
                             TableId = r,
                             ReservationTableDetailId = Guid.NewGuid(),
@@ -673,9 +673,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
         }
 
-        private async Task<List<ReservationTableDetail>> GetReservationTableDetails(Guid reservationId)
+        private async Task<List<TableDetail>> GetReservationTableDetails(Guid reservationId)
         {
-            var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
+            var reservationTableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
             var result = await reservationTableDetailRepository!.GetAllDataByExpression(
                 o => o.ReservationId == reservationId,
                 0, 0, null, false,
@@ -835,7 +835,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var tableRepository = Resolve<IGenericRepository<Table>>();
-                var reservationTableRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
+                var reservationTableRepository = Resolve<IGenericRepository<TableDetail>>();
                 var tableDb = await tableRepository!.GetById(tableId);
                 if(tableDb == null)
                 {
@@ -888,12 +888,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return BuildAppActionResultError(result, $"Một số id bàn không tồn tại trong hệ thống. Vui lòng kiểm tra lại");
                 }
 
-                var reservationTableDetailRepository = Resolve<IGenericRepository<ReservationTableDetail>>();
-                var reservationTableDetail = new List<ReservationTableDetail>();
+                var reservationTableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
+                var reservationTableDetail = new List<TableDetail>();
 
                 foreach (var tableId in tableIds)
                 {
-                    reservationTableDetail.Add(new ReservationTableDetail()
+                    reservationTableDetail.Add(new TableDetail()
                     {
                         ReservationId = reservationId,
                         TableId = tableId,

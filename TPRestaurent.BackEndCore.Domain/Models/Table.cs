@@ -17,11 +17,8 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         [ForeignKey(nameof(TableSizeId))]
         public EnumModels.TableSize? TableSize { get; set; }
         public bool IsDeleted { get; set; }
-        public Guid? TableRatingId { get; set; }
-        [ForeignKey(nameof(TableRatingId))]
-        public TableRating? TableRating { get; set; }
-        public Guid? OrderDetailId { get; set; }
-        [ForeignKey(nameof(OrderDetailId))]
-        public OrderDetail? OrderDetail { get; set; }
+        public Guid RoomId { get; set; }
+        [ForeignKey(nameof(RoomId))]
+        public Room? Room { get; set; }
     }
 }

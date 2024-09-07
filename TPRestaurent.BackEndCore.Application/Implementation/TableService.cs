@@ -43,7 +43,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return result;
                 }
 
-                var tableRatingRepository = Resolve<IGenericRepository<TableRating>>();
+                var tableRatingRepository = Resolve<IGenericRepository<Room>>();
                 if((await tableRatingRepository.GetById(dto.TableRatingId) == null))
                 {
                     result = BuildAppActionResultError(result, $"Không tìm thấy phân loại bàn với id {dto.TableRatingId}");
@@ -130,7 +130,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return result;
                 }
 
-                var tableRatingRepository = Resolve<IGenericRepository<TableRating>>();
+                var tableRatingRepository = Resolve<IGenericRepository<Room>>();
                 if ((await tableRatingRepository.GetById(dto.TableRatingId) == null))
                 {
                     result = BuildAppActionResultError(result, $"Không tìm thấy phân loại bàn với id {dto.TableRatingId}");
