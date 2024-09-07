@@ -19,5 +19,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid OrderId { get; set; }
         [ForeignKey(nameof(OrderId))]
         public Order? Order { get; set; }
+        public DateTime StartTime { get; set; }    
+        public DateTime? EndDate { get; set; }  
     }
 }
