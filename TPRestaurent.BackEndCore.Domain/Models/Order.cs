@@ -24,9 +24,6 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Enums.PaymentMethod PaymentMethodId { get; set; }
         [ForeignKey(nameof(PaymentMethodId))]
         public EnumModels.PaymentMethod? PaymentMethod { get; set; }
-        public Guid? ReservationId { get; set; }
-        [ForeignKey(nameof(ReservationId))]
-        public Reservation? Reservation { get; set; }
         public Guid? LoyalPointsHistoryId { get; set; }
         [ForeignKey(nameof(LoyalPointsHistoryId))]
         public LoyalPointsHistory? LoyalPointsHistory { get; set; }
@@ -34,9 +31,10 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         [ForeignKey(nameof(CustomerSavedCouponId))]
         public CustomerSavedCoupon? CustomerSavedCoupon { get; set; }
         public string? Note { get; set; }
+        public bool? IsReservation { get; set; }
         public bool? IsDelivering { get; set; }
-        public Guid? TableId { get; set; }
-        [ForeignKey(nameof(TableId))]
-        public Table? Table { get; set; }       
+        public int? NumOfPeople { get; set; }   
+        public double? Deposit { get; set; }
+        public bool? IsPrivate { get; set; }
     }
 }

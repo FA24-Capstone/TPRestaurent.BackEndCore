@@ -10,8 +10,11 @@ namespace TPRestaurent.BackEndCore.Domain.Enums
     {
         Pending = 1,
         Processing = 2,
-        Completed = 3,
-        Cancelled = 4,
-        Delivering = 5
+        TableAssigned = 3,
+        Paid = 4,
+        Dining = 5, 
+        Completed = 6,
+        Cancelled = 7,
+        Delivering = 8
     }
 }
