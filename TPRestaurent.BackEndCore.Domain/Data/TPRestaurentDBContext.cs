@@ -50,12 +50,10 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.EnumModels.PaymentMethod> PaymentMethods { get; set; } = null!;
         public DbSet<Models.EnumModels.RatingPoint> RatingPoints { get; set; } = null!;
         public DbSet<Models.EnumModels.DishItemType> DishItemTypes { get; set; } = null!;
-        public DbSet<Models.EnumModels.ReservationRequestStatus> ReservationRequestStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.TableSize> TableSizes { get; set; } = null!;
         public DbSet<Models.EnumModels.ComboCategory> ComboCategories { get; set; } = null!;
         public DbSet<Models.EnumModels.DishSize> DishSizes { get; set; } = null!;
-        public DbSet<Models.EnumModels.ReservationStatus> ReservationStatuses { get; set; } = null!;
-        public DbSet<Models.EnumModels.PreListOrderStatus> PreListOrderStatuses { get; set; } = null!;
+        public DbSet<Models.EnumModels.OrderDetailStatus> OrderDetailStatuses { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -104,13 +102,11 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             SeedEnumTable<Models.EnumModels.PaymentMethod, Enums.PaymentMethod>(builder);
             SeedEnumTable<Models.EnumModels.RatingPoint, Enums.RatingPoint>(builder);
             SeedEnumTable<Models.EnumModels.DishItemType, Enums.DishItemType>(builder);
-            SeedEnumTable<Models.EnumModels.ReservationRequestStatus, Enums.ReservationRequestStatus>(builder);
             SeedEnumTable<Models.EnumModels.TableSize, Enums.TableSize>(builder);
             SeedEnumTable<Models.EnumModels.ComboCategory, Enums.ComboCategory>(builder);
             SeedEnumTable<Models.EnumModels.DishSize, Enums.DishSize>(builder);
-            SeedEnumTable<Models.EnumModels.ReservationStatus, Enums.ReservationStatus>(builder);
-            SeedEnumTable<Models.EnumModels.PreListOrderStatus, Enums.PreListOrderStatus>(builder);
             SeedEnumTable<Models.EnumModels.TransationStatus, Enums.TransationStatus>(builder);
+            SeedEnumTable<Models.EnumModels.OrderDetailStatus, Enums.OrderDetailStatus>(builder);
 
         }
 
