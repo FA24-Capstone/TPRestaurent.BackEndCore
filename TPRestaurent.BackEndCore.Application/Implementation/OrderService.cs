@@ -1178,16 +1178,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> CalculateReservation(ReservationDto reservationDto)
+        public async Task<AppActionResult> CalculateReservation(CalculateDepositRequest request)
         {
             AppActionResult result = new AppActionResult();
             try
             {
                 double total = 0;
-                if (reservationDto.)
-                {
-
-                }
+            
             }
             catch (Exception ex)
             {
