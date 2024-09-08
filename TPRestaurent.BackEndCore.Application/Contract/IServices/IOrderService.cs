@@ -17,7 +17,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         //public Task<AppActionResult> GetAllOrderByStatus(Domain.Enums.OrderStatus? status, int pageNumber, int pageSize);
         //public Task<AppActionResult> GetAllOrderByPhoneNumber(string phoneNumber, int pageNumber, int pageSize);
         //public Task<AppActionResult> GetOrderDetail(Guid orderId);
-        //public Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto, HttpContext httpContext);
+        public Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto, HttpContext httpContext);
         //public Task<AppActionResult> CompleteOrder(OrderPaymentRequestDto orderRequestDto);
         //public Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful);
         //public Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto);
