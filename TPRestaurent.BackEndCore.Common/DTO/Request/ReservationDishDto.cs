@@ -14,11 +14,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public string? Note { get; set; }
     }
 
-    public class ComboOrderDto
-    {
-        public Guid ComboId { get; set; }
-        public List<Guid> DishComboIds { get; set; } = new List<Guid>();
-    }
+ 
 
 
 }
