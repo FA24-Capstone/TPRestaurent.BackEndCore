@@ -13,14 +13,16 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
     public interface IOrderService
     {
-        //public Task<AppActionResult> GetAllOrderByAccountId(string accountId, Domain.Enums.OrderStatus? status, int pageNumber, int pageSize);
-        //public Task<AppActionResult> GetAllOrderByStatus(Domain.Enums.OrderStatus? status, int pageNumber, int pageSize);
-        //public Task<AppActionResult> GetAllOrderByPhoneNumber(string phoneNumber, int pageNumber, int pageSize);
-        //public Task<AppActionResult> GetOrderDetail(Guid orderId);
+        public Task<AppActionResult> GetAllOrderByAccountId(string accountId, Domain.Enums.OrderStatus? status, OrderType? orderType, int pageNumber, int pageSize);
+        public Task<AppActionResult> GetAllOrderByStatus(Domain.Enums.OrderStatus? status, OrderType? orderType ,int pageNumber, int pageSize);
+        public Task<AppActionResult> GetAllOrderByPhoneNumber(string phoneNumber, int pageNumber, int pageSize);
+        public Task<AppActionResult> GetOrderDetail(Guid orderId);
+        public Task<AppActionResult> GetOrderByTime(double? minute, int pageNumber, int pageSize);
+        public Task<AppActionResult> CalculateReservation(ReservationDto reservationDto);
         //public Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto, HttpContext httpContext);
         //public Task<AppActionResult> CompleteOrder(OrderPaymentRequestDto orderRequestDto);
         //public Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful);
-        //public Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto);
+        public Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto);
         //public Task<AppActionResult> GetOrderTotal(CalculateOrderRequest orderRequestDto);
         //public Task<AppActionResult> GetOrderJsonByTableSessionId(Guid TableSessionId);
 

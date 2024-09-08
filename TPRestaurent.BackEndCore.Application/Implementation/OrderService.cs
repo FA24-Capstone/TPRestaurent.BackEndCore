@@ -34,78 +34,72 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _mapper = mapper;
         }
 
-        //public async Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto)
-        //{
-        //    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-        //    {
-        //        AppActionResult result = new AppActionResult();
-        //        try
-        //        {
-        //            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-        //            var dishRepository = Resolve<IGenericRepository<DishSizeDetail>>();
-        //            var comboRepository = Resolve<IGenericRepository<Combo>>();
-        //            var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
-        //            var orderDb = await _repository.GetById(dto.OrderId);
-        //            if (orderDb == null)
-        //            {
-        //                result = BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {dto.OrderId}");
-        //                return result;
-        //            }
+        public async Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto)
+        {
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            {
+                AppActionResult result = new AppActionResult();
+                try
+                {
+                    var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                    var dishRepository = Resolve<IGenericRepository<DishSizeDetail>>();
+                    var comboRepository = Resolve<IGenericRepository<Combo>>();
+                    var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+                    var orderDb = await _repository.GetById(dto.OrderId);
+                    if (orderDb == null)
+                    {
+                        result = BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {dto.OrderId}");
+                        return result;
+                    }
 
-        //            var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(o => o.OrderId == dto.OrderId, 0, 0, null, false, null);
-        //            int orderBatch = 1;
-        //            if (orderDetailDb.Items.Count > 0)
-        //            {
-        //                orderBatch = orderDetailDb.Items.OrderByDescending(o => o.OrderBatch).Select(o => o.OrderBatch).FirstOrDefault() + 1;
-        //            }
-        //            var orderDetails = new List<OrderDetail>();
-        //            List<ComboOrderDetail> comboOrderDetails = new List<ComboOrderDetail>();
+                    var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(o => o.OrderId == dto.OrderId, 0, 0, null, false, null);
+                    var orderDetails = new List<OrderDetail>();
+                    List<ComboOrderDetail> comboOrderDetails = new List<ComboOrderDetail>();
 
-        //            foreach (var o in dto.OrderDetailsDtos)
-        //            {
-        //                var orderDetail = _mapper.Map<OrderDetail>(o);
-        //                orderDetail.OrderId = dto.OrderId;
-        //                orderDetail.OrderDetailId = Guid.NewGuid();
-        //                orderDetail.OrderBatch = orderBatch;
+                    foreach (var o in dto.OrderDetailsDtos)
+                    {
+                        var orderDetail = _mapper.Map<OrderDetail>(o);
+                        orderDetail.OrderId = dto.OrderId;
+                        orderDetail.OrderDetailId = Guid.NewGuid();
 
-        //                if (o.Combo != null)
-        //                {
-        //                    var combo = await comboRepository!.GetById(o.Combo.ComboId);
-        //                    orderDetail.Price = combo.Price;
+                        if (o.Combo != null)
+                        {
+                            var combo = await comboRepository!.GetById(o.Combo.ComboId);
+                            orderDetail.Price = combo.Price;
 
-        //                    foreach (var dishComboId in o.Combo.DishComboIds)
-        //                    {
-        //                        comboOrderDetails.Add(new ComboOrderDetail
-        //                        {
-        //                            ComboOrderDetailId = Guid.NewGuid(),
-        //                            DishComboId = dishComboId,
-        //                            OrderDetailId = orderDetail.OrderDetailId
-        //                        });
-        //                    }
-        //                }
-        //                else
-        //                {
-        //                    var dish = await dishRepository!.GetById(o.DishSizeDetailId!);
-        //                    orderDetail.Price = dish.Price;
-        //                }
+                            foreach (var dishComboId in o.Combo.DishComboIds)
+                            {
+                                comboOrderDetails.Add(new ComboOrderDetail
+                                {
+                                    ComboOrderDetailId = Guid.NewGuid(),
+                                    DishComboId = dishComboId,
+                                    OrderDetailId = orderDetail.OrderDetailId
+                                });
+                            }
+                        }
+                        else
+                        {
+                            var dish = await dishRepository!.GetById(o.DishSizeDetailId!);
+                            orderDetail.Price = dish.Price;
+                        }
 
-        //                orderDb.TotalAmount += orderDetail.Price * orderDetail.Quantity;
-        //            }
+                        orderDb.TotalAmount += orderDetail.Price * orderDetail.Quantity;
+                    }
 
-        //            await _repository.Update(orderDb);
-        //            await orderDetailRepository.InsertRange(orderDetails);
-        //            await comboOrderDetailRepository!.InsertRange(comboOrderDetails);
-        //            await _unitOfWork.SaveChangesAsync();
-        //            scope.Complete();
-        //            //AddOrderMessageToChef
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            result = BuildAppActionResultError(result, ex.Message);
-        //        }
-        //        return result;
-        //    }
-        //}
+                    await _repository.Update(orderDb);
+                    await orderDetailRepository.InsertRange(orderDetails);
+                    await comboOrderDetailRepository!.InsertRange(comboOrderDetails);
+                    await _unitOfWork.SaveChangesAsync();
+                    scope.Complete();
+                    //AddOrderMessageToChef
+                }
+                catch (Exception ex)
+                {
+                    result = BuildAppActionResultError(result, ex.Message);
+                }
+                return result;
+            }
+        }
         //public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful)
         //{
         //    var result = new AppActionResult();
@@ -808,96 +802,94 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //    }
         //    return result;
         //}
-        //public async Task<AppActionResult> GetAllOrderByAccountId(string accountId, OrderStatus? status, int pageNumber, int pageSize)
-        //{
-        //    AppActionResult result = new AppActionResult();
-        //    try
-        //    {
-        //        if (status.HasValue)
-        //        {
-        //            result.Result = await _repository.GetAllDataByExpression(o => o.CustomerInfo.AccountId.Equals(accountId) && o.StatusId == status, pageNumber, pageSize, o => o.OrderDate, false,
-        //            p => p.PaymentMethod!,
-        //            p => p.Reservation!.ReservationStatus!,
-        //            p => p.LoyalPointsHistory!,
-        //            p => p.CustomerSavedCoupon!.Coupon!,
-        //            p => p.CustomerSavedCoupon!.Account!,
-        //            p => p.Table!.TableRating!,
-        //            p => p.Table!.TableSize!,
-        //            p => p.Status!
-        //            );
-        //        }
-        //        else
-        //        {
-        //            result.Result = await _repository.GetAllDataByExpression(o => o.CustomerInfo.AccountId.Equals(accountId), pageNumber, pageSize, o => o.OrderDate, false, p => p.PaymentMethod!,
-        //            p => p.Reservation!.ReservationStatus!,
-        //            p => p.LoyalPointsHistory!,
-        //            p => p.CustomerSavedCoupon!.Coupon!,
-        //            p => p.CustomerSavedCoupon!.Account!,
-        //            p => p.Table!.TableRating!,
-        //            p => p.Table!.TableSize!,
-        //            p => p.Status!);
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        result = BuildAppActionResultError(result, ex.Message);
-        //    }
-        //    return result;
-        //}
 
-        //public async Task<AppActionResult> GetOrderDetail(Guid orderId)
-        //{
-        //    AppActionResult result = new AppActionResult();
-        //    try
-        //    {
-        //        var orderDb = await _repository.GetAllDataByExpression(p => p.OrderId == orderId, 0, 0, null, false, p => p.CustomerInfo!.Account!,
-        //            p => p.PaymentMethod!,
-        //            p => p.Reservation!.ReservationStatus!,
-        //            p => p.LoyalPointsHistory!,
-        //            p => p.CustomerSavedCoupon!.Coupon!,
-        //            p => p.CustomerSavedCoupon!.Account!,
-        //            p => p.Table!.TableRating!,
-        //            p => p.Table!.TableSize!,
-        //            p => p.Status!
-        //            );
-        //        if (orderDb.Items! == null && orderDb.Items.Count == 0)
-        //        {
-        //            result = BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {orderId}");
-        //            return result;
-        //        }
+        public async Task<AppActionResult> GetAllOrderByAccountId(string accountId, OrderStatus? status, OrderType? orderType ,int pageNumber, int pageSize)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                if (status.HasValue)
+                {
+                    result.Result = await _repository.GetAllDataByExpression((o => o.CustomerInfo.AccountId.Equals(accountId) && (
+                    o.StatusId == status && o.OrderTypeId == orderType) ||
+                    (o.StatusId == status) ||
+                    (o.OrderTypeId == orderType)), pageNumber, pageSize, o => o.OrderDate, false,
+                     p => p.Status!,
+                     p => p.CustomerInfo!.Account!,
+                     p => p.PaymentMethod!,
+                     p => p.LoyalPointsHistory!,
+                     p => p.OrderType!
+                    );
+                }
+                else
+                {
+                    result.Result = await _repository.GetAllDataByExpression(o => o.CustomerInfo.AccountId.Equals(accountId), pageNumber, pageSize, o => o.OrderDate, false, p => p.PaymentMethod!,
+                        p => p.Status!,
+                        p => p.CustomerInfo!.Account!,
+                        p => p.PaymentMethod!,
+                        p => p.LoyalPointsHistory!,
+                        p => p.OrderType!
+                        );
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
 
-        //        var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-        //        var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
-        //        var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(o => o.OrderId == orderId, 0, 0, null, false, o => o.DishSizeDetail!.Dish!, o => o.Combo!);
-        //        var orderDetailReponseList = new List<OrderDetailResponse>();
-        //        foreach (var o in orderDetailDb!.Items!)
-        //        {
-        //            var comboOrderDetailsDb = await comboOrderDetailRepository!.GetAllDataByExpression(
-        //                c => c.OrderDetailId == o.OrderDetailId,
-        //                0,
-        //                0,
-        //                null,
-        //                false,
-        //                c => c.DishCombo!.DishSizeDetail!.Dish!
-        //            );
-        //            orderDetailReponseList.Add(new OrderDetailResponse
-        //            {
-        //                OrderDetail = o,
-        //                ComboOrderDetails = comboOrderDetailsDb.Items!
-        //            });
-        //        }
-        //        result.Result = new OrderReponse
-        //        {
-        //            Order = orderDb.Items!.FirstOrDefault()!,
-        //            OrderDetails = orderDetailReponseList
-        //        };
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        result = BuildAppActionResultError(result, ex.Message);
-        //    }
-        //    return result;
-        //}
+        public async Task<AppActionResult> GetOrderDetail(Guid orderId)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var orderDb = await _repository.GetAllDataByExpression(p => p.OrderId == orderId, 0, 0, null, false, p => p.CustomerInfo!.Account!,
+                        p => p.Status!,
+                        p => p.CustomerInfo!.Account!,
+                        p => p.PaymentMethod!,
+                        p => p.LoyalPointsHistory!,
+                        p => p.OrderType!
+                    );
+                if (orderDb.Items! == null && orderDb.Items.Count == 0)
+                {
+                    result = BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {orderId}");
+                    return result;
+                }
+
+                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+                var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(o => o.OrderId == orderId, 0, 0, null, false, o => o.DishSizeDetail!.Dish!, o => o.Combo!);
+                var orderDetailReponseList = new List<OrderDetailResponse>();
+                foreach (var o in orderDetailDb!.Items!)
+                {
+                    var comboOrderDetailsDb = await comboOrderDetailRepository!.GetAllDataByExpression(
+                        c => c.OrderDetailId == o.OrderDetailId,
+                        0,
+                        0,
+                        null,
+                        false,
+                        c => c.DishCombo!.DishSizeDetail!.Dish!
+                    );
+                    orderDetailReponseList.Add(new OrderDetailResponse
+                    {
+                        OrderDetail = o,
+                        ComboOrderDetails = comboOrderDetailsDb.Items!
+                    });
+                }
+                result.Result = new OrderReponse
+                {
+                    Order = orderDb.Items!.FirstOrDefault()!,
+                    OrderDetails = orderDetailReponseList
+                };
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
         //public async Task<AppActionResult> CompleteOrder(OrderPaymentRequestDto orderRequestDto)
         //{
         //    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
@@ -1098,68 +1090,110 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //    return result;
         //}
 
-        //public async Task<AppActionResult> GetAllOrderByPhoneNumber(string phoneNumber, int pageNumber, int pageSize)
-        //{
-        //    var result = new AppActionResult();
-        //    try
-        //    {
-        //        var orderListDb = await
-        //            _repository.GetAllDataByExpression(p => p.CustomerInfo!.PhoneNumber == phoneNumber, pageNumber, pageSize, p => p.OrderDate, false,
-        //            p => p.CustomerInfo!.Account!,
-        //            p => p.PaymentMethod!,
-        //            p => p.Reservation!.ReservationStatus!,
-        //            p => p.LoyalPointsHistory!,
-        //            p => p.CustomerSavedCoupon!.Coupon!,
-        //            p => p.CustomerSavedCoupon!.Account!,
-        //            p => p.Table!.TableRating!,
-        //            p => p.Table!.TableSize!,
-        //            p => p.Status!
-        //            );
-        //        result.Result = orderListDb;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        result = BuildAppActionResultError(result, ex.Message);
-        //    }
-        //    return result;
-        //}
+        public async Task<AppActionResult> GetAllOrderByPhoneNumber(string phoneNumber, int pageNumber, int pageSize)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var orderListDb = await
+                    _repository.GetAllDataByExpression(p => p.CustomerInfo!.PhoneNumber == phoneNumber, pageNumber, pageSize, p => p.OrderDate, false,
+                        p => p.Status!,
+                        p => p.CustomerInfo!.Account!,
+                        p => p.PaymentMethod!,
+                        p => p.LoyalPointsHistory!,
+                        p => p.OrderType!
+                    );
+                result.Result = orderListDb;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
 
-        //public async Task<AppActionResult> GetAllOrderByStatus(OrderStatus? status, int pageNumber, int pageSize)
-        //{
-        //    AppActionResult result = new AppActionResult();
-        //    try
-        //    {
-        //        if (status.HasValue)
-        //        {
-        //            result.Result = await _repository.GetAllDataByExpression(o => o.StatusId == status, pageNumber, pageSize, o => o.OrderDate, false, p => p.CustomerInfo!.Account!,
-        //            p => p.PaymentMethod!,
-        //            p => p.Reservation!.ReservationStatus!,
-        //            p => p.LoyalPointsHistory!,
-        //            p => p.CustomerSavedCoupon!.Coupon!,
-        //            p => p.CustomerSavedCoupon!.Account!,
-        //            p => p.Table!.TableRating!,
-        //            p => p.Table!.TableSize!,
-        //            p => p.Status!);
-        //        }
-        //        else
-        //        {
-        //            result.Result = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, o => o.OrderDate, false, p => p.CustomerInfo!.Account!,
-        //            p => p.PaymentMethod!,
-        //            p => p.Reservation!.ReservationStatus!,
-        //            p => p.LoyalPointsHistory!,
-        //            p => p.CustomerSavedCoupon!.Coupon!,
-        //            p => p.CustomerSavedCoupon!.Account!,
-        //            p => p.Table!.TableRating!,
-        //            p => p.Table!.TableSize!,
-        //            p => p.Status!);
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        result = BuildAppActionResultError(result, ex.Message);
-        //    }
-        //    return result;
-        //}
+        public async Task<AppActionResult> GetAllOrderByStatus(OrderStatus? status, OrderType? orderType, int pageNumber, int pageSize)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                if (status.HasValue || orderType.HasValue)
+                {
+                    result.Result = await _repository.GetAllDataByExpression(o => o.StatusId == status || o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.CustomerInfo!.Account!,
+                        p => p.Status!,
+                        p => p.CustomerInfo!.Account!,
+                        p => p.PaymentMethod!,
+                        p => p.LoyalPointsHistory!,
+                        p => p.OrderType!
+                  );
+                }
+                else if (status.HasValue && orderType.HasValue)
+                {
+                    result.Result = await _repository.GetAllDataByExpression(o => o.OrderTypeId == orderType && o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.CustomerInfo!.Account!,
+                        p => p.Status!,
+                        p => p.CustomerInfo!.Account!,
+                        p => p.PaymentMethod!,
+                        p => p.LoyalPointsHistory!,
+                        p => p.OrderType!
+                        );
+                }
+                else
+                {
+                    result.Result = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, o => o.OrderDate, false, p => p.CustomerInfo!.Account!,
+                        p => p.Status!,
+                        p => p.CustomerInfo!.Account!,
+                        p => p.PaymentMethod!,
+                        p => p.LoyalPointsHistory!,
+                        p => p.OrderType!
+                        );
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetOrderByTime(double? minute, int pageNumber, int pageSize)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var utility = Resolve<Utility>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                var targetTimeCompleted = currentTime.AddMinutes(-minute.GetValueOrDefault(0));
+                var orderDb = await _repository.GetAllDataByExpression(p => p.MealTime == targetTimeCompleted && p.StatusId == OrderStatus.Dining,
+                    pageNumber, pageSize, p => p.MealTime, false, p => p.CustomerInfo!.Account!,
+                        p => p.Status!,
+                        p => p.CustomerInfo!.Account!,
+                        p => p.PaymentMethod!,
+                        p => p.LoyalPointsHistory!,
+                        p => p.OrderType!);
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> CalculateReservation(ReservationDto reservationDto)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                double total = 0;
+                if (reservationDto.)
+                {
+
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+        }
 
         //public async Task<AppActionResult> GetOrderJsonByTableSessionId(Guid tableSessionId)
         //{
