@@ -778,7 +778,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var conditions = new List<Func<Expression<Func<Reservation, bool>>>>();
+                var _configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var conditions = new List<Func<Expression<Func<Order, bool>>>>();
 
                 // !(endTime < r.ReservationDate || r.EndTime < startTime)
                 var configurationDb = await _configurationRepository.GetAllDataByExpression(c => c.Name.Equals(SD.DefaultValue.AVERAGE_MEAL_DURATION), 0, 0, null, false, null);
@@ -929,6 +930,33 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
 
 
+        }
+        public async Task<Table> GetSuitableTable(SuggestTableDto dto)
+        {
+            Table result = null;
+            try
+            {
+                if (dto.NumOfPeople <= 0)
+                {
+                    return null;
+                }
+                //Get All Available Table
+                var availableTableResult = await GetAvailableTable(dto.StartTime, dto.EndTime, dto.NumOfPeople, 0, 0);
+                if (availableTableResult.IsSuccess)
+                {
+                    var availableTable = (PagedResult<Table>)availableTableResult.Result!;
+                    if (availableTable.Items!.Count > 0)
+                    {
+                        var suitableTables = await GetTables(availableTable.Items, dto.NumOfPeople, dto.IsPrivate);
+                        result = suitableTables[0];
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                result = null;
+            }
+            return result;
         }
 
     }
