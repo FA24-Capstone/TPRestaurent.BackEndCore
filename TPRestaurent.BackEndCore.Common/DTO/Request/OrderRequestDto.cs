@@ -12,14 +12,40 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
     public class OrderRequestDto
     {
         public Guid? CustomerId { get; set; }
-        public PaymentMethod PaymentMethodId { get; set; }
-        public Guid? ReservationId { get; set; }
-        public Guid? CouponId { get; set; }
+        public OrderType OrderType { get; set; }        
         public string? Note { get; set; }
-        public bool? isDelivering { get; set; }
         public List<OrderDetailsDto> OrderDetailsDtos { get; set; } = new List<OrderDetailsDto>();
-        public int? LoyalPointsToUse { get; set; }
-        public Guid? TableId { get; set; }
+        public ReservationOrderDto? ReservationOrder { get; set; }   
+        public DeliveryOrderDto? DeliveryOrder { get; set; }
+        public MealWithoutReservation? MealWithoutReservation { get; set; } 
+
+    }
+
+    public class ReservationOrderDto
+    {
+        public DateTime? ReservationDate { get; set; }
+        public DateTime? MealTime { get; set; }
+        public DateTime? EndTime { get; set; }
+        public bool? IsPrivate { get; set; }
+        public double? Deposit { get; set; }
+        public List<Guid>? TableIds { get; set; }
+
+    }
+
+    public class DeliveryOrderDto
+    {
+        public DateTime OrderTime { get; set; }  
+        public DateTime DeliveryTime { get; set; }  
+        public int LoyalPointToUse { get; set; }    
+        public List<Guid>? CouponIds { get; set; }
+        public PaymentMethod PaymentMethod { get; set; }    
+    }
+
+    public class MealWithoutReservation
+    {
+        public DateTime? MealTime { get; set; }
+        public List<Guid>? TableIds { get; set; }
+
     }
 
     public class CustomerInfoRequest 
@@ -36,5 +62,11 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public ComboOrderDto? Combo { get; set; }
         public int Quantity { get; set; }
         public string? Note { get; set; }    
+    }
+
+    public class ComboOrderDto
+    {
+        public Guid ComboId { get; set; }
+        public List<Guid> DishComboIds { get; set; } = new List<Guid>();
     }
 }
