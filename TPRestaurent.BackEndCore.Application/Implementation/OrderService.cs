@@ -236,8 +236,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         Note = orderRequestDto.Note
                     };
 
+                    PagedResult<CustomerInfo> customerInfoListDb = new PagedResult<CustomerInfo>();
+                    if (orderRequestDto.CustomerId.HasValue)
+                    {
+                        customerInfoListDb = await customerInfoRepository.GetAllDataByExpression(c => c.CustomerId == orderRequestDto.CustomerId.Value, 0, 0, null, false, null);
+                        if (customerInfoListDb.Items.Count != 1)
+                        {
+                            return BuildAppActionResultError(result, $"Xảy ra lỗi");
+                        }
+                    }
+
                     List<OrderDetail> orderDetails = new List<OrderDetail>();
                     List<ComboOrderDetail> comboOrderDetails = new List<ComboOrderDetail>();
+                    double money = 0;
                     if(orderRequestDto.OrderDetailsDtos != null && orderRequestDto.OrderDetailsDtos.Count > 0)
                     {
                         foreach (var item in orderRequestDto.OrderDetailsDtos)
@@ -290,7 +301,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 return BuildAppActionResultError(result, $"Không tìm thấy thông tin món ăn");
                             }
-                        }                      
+
+                            orderDetails.Add(orderDetail);
+                        }
+                        money = orderDetails.Sum(o => o.Quantity * o.Price);
                     }
 
                     List<TableDetail> tableDetails = new List<TableDetail>();
@@ -350,46 +364,169 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         await tableDetailRepository.Insert(reservationTableDetail);
 
-                        if (orderRequestDto.OrderDetailsDtos.Count() > 0)
+                        if (orderDetails.Count > 0)
                         {
-                            var dishComboComboDetailList = new List<ComboOrderDetail>();
-                            Guid orderDetailId = Guid.NewGuid();
-                            orderRequestDto.OrderDetailsDtos.ForEach(r =>
-                            {
-                                orderDetailId = Guid.NewGuid();
-                                orderDetails.Add(new OrderDetail
-                                {
-                                    OrderDetailId = orderDetailId,
-                                    DishSizeDetailId = r.DishSizeDetailId,
-                                    ComboId = (r.Combo != null) ? r.Combo.ComboId : (Guid?)null,
-                                    Note = r.Note,
-                                    Quantity = r.Quantity,
-                                    OrderId = order.OrderId,
-                                    OrderDetailStatusId = OrderDetailStatus.Pending,
-                                });
-
-                                if (r.Combo != null)
-                                {
-                                    r.Combo.DishComboIds.ForEach(d => dishComboComboDetailList.Add(new ComboOrderDetail
-                                    {
-                                        ComboOrderDetailId = Guid.NewGuid(),
-                                        DishComboId = d,
-                                        OrderDetailId = orderDetailId
-                                    }));
-                                }
-                            });
-
-                            await comboOrderDetailRepository.InsertRange(dishComboComboDetailList);
-                            await orderDetailRepository.InsertRange(orderDetails);
+                            orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Pending);
                         }
 
                     }
                     else if (orderRequestDto.OrderType == OrderType.MealWithoutReservation)
                     {
-
-                    } else
+                        order.MealTime = utility.GetCurrentDateTimeInTimeZone();
+                        order.TotalAmount = money;
+                        if (orderDetails.Count > 0)
+                        {
+                            orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Pending);
+                        }
+                        else
+                        {
+                            result = BuildAppActionResultError(result, "Bàn không thực hiện gọi món.");
+                        }
+                    }
+                    else
                     {
+                        order.OrderTypeId = OrderType.MealWithoutReservation;
+                        order.OrderDate = utility.GetCurrentDateInTimeZone();
 
+                        if (customerInfoListDb.Items.Count == 0)
+                        {
+                            return BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng. Đặt hàng thất bại");
+                        }
+
+                        if (customerInfoListDb.Items.Count > 1)
+                        {
+                            return BuildAppActionResultError(result, $"Xảy ra lỗi khi tìm thông tin khách hàng. Đặt hàng thất bại");
+                        }
+
+                        var address = customerInfoListDb.Items.Select(c => c.Address).FirstOrDefault();
+                        var accountId = customerInfoListDb.Items.Select(c => c.AccountId).FirstOrDefault();
+                        if (orderRequestDto.CustomerId.HasValue)
+                        {
+                            if (string.IsNullOrEmpty(address))
+                            {
+                                return BuildAppActionResultError(result, $"Địa chỉ của bạn không tồn tại. Vui lòng cập nhập địa chỉ");
+                            }
+
+                            var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => !string.IsNullOrEmpty(accountId) && p.AccountId == accountId, 0, 0, null, false, p => p.Coupon!);
+                            if (customerSavedCouponDb.Items!.Count > 0 && customerSavedCouponDb.Items != null && orderRequestDto.DeliveryOrder.CouponIds.Count > 0)
+                            {
+                                foreach(var couponId in orderRequestDto.DeliveryOrder.CouponIds)
+                                {
+                                    if(money <= 0)
+                                    {
+                                        break;
+                                    }
+
+                                    var customerSavedCoupon = customerSavedCouponDb.Items.FirstOrDefault(c => c.CouponId == couponId);
+                                    if (customerSavedCoupon != null && customerSavedCoupon.IsUsedOrExpired == false)
+                                    {
+                                        var coupon = await couponRepository!.GetById(customerSavedCoupon.CouponId);
+                                        if (coupon != null && coupon.ExpiryDate > utility.GetCurrentDateTimeInTimeZone())
+                                        {
+                                            double discountMoney = money * (coupon.DiscountPercent * 0.01);
+                                            money -= discountMoney;
+                                        }
+                                        else if (coupon.ExpiryDate < utility.GetCurrentDateTimeInTimeZone())
+                                        {
+                                            return BuildAppActionResultError(result, $"Mã giảm giá của bạn đã hết hạn");
+                                        }
+
+                                        money = Math.Max(0, money);
+
+                                        // Update the coupon usage
+                                        customerSavedCoupon.IsUsedOrExpired = true;
+                                        customerSavedCoupon.OrderId = order.OrderId;
+                                        await customerSavedCouponRepository!.Update(customerSavedCoupon);
+
+                                    }
+                                }
+                            }
+
+
+                            if (!string.IsNullOrEmpty(accountId))
+                            {
+                                var accountDb = await accountRepository!.GetById(accountId);
+                                if (accountDb != null && orderRequestDto.DeliveryOrder.LoyalPointToUse.HasValue && orderRequestDto.DeliveryOrder.LoyalPointToUse > 0)
+                                {
+                                    // Check if the user has enough points
+                                    if (accountDb!.LoyaltyPoint >= orderRequestDto.DeliveryOrder.LoyalPointToUse)
+                                    {
+                                        // Calculate the discount (assuming 1 point = 1 currency unit)
+                                        double loyaltyDiscount = Math.Min(orderRequestDto.DeliveryOrder.LoyalPointToUse.Value, money);
+                                        money -= loyaltyDiscount;
+
+                                        // Ensure the total doesn't go below zero
+                                        money = Math.Max(0, money);
+
+                                        // Update the customer's loyalty points
+                                        accountDb.LoyaltyPoint -= (int)loyaltyDiscount;
+
+                                        // Create a new loyalty point history entry for the point usage
+                                        var loyalPointUsageHistory = new LoyalPointsHistory
+                                        {
+                                            LoyalPointsHistoryId = Guid.NewGuid(),
+                                            TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
+                                            OrderId = order.OrderId,
+                                            PointChanged = -(int)loyaltyDiscount,
+                                            NewBalance = accountDb.LoyaltyPoint
+                                        };
+
+                                        await loyalPointsHistoryRepository!.Insert(loyalPointUsageHistory);
+                                    }
+                                    else
+                                    {
+                                        // Handle the case where the user doesn't have enough points
+                                        return BuildAppActionResultError(result, "Không đủ điểm tích lũy để sử dụng.");
+                                    }
+                                }
+
+                                if (accountDb != null)
+                                {
+                                    var newLoyalPointHistory = new LoyalPointsHistory
+                                    {
+                                        LoyalPointsHistoryId = Guid.NewGuid(),
+                                        TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
+                                        OrderId = order.OrderId,
+                                        PointChanged = (int)money / 100,
+                                        NewBalance = accountDb.LoyaltyPoint + (int)money / 100
+                                    };
+
+                                    await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
+
+
+                                    accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
+                                }
+                            }
+                        }
+                        await _repository.Insert(order);
+                        orderWithPayment.Order = order;
+
+                        if (orderDetails.Count > 0)
+                        {
+                            orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Pending);
+                        }
+
+                        if (!BuildAppActionResultIsError(result))
+                        {
+                            await _unitOfWork.SaveChangesAsync();
+                            if (orderRequestDto.DeliveryOrder.PaymentMethod != PaymentMethod.Cash)
+                            {
+
+                                var paymentRequest = new PaymentRequestDto
+                                {
+                                    OrderId = createdOrderId,
+                                    PaymentMethod = orderRequestDto.DeliveryOrder.PaymentMethod,
+                                };
+                                var linkPaymentDb = await transcationService!.CreatePayment(paymentRequest, httpContext);
+                                if (!linkPaymentDb.IsSuccess)
+                                {
+                                    return BuildAppActionResultError(result, "Tạo thanh toán thất bại");
+                                }
+                                orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
+                            }
+                            result.Result = orderWithPayment;
+                            scope.Complete();
+                        }
                     }
 
                 }

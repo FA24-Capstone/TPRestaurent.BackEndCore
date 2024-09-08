@@ -35,7 +35,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
     {
         public DateTime OrderTime { get; set; }  
         public DateTime DeliveryTime { get; set; }  
-        public int LoyalPointToUse { get; set; }    
+        public int? LoyalPointToUse { get; set; }    
         public List<Guid>? CouponIds { get; set; }
         public PaymentMethod PaymentMethod { get; set; }    
     }
