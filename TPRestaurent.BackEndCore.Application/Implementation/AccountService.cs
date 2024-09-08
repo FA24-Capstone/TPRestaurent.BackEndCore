@@ -78,10 +78,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var utility = Resolve<Utility>();
+                var customerInfoRepository = Resolve<IGenericRepository<CustomerInfo>>();
                 var tokenRepository = Resolve<IGenericRepository<Token>>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
                 var user = await _accountRepository.GetByExpression(u =>
                     u!.PhoneNumber!.ToLower() == loginRequest.PhoneNumber.ToLower() && u.IsDeleted == false);
+                var customerInfo = await customerInfoRepository.GetByExpression(p => p.AccountId == user.Id, null);
+                customerInfo.Account = null;
+                user.Customer = customerInfo;
                 var otpCodeListDb = await _otpRepository.GetAllDataByExpression(p => p.Code == loginRequest.OTPCode && (p.Type == OTPType.Login || p.Type == OTPType.ConfirmPhone) && p.ExpiredTime > currentTime && !p.IsUsed, 0, 0, null, false, null);
 
                 if (otpCodeListDb.Items.Count > 1)
@@ -912,6 +916,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _tokenDto.Token = token;
             _tokenDto.RefreshToken = user.RefreshToken;
             _tokenDto.Account = _mapper.Map<AccountResponse>(user);
+            
             var roleList = new List<string>();
             var roleListDb = await _userRoleRepository.GetAllDataByExpression(r => r.UserId.Equals(user.Id), 0, 0, null, false, null);
             if (roleListDb.Items == null || roleListDb.Items.Count == 0)
