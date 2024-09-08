@@ -1178,13 +1178,47 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> CalculateReservation(CalculateDepositRequest request)
+        public async Task<AppActionResult> CalculateReservation(ReservationDto request)
         {
             AppActionResult result = new AppActionResult();
             try
             {
                 double total = 0;
-            
+                if (request.ReservationDishDtos.Count() > 0)
+                {
+                    var dishRepository = Resolve<IGenericRepository<DishSizeDetail>>();
+                    var comboRepository = Resolve<IGenericRepository<Combo>>();
+                    var utility = Resolve<Utility>();
+
+                    DishSizeDetail dishSizeDetailDb = null;
+                    Combo comboDb = null;
+
+                    foreach (var reservationDish in request.ReservationDishDtos!)
+                    {
+                        if (reservationDish.Combo != null)
+                        {
+                            comboDb = await comboRepository!.GetByExpression(c => c.ComboId == reservationDish.Combo.ComboId && c.EndDate > utility.GetCurrentDateTimeInTimeZone(), null);
+                            if (comboDb == null)
+                            {
+                                result = BuildAppActionResultError(result, $"Không tìm thấy combo với id {reservationDish.Combo.ComboId}");
+                                return result;
+                            }
+                            total += reservationDish.Quantity * comboDb.Price;
+                        }
+                        else
+                        {
+
+                            dishSizeDetailDb = await dishRepository!.GetByExpression(c => c.DishSizeDetailId == reservationDish.DishSizeDetailId.Value && c.IsAvailable, null);
+                            if (dishSizeDetailDb == null)
+                            {
+                                result = BuildAppActionResultError(result, $"Không tìm thấy món ăn với id {reservationDish.DishSizeDetailId}");
+                                return result;
+                            }
+                            total += reservationDish.Quantity * dishSizeDetailDb.Price;
+                        }
+                    }
+                }
+
             }
             catch (Exception ex)
             {
