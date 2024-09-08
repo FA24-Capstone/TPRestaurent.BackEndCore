@@ -10,7 +10,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models.EnumModels
     public class OrderType
     {
         [Key]
-        public TPRestaurent.BackEndCore.Domain.Enums.OTPType Id { get; set; }
+        public TPRestaurent.BackEndCore.Domain.Enums.OrderType Id { get; set; }
         public string Name { get; set; } = null!;
     }
 }

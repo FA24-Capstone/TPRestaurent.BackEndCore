@@ -204,8 +204,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //            var utility = Resolve<Utility>();
         //            var accountRepository = Resolve<IGenericRepository<Account>>();
         //            var customerInfoRepository = Resolve<IGenericRepository<CustomerInfo>>();
-        //            var reservationRepository = Resolve<IGenericRepository<Reservation>>();
-        //            var reservationDishRepository = Resolve<IGenericRepository<ReservationDish>>();
         //            var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
         //            var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
         //            var customerSavedCouponRepository = Resolve<IGenericRepository<CustomerSavedCoupon>>();
@@ -846,6 +844,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //    }
         //    return result;
         //}
+
         //public async Task<AppActionResult> GetOrderDetail(Guid orderId)
         //{
         //    AppActionResult result = new AppActionResult();
