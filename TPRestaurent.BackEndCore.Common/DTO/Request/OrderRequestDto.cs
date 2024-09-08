@@ -24,7 +24,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
     public class ReservationOrderDto
     {
         public int NumberOfPeople { get; set; }
-        public DateTime ReservationDate { get; set; }
         public DateTime MealTime { get; set; }
         public DateTime? EndTime { get; set; }
         public bool IsPrivate { get; set; }
