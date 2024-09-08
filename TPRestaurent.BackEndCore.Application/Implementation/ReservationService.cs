@@ -454,39 +454,39 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //    }
         //}
 
-        //public async Task<AppActionResult> SuggestTable(SuggestTableDto dto)
-        //{
-        //    AppActionResult result = new AppActionResult();
-        //    try
-        //    {
-        //        //Validate
-        //        List<Guid> guids = new List<Guid>();
-        //        var conditions = new List<Func<Expression<Func<Reservation, bool>>>>();
-        //        if (dto.NumOfPeople <= 0)
-        //        {
-        //            return BuildAppActionResultError(result, "Số người phải lớn hơn 0!");
-        //        }
-        //        //Get All Available Table
-        //        var availableTableResult = await GetAvailableTable(dto.StartTime, dto.EndTime, dto.NumOfPeople, 0, 0);
-        //        if (availableTableResult.IsSuccess)
-        //        {
-        //            var availableTable = (PagedResult<Table>)availableTableResult.Result!;
-        //            if (availableTable.Items!.Count > 0)
-        //            {
-        //                result.Result = await GetTables(availableTable.Items, dto.NumOfPeople, dto.IsPrivate);
-        //            }
-        //        }
+        public async Task<AppActionResult> SuggestTable(SuggestTableDto dto)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                //Validate
+                List<Guid> guids = new List<Guid>();
+                var conditions = new List<Func<Expression<Func<Reservation, bool>>>>();
+                if (dto.NumOfPeople <= 0)
+                {
+                    return BuildAppActionResultError(result, "Số người phải lớn hơn 0!");
+                }
+                //Get All Available Table
+                var availableTableResult = await GetAvailableTable(dto.StartTime, dto.EndTime, dto.NumOfPeople, 0, 0);
+                if (availableTableResult.IsSuccess)
+                {
+                    var availableTable = (PagedResult<Table>)availableTableResult.Result!;
+                    if (availableTable.Items!.Count > 0)
+                    {
+                        result.Result = await GetTables(availableTable.Items, dto.NumOfPeople, dto.IsPrivate);
+                    }
+                }
 
 
-        //        //Get Table with condition: 
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        result = BuildAppActionResultError(result, ex.Message);
-        //    }
+                //Get Table with condition: 
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
 
-        //    return result;
-        //}
+            return result;
+        }
         public async Task<Table> GetSuitableTable(SuggestTableDto dto)
         {
             Table result = null;
