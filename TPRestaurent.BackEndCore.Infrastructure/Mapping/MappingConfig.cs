@@ -23,7 +23,7 @@ public class MappingConfig
                 .ForMember(desc => desc.PhoneNumber, act => act.MapFrom(src => src.PhoneNumber))
                 .ForMember(desc => desc.UserName, act => act.MapFrom(src => src.UserName))
                 .ForMember(desc => desc.Avatar, act => act.MapFrom(src => src.Avatar))
-                .ForMember(desc => desc.CustomerInfoId, act => act.MapFrom(src => src.CustomerId))
+                .ForMember(desc => desc.CustomerInfo, act => act.MapFrom(src => src.Customer))
                 ;
 
             config.CreateMap<Device, DeviceResponse>()
