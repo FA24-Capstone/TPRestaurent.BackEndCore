@@ -170,7 +170,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var dishDetailsListDb = await dishDetailsRepository!.GetAllDataByExpression(p => p.DishId == item.DishId, 0, 0, null, false, p => p.DishSize!);
                     var dishSizeResponse = new DishSizeResponse();
                     dishSizeResponse.Dish = item;
-                    dishSizeResponse.dishSizeDetails = dishDetailsListDb.Items!;
+                    dishSizeResponse.dishSizeDetails = dishDetailsListDb.Items!.OrderBy(d => d.DishSizeId).ToList();
                     dishSizeList.Add(dishSizeResponse); 
                 }
                 result.Result = new PagedResult<DishSizeResponse>
@@ -207,7 +207,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, $"Size món ăn với id {dishId} không tồn tại");
                 }
-                dishResponse.dishSizeDetails = dishSizeDetailsDb!.Items!;
+                dishResponse.dishSizeDetails = dishSizeDetailsDb!.Items!.OrderBy(d => d.DishSizeId).ToList();
                 var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, null);
 
                 var ratingDb = await ratingRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.CreateByAccount, p => p.UpdateByAccount);
