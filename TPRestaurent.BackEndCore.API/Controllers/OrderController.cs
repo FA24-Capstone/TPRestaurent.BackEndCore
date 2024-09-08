@@ -17,35 +17,47 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             _service = service;
         }
 
-        //[HttpGet("get-all-order-by-status/{pageNumber}/{pageSize}")]
-        //public async Task<AppActionResult> GetAllOrderByStatus(Domain.Enums.OrderStatus? status, int pageNumber = 1, int pageSize = 10)
-        //{
-        //    return await _service.GetAllOrderByStatus(status, 1, 10);
-        //}
+        [HttpGet("get-all-order-by-status/{pageNumber}/{pageSize}")]
+        public async Task<AppActionResult> GetAllOrderByStatus(Domain.Enums.OrderStatus? status, OrderType orderType ,int pageNumber = 1, int pageSize = 10)
+        {
+            return await _service.GetAllOrderByStatus(status, orderType, pageNumber, pageSize);
+        }
 
-        //[HttpGet("get-order-by-account-id/{accountId}/{pageNumber}/{pageSize}")]
-        //public async Task<AppActionResult> GetAllOrderByAccountId(string accountId, Domain.Enums.OrderStatus? status, int pageNumber = 1, int pageSize = 10)
-        //{
-        //    return await _service.GetAllOrderByAccountId(accountId, status, 1, 10);
-        //}
+        [HttpGet("get-order-by-account-id/{accountId}/{pageNumber}/{pageSize}")]
+        public async Task<AppActionResult> GetAllOrderByAccountId(string accountId, Domain.Enums.OrderStatus? status, OrderType? orderType, int pageNumber = 1, int pageSize = 10)
+        {
+            return await _service.GetAllOrderByAccountId(accountId, status, orderType, 1, 10);
+        }
 
-        //[HttpGet("get-all-order-by-phone-number/{pageNumber}/{pageSize}")]
-        //public async Task<AppActionResult> GetAllOrderByPhoneNumber(string phoneNumber, int pageNumber = 1, int pageSize = 10)
-        //{
-        //    return await _service.GetAllOrderByPhoneNumber(phoneNumber, pageNumber, pageSize);      
-        //}
+        [HttpGet("get-all-order-by-phone-number/{pageNumber}/{pageSize}")]
+        public async Task<AppActionResult> GetAllOrderByPhoneNumber(string phoneNumber, int pageNumber = 1, int pageSize = 10)
+        {
+            return await _service.GetAllOrderByPhoneNumber(phoneNumber, pageNumber, pageSize);
+        }
 
-        //[HttpGet("get-order-detail/{orderId}")]
-        //public async Task<AppActionResult> GetOrderDetail(Guid orderId)
-        //{
-        //    return await _service.GetOrderDetail(orderId);
-        //}
+        [HttpGet("get-order-by-time/{pageNumber}/{pageSize}")]
+        public async Task<AppActionResult> GetOrderByTime(double? minute, int pageNumber, int pageSize)
+        {
+            return await _service.GetOrderByTime(minute, pageNumber, pageSize); 
+        }
 
-        //[HttpPost("add-dish-to-order/{orderId}")]
-        //public async Task<AppActionResult> AddDishToOrder([FromBody] AddDishToOrderRequestDto dto)
-        //{
-        //    return await _service.AddDishToOrder(dto);
-        //}
+        [HttpGet("get-order-detail/{orderId}")]
+        public async Task<AppActionResult> GetOrderDetail(Guid orderId)
+        {
+            return await _service.GetOrderDetail(orderId);
+        }
+
+        [HttpPost("calculate-reservation")]
+        public async Task<AppActionResult> CalculateReservation([FromBody]ReservationDto request)
+        {
+            return await _service.CalculateReservation(request);    
+        }
+
+        [HttpPost("add-dish-to-order/{orderId}")]
+        public async Task<AppActionResult> AddDishToOrder([FromBody] AddDishToOrderRequestDto dto)
+        {
+            return await _service.AddDishToOrder(dto);
+        }
 
         //[HttpPost("create-order")]
         //public async Task<AppActionResult> CreateOrder([FromBody]OrderRequestDto dto)

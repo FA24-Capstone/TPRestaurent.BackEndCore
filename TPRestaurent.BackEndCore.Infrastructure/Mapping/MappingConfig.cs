@@ -2,6 +2,7 @@
 using Castle.Core.Resource;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
+using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Infrastructure.Mapping;
@@ -50,14 +51,9 @@ public class MappingConfig
 
 
             config.CreateMap<OrderDetailsDto, OrderDetail>()
-            .ForMember(desc => desc.ComboId, act =>
-            {
-                act.MapFrom(src => src.Combo.ComboId);
-                act.Condition(src => src.Combo != null);
-            })
-            .ForMember(desc => desc.DishSizeDetailId, act => act.MapFrom(src => src.DishSizeDetailId))
-           .ForMember(desc => desc.Quantity, act => act.MapFrom(src => src.Quantity))
-           .ForMember(desc => desc.Note, act => act.MapFrom(src => src.Note))
+            .ForMember(dest => dest.ComboId, opt => opt.MapFrom(src => src.Combo != null ? src.Combo.ComboId : (Guid?)null))
+            .ForMember(dest => dest.OrderTime, opt => opt.MapFrom(src => DateTime.Now))
+            .ForMember(dest => dest.OrderDetailStatusId, opt => opt.MapFrom(src => OrderDetailStatus.Pending)) // Assuming a default status
            .ReverseMap();
             ;
 

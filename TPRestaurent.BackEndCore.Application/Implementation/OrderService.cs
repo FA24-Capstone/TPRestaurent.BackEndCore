@@ -46,6 +46,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var comboRepository = Resolve<IGenericRepository<Combo>>();
                     var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
                     var orderDb = await _repository.GetById(dto.OrderId);
+                    var utility = Resolve<Utility>();
                     if (orderDb == null)
                     {
                         result = BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {dto.OrderId}");
@@ -58,15 +59,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     foreach (var o in dto.OrderDetailsDtos)
                     {
-                        var orderDetail = _mapper.Map<OrderDetail>(o);
-                        orderDetail.OrderId = dto.OrderId;
-                        orderDetail.OrderDetailId = Guid.NewGuid();
+                        var orderDetail = new OrderDetail
+                        {
+                            OrderDetailId = Guid.NewGuid(),
+                            OrderId = dto.OrderId,  
+                        };
 
                         if (o.Combo != null)
                         {
                             var combo = await comboRepository!.GetById(o.Combo.ComboId);
                             orderDetail.Price = combo.Price;
-
+                            orderDetail.ComboId = combo.ComboId;  
+                            
                             foreach (var dishComboId in o.Combo.DishComboIds)
                             {
                                 comboOrderDetails.Add(new ComboOrderDetail
@@ -76,11 +80,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     OrderDetailId = orderDetail.OrderDetailId
                                 });
                             }
+
+                            orderDetail.OrderDetailStatusId = OrderDetailStatus.Unchecked;
+                            orderDetail.OrderTime = utility!.GetCurrentDateTimeInTimeZone();
+                            orderDetail.Quantity = o.Quantity;
                         }
                         else
                         {
                             var dish = await dishRepository!.GetById(o.DishSizeDetailId!);
                             orderDetail.Price = dish.Price;
+                            orderDetail.
                         }
 
                         orderDb.TotalAmount += orderDetail.Price * orderDetail.Quantity;
@@ -803,7 +812,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //    return result;
         //}
 
-        public async Task<AppActionResult> GetAllOrderByAccountId(string accountId, OrderStatus? status, OrderType? orderType ,int pageNumber, int pageSize)
+        public async Task<AppActionResult> GetAllOrderByAccountId(string accountId, OrderStatus? status, OrderType? orderType, int pageNumber, int pageSize)
         {
             AppActionResult result = new AppActionResult();
             try
@@ -1184,11 +1193,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 double total = 0;
+                var dishRepository = Resolve<IGenericRepository<DishSizeDetail>>();
+                var comboRepository = Resolve<IGenericRepository<Combo>>();
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var utility = Resolve<Utility>();
                 if (request.ReservationDishDtos.Count() > 0)
                 {
-                    var dishRepository = Resolve<IGenericRepository<DishSizeDetail>>();
-                    var comboRepository = Resolve<IGenericRepository<Combo>>();
-                    var utility = Resolve<Utility>();
 
                     DishSizeDetail dishSizeDetailDb = null;
                     Combo comboDb = null;
@@ -1218,12 +1228,36 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                     }
                 }
+                var configurationDb = await configurationRepository.GetAllDataByExpression(c => c.Name.Equals(SD.DefaultValue.DEPOSIT_PERCENT), 0, 0, null, false, null);
+                if (configurationDb.Items.Count == 0 || configurationDb.Items.Count > 1)
+                {
+                    return BuildAppActionResultError(result, $"Xảy ra lỗi khi lấy thông số cấu hình {SD.DefaultValue.DEPOSIT_PERCENT}");
+                }
 
+                double deposit = total  * double.Parse(configurationDb.Items[0].PreValue);
+                string tableTypeDeposit = SD.DefaultValue.DEPOSIT_FOR_NORMAL_TABLE;
+                if (request.IsPrivate)
+                {
+                    tableTypeDeposit = SD.DefaultValue.DEPOSIT_FOR_PRIVATE_TABLE;
+                }
+                else
+                {
+                    tableTypeDeposit = SD.DefaultValue.DEPOSIT_FOR_NORMAL_TABLE;
+                }
+                var tableConfigurationDb = await configurationRepository.GetAllDataByExpression(c => c.Name.Equals(tableTypeDeposit), 0, 0, null, false, null);
+                if (tableConfigurationDb.Items.Count == 0 || tableConfigurationDb.Items.Count > 1)
+                {
+                    return BuildAppActionResultError(result, $"Xảy ra lỗi khi lấy thông số cấu hình {tableTypeDeposit}");
+                }
+                deposit += double.Parse(tableConfigurationDb.Items[0].PreValue);
+                request.Deposit = deposit;  
+                result.Result = deposit;        
             }
             catch (Exception ex)
             {
                 result = BuildAppActionResultError(result, ex.Message);
             }
+            return result;
         }
 
         //public async Task<AppActionResult> GetOrderJsonByTableSessionId(Guid tableSessionId)
