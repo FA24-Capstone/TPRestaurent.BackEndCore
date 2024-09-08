@@ -89,10 +89,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             var dish = await dishRepository!.GetById(o.DishSizeDetailId!);
                             orderDetail.Price = dish.Price;
-                            orderDetail.
+                            orderDetail.DishSizeDetailId = o.DishSizeDetailId;
+                            orderDetail.Quantity = o.Quantity;
+                            orderDetail.OrderDetailStatusId = OrderDetailStatus.Unchecked;
+                            orderDetail.OrderTime = utility!.GetCurrentDateTimeInTimeZone();
                         }
 
                         orderDb.TotalAmount += orderDetail.Price * orderDetail.Quantity;
+                        orderDetails.Add(orderDetail);
                     }
 
                     await _repository.Update(orderDb);
