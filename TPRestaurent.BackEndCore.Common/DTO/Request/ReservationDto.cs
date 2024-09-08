@@ -17,6 +17,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public double Deposit { get; set; }
         public string? Note { get; set; }
         public bool IsPrivate { get; set; }
+        public List<Guid> 
         //public List<Guid> ReservationTableIds { get; set; } = new List<Guid>();
     }
 
