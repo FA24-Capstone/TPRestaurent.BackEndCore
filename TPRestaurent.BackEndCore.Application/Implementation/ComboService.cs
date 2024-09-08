@@ -1,6 +1,7 @@
 ﻿using Humanizer;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -195,12 +196,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     comboResponse.DishCombo.Add(new Common.DTO.Response.DishComboDto
                     {
-                        ComboOptionSet = item.Key,
-                        DishCombo = item.Value
-                        
+                        ComboOptionSetId = item.Key.ComboOptionSetId,
+                        OptionSetNumber = item.Key.OptionSetNumber,
+                        NumOfChoice = item.Key.NumOfChoice,
+                        DishItemTypeId = item.Key.DishItemTypeId,
+                        DishItemType = item.Key.DishItemType,
+                        DishCombo = item.Value                       
                     });
                 }
-                comboResponse.DishCombo = comboResponse.DishCombo.OrderBy(c => c.ComboOptionSet.OptionSetNumber).ToList();
+                comboResponse.DishCombo = comboResponse.DishCombo.OrderBy(c => c.OptionSetNumber).ToList();
+                comboResponse.DishCombo.ForEach(d => d.DishCombo.ForEach(dc => dc.ComboOptionSet = null));
                 comboResponse.Imgs = staticFileDb.Items!.Select(s => s.Path).ToList();
                 comboResponse.Combo = comboDb!;
                 result.Result = comboResponse;
@@ -234,12 +239,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     comboResponse.DishCombo.Add(new Common.DTO.Response.DishComboDto
                     {
-                        ComboOptionSet = optionSetList.FirstOrDefault(o => o.ComboOptionSetId == item.Key),
+                        ComboOptionSetId = optionSetList.FirstOrDefault(o => o.ComboOptionSetId == item.Key).ComboOptionSetId,
+                        OptionSetNumber = optionSetList.FirstOrDefault(o => o.ComboOptionSetId == item.Key).OptionSetNumber,
+                        NumOfChoice = optionSetList.FirstOrDefault(o => o.ComboOptionSetId == item.Key).NumOfChoice,
+                        DishItemTypeId = optionSetList.FirstOrDefault(o => o.ComboOptionSetId == item.Key).DishItemTypeId,
+                        DishItemType = optionSetList.FirstOrDefault(o => o.ComboOptionSetId == item.Key).DishItemType,
                         DishCombo = item.Value
-
                     });
                 }
-                comboResponse.DishCombo = comboResponse.DishCombo.OrderBy(c => c.ComboOptionSet.OptionSetNumber).ToList();
+                comboResponse.DishCombo = comboResponse.DishCombo.OrderBy(c => c.OptionSetNumber).ToList();
+                comboResponse.DishCombo.ForEach(d => d.DishCombo.ForEach(dc => dc.ComboOptionSet = null));
                 comboResponse.Imgs = staticFileDb.Items!.Select(s => s.Path).ToList();
                 comboResponse.Combo = comboDb!;
                 result.Result = comboResponse;
