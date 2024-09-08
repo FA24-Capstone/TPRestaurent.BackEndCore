@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Common.DTO.Response
 {
@@ -20,6 +21,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public string? Avatar { get; set; }
         public List<IdentityRole> Roles { get; set; }
         public string MainRole { get; set; }
-        public Guid CustomerInfoId { get; set; }
+        public CustomerInfo CustomerInfo { get; set; }
     }
 }
