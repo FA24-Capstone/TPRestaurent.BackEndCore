@@ -20,5 +20,6 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid? CustomerId { get; set; }
         [ForeignKey(nameof(CustomerId))]
         public CustomerInfo? Customer { get; set; }
+        public bool IsManuallyCreated { get; set; }
     }
 }

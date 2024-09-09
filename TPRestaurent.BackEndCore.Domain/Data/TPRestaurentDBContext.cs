@@ -143,19 +143,19 @@ namespace TPRestaurent.BackEndCore.Domain.Data
                 modelBuilder.Entity<TEntity>().HasData(entityInstance!);
             }
         }
-        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        //{
-        //    IConfiguration config = new ConfigurationBuilder()
-        //                   .SetBasePath(Directory.GetCurrentDirectory())
-        //                   .AddJsonFile("appsettings.json", true, true)
-        //                   .Build();
-        //    //string cs = config["ConnectionStrings:DB"];
-        //    //if (!optionsBuilder.IsConfigured)
-        //    //{
-        //    //    optionsBuilder.UseSqlServer(cs);
-        //    //}
-        //    optionsBuilder.UseSqlServer(
-        //    "server=.;database=TPRestaurent;uid=sa;pwd=12345;TrustServerCertificate=True;MultipleActiveResultSets=True;");
-        //}
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            IConfiguration config = new ConfigurationBuilder()
+                           .SetBasePath(Directory.GetCurrentDirectory())
+                           .AddJsonFile("appsettings.json", true, true)
+                           .Build();
+            //string cs = config["ConnectionStrings:DB"];
+            //if (!optionsBuilder.IsConfigured)
+            //{
+            //    optionsBuilder.UseSqlServer(cs);
+            //}
+            optionsBuilder.UseSqlServer(
+            "Server=tcp:tpresutaurent.database.windows.net,1433;Initial Catalog=TPRestaurent;Persist Security Info=False;User ID=tprestaurentsa;Password=Tp06042003@;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+        }
     }
 }
