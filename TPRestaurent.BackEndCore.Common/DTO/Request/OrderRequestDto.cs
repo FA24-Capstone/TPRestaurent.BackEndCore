@@ -23,27 +23,28 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
 
     public class ReservationOrderDto
     {
-        public DateTime? ReservationDate { get; set; }
-        public DateTime? MealTime { get; set; }
+        public int NumberOfPeople { get; set; }
+        public DateTime MealTime { get; set; }
         public DateTime? EndTime { get; set; }
-        public bool? IsPrivate { get; set; }
+        public bool IsPrivate { get; set; }
         public double? Deposit { get; set; }
-        public List<Guid>? TableIds { get; set; }
+        public PaymentMethod PaymentMethod { get; set; }
 
     }
 
     public class DeliveryOrderDto
     {
+        public int NumberOfPeople { get; set; }
         public DateTime OrderTime { get; set; }  
         public DateTime DeliveryTime { get; set; }  
-        public int LoyalPointToUse { get; set; }    
+        public int? LoyalPointToUse { get; set; }    
         public List<Guid>? CouponIds { get; set; }
         public PaymentMethod PaymentMethod { get; set; }    
     }
 
     public class MealWithoutReservation
     {
-        public DateTime? MealTime { get; set; }
+        public int NumberOfPeople { get; set; }
         public List<Guid>? TableIds { get; set; }
 
     }
