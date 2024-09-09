@@ -19,13 +19,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public WorkerService(IServiceProvider serviceProvider, 
             BackEndLogger logger, 
             IUnitOfWork unitOfWork,
-            IReservationService reservationService,
+            //IReservationService reservationService,
             IConfigService configService
             ) : base(serviceProvider)
         {
             _logger = logger;
             _unitOfWork = unitOfWork;
-            _reservationService = reservationService;   
+            //_reservationService = reservationService;   
             _configService = configService; 
         }
 
@@ -33,7 +33,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
             //RecurringJob.AddOrUpdate(() =>  _reservationService.CancelOverdueReservations(), Cron.DayInterval(1), vietnamTimeZone);
-            RecurringJob.AddOrUpdate(() => _configService.ChangeConfigurationJob(), Cron.DayInterval(1), vietnamTimeZone);
+            //RecurringJob.AddOrUpdate(() => _configService.ChangeConfigurationJob(), Cron.DayInterval(1), vietnamTimeZone);
             //BackgroundJob.Enqueue(() => _configService.ChangeConfigurationJob());
         }
     }

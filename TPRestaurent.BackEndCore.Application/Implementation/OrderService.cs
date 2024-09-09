@@ -108,94 +108,133 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //        return result;
         //    }
         //}
-        //public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful)
-        //{
-        //    var result = new AppActionResult();
-        //    try
-        //    {
-        //        var orderDb = await _repository.GetById(orderId);
-        //        if (orderDb == null)
-        //        {
-        //            result = BuildAppActionResultError(result, $"Đơn hàng với id {orderId} không tồn tại");
-        //        }
-        //        else
-        //        {
-        //            if (orderDb.IsDelivering == true)
-        //            {
-        //                if (orderDb.StatusId == OrderStatus.Pending)
-        //                {
-        //                    if (IsSuccessful)
-        //                    {
-        //                        orderDb.StatusId = OrderStatus.Processing;
-        //                    }
-        //                    else
-        //                    {
-        //                        orderDb.StatusId = OrderStatus.Cancelled;
-        //                    }
-        //                }
-        //                else if (orderDb.StatusId == OrderStatus.Processing)
-        //                {
-        //                    if (IsSuccessful)
-        //                    {
-        //                        orderDb.StatusId = OrderStatus.Delivering;
-        //                    }
-        //                    else
-        //                    {
-        //                        orderDb.StatusId = OrderStatus.Cancelled;
-        //                    }
-        //                }
-        //                else if (orderDb.StatusId == OrderStatus.Delivering)
-        //                {
-        //                    if (IsSuccessful)
-        //                    {
-        //                        orderDb.StatusId = OrderStatus.Completed;
-        //                        var transactionService = Resolve<ITransactionService>();
-        //                        var transactionRepository = Resolve<IGenericRepository<Domain.Models.Transaction>>();
-        //                        var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.PENDING, null);
-        //                        if (reservationTransactionDb == null)
-        //                        {
-        //                            result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch cho đơn hàng với id {orderId}");
-        //                            return result;
-        //                        }
+        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var orderDb = await _repository.GetById(orderId);
+                if (orderDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Đơn hàng với id {orderId} không tồn tại");
+                }
+                else
+                {
+                    if (orderDb.OrderTypeId == OrderType.Reservation)
+                    {
+                        if (orderDb.StatusId == OrderStatus.TableAssigned)
+                        {
+                            orderDb.StatusId = IsSuccessful? OrderStatus.DepositPaid : OrderStatus.Cancelled;
+                        }
+                        else if (orderDb.StatusId == OrderStatus.DepositPaid)
+                        {
+                            orderDb.StatusId = IsSuccessful ? OrderStatus.Dining : OrderStatus.Cancelled;
+                        }
+                        else if (orderDb.StatusId == OrderStatus.Dining)
+                        {
+                            if (IsSuccessful)
+                            {
+                                orderDb.StatusId = OrderStatus.Completed;
+                                var transactionService = Resolve<ITransactionService>();
+                                var transactionRepository = Resolve<IGenericRepository<Domain.Models.Transaction>>();
+                                var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.PENDING, null);
+                                if (reservationTransactionDb == null)
+                                {
+                                    result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch cho đơn hàng với id {orderId}");
+                                    return result;
+                                }
 
-        //                        var transactionUpdatedSuccessFully = await transactionService.UpdateTransactionStatus(reservationTransactionDb.Id, TransationStatus.SUCCESSFUL);
-        //                        if (!transactionUpdatedSuccessFully.IsSuccess)
-        //                        {
-        //                            result = BuildAppActionResultError(result, $"Cập nhật trạng thái giao dịch {reservationTransactionDb.Id} cho đơn hàng {orderId} thất bại. Vui lòng cập nhật lại sau");
-        //                        }
-        //                    }
-        //                    else
-        //                    {
-        //                        orderDb.StatusId = OrderStatus.Cancelled;
-        //                    }
-        //                }
-        //                else
-        //                {
-        //                    result = BuildAppActionResultError(result, $"Đơn hàng không thể cập nhật những trạng thái khác");
-        //                }
-        //            }
-        //            else
-        //            {
-        //                if (IsSuccessful)
-        //                {
-        //                    orderDb.StatusId = OrderStatus.Completed;
-        //                }
-        //                else
-        //                {
-        //                    orderDb.StatusId = OrderStatus.Cancelled;
-        //                }
-        //            }
+                                var transactionUpdatedSuccessFully = await transactionService.UpdateTransactionStatus(reservationTransactionDb.Id, TransationStatus.SUCCESSFUL);
+                                if (!transactionUpdatedSuccessFully.IsSuccess)
+                                {
+                                    result = BuildAppActionResultError(result, $"Cập nhật trạng thái giao dịch {reservationTransactionDb.Id} cho đơn hàng {orderId} thất bại. Vui lòng cập nhật lại sau");
+                                }
+                            }
+                            else
+                            {
+                                orderDb.StatusId = OrderStatus.Cancelled;
+                            }
+                        }
+                        else
+                        {
+                            result = BuildAppActionResultError(result, $"Đơn hàng không thể cập nhật những trạng thái khác");
+                        }
+                    }
+                    else if(orderDb.OrderTypeId == OrderType.Delivery)
+                    {
+                        if (orderDb.StatusId == OrderStatus.Pending)
+                        {
+                            orderDb.StatusId = IsSuccessful ? OrderStatus.Processing : OrderStatus.Cancelled;
+                        } else if (orderDb.StatusId == OrderStatus.Processing)
+                        {
+                            orderDb.StatusId = IsSuccessful ? OrderStatus.Delivering : OrderStatus.Cancelled;
+                        } else if(orderDb.StatusId == OrderStatus.Delivering)
+                        {
+                            orderDb.StatusId = IsSuccessful ? OrderStatus.Completed : OrderStatus.Cancelled;
+                            if(orderDb.StatusId == OrderStatus.Completed)
+                            {
+                                var transactionService = Resolve<ITransactionService>();
+                                var transactionRepository = Resolve<IGenericRepository<Domain.Models.Transaction>>();
+                                var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.PENDING, null);
+                                if (reservationTransactionDb == null)
+                                {
+                                    result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch cho đơn hàng với id {orderId}");
+                                    return result;
+                                }
 
-        //            await _repository.Update(orderDb);
-        //            await _unitOfWork.SaveChangesAsync();
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        result = BuildAppActionResultError(result, ex.Message);
-        //    }
-        //    return result;
-        //}
+                                var transactionUpdatedSuccessFully = await transactionService.UpdateTransactionStatus(reservationTransactionDb.Id, TransationStatus.SUCCESSFUL);
+                                if (!transactionUpdatedSuccessFully.IsSuccess)
+                                {
+                                    result = BuildAppActionResultError(result, $"Cập nhật trạng thái giao dịch {reservationTransactionDb.Id} cho đơn hàng {orderId} thất bại. Vui lòng cập nhật lại sau");
+                                }
+                            }
+                        } else
+                        {
+                            result = BuildAppActionResultError(result, $"Đơn hàng không thể cập nhật những trạng thái khác");
+                        }
+                    } else  
+                    {
+                        if (orderDb.StatusId == OrderStatus.Dining)
+                        {
+                            if (IsSuccessful)
+                            {
+                                orderDb.StatusId = OrderStatus.Completed;
+                                var transactionService = Resolve<ITransactionService>();
+                                var transactionRepository = Resolve<IGenericRepository<Domain.Models.Transaction>>();
+                                var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.PENDING, null);
+                                if (reservationTransactionDb == null)
+                                {
+                                    result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch cho đơn hàng với id {orderId}");
+                                    return result;
+                                }
+
+                                var transactionUpdatedSuccessFully = await transactionService.UpdateTransactionStatus(reservationTransactionDb.Id, TransationStatus.SUCCESSFUL);
+                                if (!transactionUpdatedSuccessFully.IsSuccess)
+                                {
+                                    result = BuildAppActionResultError(result, $"Cập nhật trạng thái giao dịch {reservationTransactionDb.Id} cho đơn hàng {orderId} thất bại. Vui lòng cập nhật lại sau");
+                                }
+                            }
+                            else
+                            {
+                                orderDb.StatusId = OrderStatus.Cancelled;
+                            }
+                        }
+                        else
+                        {
+                            result = BuildAppActionResultError(result, $"Đơn hàng không thể cập nhật những trạng thái khác");
+                        }
+                    }
+
+                    await _repository.Update(orderDb);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
         public async Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto, HttpContext httpContext)
         {
             var result = new AppActionResult();
@@ -226,7 +265,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         OrderId = Guid.NewGuid(),
                         CustomerId = orderRequestDto.CustomerId,
                         OrderTypeId = orderRequestDto.OrderType,
-                        Note = orderRequestDto.Note
+                        Note = orderRequestDto.Note,
+                        PaymentMethodId = PaymentMethod.VNPAY
                     };
 
                     PagedResult<CustomerInfo> customerInfoListDb = new PagedResult<CustomerInfo>();
@@ -250,7 +290,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 OrderDetailId = Guid.NewGuid(),
                                 Quantity = item.Quantity,
-                                Note = item.Note
+                                Note = item.Note,
+                                OrderId = order.OrderId
                             };
 
                             if (item.DishSizeDetailId.HasValue)
@@ -329,7 +370,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.EndTime = orderRequestDto.ReservationOrder.EndTime;
                         order.IsPrivate = orderRequestDto.ReservationOrder.IsPrivate;
                         order.Deposit = orderRequestDto.ReservationOrder.Deposit;
-
+                        order.PaymentMethodId = orderRequestDto.ReservationOrder.PaymentMethod;
 
                         var suggestTableDto = new SuggestTableDto
                         {
@@ -361,24 +402,62 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Pending);
                         }
-
+                        orderWithPayment.Order = order;
                     }
                     else if (orderRequestDto.OrderType == OrderType.MealWithoutReservation)
                     {
+                        order.OrderTypeId = OrderType.MealWithoutReservation;
+                        order.StatusId = OrderStatus.Dining;
                         order.MealTime = utility.GetCurrentDateTimeInTimeZone();
+                        order.NumOfPeople = orderRequestDto.MealWithoutReservation.NumberOfPeople;
                         order.TotalAmount = money;
                         if (orderDetails.Count > 0)
                         {
-                            orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Pending);
+                            orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
                         }
                         else
                         {
                             result = BuildAppActionResultError(result, "Bàn không thực hiện gọi món.");
                         }
+
+                        orderWithPayment.Order = order;
+
+                        if (orderRequestDto.MealWithoutReservation != null && orderRequestDto.MealWithoutReservation.TableIds.Count > 0)
+                        {
+
+                            var collidedTable = await GetCollidedTable(orderRequestDto.MealWithoutReservation.TableIds, (DateTime)order.MealTime, order.NumOfPeople);
+
+                            if (collidedTable.Count > 0)
+                            {
+                                // Tạo danh sách các tên bàn thành chuỗi phân cách bằng dấu phẩy
+                                var tableNames = string.Join(", ", collidedTable.Select(ct => ct.TableName));
+
+                                result = BuildAppActionResultError(result, $"Sắp xếp bàn chưa hợp lí. Trong danh sách nhập vào có các bàn đang hoặc đã được đặt từ trước, gồm: {tableNames}");
+                                return result;
+                            }
+
+                            foreach (var tableId in orderRequestDto.MealWithoutReservation.TableIds)
+                            {
+                                var reservationTableDetail = new TableDetail
+                                {
+                                    TableDetailId = Guid.NewGuid(),
+                                    OrderId = order.OrderId,
+                                    TableId = tableId
+                                };
+                                tableDetails.Add(reservationTableDetail);
+                            }
+
+                            await tableDetailRepository.InsertRange(tableDetails);
+                        } else
+                        {
+                            result = BuildAppActionResultError(result, "Không có thông tin bàn");
+                        }
                     }
                     else
                     {
-                        order.OrderTypeId = OrderType.MealWithoutReservation;
+                        order.OrderTypeId = OrderType.Delivery;
+                        order.StatusId = OrderStatus.Pending;
+                        order.TotalAmount = money;
                         order.OrderDate = utility.GetCurrentDateInTimeZone();
 
                         if (customerInfoListDb.Items.Count == 0)
@@ -401,7 +480,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
 
                             var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => !string.IsNullOrEmpty(accountId) && p.AccountId == accountId, 0, 0, null, false, p => p.Coupon!);
-                            if (customerSavedCouponDb.Items!.Count > 0 && customerSavedCouponDb.Items != null && orderRequestDto.DeliveryOrder.CouponIds.Count > 0)
+                            if (customerSavedCouponDb.Items!.Count > 0 && customerSavedCouponDb.Items != null 
+                                && orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.CouponIds.Count > 0)
                             {
                                 foreach(var couponId in orderRequestDto.DeliveryOrder.CouponIds)
                                 {
@@ -434,7 +514,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     }
                                 }
                             }
-
 
                             if (!string.IsNullOrEmpty(accountId))
                             {
@@ -490,36 +569,39 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
                                 }
                             }
-                        }
-                        await _repository.Insert(order);
-                        orderWithPayment.Order = order;
+                        } 
+                    }
 
-                        if (orderDetails.Count > 0)
-                        {
-                            orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Pending);
-                        }
+                    await _repository.Insert(order);
+                    orderWithPayment.Order = order;
 
-                        if (!BuildAppActionResultIsError(result))
+                    if (orderDetails.Count > 0)
+                    {
+                        orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Pending);
+                    }
+                    await orderDetailRepository.InsertRange(orderDetails);
+
+                    if (!BuildAppActionResultIsError(result))
+                    {
+                        await _unitOfWork.SaveChangesAsync();
+                        if (orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.PaymentMethod != PaymentMethod.Cash ||
+                            orderRequestDto.ReservationOrder != null && orderRequestDto.ReservationOrder.PaymentMethod != PaymentMethod.Cash)
                         {
-                            await _unitOfWork.SaveChangesAsync();
-                            if (orderRequestDto.DeliveryOrder.PaymentMethod != PaymentMethod.Cash)
+                            
+                            var paymentRequest = new PaymentRequestDto
                             {
-
-                                var paymentRequest = new PaymentRequestDto
-                                {
-                                    OrderId = createdOrderId,
-                                    PaymentMethod = orderRequestDto.DeliveryOrder.PaymentMethod,
-                                };
-                                var linkPaymentDb = await transcationService!.CreatePayment(paymentRequest, httpContext);
-                                if (!linkPaymentDb.IsSuccess)
-                                {
-                                    return BuildAppActionResultError(result, "Tạo thanh toán thất bại");
-                                }
-                                orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
+                                OrderId = order.OrderId,
+                                PaymentMethod = orderRequestDto.DeliveryOrder != null? orderRequestDto.DeliveryOrder.PaymentMethod : orderRequestDto.ReservationOrder.PaymentMethod,
+                            };
+                            var linkPaymentDb = await transcationService!.CreatePayment(paymentRequest, httpContext);
+                            if (!linkPaymentDb.IsSuccess)
+                            {
+                                return BuildAppActionResultError(result, "Tạo thanh toán thất bại");
                             }
-                            result.Result = orderWithPayment;
-                            scope.Complete();
+                            orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
                         }
+                        result.Result = orderWithPayment;
+                        scope.Complete();
                     }
 
                 }
@@ -1138,6 +1220,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-
+        private async Task<List<Table>> GetCollidedTable(List<Guid> tableIds, DateTime startTime, int? numOfPeople)
+        {
+            List<Table> collidedTables = new List<Table>();
+            try
+            {
+                AppActionResult availableTableResult = await GetAvailableTable(startTime, null, numOfPeople, 0, 100);
+                if (!availableTableResult.IsSuccess)
+                {
+                    return collidedTables;
+                }
+                var availableTable = (List<Table>)availableTableResult.Result!;
+                if (availableTable.Count > 0) 
+                {
+                    collidedTables = availableTable.Where(at => tableIds.Contains(at.TableId)).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                return new List<Table>();
+            }
+            return collidedTables;
+        }
     }
 }

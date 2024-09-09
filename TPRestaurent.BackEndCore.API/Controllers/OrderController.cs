@@ -47,11 +47,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         //    return await _service.AddDishToOrder(dto);
         //}
 
-        //[HttpPost("create-order")]
-        //public async Task<AppActionResult> CreateOrder([FromBody]OrderRequestDto dto)
-        //{
-        //    return await _service.CreateOrder(dto, HttpContext);
-        //}
+        [HttpPost("create-order")]
+        public async Task<AppActionResult> CreateOrder([FromBody] OrderRequestDto dto)
+        {
+            return await _service.CreateOrder(dto, HttpContext);
+        }
 
 
         //[HttpPut("change-order-status/{orderId}")]
