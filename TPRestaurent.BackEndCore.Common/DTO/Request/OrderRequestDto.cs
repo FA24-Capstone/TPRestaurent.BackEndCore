@@ -28,11 +28,13 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public DateTime? EndTime { get; set; }
         public bool IsPrivate { get; set; }
         public double? Deposit { get; set; }
+        public PaymentMethod PaymentMethod { get; set; }
 
     }
 
     public class DeliveryOrderDto
     {
+        public int NumberOfPeople { get; set; }
         public DateTime OrderTime { get; set; }  
         public DateTime DeliveryTime { get; set; }  
         public int? LoyalPointToUse { get; set; }    
@@ -43,7 +45,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
     public class MealWithoutReservation
     {
         public int NumberOfPeople { get; set; }
-        public DateTime? MealTime { get; set; }
         public List<Guid>? TableIds { get; set; }
 
     }
