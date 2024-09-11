@@ -1118,7 +1118,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return BuildAppActionResultError(result, $"Xảy ra lỗi khi lấy thông số cấu hình {SD.DefaultValue.DEPOSIT_PERCENT}");
                 }
 
-                double deposit = total * double.Parse(configurationDb.Items[0].PreValue);
+                //double deposit = total * double.Parse(configurationDb.Items[0].PreValue);
+                double deposit = 0;
                 string tableTypeDeposit = SD.DefaultValue.DEPOSIT_FOR_NORMAL_TABLE;
                 if (request.IsPrivate)
                 {
@@ -1133,7 +1134,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     return BuildAppActionResultError(result, $"Xảy ra lỗi khi lấy thông số cấu hình {tableTypeDeposit}");
                 }
-                deposit += double.Parse(tableConfigurationDb.Items[0].PreValue);
+                //deposit += double.Parse(tableConfigurationDb.Items[0].PreValue);
+                deposit = 0;
                 request.Deposit = deposit;
                 result.Result = deposit;
             }
@@ -1229,14 +1231,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     return BuildAppActionResultError(result, $"Xảy ra lỗi khi lấy thông số cấu hình {SD.DefaultValue.AVERAGE_MEAL_DURATION}");
                 }
-                if (!endTime.HasValue)
-                {
+                //if (!endTime.HasValue)
+                //{
 
-                    endTime = startTime.AddHours(double.Parse(configurationDb.Items[0].PreValue));
-                }
+                //    endTime = startTime.AddHours(double.Parse(configurationDb.Items[0].PreValue));
+                //}
 
-                conditions.Add(() => r => !(endTime < r.ReservationDate || (r.EndTime.HasValue && r.EndTime.Value < startTime || !r.EndTime.HasValue && r.ReservationDate.Value.AddHours(double.Parse(configurationDb.Items[0].PreValue)) < startTime))
-                                          && r.StatusId != OrderStatus.Cancelled);
+                //conditions.Add(() => r => !(endTime < r.ReservationDate || (r.EndTime.HasValue && r.EndTime.Value < startTime || !r.EndTime.HasValue && r.ReservationDate.Value.AddHours(double.Parse(configurationDb.Items[0].PreValue)) < startTime))
+                //                          && r.StatusId != OrderStatus.Cancelled);
 
                 Expression<Func<Order, bool>> expression = r => true; // Default expression to match all
 

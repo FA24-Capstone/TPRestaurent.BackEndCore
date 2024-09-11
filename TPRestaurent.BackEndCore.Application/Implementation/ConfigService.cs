@@ -32,23 +32,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var utility = Resolve<Utility>();
                 var configDb = await _repository.GetAllDataByExpression(null, 0, 0, null, false, null);
-                if (configDb.Items.Count > 0 && configDb.Items != null)
-                {
-                    foreach (var config in configDb.Items)
-                    {
-                        if (config.ActiveDate >= utility!.GetCurrentDateTimeInTimeZone())
-                        {
-                            if (config.ActiveValue != null)
-                            {
-                                config.PreValue = config!.ActiveValue!;
-                                config.ActiveValue = null;
-                                config.ActiveDate = null;
-                                await _repository.Update(config);   
-                            }
-                        }
-                    }
-                    await _unitOfWork.SaveChangesAsync();       
-                }
+                //if (configDb.Items.Count > 0 && configDb.Items != null)
+                //{
+                //    foreach (var config in configDb.Items)
+                //    {
+                //        if (config.ActiveDate >= utility!.GetCurrentDateTimeInTimeZone())
+                //        {
+                //            if (config.ActiveValue != null)
+                //            {
+                //                config.PreValue = config!.ActiveValue!;
+                //                config.ActiveValue = null;
+                //                config.ActiveDate = null;
+                //                await _repository.Update(config);   
+                //            }
+                //        }
+                //    }
+                //    await _unitOfWork.SaveChangesAsync();       
+                //}
             }
             catch (Exception ex)
             {
@@ -70,10 +70,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var configuration = new Configuration
                 {
                     ConfigurationId = Guid.NewGuid(),
-                    ActiveDate = dto.ActiveDate,
                     Name = dto.Name,
-                    ActiveValue = dto.ActiveValue,
-                    PreValue = dto.PreValue,
+                    CurrentValue = dto.CurrentValue,
                 };
 
                 await _repository.Insert(configuration);
@@ -124,36 +122,36 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> UpdateConfiguration(UpdateConfigurationDto dto)
         {
             AppActionResult result = new AppActionResult();
-            try
-            {
-                var configurationDb = await _repository.GetById(dto.ConfigurationId);
-                if (configurationDb == null)
-                {
-                    return BuildAppActionResultError(result, $"Không tìm thấy cấu hình với id {dto.ConfigurationId}");
-                }
-                if (dto.ActiveDate.HasValue)
-                {
-                    configurationDb.ActiveDate = dto.ActiveDate.Value;
-                }
-                else
-                {
-                    if (string.IsNullOrEmpty(dto.ActiveValue))
-                    {
-                        var utility = Resolve<Utility>();
-                        configurationDb.ActiveDate = utility.GetCurrentDateTimeInTimeZone();
-                    }
-                }
+            //try
+            //{
+            //    var configurationDb = await _repository.GetById(dto.ConfigurationId);
+            //    if (configurationDb == null)
+            //    {
+            //        return BuildAppActionResultError(result, $"Không tìm thấy cấu hình với id {dto.ConfigurationId}");
+            //    }
+            //    if (dto.ActiveDate.HasValue)
+            //    {
+            //        configurationDb.ActiveDate = dto.ActiveDate.Value;
+            //    }
+            //    else
+            //    {
+            //        if (string.IsNullOrEmpty(dto.ActiveValue))
+            //        {
+            //            var utility = Resolve<Utility>();
+            //            configurationDb.ActiveDate = utility.GetCurrentDateTimeInTimeZone();
+            //        }
+            //    }
 
-                configurationDb.PreValue = dto.PreValue;
-                configurationDb.ActiveValue = dto.ActiveValue;
-                await _repository.Update(configurationDb);
-                await _unitOfWork.SaveChangesAsync();
+            //    configurationDb.PreValue = dto.PreValue;
+            //    configurationDb.ActiveValue = dto.ActiveValue;
+            //    await _repository.Update(configurationDb);
+            //    await _unitOfWork.SaveChangesAsync();
 
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
+            //}
+            //catch (Exception ex)
+            //{
+            //    result = BuildAppActionResultError(result, ex.Message);
+            //}
             return result;
         }
 

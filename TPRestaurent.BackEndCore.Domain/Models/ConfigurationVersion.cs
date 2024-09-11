@@ -8,12 +8,14 @@ using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
 {
-    public class Configuration
+    public class ConfigurationVersion
     {
-        [Key] 
+        [Key]
+        public Guid ConfigurationVersionId { get; set; }
+        public string ActiveValue { get; set; }
+        public DateTime ActiveDate { get; set; }
         public Guid ConfigurationId { get; set; }
-        public string Name { get; set; } = null!;
-        public string? VietnameseName { get; set; } = null!;
-        public string CurrentValue { get; set; } = null!;
+        [ForeignKey(nameof(ConfigurationId))]
+        public Configuration? Configuration { get; set; }
     }
 }
