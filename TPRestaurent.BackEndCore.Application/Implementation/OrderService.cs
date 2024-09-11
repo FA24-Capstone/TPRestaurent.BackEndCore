@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Castle.Core.Logging;
 using Humanizer;
 using MailKit.Search;
 using Microsoft.AspNetCore.Http;
@@ -30,12 +31,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly IGenericRepository<Order> _repository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private BackEndLogger _logger;
 
-        public OrderService(IGenericRepository<Order> repository, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service) : base(service)
+        public OrderService(IGenericRepository<Order> repository, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service, BackEndLogger logger) : base(service)
         {
             _repository = repository;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto)
@@ -1418,240 +1421,96 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return collidedTables;
         }
-        public async Task<AppActionResult> GetUpdateCartComboDto(string cartComboJson)
+        public async Task CancelOverReservation()
         {
-            AppActionResult result = new AppActionResult();
+            var utility = Resolve<Utility>();
+            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
             try
             {
-
-                ComboChoice cart = JsonConvert.DeserializeObject<ComboChoice>(cartComboJson);
-                //check combo Available
-                var comboRepository = Resolve<IGenericRepository<Combo>>();
-                var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
-                var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
-                var dishRepository = Resolve<IGenericRepository<Dish>>();
-                var utility = Resolve<Utility>();
-                var currentTime = utility.GetCurrentDateTimeInTimeZone();
-                Combo comboDb = null;
-                DishCombo dishComboDb = null;
-                DishSizeDetail dishSizeDetailDb = null;
-                Dish dishDb = null;
-                foreach (var cartItem in cart.Items)
+                var currentTime = utility!.GetCurrentDateTimeInTimeZone().AddHours(24);
+                var pastReservationDb = await _repository.GetAllDataByExpression(
+                    (p => p.ReservationDate.HasValue && p.ReservationDate.Value.AddHours(24) < currentTime &&
+                    (p.StatusId == OrderStatus.Pending || p.StatusId == OrderStatus.TableAssigned
+                    )), 0, 0, null, false, null
+                    );
+                if (pastReservationDb!.Items!.Count > 0 && pastReservationDb.Items != null)
                 {
-                    comboDb = await comboRepository.GetById(Guid.Parse(cartItem.ComboId));
-                    if(comboDb == null)
+                    foreach (var reservation in pastReservationDb.Items)
                     {
-                        cart.Items.Remove(cartItem);
-                        if (cart.Items.Count == 0) break;
-                        continue;   
-                    }
-
-                    if(comboDb.EndDate <= currentTime)
-                    {
-                        cart.Items.Remove(cartItem);
-                        if (cart.Items.Count == 0) break;
-                        continue;
-                    }
-
-                    cartItem.Price = comboDb.Price;
-                    foreach(var dishDetailList in cartItem.SelectedDishes.Values)
-                    {
-                        foreach(var dishDetail in dishDetailList)
+                        reservation.StatusId = OrderStatus.Cancelled;
+                        await _repository.Update(reservation);
+                        var orderDetailsDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderId == reservation.OrderId, 0, 0, null, false, null);
+                        if (orderDetailsDb!.Items!.Count > 0 && orderDetailsDb.Items != null)
                         {
-                            dishComboDb = await dishComboRepository.GetById(Guid.Parse(dishDetail.DishComboId));
-                            if(dishComboDb == null)
+                            foreach (var orderDetail in orderDetailsDb.Items)
                             {
-                                dishDetailList.Remove(dishDetail);
-                                if (dishDetailList.Count == 0) break;
-                                continue;
+                                orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
+                                await orderDetailRepository.Update(orderDetail);
                             }
-
-                            dishSizeDetailDb = await dishSizeDetailRepository.GetById(Guid.Parse(dishDetail.DishSizeDetail.DishSizeDetailId));
-                            if (dishSizeDetailDb == null)
-                            {
-                                cart.Items.Remove(cartItem); 
-                                if (dishDetailList.Count == 0) break;
-                                continue;
-                            }
-
-                            if (!dishSizeDetailDb.IsAvailable)
-                            {
-                                dishDetailList.Remove(dishDetail);
-                                if (dishDetailList.Count == 0) break;
-                                continue;
-                            }
-
-                            dishDetail.DishSizeDetail.Price = dishSizeDetailDb.Price;
-                            dishDetail.DishSizeDetail.Discount = dishSizeDetailDb.Discount;
-
-                            dishDb = await dishRepository.GetById(Guid.Parse(dishDetail.DishSizeDetail.Dish.DishId));
-                            if (dishDb == null)
-                            {
-                                cart.Items.Remove(cartItem);
-                                if (dishDetailList.Count == 0) break;
-                                continue;
-                            }
-
-                            if (!dishDb.isAvailable)
-                            {
-                                dishDetailList.Remove(dishDetail);
-                                if (dishDetailList.Count == 0) break;
-                                continue;
-                            }
-
-                            dishDetail.DishSizeDetail.Dish.Name = dishDb.Name;
-                            dishDetail.DishSizeDetail.Dish.Description = dishDb.Description;
-                            dishDetail.DishSizeDetail.Dish.Image = dishDb.Image;
                         }
                     }
-                    cartItem.Total = cartItem.Price * cartItem.Quantity;
                 }
-                string unProcessedJson = JsonConvert.SerializeObject(cart);
-                string[] words = unProcessedJson.Split(":/");
-                result.Result = string.Join(":", words);
-                //for each check dish dishSizeDetailId Price Isavailable, dishId Hin2h anh3 is Available
-            } catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
-        }
-        public async Task<AppActionResult> GetUpdateCartDishDto(string cartDishJson)
-        {
-            AppActionResult result = new AppActionResult();
-            try
-            {
-                List<CartDishItem> cart = JsonConvert.DeserializeObject<List<CartDishItem>>(cartDishJson);
-
-                var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
-                var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
-                var dishRepository = Resolve<IGenericRepository<Dish>>();
-                var utility = Resolve<Utility>();
-                var currentTime = utility.GetCurrentDateTimeInTimeZone();
-                Combo comboDb = null;
-                DishCombo dishComboDb = null;
-                DishSizeDetail dishSizeDetailDb = null;
-                Dish dishDb = null;
-                foreach (var dish in cart)
-                {
-                    dishDb = await dishRepository.GetById(dish.Dish.DishId);
-                    if (dishDb == null)
-                    {
-                        cart.Remove(dish);
-                        if (cart.Count == 0) break;
-                        continue;
-                    }
-
-                    if (!dishDb.isAvailable)
-                    {
-                        cart.Remove(dish);
-                        if (cart.Count == 0) break;
-                        continue;
-                    }
-
-                    dish.Dish.Name = dishDb.Name;
-                    dish.Dish.Description = dishDb.Description;
-                    dish.Dish.Image = dishDb.Image;
-
-                    dishSizeDetailDb = await dishSizeDetailRepository.GetById(dish.Size.DishSizeDetailId);
-                    if (dishSizeDetailDb == null)
-                    {
-                        cart.Remove(dish);
-                        if (cart.Count == 0) break;
-                        continue;
-                    }
-
-                    if (!dishSizeDetailDb.IsAvailable)
-                    {
-                        cart.Remove(dish);
-                        if (cart.Count == 0) break;
-                        continue;
-                    }
-
-                    dish.Size.Price = dishSizeDetailDb.Price;
-                    dish.Size.Discount = dishSizeDetailDb.Discount;
-
-                    dish.Size.Dish.Name = dishDb.Name;
-                    dish.Size.Dish.Description = dishDb.Description;
-                    dish.Size.Dish.Image = dishDb.Image;
-
-                    string unProcessedJson = JsonConvert.SerializeObject(cart);
-                    string[] words = unProcessedJson.Split(":/");
-                    result.Result = string.Join(":", words);
-                }
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
-        }
-        public async Task<AppActionResult> UpdateOrderDetailStatus(List<Guid> orderDetailIds)
-        {
-            AppActionResult result = new AppActionResult();
-            try
-            {
-                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => orderDetailIds.Contains(p.OrderDetailId), 0, 0, null, false, null);
-                if (orderDetailDb.Items.Count != orderDetailIds.Count)
-                {
-                    return BuildAppActionResultError(result, $"Tồn tại id gọi món hông nằm trong hệ thống");
-                }
-
-                var utility = Resolve<Utility>();
-                var time = utility.GetCurrentDateTimeInTimeZone();
-                if (orderDetailDb.Items[0].OrderDetailStatusId == OrderDetailStatus.Unchecked)
-                {
-                    orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = OrderDetailStatus.Read);
-                }
-                else if (orderDetailDb.Items[0].OrderDetailStatusId == OrderDetailStatus.Read)
-                {
-                    orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = OrderDetailStatus.ReadyToServe);
-                }
-
-                await orderDetailRepository.UpdateRange(orderDetailDb.Items);
                 await _unitOfWork.SaveChangesAsync();
-                result.Result = orderDetailDb;
             }
             catch (Exception ex)
             {
-                result = BuildAppActionResultError(result, ex.Message);
+                _logger.LogError(ex.Message, this);
             }
-            return result;
+            Task.CompletedTask.Wait();
         }
 
-        public async Task<AppActionResult> GetCurrentTableSession()
+        public async Task UpdateOrderStatusBeforeMealTime()
         {
-            AppActionResult result = new AppActionResult();
+            var utility = Resolve<Utility>();
             try
             {
-                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-                var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
-                var tableDetailDb = await tableDetailRepository.GetAllDataByExpression(t => t.Order.StatusId == OrderStatus.Dining, 0, 0, null, false, t => t.Table, t => t.Order);
-                if (tableDetailDb.Items.Count > 0)
+                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+                var orderListDb = await _repository.GetAllDataByExpression(p => p.MealTime!.Value.AddHours(-1) <= currentTime && p.StatusId == OrderStatus.DepositPaid, 0, 0, null, false, null);
+                if (orderListDb!.Items!.Count > 0 && orderListDb.Items != null)
                 {
-                    var latestSessionByTable = tableDetailDb.Items.GroupBy(t => t.TableId).Select(t => t.OrderByDescending(ta => ta.StartTime).FirstOrDefault());
-                    List<KitchenTableSimpleResponse> data = new List<KitchenTableSimpleResponse>();
-                    foreach (var item in latestSessionByTable)
+                    foreach (var order in orderListDb.Items)
                     {
-                        var uncheckedPreorderList = await orderDetailRepository.GetAllDataByExpression(p => p.OrderId == item.OrderId && p.OrderDetailStatusId == OrderDetailStatus.Unchecked, 0, 0, null, false, null);
-                        data.Add(new KitchenTableSimpleResponse
-                        {
-                            TableId = item.TableId,
-                            OrderId = item.OrderId,
-                            TableName = item.Table.TableName,
-                            UnCheckedNumberOfDishes = uncheckedPreorderList.Items.Count
-                        });
+                        order.StatusId = OrderStatus.Dining;
+                        await _repository.Update(order);
                     }
-                    result.Result = data;
                 }
+                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
-                result = BuildAppActionResultError(result, ex.Message);
+                _logger.LogError(ex.Message, this);
             }
-            return result;
+            Task.CompletedTask.Wait();
         }
 
+        public async Task UpdateOrderDetailStatusBeforeDining()
+        {
+            var utility = Resolve<Utility>();
+            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+            try
+            {
+                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+                var orderListDb = await _repository.GetAllDataByExpression(p => p.MealTime!.Value.AddMinutes(-30) <= currentTime && p.StatusId == OrderStatus.Dining, 0, 0, null, false, null);
+                if (orderListDb!.Items!.Count > 0 && orderListDb.Items != null)
+                {
+                    var orderIds = orderListDb.Items.Select(o => o.OrderId).ToList();
+                    var orderDetailsDb = await orderDetailRepository!.GetAllDataByExpression(p => orderIds.Contains(p.OrderId) && p.OrderDetailStatusId == OrderDetailStatus.Pending, 0, 0, null, false, null);
+                    if (orderDetailsDb!.Items!.Count > 0 && orderListDb.Items != null)
+                    {
+                        foreach (var orderDetail in orderDetailsDb.Items)
+                        {
+                            orderDetail.OrderDetailStatusId = OrderDetailStatus.Unchecked;
+                        }
+                        await orderDetailRepository.UpdateRange(orderDetailsDb.Items);
+                    }
+                }
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, this);
+            }
+            Task.CompletedTask.Wait();
+        }
     }
 }

@@ -25,10 +25,8 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto);
         //public Task<AppActionResult> GetOrderTotal(CalculateOrderRequest orderRequestDto);
         //public Task<AppActionResult> GetOrderJsonByTableSessionId(Guid TableSessionId);
-        public Task<AppActionResult> GetUpdateCartComboDto(string cartComboJson);
-        public Task<AppActionResult> GetUpdateCartDishDto(string cartDishJson);
-        public Task<AppActionResult> UpdateOrderDetailStatus(List<Guid> orderDetailIds);
-        public Task<AppActionResult> GetCurrentTableSession();
-
+        public Task CancelOverReservation();
+        public Task UpdateOrderStatusBeforeMealTime();
+        public Task UpdateOrderDetailStatusBeforeDining();
     }
 }
