@@ -309,17 +309,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         result = BuildAppActionResultError(result, $"Tạo ví không thành công");
                     }
-                    var expireTimeInDay = double.Parse(configurationDb.PreValue);
-                    var storeCreditRepository = Resolve<IGenericRepository<StoreCredit>>();
-                    var utility = Resolve<Utility>();
-                    var newStoreCreditDb = new StoreCredit
-                    {
-                        StoreCreditId = Guid.NewGuid(),
-                        Amount = 0,
-                        ExpiredDate = utility.GetCurrentDateInTimeZone().AddDays(expireTimeInDay),
-                        AccountId = user.Id
-                    };
-                    await storeCreditRepository.Insert(newStoreCreditDb);
+                    //var expireTimeInDay = double.Parse(configurationDb.PreValue);
+                    //var storeCreditRepository = Resolve<IGenericRepository<StoreCredit>>();
+                    //var utility = Resolve<Utility>();
+                    //var newStoreCreditDb = new StoreCredit
+                    //{
+                    //    StoreCreditId = Guid.NewGuid(),
+                    //    Amount = 0,
+                    //    ExpiredDate = utility.GetCurrentDateInTimeZone().AddDays(expireTimeInDay),
+                    //    AccountId = user.Id
+                    //};
+                    //await storeCreditRepository.Insert(newStoreCreditDb);
                     await _unitOfWork.SaveChangesAsync();
                 }
             }
