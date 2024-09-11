@@ -20,11 +20,15 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> GetOrderByTime(double? minute, int pageNumber, int pageSize);
         public Task<AppActionResult> CalculateReservation(ReservationDto request);
         public Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto, HttpContext httpContext);
-        //public Task<AppActionResult> CompleteOrder(OrderPaymentRequestDto orderRequestDto);
+        public Task<AppActionResult> CompleteOrder(OrderPaymentRequestDto orderRequestDto, HttpContext context);
         public Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful);
         public Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto);
         //public Task<AppActionResult> GetOrderTotal(CalculateOrderRequest orderRequestDto);
         //public Task<AppActionResult> GetOrderJsonByTableSessionId(Guid TableSessionId);
+        public Task<AppActionResult> GetUpdateCartComboDto(string cartComboJson);
+        public Task<AppActionResult> GetUpdateCartDishDto(string cartDishJson);
+        public Task<AppActionResult> UpdateOrderDetailStatus(List<Guid> orderDetailIds);
+        public Task<AppActionResult> GetCurrentTableSession();
 
     }
 }

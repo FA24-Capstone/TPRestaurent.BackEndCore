@@ -65,6 +65,35 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.CreateOrder(dto, HttpContext);
         }
 
+        [HttpPost("complete-order")]
+        public async Task<AppActionResult> CompleteOrder([FromBody] OrderPaymentRequestDto dto)
+        {
+            return await _service.CompleteOrder(dto, HttpContext);
+        }
+
+        [HttpGet("get-cart-combo-item")]
+        public async Task<AppActionResult> GetCartItem(string cartItem)
+        {
+            return await _service.GetUpdateCartComboDto(cartItem);
+        }
+
+        [HttpGet("get-cart-dish-item")]
+        public async Task<AppActionResult> GetUpdateCartDishDto(string cartItem)
+        {
+            return await _service.GetUpdateCartDishDto(cartItem);
+        }
+
+        [HttpPost("update-order-detail-status")]
+        public async Task<AppActionResult> UpdatePrelistOrderStatus(List<Guid> list)
+        {
+            return await _service.UpdateOrderDetailStatus(list);
+        }
+
+        [HttpGet("get-current-table-session")]
+        public async Task<AppActionResult> GetCurrentTableSession()
+        {
+            return await _service.GetCurrentTableSession();
+        }
 
         //[HttpPut("change-order-status/{orderId}")]
         //public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool isSuccessful)
