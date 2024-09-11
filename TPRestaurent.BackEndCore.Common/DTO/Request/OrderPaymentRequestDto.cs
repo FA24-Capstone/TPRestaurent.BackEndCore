@@ -10,9 +10,8 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
     public class OrderPaymentRequestDto
     {
         public Guid OrderId { get; set; }
-        public PaymentMethod PaymentMethodId { get; set; }
-        public Guid? LoyalPointsHistoryId { get; set; }
-        public Guid? CouponId { get; set; }
+        public PaymentMethod PaymentMethod { get; set; }
+        public List<Guid>? CouponIds { get; set; } = new List<Guid> { };
         public int? LoyalPointsToUse { get; set; }
 
     }

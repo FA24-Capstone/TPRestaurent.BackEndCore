@@ -10,7 +10,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
     {
         public Guid TableId { get; set; }
         public string TableName { get; set; }
-        public Guid TableSessionId { get; set; }
+        public Guid OrderId { get; set; }
         public int UnCheckedNumberOfDishes { get; set; }
     }
 }
