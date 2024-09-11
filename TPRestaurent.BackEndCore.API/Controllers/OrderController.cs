@@ -65,10 +65,10 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.CreateOrder(dto, HttpContext);
         }
 
-        [HttpPost("complete-order")]
-        public async Task<AppActionResult> CompleteOrder([FromBody] OrderPaymentRequestDto dto)
+        [HttpPost("make-dine-in-order-bill")]
+        public async Task<AppActionResult> MakeDineInOrderBill([FromBody] OrderPaymentRequestDto dto)
         {
-            return await _service.CompleteOrder(dto, HttpContext);
+            return await _service.MakeDineInOrderBill(dto, HttpContext);
         }
 
         [HttpGet("get-cart-combo-item")]
@@ -84,9 +84,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("update-order-detail-status")]
-        public async Task<AppActionResult> UpdatePrelistOrderStatus(List<Guid> list)
+        public async Task<AppActionResult> UpdatePrelistOrderStatus(List<Guid> list, bool? isSuccessful = true)
         {
-            return await _service.UpdateOrderDetailStatus(list);
+            return await _service.UpdateOrderDetailStatus(list, !isSuccessful.HasValue || isSuccessful.HasValue && isSuccessful.Value);
         }
 
         [HttpGet("get-current-table-session")]

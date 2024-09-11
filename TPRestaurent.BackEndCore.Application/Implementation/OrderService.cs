@@ -719,7 +719,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> CompleteOrder(OrderPaymentRequestDto orderRequestDto, HttpContext context)
+        public async Task<AppActionResult> MakeDineInOrderBill(OrderPaymentRequestDto orderRequestDto, HttpContext context)
         {
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
@@ -738,7 +738,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
 
                     var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-                    var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == o.OrderId && o.OrderDetailStatusId != OrderDetailStatus.Cancelled, 0, 0, null, false, null);
+                    var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderRequestDto.OrderId && o.OrderDetailStatusId != OrderDetailStatus.Cancelled, 0, 0, null, false, null);
                     double money = 0;
                     orderDetailDb.Items.ForEach(o => money += o.Price * o.Quantity);
 
@@ -785,7 +785,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     break;
                                 }
 
-                                if(coupon == null || coupon != null && !coupon.IsUsedOrExpired)
+                                if(coupon == null || coupon != null && coupon.IsUsedOrExpired)
                                 {
                                     return BuildAppActionResultError(result, $"Coupon với {coupon.CouponId} không được khả dụng");
                                 }
@@ -856,14 +856,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             };
 
                             await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
-
-
                             customerInfo.Account.LoyaltyPoint = newLoyalPointHistory.NewBalance;
-                            await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
-
-                            customerInfo.Account.LoyaltyPoint = newLoyalPointHistory.NewBalance;
-
                         }
+
+                        orderDb.TotalAmount = money;
 
                         if (!BuildAppActionResultIsError(result))
                         {
@@ -1532,29 +1528,30 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 DishCombo dishComboDb = null;
                 DishSizeDetail dishSizeDetailDb = null;
                 Dish dishDb = null;
-                foreach (var cartItem in cart.Items)
+                double total = 0;
+                foreach (var cartItem in cart.items)
                 {
-                    comboDb = await comboRepository.GetById(Guid.Parse(cartItem.ComboId));
+                    comboDb = await comboRepository.GetById(Guid.Parse(cartItem.comboId));
                     if(comboDb == null)
                     {
-                        cart.Items.Remove(cartItem);
-                        if (cart.Items.Count == 0) break;
+                        cart.items.Remove(cartItem);
+                        if (cart.items.Count == 0) break;
                         continue;   
                     }
 
                     if(comboDb.EndDate <= currentTime)
                     {
-                        cart.Items.Remove(cartItem);
-                        if (cart.Items.Count == 0) break;
+                        cart.items.Remove(cartItem);
+                        if (cart.items.Count == 0) break;
                         continue;
                     }
 
-                    cartItem.Price = comboDb.Price;
-                    foreach(var dishDetailList in cartItem.SelectedDishes.Values)
+                    cartItem.price = comboDb.Price;
+                    foreach(var dishDetailList in cartItem.selectedDishes.Values)
                     {
                         foreach(var dishDetail in dishDetailList)
                         {
-                            dishComboDb = await dishComboRepository.GetById(Guid.Parse(dishDetail.DishComboId));
+                            dishComboDb = await dishComboRepository.GetById(Guid.Parse(dishDetail.dishComboId));
                             if(dishComboDb == null)
                             {
                                 dishDetailList.Remove(dishDetail);
@@ -1562,10 +1559,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 continue;
                             }
 
-                            dishSizeDetailDb = await dishSizeDetailRepository.GetById(Guid.Parse(dishDetail.DishSizeDetail.DishSizeDetailId));
+                            dishSizeDetailDb = await dishSizeDetailRepository.GetById(Guid.Parse(dishDetail.dishSizeDetail.dishSizeDetailId));
                             if (dishSizeDetailDb == null)
                             {
-                                cart.Items.Remove(cartItem); 
+                                cart.items.Remove(cartItem); 
                                 if (dishDetailList.Count == 0) break;
                                 continue;
                             }
@@ -1576,14 +1573,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 if (dishDetailList.Count == 0) break;
                                 continue;
                             }
+                            
+                            dishDetail.dishSizeDetail.price = dishSizeDetailDb.Price;
+                            dishDetail.dishSizeDetail.discount = dishSizeDetailDb.Discount;
 
-                            dishDetail.DishSizeDetail.Price = dishSizeDetailDb.Price;
-                            dishDetail.DishSizeDetail.Discount = dishSizeDetailDb.Discount;
-
-                            dishDb = await dishRepository.GetById(Guid.Parse(dishDetail.DishSizeDetail.Dish.DishId));
+                            dishDb = await dishRepository.GetById(Guid.Parse(dishDetail.dishSizeDetail.dish.dishId));
                             if (dishDb == null)
                             {
-                                cart.Items.Remove(cartItem);
+                                cart.items.Remove(cartItem);
                                 if (dishDetailList.Count == 0) break;
                                 continue;
                             }
@@ -1595,16 +1592,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 continue;
                             }
 
-                            dishDetail.DishSizeDetail.Dish.Name = dishDb.Name;
-                            dishDetail.DishSizeDetail.Dish.Description = dishDb.Description;
-                            dishDetail.DishSizeDetail.Dish.Image = dishDb.Image;
+                            dishDetail.dishSizeDetail.dish.name = dishDb.Name;
+                            dishDetail.dishSizeDetail.dish.description = dishDb.Description;
+                            dishDetail.dishSizeDetail.dish.image = dishDb.Image;
                         }
                     }
-                    cartItem.Total = cartItem.Price * cartItem.Quantity;
+                    total += cartItem.price * cartItem.quantity;
                 }
+                cart.total = total;
                 string unProcessedJson = JsonConvert.SerializeObject(cart);
-                string[] words = unProcessedJson.Split(":/");
-                result.Result = string.Join(":", words);
+                string formattedJson = unProcessedJson.Replace("\\", "");
+                result.Result = formattedJson;
                 //for each check dish dishSizeDetailId Price Isavailable, dishId Hin2h anh3 is Available
             } catch (Exception ex)
             {
@@ -1630,7 +1628,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 Dish dishDb = null;
                 foreach (var dish in cart)
                 {
-                    dishDb = await dishRepository.GetById(dish.Dish.DishId);
+                    dishDb = await dishRepository.GetById(Guid.Parse(dish.dish.dishId));
                     if (dishDb == null)
                     {
                         cart.Remove(dish);
@@ -1645,11 +1643,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         continue;
                     }
 
-                    dish.Dish.Name = dishDb.Name;
-                    dish.Dish.Description = dishDb.Description;
-                    dish.Dish.Image = dishDb.Image;
+                    dish.dish.name = dishDb.Name;
+                    dish.dish.description = dishDb.Description;
+                    dish.dish.image = dishDb.Image;
 
-                    dishSizeDetailDb = await dishSizeDetailRepository.GetById(dish.Size.DishSizeDetailId);
+                    dishSizeDetailDb = await dishSizeDetailRepository.GetById(Guid.Parse(dish.size.dishSizeDetailId));
                     if (dishSizeDetailDb == null)
                     {
                         cart.Remove(dish);
@@ -1664,16 +1662,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         continue;
                     }
 
-                    dish.Size.Price = dishSizeDetailDb.Price;
-                    dish.Size.Discount = dishSizeDetailDb.Discount;
+                    dish.size.price = dishSizeDetailDb.Price;
+                    dish.size.discount = dishSizeDetailDb.Discount;
 
-                    dish.Size.Dish.Name = dishDb.Name;
-                    dish.Size.Dish.Description = dishDb.Description;
-                    dish.Size.Dish.Image = dishDb.Image;
+                    dish.size.dish.name = dishDb.Name;
+                    dish.size.dish.description = dishDb.Description;
+                    dish.size.dish.image = dishDb.Image;
 
                     string unProcessedJson = JsonConvert.SerializeObject(cart);
-                    string[] words = unProcessedJson.Split(":/");
-                    result.Result = string.Join(":", words);
+                    string formattedJson = unProcessedJson.Replace("\\\"", "\"");
+                    result.Result = formattedJson;
                 }
             }
             catch (Exception ex)
@@ -1682,7 +1680,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-        public async Task<AppActionResult> UpdateOrderDetailStatus(List<Guid> orderDetailIds)
+        public async Task<AppActionResult> UpdateOrderDetailStatus(List<Guid> orderDetailIds, bool isSuccessful)
         {
             AppActionResult result = new AppActionResult();
             try
@@ -1702,7 +1700,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else if (orderDetailDb.Items[0].OrderDetailStatusId == OrderDetailStatus.Read)
                 {
-                    orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = OrderDetailStatus.ReadyToServe);
+                    if (isSuccessful)
+                    {
+                        orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = OrderDetailStatus.ReadyToServe);
+                    }
+                    else
+                    {
+                        orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = OrderDetailStatus.Cancelled);
+                    }
                 }
 
                 await orderDetailRepository.UpdateRange(orderDetailDb.Items);

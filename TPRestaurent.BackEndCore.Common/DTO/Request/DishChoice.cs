@@ -9,49 +9,49 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
 {
     public class DishChoice
     {
-        public List<CartDishItem> Items { get; set; } = new List<CartDishItem> { };
+        public List<CartDishItem> items { get; set; } = new List<CartDishItem> { };
     }
 
     public class CartDishItem
     {
-        public CartSizeDetail Dish { get; set; }
-        public CartDishSize Size { get; set; }
-        public int Quantity { get; set; }
+        public CartSizeDetail dish { get; set; }
+        public CartDishSize size { get; set; }
+        public int quantity { get; set; }
     }
 
     public class CartSizeDetail
     {
-        public string DishId { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public string Image { get; set; }
-        public int DishItemTypeId { get; set; }
-        public CartDishItemType DishItemType { get; set; }
-        public bool IsAvailable { get; set; }
+        public string dishId { get; set; }
+        public string name { get; set; }
+        public string description { get; set; }
+        public string image { get; set; }
+        public int dishItemTypeId { get; set; }
+        public CartDishItemType dishItemType { get; set; }
+        public bool isAvailable { get; set; }
     }
 
     public class CartDishItemType
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string VietnameseName { get; set; }
+        public int id { get; set; }
+        public string name { get; set; }
+        public string vietnameseName { get; set; }
     }
 
     public class CartDishSize
     {
-        public string DishSizeDetailId { get; set; }
-        public bool IsAvailable { get; set; }
-        public double Price { get; set; }
-        public double Discount { get; set; }
-        public CartSizeDetail Dish { get; set; }
-        public int DishSizeId { get; set; }
-        public DishSizeDetails DishSize { get; set; }
+        public string dishSizeDetailId { get; set; }
+        public bool isAvailable { get; set; }
+        public double price { get; set; }
+        public double discount { get; set; }
+        public CartSizeDetail dish { get; set; }
+        public int dishSizeId { get; set; }
+        public DishSizeDetails dishSize { get; set; }
     }
 
     public class DishSizeDetails
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string VietnameseName { get; set; }
+        public int id { get; set; }
+        public string name { get; set; }
+        public string vietnameseName { get; set; }
     }
 }
