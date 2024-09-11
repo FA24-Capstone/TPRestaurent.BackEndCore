@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Castle.Core.Logging;
 using Humanizer;
 using MailKit.Search;
 using Microsoft.AspNetCore.Http;
@@ -28,12 +29,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly IGenericRepository<Order> _repository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private BackEndLogger _logger;
 
-        public OrderService(IGenericRepository<Order> repository, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service) : base(service)
+        public OrderService(IGenericRepository<Order> repository, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service, BackEndLogger logger) : base(service)
         {
             _repository = repository;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto)
@@ -1414,6 +1417,97 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 return new List<Table>();
             }
             return collidedTables;
+        }
+        public async Task CancelOverReservation()
+        {
+            var utility = Resolve<Utility>();
+            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+            try
+            {
+                var currentTime = utility!.GetCurrentDateTimeInTimeZone().AddHours(24);
+                var pastReservationDb = await _repository.GetAllDataByExpression(
+                    (p => p.ReservationDate.HasValue && p.ReservationDate.Value.AddHours(24) < currentTime &&
+                    (p.StatusId == OrderStatus.Pending || p.StatusId == OrderStatus.TableAssigned
+                    )), 0, 0, null, false, null
+                    );
+                if (pastReservationDb!.Items!.Count > 0 && pastReservationDb.Items != null)
+                {
+                    foreach (var reservation in pastReservationDb.Items)
+                    {
+                        reservation.StatusId = OrderStatus.Cancelled;
+                        await _repository.Update(reservation);
+                        var orderDetailsDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderId == reservation.OrderId, 0, 0, null, false, null);
+                        if (orderDetailsDb!.Items!.Count > 0 && orderDetailsDb.Items != null)
+                        {
+                            foreach (var orderDetail in orderDetailsDb.Items)
+                            {
+                                orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
+                                await orderDetailRepository.Update(orderDetail);
+                            }
+                        }
+                    }
+                }
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, this);
+            }
+            Task.CompletedTask.Wait();
+        }
+
+        public async Task UpdateOrderStatusBeforeMealTime()
+        {
+            var utility = Resolve<Utility>();
+            try
+            {
+                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+                var orderListDb = await _repository.GetAllDataByExpression(p => p.MealTime!.Value.AddHours(-1) <= currentTime && p.StatusId == OrderStatus.DepositPaid, 0, 0, null, false, null);
+                if (orderListDb!.Items!.Count > 0 && orderListDb.Items != null)
+                {
+                    foreach (var order in orderListDb.Items)
+                    {
+                        order.StatusId = OrderStatus.Dining;
+                        await _repository.Update(order);
+                    }
+                }
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, this);
+            }
+            Task.CompletedTask.Wait();
+        }
+
+        public async Task UpdateOrderDetailStatusBeforeDining()
+        {
+            var utility = Resolve<Utility>();
+            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+            try
+            {
+                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+                var orderListDb = await _repository.GetAllDataByExpression(p => p.MealTime!.Value.AddMinutes(-30) <= currentTime && p.StatusId == OrderStatus.Dining, 0, 0, null, false, null);
+                if (orderListDb!.Items!.Count > 0 && orderListDb.Items != null)
+                {
+                    var orderIds = orderListDb.Items.Select(o => o.OrderId).ToList();
+                    var orderDetailsDb = await orderDetailRepository!.GetAllDataByExpression(p => orderIds.Contains(p.OrderId) && p.OrderDetailStatusId == OrderDetailStatus.Pending, 0, 0, null, false, null);
+                    if (orderDetailsDb!.Items!.Count > 0 && orderListDb.Items != null)
+                    {
+                        foreach (var orderDetail in orderDetailsDb.Items)
+                        {
+                            orderDetail.OrderDetailStatusId = OrderDetailStatus.Unchecked;
+                        }
+                        await orderDetailRepository.UpdateRange(orderDetailsDb.Items);
+                    }
+                }
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, this);
+            }
+            Task.CompletedTask.Wait();
         }
     }
 }
