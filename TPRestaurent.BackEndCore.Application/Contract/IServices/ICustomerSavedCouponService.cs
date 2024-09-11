@@ -11,5 +11,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
     {
         public Task<AppActionResult> GetAllCustomerCoupon(string accountId, int pageNumber, int pageSize);
         public Task<AppActionResult> TakeCoupon(string accountId, Guid couponId);
+        public Task UpdateExpiredCouponStatus();
     }
 }
