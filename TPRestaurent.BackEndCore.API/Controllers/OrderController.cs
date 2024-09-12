@@ -95,6 +95,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.GetCurrentTableSession();
         }
 
+        [HttpPost("suggest-table")]
+        public async Task<AppActionResult> SuggestTable(SuggestTableDto dto)
+        {
+            return await _service.SuggestTable(dto);
+        }
+
         //[HttpPut("change-order-status/{orderId}")]
         //public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool isSuccessful)
         //{
