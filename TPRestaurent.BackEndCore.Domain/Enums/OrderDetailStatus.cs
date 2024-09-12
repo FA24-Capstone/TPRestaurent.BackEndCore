@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Domain.Enums
 {
-    public enum ReservationStatus
+    public enum OrderDetailStatus
     {
-        PENDING,
-        TABLEASSIGNED,
-        PAID,
-        DINING,
-        CANCELLED,
+        Pending = 1,
+        Unchecked = 2,
+        Read = 3,
+        ReadyToServe = 4,
+        Cancelled = 5
     }
 }

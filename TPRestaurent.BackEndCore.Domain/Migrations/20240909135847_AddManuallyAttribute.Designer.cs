@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240909135847_AddManuallyAttribute")]
+    partial class AddManuallyAttribute
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -428,11 +430,17 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("CurrentValue")
-                        .IsRequired()
+                    b.Property<DateTime?>("ActiveDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ActiveValue")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PreValue")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -442,29 +450,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasKey("ConfigurationId");
 
                     b.ToTable("Configurations");
-                });
-
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.ConfigurationVersion", b =>
-                {
-                    b.Property<Guid>("ConfigurationVersionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("ActiveDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ActiveValue")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("ConfigurationId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("ConfigurationVersionId");
-
-                    b.HasIndex("ConfigurationId");
-
-                    b.ToTable("ConfigurationVersions");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Coupon", b =>
@@ -1857,17 +1842,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Navigation("DishCombo");
 
                     b.Navigation("OrderDetail");
-                });
-
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.ConfigurationVersion", b =>
-                {
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Configuration", "Configuration")
-                        .WithMany()
-                        .HasForeignKey("ConfigurationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Configuration");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.CustomerInfo", b =>

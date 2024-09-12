@@ -105,7 +105,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             var dishExisted = await dishSizeDetailRepository!.GetById(dishId.DishSizeDetailId);
                             if (dishExisted == null)
                             {
-                                result = BuildAppActionResultError(result, $"Size món ăn với id {dishId.DishSizeDetailId} không tồn tại");
+                                result = BuildAppActionResultError(result, $"size món ăn với id {dishId.DishSizeDetailId} không tồn tại");
                             }
                             var dishCombo = new DishCombo
                             {

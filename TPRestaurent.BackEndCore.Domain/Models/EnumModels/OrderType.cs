@@ -7,12 +7,10 @@ using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Domain.Models.EnumModels
 {
-    public class ReservationStatus
+    public class OrderType
     {
         [Key]
-        public TPRestaurent.BackEndCore.Domain.Enums.ReservationStatus Id { get; set; }
+        public TPRestaurent.BackEndCore.Domain.Enums.OrderType Id { get; set; }
         public string Name { get; set; } = null!;
-        public string? VietnameseName { get; set; } = null!;
-
     }
 }

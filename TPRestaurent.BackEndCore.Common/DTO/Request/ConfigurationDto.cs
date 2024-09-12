@@ -9,8 +9,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
     public class ConfigurationDto
     {
         public string Name { get; set; } = null!;
-        public string PreValue { get; set; } = null!;
-        public string? ActiveValue { get; set; }
-        public DateTime? ActiveDate { get; set; }
+        public string CurrentValue { get; set; } = null!;
     }
 }

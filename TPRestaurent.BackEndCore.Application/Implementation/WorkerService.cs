@@ -14,27 +14,37 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private BackEndLogger _logger;
         private IReservationService _reservationService;
         private IConfigService _configService; 
+        private IOrderService _orderService; 
         private IUnitOfWork _unitOfWork;
+        private ICustomerSavedCouponService _customerSavedCouponService;
 
-        public WorkerService(IServiceProvider serviceProvider, 
-            BackEndLogger logger, 
+        public WorkerService(IServiceProvider serviceProvider,
+            BackEndLogger logger,
             IUnitOfWork unitOfWork,
-            IReservationService reservationService,
+            IOrderService orderService,
+            ICustomerSavedCouponService customerSavedCouponService,
+            //IReservationService reservationService,
             IConfigService configService
             ) : base(serviceProvider)
         {
             _logger = logger;
             _unitOfWork = unitOfWork;
-            _reservationService = reservationService;   
-            _configService = configService; 
+            //_reservationService = reservationService;   
+            _configService = configService;
+            _orderService = orderService;
+            _customerSavedCouponService = customerSavedCouponService;   
         }
 
         public async Task Start()
         {
-            //TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
             //RecurringJob.AddOrUpdate(() =>  _reservationService.CancelOverdueReservations(), Cron.DayInterval(1), vietnamTimeZone);
             //RecurringJob.AddOrUpdate(() => _configService.ChangeConfigurationJob(), Cron.DayInterval(1), vietnamTimeZone);
-            //BackgroundJob.Enqueue(() => _configService.ChangeConfigurationJob());
+            //BackgroundJob.Enqueue(() => _orderService.CancelOverReservation());
+            //BackgroundJob.Enqueue(() => _orderService.CancelOverReservation());
+            //BackgroundJob.Enqueue(() => _orderService.UpdateOrderDetailStatusBeforeDining());
+            //BackgroundJob.Enqueue(() => _customerSavedCouponService.UpdateExpiredCouponStatus());
+            BackgroundJob.Enqueue(() => _configService.ChangeConfigurationJob());
         }
     }
 }

@@ -205,7 +205,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var dishSizeDetailsDb = await dishSizeRepository.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.Dish!, p => p.DishSize!);
                 if (dishSizeDetailsDb!.Items!.Count < 0 && dishSizeDetailsDb.Items == null)
                 {
-                    result = BuildAppActionResultError(result, $"Size món ăn với id {dishId} không tồn tại");
+                    result = BuildAppActionResultError(result, $"size món ăn với id {dishId} không tồn tại");
                 }
                 dishResponse.dishSizeDetails = dishSizeDetailsDb!.Items!.OrderBy(d => d.DishSizeId).ToList();
                 var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, null);

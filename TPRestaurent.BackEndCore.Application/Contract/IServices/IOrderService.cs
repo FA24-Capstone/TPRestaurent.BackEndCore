@@ -13,16 +13,25 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
     public interface IOrderService
     {
-        public Task<AppActionResult> GetAllOrderByAccountId(string accountId, Domain.Enums.OrderStatus? status, int pageNumber, int pageSize);
-        public Task<AppActionResult> GetAllOrderByStatus(Domain.Enums.OrderStatus? status, int pageNumber, int pageSize);
+        public Task<AppActionResult> GetAllOrderByAccountId(string accountId, Domain.Enums.OrderStatus? status, OrderType? orderType, int pageNumber, int pageSize);
+        public Task<AppActionResult> GetAllOrderByStatus(Domain.Enums.OrderStatus? status, OrderType? orderType ,int pageNumber, int pageSize);
         public Task<AppActionResult> GetAllOrderByPhoneNumber(string phoneNumber, int pageNumber, int pageSize);
         public Task<AppActionResult> GetOrderDetail(Guid orderId);
+        public Task<AppActionResult> GetOrderByTime(double? minute, int pageNumber, int pageSize);
+        public Task<AppActionResult> CalculateReservation(ReservationDto request);
         public Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto, HttpContext httpContext);
-        public Task<AppActionResult> CompleteOrder(OrderPaymentRequestDto orderRequestDto);
+        public Task<AppActionResult> MakeDineInOrderBill(OrderPaymentRequestDto orderRequestDto, HttpContext context);
         public Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful);
         public Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto);
-        public Task<AppActionResult> GetOrderTotal(CalculateOrderRequest orderRequestDto);
-        public Task<AppActionResult> GetOrderJsonByTableSessionId(Guid TableSessionId);
+        //public Task<AppActionResult> GetOrderTotal(CalculateOrderRequest orderRequestDto);
+        //public Task<AppActionResult> GetOrderJsonByTableSessionId(Guid TableSessionId);
+        public Task CancelOverReservation();
+        public Task UpdateOrderStatusBeforeMealTime();
+        public Task UpdateOrderDetailStatusBeforeDining();
+        public Task<AppActionResult> GetUpdateCartComboDto(string cartComboJson);
+        public Task<AppActionResult> GetUpdateCartDishDto(string cartDishJson);
+        public Task<AppActionResult> UpdateOrderDetailStatus(List<Guid> orderDetailIds, bool isSuccessful);
+        public Task<AppActionResult> GetCurrentTableSession();
 
     }
 }
