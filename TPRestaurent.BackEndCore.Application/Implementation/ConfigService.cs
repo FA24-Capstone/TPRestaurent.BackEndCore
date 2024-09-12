@@ -39,11 +39,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     foreach (var config in configDb.Items)
                     {
                         var configVersionDb = await configurationServiceRepository!.GetAllDataByExpression(p => p.ConfigurationId == config.ConfigurationId && p.ActiveDate <= currentTime, 0, 0, p => p.ActiveDate, false, null);
-                        var closestConfig = configVersionDb!.Items!
-                                    .OrderByDescending(p => p.ActiveDate)
-                                    .FirstOrDefault();
-                        config.CurrentValue = closestConfig!.ActiveValue;
-                        await _repository.Update(config);
+                        if (configVersionDb.Items.Count > 0 && configVersionDb.Items != null)
+                        {
+                            var closestConfig = configVersionDb!.Items!
+                                   .OrderByDescending(p => p.ActiveDate)
+                                   .FirstOrDefault();
+                            config.CurrentValue = closestConfig!.ActiveValue;
+                            await _repository.Update(config);
+                        }
                     }
                 }
                 await _unitOfWork.SaveChangesAsync();
