@@ -267,7 +267,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         Gender = signUpRequest.Gender,
                         VerifyCode = verifyCode,
                         LoyaltyPoint = 0,
-                        IsVerified = isGoogle ? true : false
+                        IsVerified = isGoogle ? true : false,
+                        IsManuallyCreated = true
                     };
                     var resultCreateUser = await _userManager.CreateAsync(user, signUpRequest.Password);
                     if (resultCreateUser.Succeeded)
@@ -484,7 +485,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     PhoneNumber = phoneNumber,
                     Gender = true,
                     VerifyCode = verifyCode,
-                    IsVerified = false
+                    IsVerified = false,
+                    IsManuallyCreated = false
                 };
                 var resultCreateUser = await _userManager.CreateAsync(user, SD.DEFAULT_PASSWORD);
                 if (resultCreateUser.Succeeded)
