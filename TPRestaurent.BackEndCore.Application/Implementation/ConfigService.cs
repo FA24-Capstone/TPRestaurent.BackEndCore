@@ -19,36 +19,34 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private BackEndLogger _logger;
         private IGenericRepository<Configuration> _repository;
         private IUnitOfWork _unitOfWork;
-        public ConfigService(IGenericRepository<Configuration> repository, IUnitOfWork unitOfWork, BackEndLogger logger, IServiceProvider service) : base(service) 
+        public ConfigService(IGenericRepository<Configuration> repository, IUnitOfWork unitOfWork, BackEndLogger logger, IServiceProvider service) : base(service)
         {
             _repository = repository;
             _unitOfWork = unitOfWork;
-            _logger = logger;   
+            _logger = logger;
         }
 
         public async Task ChangeConfigurationJob()
         {
-            try 
+            try
             {
+                var configurationServiceRepository = Resolve<IGenericRepository<ConfigurationVersion>>();
                 var utility = Resolve<Utility>();
+                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
                 var configDb = await _repository.GetAllDataByExpression(null, 0, 0, null, false, null);
-                //if (configDb.Items.Count > 0 && configDb.Items != null)
-                //{
-                //    foreach (var config in configDb.Items)
-                //    {
-                //        if (config.ActiveDate >= utility!.GetCurrentDateTimeInTimeZone())
-                //        {
-                //            if (config.ActiveValue != null)
-                //            {
-                //                config.PreValue = config!.ActiveValue!;
-                //                config.ActiveValue = null;
-                //                config.ActiveDate = null;
-                //                await _repository.Update(config);   
-                //            }
-                //        }
-                //    }
-                //    await _unitOfWork.SaveChangesAsync();       
-                //}
+                if (configDb.Items!.Count > 0 && configDb.Items != null)
+                {
+                    foreach (var config in configDb.Items)
+                    {
+                        var configVersionDb = await configurationServiceRepository!.GetAllDataByExpression(p => p.ConfigurationId == config.ConfigurationId && p.ActiveDate <= currentTime, 0, 0, p => p.ActiveDate, false, null);
+                        var closestConfig = configVersionDb!.Items!
+                                    .OrderByDescending(p => p.ActiveDate)
+                                    .FirstOrDefault();
+                        config.CurrentValue = closestConfig!.ActiveValue;
+                        await _repository.Update(config);
+                    }
+                }
+                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -63,7 +61,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var configurationDb = await _repository.GetByExpression(c => c.Name.Equals(dto.Name), null);
-                if (configurationDb != null) 
+                if (configurationDb != null)
                 {
                     return BuildAppActionResultError(result, $"Đã tồn tại cấu hình với tên {dto.Name}");
                 }
@@ -83,12 +81,51 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> CreateConfigurationVersion(ConfigurationVersionDto configurationVersionDto)
+        {
+            var configurationServiceRepository = Resolve<IGenericRepository<ConfigurationVersion>>();
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var configurationVersion = new ConfigurationVersion
+                {
+                    ConfigurationVersionId = Guid.NewGuid(),    
+                    ActiveDate = configurationVersionDto.ActiveDate,
+                    ActiveValue = configurationVersionDto.ActiveValue,
+                    ConfigurationId = configurationVersionDto.ConfigurationId,  
+                };
+
+                await configurationServiceRepository!.Insert(configurationVersion);
+                await _unitOfWork.SaveChangesAsync();   
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
         public async Task<AppActionResult> GetAll(int pageNumber, int pageSize)
         {
             AppActionResult result = new AppActionResult();
             try
             {
                 result.Result = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, null, false, null);
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetAllConfigurationVersion(int pageNumber, int pageSize)
+        {
+            var configurationServiceRepository = Resolve<IGenericRepository<ConfigurationVersion>>();
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                result.Result = await configurationServiceRepository.GetAllDataByExpression(null, pageNumber, pageSize, p => p.ActiveDate, false, p => p.Configuration!);
             }
             catch (Exception ex)
             {
@@ -113,7 +150,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
             }
             catch (Exception ex)
-            { 
+            {
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
@@ -122,36 +159,40 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> UpdateConfiguration(UpdateConfigurationDto dto)
         {
             AppActionResult result = new AppActionResult();
-            //try
-            //{
-            //    var configurationDb = await _repository.GetById(dto.ConfigurationId);
-            //    if (configurationDb == null)
-            //    {
-            //        return BuildAppActionResultError(result, $"Không tìm thấy cấu hình với id {dto.ConfigurationId}");
-            //    }
-            //    if (dto.ActiveDate.HasValue)
-            //    {
-            //        configurationDb.ActiveDate = dto.ActiveDate.Value;
-            //    }
-            //    else
-            //    {
-            //        if (string.IsNullOrEmpty(dto.ActiveValue))
-            //        {
-            //            var utility = Resolve<Utility>();
-            //            configurationDb.ActiveDate = utility.GetCurrentDateTimeInTimeZone();
-            //        }
-            //    }
+            try
+            {
+                var configurationDb = await _repository.GetById(dto.ConfigurationId);
+                var configurationVersionRepository = Resolve<IGenericRepository<ConfigurationVersion>>();
+                var configurationVersionDb = new ConfigurationVersion
+                {
+                    ConfigurationId = configurationDb.ConfigurationId,
+                };
+                if (configurationDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy cấu hình với id {dto.ConfigurationId}");
+                }
+                if (dto.ActiveDate.HasValue)
+                {
+                    configurationVersionDb.ActiveDate = dto.ActiveDate.Value;
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(dto.CurrentValue))
+                    {
+                        var utility = Resolve<Utility>();
+                        configurationVersionDb.ActiveDate = utility.GetCurrentDateTimeInTimeZone();
+                    }
+                }
 
-            //    configurationDb.PreValue = dto.PreValue;
-            //    configurationDb.ActiveValue = dto.ActiveValue;
-            //    await _repository.Update(configurationDb);
-            //    await _unitOfWork.SaveChangesAsync();
+                configurationDb.CurrentValue = dto.CurrentValue;
+                await _repository.Update(configurationDb);
+                await _unitOfWork.SaveChangesAsync();
 
-            //}
-            //catch (Exception ex)
-            //{
-            //    result = BuildAppActionResultError(result, ex.Message);
-            //}
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
             return result;
         }
 
