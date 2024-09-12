@@ -17,6 +17,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private IOrderService _orderService; 
         private IUnitOfWork _unitOfWork;
         private ICustomerSavedCouponService _customerSavedCouponService;
+        private IStoreCreditService _storeCreditService;    
 
         public WorkerService(IServiceProvider serviceProvider,
             BackEndLogger logger,
@@ -24,7 +25,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             IOrderService orderService,
             ICustomerSavedCouponService customerSavedCouponService,
             //IReservationService reservationService,
-            IConfigService configService
+            IConfigService configService,
+            IStoreCreditService storeCreditService
             ) : base(serviceProvider)
         {
             _logger = logger;
@@ -33,18 +35,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _configService = configService;
             _orderService = orderService;
             _customerSavedCouponService = customerSavedCouponService;   
+            _storeCreditService = storeCreditService;   
         }
 
         public async Task Start()
         {
             TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
-            //RecurringJob.AddOrUpdate(() =>  _reservationService.CancelOverdueReservations(), Cron.DayInterval(1), vietnamTimeZone);
-            //RecurringJob.AddOrUpdate(() => _configService.ChangeConfigurationJob(), Cron.DayInterval(1), vietnamTimeZone);
-            //BackgroundJob.Enqueue(() => _orderService.CancelOverReservation());
-            //BackgroundJob.Enqueue(() => _orderService.CancelOverReservation());
-            //BackgroundJob.Enqueue(() => _orderService.UpdateOrderDetailStatusBeforeDining());
-            //BackgroundJob.Enqueue(() => _customerSavedCouponService.UpdateExpiredCouponStatus());
-            BackgroundJob.Enqueue(() => _configService.ChangeConfigurationJob());
+            //RecurringJob.AddOrUpdate(() => _orderService.CancelOverReservation(), Cron.DayInterval(1), vietnamTimeZone);
+            //RecurringJob.AddOrUpdate(() => _orderService.CancelOverReservation(), Cron.DayInterval(1), vietnamTimeZone);
+            //RecurringJob.AddOrUpdate(() => _orderService.UpdateOrderDetailStatusBeforeDining(), Cron.DayInterval(1), vietnamTimeZone);
+            //RecurringJob.AddOrUpdate(() => _customerSavedCouponService.UpdateExpiredCouponStatus(), Cron.DayInterval(1), vietnamTimeZone);
+            //RecurringJob.AddOrUpdate(() => _storeCreditService.ChangeOverdueStoreCredit(), Cron.DayInterval(1), vietnamTimeZone);
         }
     }
 }
