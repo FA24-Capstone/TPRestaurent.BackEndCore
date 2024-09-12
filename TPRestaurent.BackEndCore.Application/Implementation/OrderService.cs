@@ -1252,7 +1252,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var reservationTableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
                     var reservedTableDb = await reservationTableDetailRepository!.GetAllDataByExpression(r => unavailableReservationIds.Contains(r.OrderId), 0, 0, null, false, r => r.Table.Room);
                     var reservedTableIds = reservedTableDb.Items!.Select(x => x.TableId);
-                    var availableTableDb = await tableRepository!.GetAllDataByExpression(t => !reservedTableIds.Contains(t.TableId), 0, 0, null, false, null);
+                    var availableTableDb = await tableRepository!.GetAllDataByExpression(t => !reservedTableIds.Contains(t.TableId), 0, 0, null, false, t => t.Room);
                     result.Result = availableTableDb;
                 }
                 else
@@ -1272,25 +1272,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                //Validate
-                List<Guid> guids = new List<Guid>();
                 if (dto.NumOfPeople <= 0)
-                {
-                    return BuildAppActionResultError(result, "Số người phải lớn hơn 0!");
-                }
-                //Get All Available Table
-                var availableTableResult = await GetAvailableTable(dto.StartTime, dto.EndTime, dto.NumOfPeople, 0, 0);
-                if (availableTableResult.IsSuccess)
-                {
-                    var availableTable = (PagedResult<Table>)availableTableResult.Result!;
-                    if (availableTable.Items!.Count > 0)
                     {
-                        result.Result = await GetTables(availableTable.Items, dto.NumOfPeople, dto.IsPrivate);
+                        return null;
                     }
-                }
-
-
-                //Get Table with condition: 
+                    //Get All Available Table
+                    var availableTableResult = await GetAvailableTable(dto.StartTime, dto.EndTime, dto.NumOfPeople, 0, 0);
+                    if (availableTableResult.IsSuccess)
+                    {
+                        var availableTable = (PagedResult<Table>)availableTableResult.Result!;
+                        if (availableTable.Items!.Count > 0)
+                        {
+                            var suitableTables = await GetTables(availableTable.Items, dto.NumOfPeople, dto.IsPrivate);
+                            result.Result = suitableTables[0];
+                        }
+                    }
             }
             catch (Exception ex)
             {
