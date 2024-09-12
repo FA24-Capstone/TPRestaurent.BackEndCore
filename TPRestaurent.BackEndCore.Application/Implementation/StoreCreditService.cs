@@ -28,6 +28,31 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _unitOfWork = unitOfWork;
         }
 
+        public async Task ChangeOverdueStoreCredit()
+        {
+            AppActionResult result = new AppActionResult();
+            var utility = Resolve<Utility>();
+            try
+            {
+                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+                var storeCreditDb = await _repository.GetAllDataByExpression(p => p.ExpiredDate < currentTime, 0, 0, null, false, null);
+                if (storeCreditDb.Items!.Count > 0 && storeCreditDb.Items != null)
+                {
+                    foreach (var storeCredit in storeCreditDb!.Items!)
+                    {
+                        storeCredit.Amount = 0;
+                        await _repository.Update(storeCredit);
+                    }
+                }
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            Task.CompletedTask.Wait();
+        }
+
         //public async Task<AppActionResult> AddStoreCredit(Guid transactionId)
         //{
         //    AppActionResult result = new AppActionResult();
