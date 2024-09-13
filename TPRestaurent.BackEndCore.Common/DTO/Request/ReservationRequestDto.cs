@@ -13,7 +13,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public DateTime? EndTime { get; set; }
         public Guid CustomerAccountId { get; set; }
         public string? Note { get; set; }
-        public List<ReservationDishDto> ReservationDishes { get; set; } = new List<ReservationDishDto>();
 
     }
 }

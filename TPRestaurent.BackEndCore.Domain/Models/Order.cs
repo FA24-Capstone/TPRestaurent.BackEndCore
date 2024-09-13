@@ -14,6 +14,10 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         [Key]
         public Guid OrderId { get; set; }
         public DateTime OrderDate { get; set; }
+        public DateTime? DeliveryTime { get; set; }
+        public DateTime? ReservationDate { get; set; }   
+        public DateTime? MealTime { get; set; }     
+        public DateTime? EndTime { get; set; }      
         public double TotalAmount { get; set; }
         public OrderStatus StatusId { get; set; }
         [ForeignKey(nameof(StatusId))]
@@ -24,19 +28,15 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Enums.PaymentMethod PaymentMethodId { get; set; }
         [ForeignKey(nameof(PaymentMethodId))]
         public EnumModels.PaymentMethod? PaymentMethod { get; set; }
-        public Guid? ReservationId { get; set; }
-        [ForeignKey(nameof(ReservationId))]
-        public Reservation? Reservation { get; set; }
         public Guid? LoyalPointsHistoryId { get; set; }
         [ForeignKey(nameof(LoyalPointsHistoryId))]
         public LoyalPointsHistory? LoyalPointsHistory { get; set; }
-        public Guid? CustomerSavedCouponId { get; set; }
-        [ForeignKey(nameof(CustomerSavedCouponId))]
-        public CustomerSavedCoupon? CustomerSavedCoupon { get; set; }
         public string? Note { get; set; }
-        public bool? IsDelivering { get; set; }
-        public Guid? TableId { get; set; }
-        [ForeignKey(nameof(TableId))]
-        public Table? Table { get; set; }       
+        public Enums.OrderType OrderTypeId { get; set; }
+        [ForeignKey(nameof(OrderTypeId))]
+        public EnumModels.OrderType? OrderType { get; set; }
+        public int? NumOfPeople { get; set; }   
+        public double? Deposit { get; set; }
+        public bool? IsPrivate { get; set; }
     }
 }

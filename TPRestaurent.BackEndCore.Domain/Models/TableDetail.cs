@@ -9,15 +9,17 @@ using TPRestaurent.BackEndCore.Domain.Models.EnumModels;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
 {
-    public class ReservationTableDetail
+    public class TableDetail
     {
         [Key]
-        public Guid ReservationTableDetailId { get; set; }
+        public Guid TableDetailId { get; set; }
         public Guid TableId { get; set; }
         [ForeignKey(nameof(TableId))]
         public Table? Table { get; set; }
-        public Guid ReservationId { get; set; }
-        [ForeignKey(nameof(ReservationId))]
-        public Reservation? Reservation { get; set; }
+        public Guid OrderId { get; set; }
+        [ForeignKey(nameof(OrderId))]
+        public Order? Order { get; set; }
+        public DateTime StartTime { get; set; }    
+        public DateTime? EndDate { get; set; }  
     }
 }

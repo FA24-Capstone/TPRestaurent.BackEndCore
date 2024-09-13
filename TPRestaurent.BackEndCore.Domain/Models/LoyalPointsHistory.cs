@@ -14,7 +14,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         [Key]
         public Guid LoyalPointsHistoryId { get; set; }
         public DateTime TransactionDate { get; set; }
-        public int PointChanged{ get; set; }
+        public int PointChanged { get; set; }
         public int NewBalance { get; set; }
         public Guid? OrderId { get; set; }
         [ForeignKey(nameof(OrderId))]

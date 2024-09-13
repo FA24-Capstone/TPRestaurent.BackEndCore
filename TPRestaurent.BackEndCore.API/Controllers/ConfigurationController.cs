@@ -16,10 +16,22 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             _service = service;
         }
 
+        [HttpPost("create-config-service")]
+        public async Task<AppActionResult> CreateConfigurationService(ConfigurationVersionDto configurationVersionDto)
+        {
+            return await _service.CreateConfigurationVersion(configurationVersionDto);
+        }
+
         [HttpPost("create-config")]
         public Task<AppActionResult> CreateConfiguration(ConfigurationDto dto)
         {
             return _service.CreateConfiguration(dto);
+        }
+
+        [HttpGet("get-all-configuration-version/{pageNumber}/{pageSize}")]
+        public async Task<AppActionResult> GetAllConfigurationVersion(int pageNumber = 1, int pageSize = 10)
+        {
+            return await _service.GetAllConfigurationVersion(pageNumber, pageSize);       
         }
 
         [HttpPut("update-config")]

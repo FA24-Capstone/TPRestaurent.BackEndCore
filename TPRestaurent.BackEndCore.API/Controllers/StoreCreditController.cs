@@ -17,17 +17,17 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             _service = service;
         }
 
-        [HttpGet("get-store-credit-by-account-id/{accountId}")]
-        public async Task<AppActionResult> Get(string accountId)
-        {
-            return await _service.GetStoreCreditByAccountId(accountId);
-        }
+        //[HttpGet("get-store-credit-by-account-id/{accountId}")]
+        //public async Task<AppActionResult> Get(string accountId)
+        //{
+        //    return await _service.GetStoreCreditByAccountId(accountId);
+        //}
 
-        [HttpPost("add-store-credit")]
-        public async Task<AppActionResult> AddStoreCredit(Guid transactionId)
-        {
-            return await _service.AddStoreCredit(transactionId);
-        }
+        //[HttpPost("add-store-credit")]
+        //public async Task<AppActionResult> AddStoreCredit(Guid transactionId)
+        //{
+        //    return await _service.AddStoreCredit(transactionId);
+        //}
 
         [HttpPost("refund-reservation")]
         public async Task<AppActionResult> RefundReservation(Guid reservationId)

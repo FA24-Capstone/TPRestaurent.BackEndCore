@@ -271,7 +271,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         Gender = signUpRequest.Gender,
                         VerifyCode = verifyCode,
                         LoyaltyPoint = 0,
-                        IsVerified = isGoogle ? true : false
+                        IsVerified = isGoogle ? true : false,
+                        IsManuallyCreated = true
                     };
                     var resultCreateUser = await _userManager.CreateAsync(user, signUpRequest.Password);
                     if (resultCreateUser.Succeeded)
@@ -302,17 +303,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         result = BuildAppActionResultError(result, $"Tạo ví không thành công");
                     }
-                    var expireTimeInDay = double.Parse(configurationDb.PreValue);
-                    var storeCreditRepository = Resolve<IGenericRepository<StoreCredit>>();
-                    var utility = Resolve<Utility>();
-                    var newStoreCreditDb = new StoreCredit
-                    {
-                        StoreCreditId = Guid.NewGuid(),
-                        Amount = 0,
-                        ExpiredDate = utility.GetCurrentDateInTimeZone().AddDays(expireTimeInDay),
-                        AccountId = user.Id
-                    };
-                    await storeCreditRepository.Insert(newStoreCreditDb);
+                    //var expireTimeInDay = double.Parse(configurationDb.PreValue);
+                    //var storeCreditRepository = Resolve<IGenericRepository<StoreCredit>>();
+                    //var utility = Resolve<Utility>();
+                    //var newStoreCreditDb = new StoreCredit
+                    //{
+                    //    StoreCreditId = Guid.NewGuid(),
+                    //    Amount = 0,
+                    //    ExpiredDate = utility.GetCurrentDateInTimeZone().AddDays(expireTimeInDay),
+                    //    AccountId = user.Id
+                    //};
+                    //await storeCreditRepository.Insert(newStoreCreditDb);
                     await _unitOfWork.SaveChangesAsync();
                 }
             }
@@ -488,7 +489,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     PhoneNumber = phoneNumber,
                     Gender = true,
                     VerifyCode = verifyCode,
-                    IsVerified = false
+                    IsVerified = false,
+                    IsManuallyCreated = false
                 };
                 var resultCreateUser = await _userManager.CreateAsync(user, SD.DEFAULT_PASSWORD);
                 if (resultCreateUser.Succeeded)
