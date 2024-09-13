@@ -83,9 +83,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
                 var user = await _accountRepository.GetByExpression(u =>
                     u!.PhoneNumber!.ToLower() == loginRequest.PhoneNumber.ToLower() && u.IsDeleted == false);
-                var customerInfo = await customerInfoRepository.GetByExpression(p => p.AccountId == user.Id, null);
-                customerInfo.Account = null;
-                user.Customer = customerInfo;
+                var customerInfo = await customerInfoRepository!.GetByExpression(p => p.AccountId == user.Id, null);
+                if (customerInfo == null)
+                {
+                    user.Customer = null;
+                }
+                else
+                {
+                    customerInfo.Account = null;
+                    user.Customer = customerInfo;
+                }
                 var otpCodeListDb = await _otpRepository.GetAllDataByExpression(p => p.Code == loginRequest.OTPCode && (p.Type == OTPType.Login || p.Type == OTPType.ConfirmPhone) && p.ExpiredTime > currentTime && !p.IsUsed, 0, 0, null, false, null);
 
                 if (otpCodeListDb.Items.Count > 1)
