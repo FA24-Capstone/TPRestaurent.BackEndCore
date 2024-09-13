@@ -14,7 +14,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public string? Note { get; set; }
     }
 
- 
+
 
 
 }
