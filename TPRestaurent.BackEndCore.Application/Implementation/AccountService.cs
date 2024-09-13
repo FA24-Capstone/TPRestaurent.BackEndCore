@@ -83,7 +83,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
                 var user = await _accountRepository.GetByExpression(u =>
                     u!.PhoneNumber!.ToLower() == loginRequest.PhoneNumber.ToLower() && u.IsDeleted == false);
-                var customerInfo = await customerInfoRepository!.GetByExpression(p => p.AccountId == user.Id, null);
+                var customerInfo = await customerInfoRepository!.GetByExpression(p => p.CustomerId == user.CustomerId, null);
                 if (customerInfo == null)
                 {
                     user.Customer = null;
