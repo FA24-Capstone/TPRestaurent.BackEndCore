@@ -19,6 +19,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public string UserName { get; set; } = null!;
         public string Email { get; set; } = null!;
         public string? Avatar { get; set; }
+        public bool? IsManuallyUpdate { get; set; }  
         public List<IdentityRole> Roles { get; set; }
         public string MainRole { get; set; }
         public CustomerInfo CustomerInfo { get; set; }
