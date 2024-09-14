@@ -1050,15 +1050,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var utility = Resolve<Utility>();
-                var currentTime = utility.GetCurrentDateTimeInTimeZone();
-                var targetTimeCompleted = currentTime.AddMinutes(-minute.GetValueOrDefault(0));
-                var orderDb = await _repository.GetAllDataByExpression(p => p.MealTime == targetTimeCompleted && p.StatusId == OrderStatus.Dining,
+                var currentTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(-minute.GetValueOrDefault(0));
+                var orderDb = await _repository.GetAllDataByExpression(p => p.MealTime <= currentTime && p.StatusId == OrderStatus.Dining,
                     pageNumber, pageSize, p => p.MealTime, false, p => p.CustomerInfo!.Account!,
                         p => p.Status!,
                         p => p.CustomerInfo!.Account!,
                         p => p.PaymentMethod!,
                         p => p.LoyalPointsHistory!,
                         p => p.OrderType!);
+                result.Result = orderDb;    
             }
             catch (Exception ex)
             {

@@ -36,7 +36,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-order-by-time/{pageNumber}/{pageSize}")]
-        public async Task<AppActionResult> GetOrderByTime(double? minute, int pageNumber, int pageSize)
+        public async Task<AppActionResult> GetOrderByTime(double? minute, int pageNumber = 1, int pageSize = 10)
         {
             return await _service.GetOrderByTime(minute, pageNumber, pageSize); 
         }
@@ -99,6 +99,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         public async Task<AppActionResult> SuggestTable(SuggestTableDto dto)
         {
             return await _service.SuggestTable(dto);
+        }
+
+        [HttpGet("get-table-reservation-with-time")]
+        public async Task<AppActionResult> GetTableReservationWithTime(Guid tableId, DateTime? time)
+        {
+            return await _service.GetTableReservationWithTime(tableId, time);
         }
 
         //[HttpPut("change-order-status/{orderId}")]
