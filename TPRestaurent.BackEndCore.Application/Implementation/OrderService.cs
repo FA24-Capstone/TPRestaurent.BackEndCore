@@ -346,7 +346,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     comboOrderDetails.Add(new ComboOrderDetail
                                     {
                                         ComboOrderDetailId = Guid.NewGuid(),
-                                        OrderDetailId = order.OrderId,
+                                        OrderDetailId = orderDetail.OrderDetailId,
                                         DishComboId = dishComboId
                                     });
                                 }
@@ -359,6 +359,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             orderDetails.Add(orderDetail);
                         }
                         money = orderDetails.Sum(o => o.Quantity * o.Price);
+                    }
+
+                    if(comboOrderDetails.Count > 0)
+                    {
+                        await comboOrderDetailRepository.InsertRange(comboOrderDetails);
                     }
 
                     List<TableDetail> tableDetails = new List<TableDetail>();
@@ -400,8 +405,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             NumOfPeople = orderRequestDto.ReservationOrder.NumberOfPeople,
                         };
 
-                        var suitableTable = await GetSuitableTable(suggestTableDto);
-                        if (suitableTable == null)
+                        var suggestedTables = await GetSuitableTable(suggestTableDto);
+                        if (suggestedTables == null || suggestedTables.Count == 0)
                         {
                             result = BuildAppActionResultError(result, $"Không có bàn trống cho {orderRequestDto.ReservationOrder.NumberOfPeople} người " +
                                                                        $"vào lúc {orderRequestDto.ReservationOrder.MealTime.Hour}h{orderRequestDto.ReservationOrder.MealTime.Minute}p " +
@@ -409,14 +414,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return result;
                         }
                         //Add busniness rule for reservation time(if needed)
-                        var reservationTableDetail = new TableDetail
+                        List<TableDetail> reservationTableDetails = new List<TableDetail>();
+
+                        //foreach(var suggestedTable in suggestedTables)
+                        //{
+                        //    reservationTableDetails.Add(new TableDetail
+                        //    {
+                        //        TableDetailId = Guid.NewGuid(),
+                        //        OrderId = order.OrderId,
+                        //        TableId = suggestedTable.TableId
+                        //    });
+                        //}
+
+                        reservationTableDetails.Add(new TableDetail
                         {
                             TableDetailId = Guid.NewGuid(),
                             OrderId = order.OrderId,
-                            TableId = suitableTable.TableId
-                        };
+                            TableId = suggestedTables[0].TableId
+                        });
 
-                        await tableDetailRepository.Insert(reservationTableDetail);
+                        await tableDetailRepository.InsertRange(reservationTableDetails);
 
                         if (orderDetails.Count > 0)
                         {
@@ -1267,7 +1284,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-
+      
         public async Task<AppActionResult> SuggestTable(SuggestTableDto dto)
         {
             AppActionResult result = new AppActionResult();
@@ -1277,6 +1294,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         return null;
                     }
+
                     //Get All Available Table
                     var availableTableResult = await GetAvailableTable(dto.StartTime, dto.EndTime, dto.NumOfPeople, 0, 0);
                     if (availableTableResult.IsSuccess)
@@ -1285,7 +1303,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (availableTable.Items!.Count > 0)
                         {
                             var suitableTables = await GetTables(availableTable.Items, dto.NumOfPeople, dto.IsPrivate);
-                            result.Result = suitableTables.Count == 0 ? null : suitableTables[0];
+                            result.Result = suitableTables.Count == 0 ? new List<Table>() : suitableTables;
                         }
                     }
             }
@@ -1371,9 +1389,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
 
         }
-        public async Task<Table> GetSuitableTable(SuggestTableDto dto)
+        public async Task<List<Table>> GetSuitableTable(SuggestTableDto dto)
         {
-            Table result = null;
+            List<Table> result = null;
             try
             {
                 if (dto.NumOfPeople <= 0)
@@ -1388,13 +1406,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (availableTable.Items!.Count > 0)
                     {
                         var suitableTables = await GetTables(availableTable.Items, dto.NumOfPeople, dto.IsPrivate);
-                        result = suitableTables[0];
+                        result = suitableTables.Count > 0 ? suitableTables : new List<Table>();
                     }
                 }
             }
             catch (Exception ex)
             {
-                result = null;
+                result = new List<Table>();
             }
             return result;
         }
@@ -1795,7 +1813,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetAllReservationDetail(Guid orderId)
+        public async Task<AppActionResult> GetAllReservationDetail2(Guid orderId)
         {
             try
             {
@@ -1811,8 +1829,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var data = new ReservationReponse
                 {
                     Order = reservation,
-                    ReservationTableDetails = reservationTableDetails,
-                    ReservationDishes = reservationDishes
+                    OrderTables = reservationTableDetails,
+                    OrderDishes = reservationDishes
                 };
 
                 return new AppActionResult { Result = data };
@@ -1835,7 +1853,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result.Items!;
         }
 
-        private async Task<List<Common.DTO.Response.ReservationDishDto>> GetReservationDishes(Guid orderId)
+        private async Task<List<Common.DTO.Response.OrderDishDto>> GetReservationDishes(Guid orderId)
         {
             var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
             var reservationDishDb = await orderDetailRepository!.GetAllDataByExpression(
@@ -1846,7 +1864,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 o => o.DishSizeDetail!.DishSize!
             );
 
-            var reservationDishes = new List<Common.DTO.Response.ReservationDishDto>();
+            var reservationDishes = new List<Common.DTO.Response.OrderDishDto>();
             var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
 
             foreach (var r in reservationDishDb.Items)
@@ -1854,7 +1872,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (r.Combo != null)
                 {
                     var comboDishDto = await CreateComboDishDto(r, comboOrderDetailRepository);
-                    reservationDishes.Add(new Common.DTO.Response.ReservationDishDto
+                    reservationDishes.Add(new Common.DTO.Response.OrderDishDto
                     {
                         OrderDetailsId = r.OrderDetailId,
                         ComboDish = comboDishDto
@@ -1862,7 +1880,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else
                 {
-                    reservationDishes.Add(new Common.DTO.Response.ReservationDishDto
+                    reservationDishes.Add(new Common.DTO.Response.OrderDishDto
                     {
                         OrderDetailsId = r.OrderDetailId,
                         DishSizeDetailId = r.DishSizeDetailId,
@@ -1877,10 +1895,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private async Task<ComboDishDto> CreateComboDishDto(OrderDetail r, IGenericRepository<ComboOrderDetail> comboOrderDetailRepository)
           {
                     var comboOrderDetails = await comboOrderDetailRepository!.GetAllDataByExpression(
-                        d => d.OrderDetailId == r.OrderDetailId && d.OrderDetail.OrderDetailStatusId == OrderDetailStatus.Unchecked,
+                        d => d.OrderDetailId == r.OrderDetailId,
                         0, 0, null, false,
                         d => d.DishCombo.DishSizeDetail!.Dish,
-                        d => d.DishCombo.DishSizeDetail.DishSize
+                        d => d.DishCombo.DishSizeDetail.DishSize,
+                        d => d.DishCombo.ComboOptionSet
                     );
 
             return new ComboDishDto
@@ -1890,5 +1909,73 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 DishCombos = comboOrderDetails.Items.Select(d => d.DishCombo).ToList()
             };
         }
+
+        public async Task<AppActionResult> GetAllReservationDetail(Guid reservationId)
+        {
+            try
+            {
+                var reservation = await _repository.GetByExpression(r => r.OrderId == reservationId, r => r.CustomerInfo);
+                if (reservation == null)
+                {
+                    return BuildAppActionResultError(new AppActionResult(), $"Không tìm thấy thông tin đặt bàn với id {reservationId}");
+                }
+
+                var reservationTableDetails = await GetReservationTableDetails(reservationId);
+                var reservationDishes = await GetReservationDishes2(reservationId);
+
+                var data = new ReservationReponse
+                {
+                    Order = reservation,
+                    OrderTables = reservationTableDetails,
+                    OrderDishes = reservationDishes
+                };
+
+                return new AppActionResult { Result = data };
+            }
+            catch (Exception ex)
+            {
+                return BuildAppActionResultError(new AppActionResult(), ex.Message);
+            }
+        }
+
+        private async Task<List<Common.DTO.Response.OrderDishDto>> GetReservationDishes2(Guid reservationId)
+        {
+            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+            var reservationDishDb = await orderDetailRepository.GetAllDataByExpression(
+                o => o.OrderId == reservationId,
+                0, 0, null, false,
+                o => o.DishSizeDetail.Dish,
+                o => o.DishSizeDetail.DishSize,
+                o => o.Combo
+            );
+
+            var reservationDishes = new List<Common.DTO.Response.OrderDishDto>();
+            var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+
+            foreach (var r in reservationDishDb.Items)
+            {
+                if (r.Combo != null)
+                {
+                    var comboDishDto = await CreateComboDishDto(r, comboOrderDetailRepository);
+                    reservationDishes.Add(new Common.DTO.Response.OrderDishDto
+                    {
+                        OrderDetailsId = r.OrderDetailId,
+                        ComboDish = comboDishDto
+                    });
+                }
+                else
+                {
+                    reservationDishes.Add(new Common.DTO.Response.OrderDishDto
+                    {
+                        OrderDetailsId = r.OrderDetailId,
+                        DishSizeDetailId = r.DishSizeDetailId,
+                        DishSizeDetail = r.DishSizeDetail
+                    });
+                }
+            }
+
+            return reservationDishes;
+        }
+
     }
 }

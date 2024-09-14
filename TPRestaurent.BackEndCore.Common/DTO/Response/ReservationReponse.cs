@@ -11,11 +11,11 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
     public class ReservationReponse
     {
         public Order Order { get; set; }    
-        public List<ReservationDishDto> ReservationDishes { get; set; } = new List<ReservationDishDto>();
-        public List<TableDetail> ReservationTableDetails { get; set; } = new List<TableDetail>();
+        public List<OrderDishDto> OrderDishes { get; set; } = new List<OrderDishDto>();
+        public List<TableDetail> OrderTables { get; set; } = new List<TableDetail>();
     }
 
-    public class ReservationDishDto
+    public class OrderDishDto
     {
         public Guid OrderDetailsId { get; set; }
         public Guid? DishSizeDetailId { get; set; }

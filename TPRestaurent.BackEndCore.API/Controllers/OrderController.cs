@@ -44,7 +44,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpGet("get-order-detail/{orderId}")]
         public async Task<AppActionResult> GetOrderDetail(Guid orderId)
         {
-            return await _service.GetOrderDetail(orderId);
+            return await _service.GetAllReservationDetail(orderId);
         }
 
         [HttpPost("calculate-reservation")]
