@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240914031418_AddVietnameseNamtoToOrderTypeEnumModel")]
+    partial class AddVietnameseNamtoToOrderTypeEnumModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -769,19 +771,19 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         {
                             Id = 0,
                             Name = "HOTPOT",
-                            VietnameseName = "Lẩu"
+                            VietnameseName = "HOTPOT"
                         },
                         new
                         {
                             Id = 1,
                             Name = "BBQ",
-                            VietnameseName = "Nướng"
+                            VietnameseName = "BBQ"
                         },
                         new
                         {
                             Id = 2,
                             Name = "BOTH",
-                            VietnameseName = "Lẩu-Nướng"
+                            VietnameseName = "BOTH"
                         });
                 });
 
@@ -806,97 +808,97 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         {
                             Id = 0,
                             Name = "APPETIZER",
-                            VietnameseName = "Khai Vị"
+                            VietnameseName = "APPETIZER"
                         },
                         new
                         {
                             Id = 1,
                             Name = "SOUP",
-                            VietnameseName = "Súp"
+                            VietnameseName = "SOUP"
                         },
                         new
                         {
                             Id = 2,
                             Name = "HOTPOT",
-                            VietnameseName = "Lẩu"
+                            VietnameseName = "HOTPOT"
                         },
                         new
                         {
                             Id = 3,
                             Name = "BBQ",
-                            VietnameseName = "Nướng"
+                            VietnameseName = "BBQ"
                         },
                         new
                         {
                             Id = 4,
                             Name = "HOTPOT_BROTH",
-                            VietnameseName = "Nước Lẩu"
+                            VietnameseName = "HOTPOT_BROTH"
                         },
                         new
                         {
                             Id = 5,
                             Name = "HOTPOT_MEAT",
-                            VietnameseName = "Thịt Lẩu"
+                            VietnameseName = "HOTPOT_MEAT"
                         },
                         new
                         {
                             Id = 6,
                             Name = "HOTPOT_SEAFOOD",
-                            VietnameseName = "Hải Sản Lẩu"
+                            VietnameseName = "HOTPOT_SEAFOOD"
                         },
                         new
                         {
                             Id = 7,
                             Name = "HOTPOT_VEGGIE",
-                            VietnameseName = "Rau Lẩu"
+                            VietnameseName = "HOTPOT_VEGGIE"
                         },
                         new
                         {
                             Id = 8,
                             Name = "BBQ_MEAT",
-                            VietnameseName = "Thịt Nướng"
+                            VietnameseName = "BBQ_MEAT"
                         },
                         new
                         {
                             Id = 9,
                             Name = "BBQ_SEAFOOD",
-                            VietnameseName = "Hải Sản Nướng"
+                            VietnameseName = "BBQ_SEAFOOD"
                         },
                         new
                         {
                             Id = 10,
                             Name = "HOTPOT_TOPPING",
-                            VietnameseName = "Topping Thả Lẩu"
+                            VietnameseName = "HOTPOT_TOPPING"
                         },
                         new
                         {
                             Id = 11,
                             Name = "BBQ_TOPPING",
-                            VietnameseName = "Topping Nướng"
+                            VietnameseName = "BBQ_TOPPING"
                         },
                         new
                         {
                             Id = 12,
                             Name = "SIDEDISH",
-                            VietnameseName = "Món Phụ"
+                            VietnameseName = "SIDEDISH"
                         },
                         new
                         {
                             Id = 13,
                             Name = "DRINK",
-                            VietnameseName = "Đồ Uống"
+                            VietnameseName = "DRINK"
                         },
                         new
                         {
                             Id = 14,
                             Name = "DESSERT",
-                            VietnameseName = "Tráng Miệng"
+                            VietnameseName = "DESSERT"
                         },
                         new
                         {
                             Id = 15,
                             Name = "SAUCE",
-                            VietnameseName = "Sốt"
+                            VietnameseName = "SAUCE"
                         });
                 });
 
@@ -921,19 +923,19 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         {
                             Id = 0,
                             Name = "SMALL",
-                            VietnameseName = "Nhỏ"
+                            VietnameseName = "SMALL"
                         },
                         new
                         {
                             Id = 1,
                             Name = "MEDIUM",
-                            VietnameseName = "Vừa"
+                            VietnameseName = "MEDIUM"
                         },
                         new
                         {
                             Id = 2,
                             Name = "LARGE",
-                            VietnameseName = "Lớn"
+                            VietnameseName = "LARGE"
                         });
                 });
 
@@ -958,30 +960,31 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         {
                             Id = 1,
                             Name = "Pending",
-                            VietnameseName = "Chờ Xử Lý"
+                            VietnameseName = "Pending"
                         },
                         new
                         {
                             Id = 2,
                             Name = "Unchecked",
-                            VietnameseName = "Chưa Xem"
+                            VietnameseName = "Unchecked"
                         },
                         new
                         {
                             Id = 3,
                             Name = "Read",
-                            VietnameseName = "Đã Xem"
+                            VietnameseName = "Read"
                         },
                         new
                         {
                             Id = 4,
-                            Name = "ReadyToServe"
+                            Name = "ReadyToServe",
+                            VietnameseName = "ReadyToServe"
                         },
                         new
                         {
                             Id = 5,
                             Name = "Cancelled",
-                            VietnameseName = "Đã Huỷ"
+                            VietnameseName = "Cancelled"
                         });
                 });
 
@@ -1006,49 +1009,49 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         {
                             Id = 1,
                             Name = "TableAssigned",
-                            VietnameseName = "Đã Xếp Bàn"
+                            VietnameseName = "TableAssigned"
                         },
                         new
                         {
                             Id = 2,
                             Name = "DepositPaid",
-                            VietnameseName = "Đã Đặt Cọc"
+                            VietnameseName = "DepositPaid"
                         },
                         new
                         {
                             Id = 3,
                             Name = "Dining",
-                            VietnameseName = "Đang Dùng Bữa"
+                            VietnameseName = "Dining"
                         },
                         new
                         {
                             Id = 4,
                             Name = "Pending",
-                            VietnameseName = "Chờ Xử Lý"
+                            VietnameseName = "Pending"
                         },
                         new
                         {
                             Id = 5,
                             Name = "Processing",
-                            VietnameseName = "Đang Xử Lý"
+                            VietnameseName = "Processing"
                         },
                         new
                         {
                             Id = 6,
                             Name = "Delivering",
-                            VietnameseName = "Đang Giao"
+                            VietnameseName = "Delivering"
                         },
                         new
                         {
                             Id = 7,
                             Name = "Completed",
-                            VietnameseName = "Thành Công"
+                            VietnameseName = "Completed"
                         },
                         new
                         {
                             Id = 8,
                             Name = "Cancelled",
-                            VietnameseName = "Đã Huỷ"
+                            VietnameseName = "Cancelled"
                         });
                 });
 
@@ -1072,17 +1075,20 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         new
                         {
                             Id = 1,
-                            Name = "Reservation"
+                            Name = "Reservation",
+                            VietnameseName = "Reservation"
                         },
                         new
                         {
                             Id = 2,
-                            Name = "Delivery"
+                            Name = "Delivery",
+                            VietnameseName = "Delivery"
                         },
                         new
                         {
                             Id = 3,
-                            Name = "MealWithoutReservation"
+                            Name = "MealWithoutReservation",
+                            VietnameseName = "MealWithoutReservation"
                         });
                 });
 
@@ -1107,61 +1113,61 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         {
                             Id = 0,
                             Name = "Login",
-                            VietnameseName = "Đăng Nhập"
+                            VietnameseName = "Login"
                         },
                         new
                         {
                             Id = 1,
                             Name = "Register",
-                            VietnameseName = "Đăng Ký"
+                            VietnameseName = "Register"
                         },
                         new
                         {
                             Id = 2,
                             Name = "ForgotPassword",
-                            VietnameseName = "Quên Mật Khẩu"
+                            VietnameseName = "ForgotPassword"
                         },
                         new
                         {
                             Id = 3,
                             Name = "ChangePassword",
-                            VietnameseName = "Đổi Mật Khẩu"
+                            VietnameseName = "ChangePassword"
                         },
                         new
                         {
                             Id = 4,
                             Name = "ChangeEmail",
-                            VietnameseName = "Đổi Email"
+                            VietnameseName = "ChangeEmail"
                         },
                         new
                         {
                             Id = 5,
                             Name = "ChangePhone",
-                            VietnameseName = "Đổi SĐT"
+                            VietnameseName = "ChangePhone"
                         },
                         new
                         {
                             Id = 6,
                             Name = "ConfirmEmail",
-                            VietnameseName = "Xác Nhận Email"
+                            VietnameseName = "ConfirmEmail"
                         },
                         new
                         {
                             Id = 7,
                             Name = "ConfirmPhone",
-                            VietnameseName = "Xác Nhận SĐT"
+                            VietnameseName = "ConfirmPhone"
                         },
                         new
                         {
                             Id = 8,
                             Name = "ConfirmPayment",
-                            VietnameseName = "Xác Nhận Thanh Toán"
+                            VietnameseName = "ConfirmPayment"
                         },
                         new
                         {
                             Id = 9,
                             Name = "VerifyForReservation",
-                            VietnameseName = "Xác Nhận Đặt Bàn"
+                            VietnameseName = "VerifyForReservation"
                         });
                 });
 
@@ -1186,7 +1192,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         {
                             Id = 1,
                             Name = "Cash",
-                            VietnameseName = "Tiền Mặt"
+                            VietnameseName = "Cash"
                         },
                         new
                         {
@@ -1229,31 +1235,31 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         {
                             Id = 1,
                             Name = "One",
-                            VietnameseName = "1"
+                            VietnameseName = "One"
                         },
                         new
                         {
                             Id = 2,
                             Name = "Two",
-                            VietnameseName = "2"
+                            VietnameseName = "Two"
                         },
                         new
                         {
                             Id = 3,
                             Name = "Three",
-                            VietnameseName = "3"
+                            VietnameseName = "Three"
                         },
                         new
                         {
                             Id = 4,
                             Name = "Four",
-                            VietnameseName = "4"
+                            VietnameseName = "Four"
                         },
                         new
                         {
                             Id = 5,
                             Name = "Five",
-                            VietnameseName = "5"
+                            VietnameseName = "Five"
                         });
                 });
 
@@ -1278,31 +1284,31 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         {
                             Id = 2,
                             Name = "TWO",
-                            VietnameseName = "2"
+                            VietnameseName = "TWO"
                         },
                         new
                         {
                             Id = 4,
                             Name = "FOUR",
-                            VietnameseName = "4"
+                            VietnameseName = "FOUR"
                         },
                         new
                         {
                             Id = 6,
                             Name = "SIX",
-                            VietnameseName = "6"
+                            VietnameseName = "SIX"
                         },
                         new
                         {
                             Id = 8,
                             Name = "EIGHT",
-                            VietnameseName = "8"
+                            VietnameseName = "EIGHT"
                         },
                         new
                         {
                             Id = 10,
                             Name = "TEN",
-                            VietnameseName = "10"
+                            VietnameseName = "TEN"
                         });
                 });
 
@@ -1327,24 +1333,25 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         {
                             Id = 0,
                             Name = "PENDING",
-                            VietnameseName = "Chờ Xử Lý"
+                            VietnameseName = "PENDING"
                         },
                         new
                         {
                             Id = 1,
                             Name = "FAILED",
-                            VietnameseName = "Thất Bại"
+                            VietnameseName = "FAILED"
                         },
                         new
                         {
                             Id = 2,
                             Name = "SUCCESSFUL",
-                            VietnameseName = "Thành Công"
+                            VietnameseName = "SUCCESSFUL"
                         },
                         new
                         {
                             Id = 3,
-                            Name = "APPLIED"
+                            Name = "APPLIED",
+                            VietnameseName = "APPLIED"
                         });
                 });
 
