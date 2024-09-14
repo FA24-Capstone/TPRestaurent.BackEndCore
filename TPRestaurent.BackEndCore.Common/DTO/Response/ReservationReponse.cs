@@ -10,13 +10,14 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
 {
     public class ReservationReponse
     {
+        public Order Order { get; set; }    
         public List<ReservationDishDto> ReservationDishes { get; set; } = new List<ReservationDishDto>();
         public List<TableDetail> ReservationTableDetails { get; set; } = new List<TableDetail>();
     }
 
     public class ReservationDishDto
     {
-        public Guid ReservationDishId { get; set; }
+        public Guid OrderDetailsId { get; set; }
         public Guid? DishSizeDetailId { get; set; }
         public DishSizeDetail? DishSizeDetail { get; set; }
         public ComboDishDto? ComboDish { get; set; }
