@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,5 +19,9 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public double MinimumAmount { get; set; }
         public int Quantity { get; set; }
         public string? Img { get; set; }
+        public Guid? OrderId { get; set; }
+        [ForeignKey(nameof(OrderId))]
+        public Order? Order { get; set; }
+nnm
     }
 }
