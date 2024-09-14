@@ -1284,7 +1284,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (availableTable.Items!.Count > 0)
                         {
                             var suitableTables = await GetTables(availableTable.Items, dto.NumOfPeople, dto.IsPrivate);
-                            result.Result = suitableTables[0];
+                            result.Result = suitableTables.Count == 0 ? null : suitableTables[0];
                         }
                     }
             }
@@ -1308,8 +1308,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var tableType = allAvailableTables.Where(t => t.TableName.Contains(tableCode)).GroupBy(t => t.TableSizeId)
                                                   .ToDictionary(k => k.Key, k => k.ToList());
+                if(tableType.Count == 0)
+                {
+                    return result;  
+                }
 
-                if (!tableType.Equals("V"))
+                if (!tableCode.Equals("V"))
                 {
                     if (quantity <= 2)
                     {
