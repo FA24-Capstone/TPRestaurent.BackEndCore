@@ -26,6 +26,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> SuggestTable(SuggestTableDto dto);
         //public Task<AppActionResult> GetOrderTotal(CalculateOrderRequest orderRequestDto);
         //public Task<AppActionResult> GetOrderJsonByTableSessionId(Guid TableSessionId);
+        public Task<AppActionResult> GetTableReservationWithTime(Guid tableId, DateTime? time);
         public Task CancelOverReservation();
         public Task UpdateOrderStatusBeforeMealTime();
         public Task UpdateOrderDetailStatusBeforeDining();
