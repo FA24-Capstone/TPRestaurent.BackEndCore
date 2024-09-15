@@ -118,7 +118,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         OrderID = orderDb.OrderId.ToString(),
                                         PaymentMethod = paymentRequest.PaymentMethod,
                                         Amount = (double)(orderDb.TotalAmount > 0 ? orderDb.TotalAmount : orderDb.Deposit),
-                                        CustomerName = orderDb!.Account!.Name,
+                                        CustomerName = orderDb!.Account!.LastName,
                                         AccountID = orderDb.AccountId,
                                     };
 
