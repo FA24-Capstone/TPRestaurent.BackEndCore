@@ -80,7 +80,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 var coupon = new CouponProgram
                 {
-                    CouponId = Guid.NewGuid(),
+                    CouponProgramId = Guid.NewGuid(),
                     Code = couponDto.Code,  
                     DiscountPercent = couponDto.DiscountPercent,    
                     ExpiryDate = couponDto.ExpiryDate,  
@@ -89,7 +89,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     StartDate = couponDto.StartDate,    
                 };
 
-                var pathName = SD.FirebasePathName.COUPON_PREFIX + $"{coupon.CouponId}{Guid.NewGuid()}.jpg";
+                var pathName = SD.FirebasePathName.COUPON_PREFIX + $"{coupon.CouponProgramId}{Guid.NewGuid()}.jpg";
                 var upload = await firebaseService!.UploadFileToFirebase(couponDto.File, pathName);
                 coupon.Img = pathName;
                 if (!upload.IsSuccess)
@@ -122,6 +122,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;  
         }
 
+      
         public async Task<AppActionResult> GetCouponById(Guid couponId)
         {
             var result = new AppActionResult();

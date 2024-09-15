@@ -195,6 +195,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var staticFileRepository = Resolve<IGenericRepository<Image>>();
             var ratingRepository = Resolve<IGenericRepository<Rating>>();
             var dishSizeRepository = Resolve<IGenericRepository<DishSizeDetail>>();
+            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();     
+            var ratingListDb = new List<Rating>();  
             try
             {
                 var dishDb = await _dishRepository.GetByExpression(p => p.DishId == dishId, p => p.DishItemType);
@@ -210,11 +212,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 dishResponse.dishSizeDetails = dishSizeDetailsDb!.Items!.OrderBy(d => d.DishSizeId).ToList();
                 var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, null);
 
-                var ratingDb = await ratingRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.CreateByAccount, p => p.UpdateByAccount);
-
-                if (ratingDb.Items.Count > 0)
+                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => p.DishSizeDetail!.DishId == dishId && p.Order!.StatusId == OrderStatus.Completed, 0, 0, null, false, null);
+                if (orderDetailDb!.Items!.Count > 0 && orderDetailDb.Items != null)
                 {
-                    foreach (var rating in ratingDb.Items!)
+                    foreach (var orderDetail in orderDetailDb.Items)
+                    {
+                        var ratingDb = await ratingRepository!.GetByExpression(p => p.OrderDetailId == orderDetail.OrderDetailId);
+                        ratingListDb.Add(ratingDb);
+                    }
+                }
+
+                if (ratingListDb.Count > 0)
+                {
+                    foreach (var rating in ratingListDb)
                     {
                         var ratingStaticFileDb = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == rating.RatingId, 0, 0, null, false, null);
                         var ratingDishResponse = new RatingDishResponse
