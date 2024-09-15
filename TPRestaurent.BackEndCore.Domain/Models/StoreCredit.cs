@@ -14,7 +14,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid StoreCreditId { get; set; }
         public double Amount { get; set; }
         public DateTime ExpiredDate { get; set; }
-        public Guid? AccountId { get; set; }
+        public string? AccountId { get; set; }
         [ForeignKey(nameof(AccountId))]
         public Account? Account { get; set; }
     }

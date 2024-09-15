@@ -19,7 +19,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public double MinimumAmount { get; set; }
         public int Quantity { get; set; }
         public string? Img { get; set; }
-        public Guid? AccountId { get; set; }
+        public string? AccountId { get; set; }
         [ForeignKey(nameof(AccountId))]
         public Account? Account { get; set; }   
         

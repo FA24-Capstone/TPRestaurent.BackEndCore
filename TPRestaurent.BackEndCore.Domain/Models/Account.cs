@@ -12,7 +12,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
     public class Account : IdentityUser
     {
         [Key]
-        public Guid CustomerId { get; set; }
+        public string CustomerId { get; set; }
         public string Name { get; set; } = null!;
         public string PhoneNumber { get; set; } = null!;
         public DateTime? DOB { get; set; }

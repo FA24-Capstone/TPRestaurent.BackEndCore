@@ -14,7 +14,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid CustomerInfoAddressId   { get; set; }
         public string CustomerInfoAddressName { get; set; }
         public bool IsCurrentUsed { get; set; }
-        public Guid AccountId { get; set; }
+        public string AccountId { get; set; }
         [ForeignKey(nameof(AccountId))]
         public Account? Account {  get; set; }
     }
