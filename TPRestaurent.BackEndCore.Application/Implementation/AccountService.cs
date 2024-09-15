@@ -43,7 +43,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly IEmailService _emailService;
         private readonly IExcelService _excelService;
         private readonly IGenericRepository<OTP> _otpRepository;
-        private readonly IGenericRepository<CustomerInfo> _customerInfoRepository;
         public AccountService(
             IGenericRepository<Account> accountRepository,
             IUnitOfWork unitOfWork,
@@ -55,7 +54,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             IServiceProvider serviceProvider,
             IGenericRepository<IdentityUserRole<string>> userRoleRepository,
             IGenericRepository<OTP> otpRepository,
-            IGenericRepository<CustomerInfo> customerInfoRepository
         ) : base(serviceProvider)
         {
             _accountRepository = accountRepository;
@@ -69,7 +67,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _mapper = mapper;
             _userRoleRepository = userRoleRepository;
             _otpRepository = otpRepository;
-            _customerInfoRepository = customerInfoRepository;
         }
 
         public async Task<AppActionResult> Login(LoginRequestDto loginRequest, HttpContext httpContext)
@@ -78,7 +75,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var utility = Resolve<Utility>();
-                var customerInfoRepository = Resolve<IGenericRepository<CustomerInfo>>();
                 var tokenRepository = Resolve<IGenericRepository<Token>>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
                 var user = await _accountRepository.GetByExpression(u =>
