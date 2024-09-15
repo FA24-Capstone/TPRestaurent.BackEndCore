@@ -17,8 +17,8 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public string Code { get; set; } = null!;
         public DateTime ExpiredTime { get; set; }
         public bool IsUsed { get; set; }
-        public Guid? CustomerInfoId { get; set; } = null!;
-        [ForeignKey(nameof(CustomerInfoId))]
-        public CustomerInfo? CustomerInfo { get; set; }
+        public Guid? AccountId { get; set; } = null!;
+        [ForeignKey(nameof(AccountId))]
+        public Account? Account { get; set; }
     }
 }

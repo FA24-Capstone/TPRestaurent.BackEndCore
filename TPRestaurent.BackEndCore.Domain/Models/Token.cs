@@ -20,8 +20,8 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public DateTime CreateRefreshToken { get; set; }
         public DateTime ExpiryTimeRefreshToken { get; set; }
         public bool IsActive { get; set; }
-        public Guid? CustomerInfoId { get; set; }
-        [ForeignKey(nameof(CustomerInfoId))]
-        public CustomerInfo? CustomerInfo { get; set; }
+        public Guid? AccountId { get; set; }
+        [ForeignKey(nameof(AccountId))]
+        public Account? Account { get; set; }
     }
 }

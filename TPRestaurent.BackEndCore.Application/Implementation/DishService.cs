@@ -43,7 +43,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var firebaseService = Resolve<IFirebaseService>();
                     var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
-                    var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
+                    var staticFileRepository = Resolve<IGenericRepository<Image>>();
                     var dishExsted = await _dishRepository.GetByExpression(p => p.Name == dto.Name);
                     if (dishExsted != null)
                     {
@@ -79,7 +79,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }));
                     }
 
-                    List<StaticFile> staticList = new List<StaticFile>();
+                    List<Image> staticList = new List<Image>();
 
                     var mainFile = dto.MainImageFile;
                     if (mainFile == null)
@@ -88,7 +88,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     var mainPathName = SD.FirebasePathName.DISH_PREFIX + $"{dish.DishId}_main.jpg";
                     var uploadMainPicture = await firebaseService!.UploadFileToFirebase(mainFile, mainPathName);
-                    var staticMainFile = new StaticFile
+                    var staticMainFile = new Image
                     {
                         StaticFileId = Guid.NewGuid(),
                         DishId = dish.DishId,
@@ -101,7 +101,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         var pathName = SD.FirebasePathName.DISH_PREFIX + $"{dish.DishId}{Guid.NewGuid()}.jpg";
                         var upload = await firebaseService!.UploadFileToFirebase(file, pathName);
-                        var staticImg = new StaticFile
+                        var staticImg = new Image
                         {
                             StaticFileId = Guid.NewGuid(),
                             DishId = dish.DishId,
@@ -192,7 +192,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             var result = new AppActionResult();
             var dishResponse = new DishResponse();
-            var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
+            var staticFileRepository = Resolve<IGenericRepository<Image>>();
             var ratingRepository = Resolve<IGenericRepository<Rating>>();
             var dishSizeRepository = Resolve<IGenericRepository<DishSizeDetail>>();
             try
@@ -261,7 +261,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 try
                 {
                     var firebaseService = Resolve<IFirebaseService>();
-                    var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
+                    var staticFileRepository = Resolve<IGenericRepository<Image>>();
                     var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                     var dishDb = await _dishRepository.GetById(dto.DishId);
                     if (dishDb == null)
@@ -273,7 +273,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         return BuildAppActionResultError(result, $"Các file hình ảnh của món ăn với id {dishDb.DishId} không tồn tại");
                     }
-                    var oldFileList = new List<StaticFile>();
+                    var oldFileList = new List<Image>();
                     foreach (var oldImg in oldFiles.Items!)
                     {
                         oldFileList.Add(oldImg);
@@ -294,7 +294,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await staticFileRepository.DeleteRange(oldFileList);
                     await _unitOfWork.SaveChangesAsync();
 
-                    List<StaticFile> staticList = new List<StaticFile>();
+                    List<Image> staticList = new List<Image>();
                     var mainFile = dto.MainImageFile;
                     if (mainFile == null)
                     {
@@ -302,7 +302,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     var mainPathName = SD.FirebasePathName.DISH_PREFIX + $"{dishDb.DishId}_main.jpg";
                     var uploadMainPicture = await firebaseService!.UploadFileToFirebase(mainFile, mainPathName);
-                    var staticMainFile = new StaticFile
+                    var staticMainFile = new Image
                     {
                         StaticFileId = Guid.NewGuid(),
                         DishId = dishDb.DishId,
@@ -316,7 +316,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         var pathName = SD.FirebasePathName.DISH_PREFIX + $"{dishDb.DishId}{Guid.NewGuid()}.jpg";
                         var upload = await firebaseService!.UploadFileToFirebase(file, pathName);
-                        var staticImg = new StaticFile
+                        var staticImg = new Image
                         {
                             StaticFileId = Guid.NewGuid(),
                             DishId = dishDb.DishId,

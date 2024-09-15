@@ -11,7 +11,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
     {
         public Dish Dish { get; set; } = null!;
         public List<DishSizeDetail> dishSizeDetails { get; set; } = null!;  
-        public List<StaticFile> DishImgs { get; set; } = new List<StaticFile>();
+        public List<Image> DishImgs { get; set; } = new List<Image>();
         public List<RatingDishResponse> RatingDish { get; set; } = new List<RatingDishResponse>();
         public List<DishTag> DishTags = new List<DishTag>();
     }
@@ -19,6 +19,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
     public class RatingDishResponse
     {
         public Rating Rating { get; set; } = null!;
-        public List<StaticFile> RatingImgs { get; set; } = new List<StaticFile>();
+        public List<Image> RatingImgs { get; set; } = new List<Image>();
     }
 }

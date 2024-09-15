@@ -15,10 +15,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 {
     public class CouponService :  GenericBackendService, ICouponService
     {
-        private IGenericRepository<Coupon> _couponRepository;
+        private IGenericRepository<CouponProgram> _couponRepository;
         private IUnitOfWork _unitOfWork;
 
-        public CouponService(IServiceProvider serviceProvider, IGenericRepository<Coupon> couponRepository, IUnitOfWork unitOfWork) : base(serviceProvider)
+        public CouponService(IServiceProvider serviceProvider, IGenericRepository<CouponProgram> couponRepository, IUnitOfWork unitOfWork) : base(serviceProvider)
         {
             _couponRepository = couponRepository;   
             _unitOfWork = unitOfWork;   
@@ -73,12 +73,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var couponDb = await _couponRepository.GetByExpression(p => p.Code == couponDto.Code);
                 var firebaseService = Resolve<IFirebaseService>();
-                var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
+                var staticFileRepository = Resolve<IGenericRepository<Image>>();
                 if (couponDb != null)
                 {
                     result = BuildAppActionResultError(result, $"Mã giảm giá với code {couponDto.Code} đã tồn tại");
                 }
-                var coupon = new Coupon
+                var coupon = new CouponProgram
                 {
                     CouponId = Guid.NewGuid(),
                     Code = couponDto.Code,  

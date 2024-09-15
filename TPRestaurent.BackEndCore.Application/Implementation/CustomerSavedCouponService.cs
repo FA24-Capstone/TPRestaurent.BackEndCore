@@ -58,7 +58,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task UpdateExpiredCouponStatus()
         {
             var utility = Resolve<Utility>();
-            var couponRepository = Resolve<IGenericRepository<Coupon>>();
+            var couponRepository = Resolve<IGenericRepository<CouponProgram>>();
             try
             {
                 var currentTime = utility!.GetCurrentDateTimeInTimeZone();

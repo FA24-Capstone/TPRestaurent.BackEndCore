@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
 {
-    public class StaticFile
+    public class Image
     {
         [Key]
         public Guid StaticFileId { get; set; }

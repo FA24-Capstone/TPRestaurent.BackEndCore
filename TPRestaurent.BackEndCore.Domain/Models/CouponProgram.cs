@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
 {
-    public class Coupon
+    public class CouponProgram
     {
         [Key]
-        public Guid CouponId { get; set; }
+        public Guid CouponProgramId { get; set; }
         public string Code { get; set; } = null!;
         public int DiscountPercent { get; set; }
         public DateTime StartDate { get; set; }
@@ -19,9 +19,9 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public double MinimumAmount { get; set; }
         public int Quantity { get; set; }
         public string? Img { get; set; }
-        public Guid? OrderId { get; set; }
-        [ForeignKey(nameof(OrderId))]
-        public Order? Order { get; set; }
-nnm
+        public Guid? AccountId { get; set; }
+        [ForeignKey(nameof(AccountId))]
+        public Account? Account { get; set; }   
+        
     }
 }

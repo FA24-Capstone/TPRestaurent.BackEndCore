@@ -37,7 +37,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
                     var comboOptionSetRepository = Resolve<IGenericRepository<ComboOptionSet>>();
                     var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
-                    var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
+                    var staticFileRepository = Resolve<IGenericRepository<Image>>();
                     var firebaseService = Resolve<IFirebaseService>();
 
 
@@ -67,14 +67,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                    
                     comboDb.Image = uploadMainPicture!.Result!.ToString()!;
 
-                    List<StaticFile> staticList = new List<StaticFile>();
+                    List<Image> staticList = new List<Image>();
 
 
                     foreach (var file in comboDto!.ImageFiles!)
                     {
                         var pathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDb.ComboId}{Guid.NewGuid()}.jpg";
                         var upload = await firebaseService!.UploadFileToFirebase(file, pathName );
-                        var staticImg = new StaticFile
+                        var staticImg = new Image
                         {
                             StaticFileId = Guid.NewGuid(),
                             ComboId = comboDb.ComboId,
@@ -181,7 +181,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
-                var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
+                var staticFileRepository = Resolve<IGenericRepository<Image>>();
                 var comboResponse = new ComboResponseDto();
                 var comboDb = await _comboRepository.GetByExpression(p => p!.ComboId == comboId, p => p.Category);
                 if (comboDb == null)
@@ -223,7 +223,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
-                var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
+                var staticFileRepository = Resolve<IGenericRepository<Image>>();
                 var comboResponse = new ComboResponseDto();
                 var comboDb = await _comboRepository.GetByExpression(p => p!.ComboId == comboId, p => p.Category);
                 if (comboDb == null)

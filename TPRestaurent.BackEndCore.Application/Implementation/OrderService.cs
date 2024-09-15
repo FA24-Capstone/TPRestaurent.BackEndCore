@@ -269,7 +269,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                     var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                     var comboRepository = Resolve<IGenericRepository<Combo>>();
-                    var couponRepository = Resolve<IGenericRepository<Coupon>>();
+                    var couponRepository = Resolve<IGenericRepository<CouponProgram>>();
                     var tableRepository = Resolve<IGenericRepository<Table>>();
                     var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
                     var transcationService = Resolve<ITransactionService>();
@@ -763,7 +763,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     if (orderDb.CustomerId.HasValue)
                     {
-                        var couponRepository = Resolve<IGenericRepository<Coupon>>();
+                        var couponRepository = Resolve<IGenericRepository<CouponProgram>>();
                         var customerSavedCouponRepository = Resolve<IGenericRepository<CustomerSavedCoupon>>();
                         var customerInfoRepository = Resolve<IGenericRepository<CustomerInfo>>();
                         var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();

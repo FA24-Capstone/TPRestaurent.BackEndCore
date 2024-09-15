@@ -19,10 +19,9 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public TPRestaurentDBContext(DbContextOptions options) : base(options)
         {
         }
-        public DbSet<Models.Account> Accounts { get; set; } = null!;
         public DbSet<Models.Blog> Blogs { get; set; } = null!;
-        public DbSet<Models.Coupon> Coupons { get; set; } = null!;
-        public DbSet<Models.CustomerInfo> CustomerInfos { get; set; } = null!;
+        public DbSet<Models.CouponProgram> Coupons { get; set; } = null!;
+        public DbSet<Models.Account> Accounts { get; set; } = null!;
         public DbSet<Models.Dish> Dishes { get; set; } = null!;
         public DbSet<Models.DishTag> DishTags { get; set; } = null!;
         public DbSet<Models.LoyalPointsHistory> LoyalPointsHistories { get; set; } = null!;
@@ -31,7 +30,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.OTP> OTPs { get; set; } = null!;
         public DbSet<Models.Rating> Ratings { get; set; } = null!;
         public DbSet<Models.TableDetail> ReservationTableDetail { get; set; } = null!;
-        public DbSet<Models.StaticFile> StaticFiles { get; set; } = null!;
+        public DbSet<Models.Image> StaticFiles { get; set; } = null!;
         public DbSet<Models.Table> Tables { get; set; } = null!;
         public DbSet<Models.Room> TableRatings { get; set; } = null!;
         public DbSet<Models.Tag> Tags { get; set; } = null!;
