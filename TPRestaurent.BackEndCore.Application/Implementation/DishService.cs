@@ -188,55 +188,55 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
 
 
-        //public async Task<AppActionResult> GetDishById(Guid dishId)
-        //{
-        //    var result = new AppActionResult();
-        //    var dishResponse = new DishResponse();
-        //    var staticFileRepository = Resolve<IGenericRepository<Image>>();
-        //    var ratingRepository = Resolve<IGenericRepository<Rating>>();
-        //    var dishSizeRepository = Resolve<IGenericRepository<DishSizeDetail>>();
-        //    try
-        //    {
-        //        var dishDb = await _dishRepository.GetByExpression(p => p.DishId == dishId, p => p.DishItemType);
-        //        if (dishDb == null)
-        //        {
-        //            result = BuildAppActionResultError(result, $"Món ăn với id {dishId} không tồn tại");
-        //        }
-        //        var dishSizeDetailsDb = await dishSizeRepository.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.Dish!, p => p.DishSize!);
-        //        if (dishSizeDetailsDb!.Items!.Count < 0 && dishSizeDetailsDb.Items == null)
-        //        {
-        //            result = BuildAppActionResultError(result, $"size món ăn với id {dishId} không tồn tại");
-        //        }
-        //        dishResponse.dishSizeDetails = dishSizeDetailsDb!.Items!.OrderBy(d => d.DishSizeId).ToList();
-        //        var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, null);
+        public async Task<AppActionResult> GetDishById(Guid dishId)
+        {
+            var result = new AppActionResult();
+            var dishResponse = new DishResponse();
+            var staticFileRepository = Resolve<IGenericRepository<Image>>();
+            var ratingRepository = Resolve<IGenericRepository<Rating>>();
+            var dishSizeRepository = Resolve<IGenericRepository<DishSizeDetail>>();
+            try
+            {
+                var dishDb = await _dishRepository.GetByExpression(p => p.DishId == dishId, p => p.DishItemType);
+                if (dishDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Món ăn với id {dishId} không tồn tại");
+                }
+                var dishSizeDetailsDb = await dishSizeRepository.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.Dish!, p => p.DishSize!);
+                if (dishSizeDetailsDb!.Items!.Count < 0 && dishSizeDetailsDb.Items == null)
+                {
+                    result = BuildAppActionResultError(result, $"size món ăn với id {dishId} không tồn tại");
+                }
+                dishResponse.dishSizeDetails = dishSizeDetailsDb!.Items!.OrderBy(d => d.DishSizeId).ToList();
+                var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, null);
 
-        //        var ratingDb = await ratingRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.CreateByAccount, p => p.UpdateByAccount);
+                var ratingDb = await ratingRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.CreateByAccount, p => p.UpdateByAccount);
 
-        //        if (ratingDb.Items.Count > 0)
-        //        {
-        //            foreach (var rating in ratingDb.Items!)
-        //            {
-        //                var ratingStaticFileDb = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == rating.RatingId, 0, 0, null, false, null);
-        //                var ratingDishResponse = new RatingDishResponse
-        //                {
-        //                    Rating = rating,
-        //                    RatingImgs = ratingStaticFileDb.Items!
-        //                };
-        //                dishResponse.RatingDish.Add(ratingDishResponse);
-        //            }
-        //        }
+                if (ratingDb.Items.Count > 0)
+                {
+                    foreach (var rating in ratingDb.Items!)
+                    {
+                        var ratingStaticFileDb = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == rating.RatingId, 0, 0, null, false, null);
+                        var ratingDishResponse = new RatingDishResponse
+                        {
+                            Rating = rating,
+                            RatingImgs = ratingStaticFileDb.Items!
+                        };
+                        dishResponse.RatingDish.Add(ratingDishResponse);
+                    }
+                }
 
-        //        dishResponse.Dish = dishDb!;
-        //        dishResponse.DishImgs = staticFileDb.Items!;
+                dishResponse.Dish = dishDb!;
+                dishResponse.DishImgs = staticFileDb.Items!;
 
-        //        result.Result = dishResponse;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        result = BuildAppActionResultError(result, ex.Message);
-        //    }
-        //    return result;
-        //}
+                result.Result = dishResponse;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
 
         public async Task<AppActionResult> GetAllDishType(int pageNumber, int pagesize)
         {

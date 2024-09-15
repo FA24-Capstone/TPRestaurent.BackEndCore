@@ -28,10 +28,10 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _couponService.GetCouponById(comboId);     
         }
 
-        //[HttpPost("create-coupon")]
-        //public async Task<AppActionResult> CreateCoupon([FromForm]CouponDto couponDto)
-        //{
-        //    return await _couponService.CreateCoupon(couponDto);        
-        //}
+        [HttpPost("create-coupon")]
+        public async Task<AppActionResult> CreateCoupon([FromForm]CouponDto couponDto)
+        {
+            return await _couponService.CreateCoupon(couponDto);        
+        }
     }
 }

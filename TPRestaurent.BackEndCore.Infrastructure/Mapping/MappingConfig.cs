@@ -14,19 +14,19 @@ public class MappingConfig
         var mappingConfig = new MapperConfiguration(config =>
         {
 
-            //config.CreateMap<Account, AccountResponse>()
-            //    .ForMember(desc => desc.Id, act => act.MapFrom(src => src.Id))
-            //    .ForMember(desc => desc.Email, act => act.MapFrom(src => src.Email))
-            //    .ForMember(desc => desc.Gender, act => act.MapFrom(src => src.Gender))
-            //    .ForMember(desc => desc.IsVerified, act => act.MapFrom(src => src.IsVerified))
-            //    .ForMember(desc => desc.FirstName, act => act.MapFrom(src => src.FirstName))
-            //    .ForMember(desc => desc.LastName, act => act.MapFrom(src => src.LastName))
-            //    .ForMember(desc => desc.PhoneNumber, act => act.MapFrom(src => src.PhoneNumber))
-            //    .ForMember(desc => desc.UserName, act => act.MapFrom(src => src.UserName))
-            //    .ForMember(desc => desc.Avatar, act => act.MapFrom(src => src.Avatar))
-            //    .ForMember(desc => desc.CustomerInfo, act => act.MapFrom(src => src.Customer))
-            //    .ForMember(desc => desc.IsManuallyUpdate, act => act.MapFrom(src => src.IsManuallyCreated))
-            //    ;
+            config.CreateMap<Account, AccountResponse>()
+                .ForMember(desc => desc.Id, act => act.MapFrom(src => src.Id))
+                .ForMember(desc => desc.Email, act => act.MapFrom(src => src.Email))
+                .ForMember(desc => desc.Gender, act => act.MapFrom(src => src.Gender))
+                .ForMember(desc => desc.IsVerified, act => act.MapFrom(src => src.IsVerified))
+                .ForMember(desc => desc.FirstName, act => act.MapFrom(src => src.FirstName))
+                .ForMember(desc => desc.LastName, act => act.MapFrom(src => src.LastName))
+                .ForMember(desc => desc.PhoneNumber, act => act.MapFrom(src => src.PhoneNumber))
+                .ForMember(desc => desc.UserName, act => act.MapFrom(src => src.UserName))
+                .ForMember(desc => desc.Avatar, act => act.MapFrom(src => src.Avatar))
+                .ForMember(desc => desc.CustomerInfo, act => act.MapFrom(src => src.Customer))
+                .ForMember(desc => desc.IsManuallyUpdate, act => act.MapFrom(src => src.IsManuallyCreated))
+                ;
 
             config.CreateMap<Device, DeviceResponse>()
             .ForMember(desc => desc.DeviceId, act => act.MapFrom(src => src.DeviceId))

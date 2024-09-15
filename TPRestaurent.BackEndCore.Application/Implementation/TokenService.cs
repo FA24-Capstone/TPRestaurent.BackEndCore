@@ -39,32 +39,32 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        //public async Task<AppActionResult> InvalidateTokensForUser(string accountId)
-        //{
-        //    var result = new AppActionResult();
-        //    var utility = Resolve<Utility>();
-        //    try
-        //    {
-        //        var accountTokenList = await _tokenRepository.GetAllDataByExpression(p => p.AccountId == accountId, 0, 0, null, false, p => p.Account!);
-        //        if (accountTokenList == null)
-        //        {
-        //            result = BuildAppActionResultError(result, $"Danh sách token của tài khoản {accountId} không tồn tại");
-        //        }
-        //        if (accountTokenList!.Items!.Count < 0 && accountTokenList.Items != null)
-        //        {
-        //            foreach (var token in accountTokenList.Items)
-        //            {
-        //                token.IsActive = false;     
-        //                token.ExpiryTimeAccessToken = utility!.GetCurrentDateTimeInTimeZone();
-        //                token.ExpiryTimeRefreshToken = utility.GetCurrentDateTimeInTimeZone();      
-        //            }
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        result = BuildAppActionResultError(result, ex.Message);
-        //    }
-        //    return result;
-        //}
+        public async Task<AppActionResult> InvalidateTokensForUser(string accountId)
+        {
+            var result = new AppActionResult();
+            var utility = Resolve<Utility>();
+            try
+            {
+                var accountTokenList = await _tokenRepository.GetAllDataByExpression(p => p.AccountId == accountId, 0, 0, null, false, p => p.Account!);
+                if (accountTokenList == null)
+                {
+                    result = BuildAppActionResultError(result, $"Danh sách token của tài khoản {accountId} không tồn tại");
+                }
+                if (accountTokenList!.Items!.Count < 0 && accountTokenList.Items != null)
+                {
+                    foreach (var token in accountTokenList.Items)
+                    {
+                        token.IsActive = false;     
+                        token.ExpiryTimeAccessToken = utility!.GetCurrentDateTimeInTimeZone();
+                        token.ExpiryTimeRefreshToken = utility.GetCurrentDateTimeInTimeZone();      
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
     }
 }
