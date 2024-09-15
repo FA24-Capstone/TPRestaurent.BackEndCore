@@ -262,10 +262,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var utility = Resolve<Utility>();
                     var accountRepository = Resolve<IGenericRepository<Account>>();
-                    var customerInfoRepository = Resolve<IGenericRepository<z>>();
                     var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
                     var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
-                    var customerSavedCouponRepository = Resolve<IGenericRepository<CustomerSavedCoupon>>();
                     var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                     var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                     var comboRepository = Resolve<IGenericRepository<Combo>>();
@@ -761,11 +759,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     orderDb.TotalAmount = money - ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0) ? orderDb.Deposit.Value : 0);
 
-                    if (orderDb.CustomerId.HasValue)
+                    if (orderDb.AccountId.HasValue)
                     {
                         var couponRepository = Resolve<IGenericRepository<CouponProgram>>();
-                        var customerSavedCouponRepository = Resolve<IGenericRepository<CustomerSavedCoupon>>();
-                        var customerInfoRepository = Resolve<IGenericRepository<CustomerInfo>>();
+                        var customerInfoRepository = Resolve<IGenericRepository<Account>>();
                         var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
                         var transactionService = Resolve<ITransactionService>();
                         var customerInfoListDb = await customerInfoRepository.GetAllDataByExpression(p => p.CustomerId == orderDb.CustomerId, 0, 0, null, false, p => p.Account!);
