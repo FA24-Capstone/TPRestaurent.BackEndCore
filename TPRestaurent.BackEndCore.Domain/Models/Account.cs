@@ -13,7 +13,8 @@ namespace TPRestaurent.BackEndCore.Domain.Models
     {
         [Key]
         public string CustomerId { get; set; }
-        public string Name { get; set; } = null!;
+        public string FirstName { get; set; } = null!;
+        public string LastName { get; set; } = null!;
         public string PhoneNumber { get; set; } = null!;
         public DateTime? DOB { get; set; }
         public bool? Gender { get; set; }

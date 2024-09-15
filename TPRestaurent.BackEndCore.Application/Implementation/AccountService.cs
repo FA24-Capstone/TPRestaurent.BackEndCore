@@ -259,7 +259,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         Email = signUpRequest.Email,
                         UserName = signUpRequest.Email,
-                        Name = signUpRequest.FirstName + " " + signUpRequest.LastName,
+                        Name = signUpRequest.Name,
                         PhoneNumber = signUpRequest.PhoneNumber,
                         Gender = signUpRequest.Gender,
                         VerifyCode = verifyCode,
@@ -862,9 +862,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 new SignUpRequestDto
                                 {
                                     Email = userEmail,
-                                    FirstName = name!,
+                                    Name = name!,
                                     Gender = true,
-                                    LastName = string.Empty,
                                     Password = "Google123@",
                                     PhoneNumber = string.Empty
                                 }, true);
@@ -1460,9 +1459,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, $"Tài khoản với số điện thoại {accountId} không tồn tại!");
                 }
-                var customerInforList = await _accountRepository.GetAllDataByExpression(p => p.CustomerId == accountId, pageNumber, pageSize, null, false, null);
                 customerInfoResponse.Account = accountDb;
-                customerInfoResponse.CustomerInfo = customerInforList.Items!;
                 result.Result = customerInfoResponse;
             }
             catch (Exception ex)

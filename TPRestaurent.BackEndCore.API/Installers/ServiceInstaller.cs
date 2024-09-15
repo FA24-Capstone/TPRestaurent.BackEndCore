@@ -1,4 +1,5 @@
-﻿using TPRestaurent.BackEndCore.Application;
+﻿using TPRestaurent.BackEndCore.API.Middlewares;
+using TPRestaurent.BackEndCore.Application;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.Implementation;
 using TPRestaurent.BackEndCore.Application.IRepositories;
@@ -22,7 +23,6 @@ public class ServiceInstaller : IInstaller
         services.AddScoped<IReservationRequestService, ReservationRequestService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IStoreCreditService, StoreCreditService>();
-        services.AddScoped<ICustomerSavedCouponService, CustomerSavedCouponService>();
         services.AddScoped<ITransactionService, TransactionService>();
         services.AddScoped<IPaymentGatewayService, PaymentGatewayService>();
         services.AddScoped<IConfigService, ConfigService>();
@@ -36,5 +36,6 @@ public class ServiceInstaller : IInstaller
         services.AddScoped<ICouponService, CouponService>();
         services.AddScoped<IHashingService, HashingService>();
         services.AddScoped<ITokenService, TokenService>();
+        services.AddScoped<TokenValidationMiddleware>();
     }
 }
