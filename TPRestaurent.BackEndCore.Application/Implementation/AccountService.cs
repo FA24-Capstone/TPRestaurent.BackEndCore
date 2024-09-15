@@ -864,8 +864,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 new SignUpRequestDto
                                 {
                                     Email = userEmail,
-                                    LastName = name!,
+                                    FirstName = name!,
                                     Gender = true,
+                                    LastName = string.Empty,
                                     Password = "Google123@",
                                     PhoneNumber = string.Empty
                                 }, true);
