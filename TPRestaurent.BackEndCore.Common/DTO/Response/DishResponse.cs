@@ -14,6 +14,8 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public List<Image> DishImgs { get; set; } = new List<Image>();
         public List<RatingDishResponse> RatingDish { get; set; } = new List<RatingDishResponse>();
         public List<DishTag> DishTags = new List<DishTag>();
+        public double AverageRating { get; set; } = 0;
+        public int NumberOfRating { get; set; } = 0;
     }
 
     public class RatingDishResponse
