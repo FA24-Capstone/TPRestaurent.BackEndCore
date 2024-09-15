@@ -259,7 +259,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         Email = signUpRequest.Email,
                         UserName = signUpRequest.Email,
-                        Name = signUpRequest.Name,
+                        FirstName = signUpRequest.FirstName,
+                        LastName = signUpRequest.LastName,
                         PhoneNumber = signUpRequest.PhoneNumber,
                         Gender = signUpRequest.Gender,
                         VerifyCode = verifyCode,
@@ -275,7 +276,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             emailService!.SendEmail(user.Email, SD.SubjectMail.VERIFY_ACCOUNT,
                                 TemplateMappingHelper.GetTemplateOTPEmail(
                                     TemplateMappingHelper.ContentEmailType.VERIFICATION_CODE, verifyCode,
-                                    user.Name));
+                                    user.LastName));
                     }
                     else
                     {
@@ -326,7 +327,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var customer = new Account
                 {
                     CustomerId = Guid.NewGuid().ToString(),
-                    Name = user.Name,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
                     PhoneNumber = user.PhoneNumber,
                     Address = ""
                 };
@@ -476,7 +478,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     Email = $"{SD.AccountDefaultInfomation.DEFAULT_EMAIL}{accountRandomNumber}{SD.DEFAULT_EMAIL_DOMAIN}",
                     UserName = $"{SD.AccountDefaultInfomation.DEFAULT_EMAIL}{accountRandomNumber}{SD.DEFAULT_EMAIL_DOMAIN}",
-                    Name = SD.AccountDefaultInfomation.DEFAULT_FIRSTNAME + " " + SD.AccountDefaultInfomation.DEFAULT_LASTNAME,
+                    LastName = SD.AccountDefaultInfomation.DEFAULT_FIRSTNAME + " " + SD.AccountDefaultInfomation.DEFAULT_LASTNAME,
                     PhoneNumber = phoneNumber,
                     Gender = true,
                     VerifyCode = verifyCode,
@@ -766,7 +768,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var code = await GenerateVerifyCode(user!.Email, false);
                     emailService!.SendEmail(email, SD.SubjectMail.VERIFY_ACCOUNT,
                         TemplateMappingHelper.GetTemplateOTPEmail(TemplateMappingHelper.ContentEmailType.VERIFICATION_CODE,
-                            code, user.Name!));
+                            code, user.LastName!));
                 }
             }
             catch (Exception ex)
@@ -862,7 +864,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 new SignUpRequestDto
                                 {
                                     Email = userEmail,
-                                    Name = name!,
+                                    LastName = name!,
                                     Gender = true,
                                     Password = "Google123@",
                                     PhoneNumber = string.Empty
@@ -1175,7 +1177,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 if (!BuildAppActionResultIsError(result))
                 {
-                    account.Name = request.FirstName + request.LastName;
+                    account.FirstName = request.FirstName + request.LastName;
+                    account.LastName = request.FirstName + request.LastName;
                     account.PhoneNumber = request.PhoneNumber;
                     if (!string.IsNullOrEmpty(request.Avatar))
                     {
@@ -1223,7 +1226,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var customerInfo = new Account
                 {
                     CustomerId = Guid.NewGuid().ToString(),
-                    Name = customerInforRequest.Name,
+                    FirstName = customerInforRequest.FirstName,
+                    LastName = customerInforRequest.LastName,
                     PhoneNumber = customerInforRequest.PhoneNumber,
                     Address = customerInforRequest.Address,
                     DOB = customerInforRequest.DOB,
@@ -1435,7 +1439,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     updateCustomerInfo.Address = customerInforRequest.Address;
                 }
                 updateCustomerInfo.DOB = customerInforRequest.DOB;
-                updateCustomerInfo.Name = customerInforRequest.Name;
+                updateCustomerInfo.FirstName = customerInforRequest.FirstName;
+                updateCustomerInfo.LastName = customerInforRequest.LastName;
+
 
                 await _accountRepository.Update(updateCustomerInfo);
                 await _unitOfWork.SaveChangesAsync();
