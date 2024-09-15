@@ -9,7 +9,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
 {
     public class StoreCreditResponse
     {
-        public CustomerInfo CustomerInfo { get; set; }
+        public Account CustomerInfo { get; set; }
         public StoreCredit StoreCredit { get; set; }
         //public List<StoreCreditHistory> StoreCreditHistories { get; set; } = new List<StoreCreditHistory>();
     }

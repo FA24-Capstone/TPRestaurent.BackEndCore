@@ -22,23 +22,23 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             _service = service;
         }
 
-        [HttpPost("create-payment")]
-        public async Task<AppActionResult> CreatePayment([FromBody] PaymentRequestDto paymentRequest)
-        {
-            return await _service.CreatePayment(paymentRequest, HttpContext);
-        }
-
-        //[HttpGet("get-all-payment/{pageIndex}/{pageSize}")]
-        //public async Task<AppActionResult> GetAllPayment(Domain.Enums.TransationStatus transationStatus, int pageIndex = 1, int pageSize = 10)
+        //[HttpPost("create-payment")]
+        //public async Task<AppActionResult> CreatePayment([FromBody] PaymentRequestDto paymentRequest)
         //{
-        //    return await _service.GetAllPayment(pageIndex, pageSize, transationStatus);
+        //    return await _service.CreatePayment(paymentRequest, HttpContext);
         //}
 
-        //[HttpGet("get-payment-by-id/{paymentId}")]
-        //public async Task<AppActionResult> GetPaymentById(Guid paymentId)
-        //{
-        //    return await _service.GetPaymentById(paymentId);
-        //}
+        ////[HttpGet("get-all-payment/{pageIndex}/{pageSize}")]
+        ////public async Task<AppActionResult> GetAllPayment(Domain.Enums.TransationStatus transationStatus, int pageIndex = 1, int pageSize = 10)
+        ////{
+        ////    return await _service.GetAllPayment(pageIndex, pageSize, transationStatus);
+        ////}
+
+        ////[HttpGet("get-payment-by-id/{paymentId}")]
+        ////public async Task<AppActionResult> GetPaymentById(Guid paymentId)
+        ////{
+        ////    return await _service.GetPaymentById(paymentId);
+        ////}
 
 
         [HttpPut("update-transaction-status/{transactionId}/{transactionStatus}")]

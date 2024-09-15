@@ -9,7 +9,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
     public interface ITokenService
     {
-        Task<AppActionResult> GetUserToken(string token);
-        Task<AppActionResult> InvalidateTokensForUser(string accountId);
+        //Task<AppActionResult> GetUserToken(string token);
+        //Task<AppActionResult> InvalidateTokensForUser(string accountId);
     }
 }

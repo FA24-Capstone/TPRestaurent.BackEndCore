@@ -66,45 +66,45 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //    return result;
         //}
 
-        public async Task<AppActionResult> CreateCoupon(CouponDto couponDto)
-        {
-            var result = new AppActionResult(); 
-            try
-            {
-                var couponDb = await _couponRepository.GetByExpression(p => p.Code == couponDto.Code);
-                var firebaseService = Resolve<IFirebaseService>();
-                var staticFileRepository = Resolve<IGenericRepository<Image>>();
-                if (couponDb != null)
-                {
-                    result = BuildAppActionResultError(result, $"Mã giảm giá với code {couponDto.Code} đã tồn tại");
-                }
-                var coupon = new CouponProgram
-                {
-                    CouponId = Guid.NewGuid(),
-                    Code = couponDto.Code,  
-                    DiscountPercent = couponDto.DiscountPercent,    
-                    ExpiryDate = couponDto.ExpiryDate,  
-                    MinimumAmount = couponDto.MinimumAmount,    
-                    Quantity = couponDto.Quantity,  
-                    StartDate = couponDto.StartDate,    
-                };
+        //public async Task<AppActionResult> CreateCoupon(CouponDto couponDto)
+        //{
+        //    var result = new AppActionResult(); 
+        //    try
+        //    {
+        //        var couponDb = await _couponRepository.GetByExpression(p => p.Code == couponDto.Code);
+        //        var firebaseService = Resolve<IFirebaseService>();
+        //        var staticFileRepository = Resolve<IGenericRepository<Image>>();
+        //        if (couponDb != null)
+        //        {
+        //            result = BuildAppActionResultError(result, $"Mã giảm giá với code {couponDto.Code} đã tồn tại");
+        //        }
+        //        var coupon = new CouponProgram
+        //        {
+        //            CouponId = Guid.NewGuid(),
+        //            Code = couponDto.Code,  
+        //            DiscountPercent = couponDto.DiscountPercent,    
+        //            ExpiryDate = couponDto.ExpiryDate,  
+        //            MinimumAmount = couponDto.MinimumAmount,    
+        //            Quantity = couponDto.Quantity,  
+        //            StartDate = couponDto.StartDate,    
+        //        };
 
-                var pathName = SD.FirebasePathName.COUPON_PREFIX + $"{coupon.CouponId}{Guid.NewGuid()}.jpg";
-                var upload = await firebaseService!.UploadFileToFirebase(couponDto.File, pathName);
-                coupon.Img = pathName;
-                if (!upload.IsSuccess)
-                {
-                    return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
-                }
-                await _couponRepository.Insert(coupon);
-                await _unitOfWork.SaveChangesAsync();       
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
-        }
+        //        var pathName = SD.FirebasePathName.COUPON_PREFIX + $"{coupon.CouponId}{Guid.NewGuid()}.jpg";
+        //        var upload = await firebaseService!.UploadFileToFirebase(couponDto.File, pathName);
+        //        coupon.Img = pathName;
+        //        if (!upload.IsSuccess)
+        //        {
+        //            return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
+        //        }
+        //        await _couponRepository.Insert(coupon);
+        //        await _unitOfWork.SaveChangesAsync();       
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        result = BuildAppActionResultError(result, ex.Message);
+        //    }
+        //    return result;
+        //}
 
         public async Task<AppActionResult> GetAllAvailableCoupon(int pageNumber, int pageSize)
         {

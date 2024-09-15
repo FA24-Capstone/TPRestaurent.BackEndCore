@@ -25,11 +25,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
 
-        [HttpGet("get-dish-by-id/{dishId}")]
-        public async Task<AppActionResult> GetDishbyId(Guid dishId)
-        {
-            return await _dishService.GetDishById(dishId);  
-        }
+        //[HttpGet("get-dish-by-id/{dishId}")]
+        //public async Task<AppActionResult> GetDishbyId(Guid dishId)
+        //{
+        //    return await _dishService.GetDishById(dishId);  
+        //}
 
 
         [HttpPost("create-dish")]
