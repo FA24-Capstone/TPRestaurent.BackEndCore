@@ -11,5 +11,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
     {
         public Dish Dish { get; set; } = null!;
         public List<DishSizeDetail> dishSizeDetails { get; set; }  = new List<DishSizeDetail>();   
+        public double AverageRating { get; set; } = 0;
+        public int NumberOfRating { get; set; } = 0;
     }
 }

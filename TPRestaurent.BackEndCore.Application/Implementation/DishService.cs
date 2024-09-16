@@ -14,6 +14,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
+using Twilio.Http;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -175,7 +176,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 result.Result = new PagedResult<DishSizeResponse>
                 {
-                    Items = dishSizeList,
+                    Items = await GetListDishRatingInformation(dishSizeList),
                     TotalPages = dishList.TotalPages,
                 };
             }
@@ -186,6 +187,37 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        private async Task<List<DishSizeResponse>> GetListDishRatingInformation(List<DishSizeResponse> dishSizeResponses)
+        {
+            List<DishSizeResponse> responses = dishSizeResponses.ToList();
+            try
+            {
+                var dishIds = dishSizeResponses.Select(d => d.Dish.DishId).ToList();
+                var ratingRepository = Resolve<IGenericRepository<Rating>>();
+                var ratingDb = await ratingRepository.GetAllDataByExpression(o => o.OrderDetailId.HasValue && o.OrderDetail.DishSizeDetailId != null && dishIds.Contains(o.OrderDetail.DishSizeDetail.DishId.Value), 0, 0, null, false, null);
+                if (ratingDb.Items.Count > 0)
+                {
+                    var dishRating = ratingDb.Items.GroupBy(r => r.OrderDetail.DishSizeDetail.DishId).ToDictionary(r => r.Key, r => r.ToList());
+                    foreach (var response in responses)
+                    {
+                        response.NumberOfRating = dishRating[response.Dish.DishId].Count();
+                        response.AverageRating = dishRating[response.Dish.DishId].Average(r =>
+                        {
+                            if (r.PointId == RatingPoint.One) return 1;
+                            if (r.PointId == RatingPoint.Two) return 2;
+                            if (r.PointId == RatingPoint.Three) return 3;
+                            if (r.PointId == RatingPoint.Four) return 4;
+                            return 5;
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                responses = dishSizeResponses.ToList();
+            }
+            return responses;
+        }
 
 
         public async Task<AppActionResult> GetDishById(Guid dishId)
@@ -227,18 +259,28 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     foreach (var rating in ratingListDb)
                     {
                         var ratingStaticFileDb = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == rating.RatingId, 0, 0, null, false, null);
-                        var ratingDishResponse = new RatingDishResponse
+                        var ratingDishResponse = new RatingResponse
                         {
                             Rating = rating,
                             RatingImgs = ratingStaticFileDb.Items!
                         };
                         dishResponse.RatingDish.Add(ratingDishResponse);
                     }
+
+                    dishResponse.NumberOfRating = ratingListDb.Count();
+                    dishResponse.AverageRating = ratingListDb.Average(r =>
+                    {
+                        if (r.PointId == RatingPoint.One) return 1;
+                        if (r.PointId == RatingPoint.Two) return 2;
+                        if (r.PointId == RatingPoint.Three) return 3;
+                        if (r.PointId == RatingPoint.Four) return 4;
+                        return 5;
+                    });
                 }
 
                 dishResponse.Dish = dishDb!;
                 dishResponse.DishImgs = staticFileDb.Items!;
-
+                    
                 result.Result = dishResponse;
             }
             catch (Exception ex)
