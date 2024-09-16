@@ -16,14 +16,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private IConfigService _configService; 
         private IOrderService _orderService; 
         private IUnitOfWork _unitOfWork;
-        private ICustomerSavedCouponService _customerSavedCouponService;
         private IStoreCreditService _storeCreditService;    
 
         public WorkerService(IServiceProvider serviceProvider,
             BackEndLogger logger,
             IUnitOfWork unitOfWork,
             IOrderService orderService,
-            ICustomerSavedCouponService customerSavedCouponService,
             //IReservationService reservationService,
             IConfigService configService,
             IStoreCreditService storeCreditService
@@ -34,7 +32,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             //_reservationService = reservationService;   
             _configService = configService;
             _orderService = orderService;
-            _customerSavedCouponService = customerSavedCouponService;   
             _storeCreditService = storeCreditService;   
         }
 
@@ -44,7 +41,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             //RecurringJob.AddOrUpdate(() => _orderService.CancelOverReservation(), Cron.DayInterval(1), vietnamTimeZone);
             //RecurringJob.AddOrUpdate(() => _orderService.CancelOverReservation(), Cron.DayInterval(1), vietnamTimeZone);
             //RecurringJob.AddOrUpdate(() => _orderService.UpdateOrderDetailStatusBeforeDining(), Cron.DayInterval(1), vietnamTimeZone);
-            //RecurringJob.AddOrUpdate(() => _customerSavedCouponService.UpdateExpiredCouponStatus(), Cron.DayInterval(1), vietnamTimeZone);
             //RecurringJob.AddOrUpdate(() => _storeCreditService.ChangeOverdueStoreCredit(), Cron.DayInterval(1), vietnamTimeZone);
         }
     }

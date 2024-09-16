@@ -14,6 +14,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
+using Twilio.Http;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -43,7 +44,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var firebaseService = Resolve<IFirebaseService>();
                     var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
-                    var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
+                    var staticFileRepository = Resolve<IGenericRepository<Image>>();
                     var dishExsted = await _dishRepository.GetByExpression(p => p.Name == dto.Name);
                     if (dishExsted != null)
                     {
@@ -79,7 +80,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }));
                     }
 
-                    List<StaticFile> staticList = new List<StaticFile>();
+                    List<Image> staticList = new List<Image>();
 
                     var mainFile = dto.MainImageFile;
                     if (mainFile == null)
@@ -88,7 +89,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     var mainPathName = SD.FirebasePathName.DISH_PREFIX + $"{dish.DishId}_main.jpg";
                     var uploadMainPicture = await firebaseService!.UploadFileToFirebase(mainFile, mainPathName);
-                    var staticMainFile = new StaticFile
+                    var staticMainFile = new Image
                     {
                         StaticFileId = Guid.NewGuid(),
                         DishId = dish.DishId,
@@ -101,7 +102,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         var pathName = SD.FirebasePathName.DISH_PREFIX + $"{dish.DishId}{Guid.NewGuid()}.jpg";
                         var upload = await firebaseService!.UploadFileToFirebase(file, pathName);
-                        var staticImg = new StaticFile
+                        var staticImg = new Image
                         {
                             StaticFileId = Guid.NewGuid(),
                             DishId = dish.DishId,
@@ -175,7 +176,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 result.Result = new PagedResult<DishSizeResponse>
                 {
-                    Items = dishSizeList,
+                    Items = await GetListDishRatingInformation(dishSizeList),
                     TotalPages = dishList.TotalPages,
                 };
             }
@@ -186,15 +187,48 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        private async Task<List<DishSizeResponse>> GetListDishRatingInformation(List<DishSizeResponse> dishSizeResponses)
+        {
+            List<DishSizeResponse> responses = dishSizeResponses.ToList();
+            try
+            {
+                var dishIds = dishSizeResponses.Select(d => d.Dish.DishId).ToList();
+                var ratingRepository = Resolve<IGenericRepository<Rating>>();
+                var ratingDb = await ratingRepository.GetAllDataByExpression(o => o.OrderDetailId.HasValue && o.OrderDetail.DishSizeDetailId != null && dishIds.Contains(o.OrderDetail.DishSizeDetail.DishId.Value), 0, 0, null, false, null);
+                if (ratingDb.Items.Count > 0)
+                {
+                    var dishRating = ratingDb.Items.GroupBy(r => r.OrderDetail.DishSizeDetail.DishId).ToDictionary(r => r.Key, r => r.ToList());
+                    foreach (var response in responses)
+                    {
+                        response.NumberOfRating = dishRating[response.Dish.DishId].Count();
+                        response.AverageRating = dishRating[response.Dish.DishId].Average(r =>
+                        {
+                            if (r.PointId == RatingPoint.One) return 1;
+                            if (r.PointId == RatingPoint.Two) return 2;
+                            if (r.PointId == RatingPoint.Three) return 3;
+                            if (r.PointId == RatingPoint.Four) return 4;
+                            return 5;
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                responses = dishSizeResponses.ToList();
+            }
+            return responses;
+        }
 
 
         public async Task<AppActionResult> GetDishById(Guid dishId)
         {
             var result = new AppActionResult();
             var dishResponse = new DishResponse();
-            var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
+            var staticFileRepository = Resolve<IGenericRepository<Image>>();
             var ratingRepository = Resolve<IGenericRepository<Rating>>();
             var dishSizeRepository = Resolve<IGenericRepository<DishSizeDetail>>();
+            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();     
+            var ratingListDb = new List<Rating>();  
             try
             {
                 var dishDb = await _dishRepository.GetByExpression(p => p.DishId == dishId, p => p.DishItemType);
@@ -210,25 +244,43 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 dishResponse.dishSizeDetails = dishSizeDetailsDb!.Items!.OrderBy(d => d.DishSizeId).ToList();
                 var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, null);
 
-                var ratingDb = await ratingRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.CreateByAccount, p => p.UpdateByAccount);
-
-                if (ratingDb.Items.Count > 0)
+                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => p.DishSizeDetail!.DishId == dishId && p.Order!.StatusId == OrderStatus.Completed, 0, 0, null, false, null);
+                if (orderDetailDb!.Items!.Count > 0 && orderDetailDb.Items != null)
                 {
-                    foreach (var rating in ratingDb.Items!)
+                    foreach (var orderDetail in orderDetailDb.Items)
+                    {
+                        var ratingDb = await ratingRepository!.GetByExpression(p => p.OrderDetailId == orderDetail.OrderDetailId);
+                        ratingListDb.Add(ratingDb);
+                    }
+                }
+
+                if (ratingListDb.Count > 0)
+                {
+                    foreach (var rating in ratingListDb)
                     {
                         var ratingStaticFileDb = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == rating.RatingId, 0, 0, null, false, null);
-                        var ratingDishResponse = new RatingDishResponse
+                        var ratingDishResponse = new RatingResponse
                         {
                             Rating = rating,
                             RatingImgs = ratingStaticFileDb.Items!
                         };
                         dishResponse.RatingDish.Add(ratingDishResponse);
                     }
+
+                    dishResponse.NumberOfRating = ratingListDb.Count();
+                    dishResponse.AverageRating = ratingListDb.Average(r =>
+                    {
+                        if (r.PointId == RatingPoint.One) return 1;
+                        if (r.PointId == RatingPoint.Two) return 2;
+                        if (r.PointId == RatingPoint.Three) return 3;
+                        if (r.PointId == RatingPoint.Four) return 4;
+                        return 5;
+                    });
                 }
 
                 dishResponse.Dish = dishDb!;
                 dishResponse.DishImgs = staticFileDb.Items!;
-
+                    
                 result.Result = dishResponse;
             }
             catch (Exception ex)
@@ -261,7 +313,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 try
                 {
                     var firebaseService = Resolve<IFirebaseService>();
-                    var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
+                    var staticFileRepository = Resolve<IGenericRepository<Image>>();
                     var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                     var dishDb = await _dishRepository.GetById(dto.DishId);
                     if (dishDb == null)
@@ -273,7 +325,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         return BuildAppActionResultError(result, $"Các file hình ảnh của món ăn với id {dishDb.DishId} không tồn tại");
                     }
-                    var oldFileList = new List<StaticFile>();
+                    var oldFileList = new List<Image>();
                     foreach (var oldImg in oldFiles.Items!)
                     {
                         oldFileList.Add(oldImg);
@@ -294,7 +346,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await staticFileRepository.DeleteRange(oldFileList);
                     await _unitOfWork.SaveChangesAsync();
 
-                    List<StaticFile> staticList = new List<StaticFile>();
+                    List<Image> staticList = new List<Image>();
                     var mainFile = dto.MainImageFile;
                     if (mainFile == null)
                     {
@@ -302,7 +354,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     var mainPathName = SD.FirebasePathName.DISH_PREFIX + $"{dishDb.DishId}_main.jpg";
                     var uploadMainPicture = await firebaseService!.UploadFileToFirebase(mainFile, mainPathName);
-                    var staticMainFile = new StaticFile
+                    var staticMainFile = new Image
                     {
                         StaticFileId = Guid.NewGuid(),
                         DishId = dishDb.DishId,
@@ -316,7 +368,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         var pathName = SD.FirebasePathName.DISH_PREFIX + $"{dishDb.DishId}{Guid.NewGuid()}.jpg";
                         var upload = await firebaseService!.UploadFileToFirebase(file, pathName);
-                        var staticImg = new StaticFile
+                        var staticImg = new Image
                         {
                             StaticFileId = Guid.NewGuid(),
                             DishId = dishDb.DishId,

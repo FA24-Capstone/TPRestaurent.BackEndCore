@@ -22,9 +22,9 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public OrderStatus StatusId { get; set; }
         [ForeignKey(nameof(StatusId))]
         public EnumModels.OrderStatus? Status { get; set; }  
-        public Guid? CustomerId { get; set; } 
-        [ForeignKey(nameof(CustomerId))]
-        public CustomerInfo? CustomerInfo { get; set; }
+        public string? AccountId { get; set; } 
+        [ForeignKey(nameof(AccountId))]
+        public Account? Account { get; set; }
         public Enums.PaymentMethod PaymentMethodId { get; set; }
         [ForeignKey(nameof(PaymentMethodId))]
         public EnumModels.PaymentMethod? PaymentMethod { get; set; }

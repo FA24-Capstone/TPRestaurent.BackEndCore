@@ -262,14 +262,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var utility = Resolve<Utility>();
                     var accountRepository = Resolve<IGenericRepository<Account>>();
-                    var customerInfoRepository = Resolve<IGenericRepository<CustomerInfo>>();
                     var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
                     var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
-                    var customerSavedCouponRepository = Resolve<IGenericRepository<CustomerSavedCoupon>>();
                     var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                     var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                     var comboRepository = Resolve<IGenericRepository<Combo>>();
-                    var couponRepository = Resolve<IGenericRepository<Coupon>>();
+                    var couponProgramRepository = Resolve<IGenericRepository<CouponProgram>>();
+                    var orderAppliedCouponRepository = Resolve<IGenericRepository<OrderAppliedCoupon>>();
                     var tableRepository = Resolve<IGenericRepository<Table>>();
                     var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
                     var transcationService = Resolve<ITransactionService>();
@@ -281,20 +280,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var order = new Order()
                     {
                         OrderId = Guid.NewGuid(),
-                        CustomerId = orderRequestDto.CustomerId,
                         OrderTypeId = orderRequestDto.OrderType,
                         Note = orderRequestDto.Note,
                         PaymentMethodId = PaymentMethod.VNPAY
                     };
 
-                    PagedResult<CustomerInfo> customerInfoListDb = new PagedResult<CustomerInfo>();
+                    Account accountDb = null;
                     if (orderRequestDto.CustomerId.HasValue)
                     {
-                        customerInfoListDb = await customerInfoRepository.GetAllDataByExpression(c => c.CustomerId == orderRequestDto.CustomerId.Value, 0, 0, null, false, null);
-                        if (customerInfoListDb.Items.Count != 1)
+                        accountDb = await accountRepository.GetByExpression(c => c.CustomerId == orderRequestDto.CustomerId.Value.ToString(), null);
+                        if (accountDb == null)
                         {
                             return BuildAppActionResultError(result, $"Xảy ra lỗi");
                         }
+
+                        order.AccountId = orderRequestDto.CustomerId.ToString();
                     }
 
                     List<OrderDetail> orderDetails = new List<OrderDetail>();
@@ -346,7 +346,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     comboOrderDetails.Add(new ComboOrderDetail
                                     {
                                         ComboOrderDetailId = Guid.NewGuid(),
-                                        OrderDetailId = order.OrderId,
+                                        OrderDetailId = orderDetail.OrderDetailId,
                                         DishComboId = dishComboId
                                     });
                                 }
@@ -360,6 +360,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                         money = orderDetails.Sum(o => o.Quantity * o.Price);
                     }
+
+                    if (orderDetails.Count > 0)
+                    {
+                        await orderDetailRepository.InsertRange(orderDetails);
+                        if (comboOrderDetails.Count > 0)
+                        {
+                            await comboOrderDetailRepository.InsertRange(comboOrderDetails);
+                        }
+                    }
+
 
                     List<TableDetail> tableDetails = new List<TableDetail>();
 
@@ -400,8 +410,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             NumOfPeople = orderRequestDto.ReservationOrder.NumberOfPeople,
                         };
 
-                        var suitableTable = await GetSuitableTable(suggestTableDto);
-                        if (suitableTable == null)
+                        var suggestedTables = await GetSuitableTable(suggestTableDto);
+                        if (suggestedTables == null || suggestedTables.Count == 0)
                         {
                             result = BuildAppActionResultError(result, $"Không có bàn trống cho {orderRequestDto.ReservationOrder.NumberOfPeople} người " +
                                                                        $"vào lúc {orderRequestDto.ReservationOrder.MealTime.Hour}h{orderRequestDto.ReservationOrder.MealTime.Minute}p " +
@@ -409,14 +419,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return result;
                         }
                         //Add busniness rule for reservation time(if needed)
-                        var reservationTableDetail = new TableDetail
+                        List<TableDetail> reservationTableDetails = new List<TableDetail>();
+
+                        //foreach(var suggestedTable in suggestedTables)
+                        //{
+                        //    reservationTableDetails.Add(new TableDetail
+                        //    {
+                        //        TableDetailId = Guid.NewGuid(),
+                        //        OrderId = order.OrderId,
+                        //        TableId = suggestedTable.TableId
+                        //    });
+                        //}
+
+                        reservationTableDetails.Add(new TableDetail
                         {
                             TableDetailId = Guid.NewGuid(),
                             OrderId = order.OrderId,
-                            TableId = suitableTable.TableId
-                        };
+                            TableId = suggestedTables[0].TableId
+                        });
 
-                        await tableDetailRepository.Insert(reservationTableDetail);
+                        await tableDetailRepository.InsertRange(reservationTableDetails);
 
                         if (orderDetails.Count > 0)
                         {
@@ -480,147 +502,132 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.StatusId = OrderStatus.Pending;
                         order.TotalAmount = money;
                         order.OrderDate = utility.GetCurrentDateInTimeZone();
-
-                        if (customerInfoListDb.Items.Count == 0)
+                        if (accountDb == null)
                         {
                             return BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng. Đặt hàng thất bại");
                         }
 
-                        if (customerInfoListDb.Items.Count > 1)
+                        if (string.IsNullOrEmpty(accountDb.Address))
                         {
-                            return BuildAppActionResultError(result, $"Xảy ra lỗi khi tìm thông tin khách hàng. Đặt hàng thất bại");
+                            return BuildAppActionResultError(result, $"Địa chỉ của bạn không tồn tại. Vui lòng cập nhập địa chỉ");
                         }
 
-                        var address = customerInfoListDb.Items.Select(c => c.Address).FirstOrDefault();
-                        var accountId = customerInfoListDb.Items.Select(c => c.AccountId).FirstOrDefault();
-                        if (orderRequestDto.CustomerId.HasValue)
+                        var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                        var couponDb = await couponProgramRepository!.GetAllDataByExpression(c => currentTime > c.StartDate && currentTime < c.ExpiryDate && c.MinimumAmount <= money && c.Quantity > 0, 0, 0, null, false, null);
+                        if (couponDb.Items!.Count > 0 && couponDb.Items != null
+                            && orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.CouponIds.Count > 0)
                         {
-                            if (string.IsNullOrEmpty(address))
+                            foreach (var couponId in orderRequestDto.DeliveryOrder.CouponIds)
                             {
-                                return BuildAppActionResultError(result, $"Địa chỉ của bạn không tồn tại. Vui lòng cập nhập địa chỉ");
-                            }
-
-                            var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => !string.IsNullOrEmpty(accountId) && p.AccountId == accountId, 0, 0, null, false, p => p.Coupon!);
-                            if (customerSavedCouponDb.Items!.Count > 0 && customerSavedCouponDb.Items != null
-                                && orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.CouponIds.Count > 0)
-                            {
-                                foreach (var couponId in orderRequestDto.DeliveryOrder.CouponIds)
+                                if (money <= 0)
                                 {
-                                    if (money <= 0)
-                                    {
-                                        break;
-                                    }
-
-                                    var customerSavedCoupon = customerSavedCouponDb.Items.FirstOrDefault(c => c.CouponId == couponId);
-                                    if (customerSavedCoupon != null && customerSavedCoupon.IsUsedOrExpired == false)
-                                    {
-                                        var coupon = await couponRepository!.GetById(customerSavedCoupon.CouponId);
-                                        if (coupon != null && coupon.ExpiryDate > utility.GetCurrentDateTimeInTimeZone())
-                                        {
-                                            double discountMoney = money * (coupon.DiscountPercent * 0.01);
-                                            money -= discountMoney;
-                                        }
-                                        else if (coupon.ExpiryDate < utility.GetCurrentDateTimeInTimeZone())
-                                        {
-                                            return BuildAppActionResultError(result, $"Mã giảm giá của bạn đã hết hạn");
-                                        }
-
-                                        money = Math.Max(0, money);
-
-                                        // Update the coupon usage
-                                        customerSavedCoupon.IsUsedOrExpired = true;
-                                        customerSavedCoupon.OrderId = order.OrderId;
-                                        await customerSavedCouponRepository!.Update(customerSavedCoupon);
-
-                                    }
-                                }
-                            }
-
-                            if (!string.IsNullOrEmpty(accountId))
-                            {
-                                var accountDb = await accountRepository!.GetById(accountId);
-                                if (accountDb != null && orderRequestDto.DeliveryOrder.LoyalPointToUse.HasValue && orderRequestDto.DeliveryOrder.LoyalPointToUse > 0)
-                                {
-                                    // Check if the user has enough points
-                                    if (accountDb!.LoyaltyPoint >= orderRequestDto.DeliveryOrder.LoyalPointToUse)
-                                    {
-                                        // Calculate the discount (assuming 1 point = 1 currency unit)
-                                        double loyaltyDiscount = Math.Min(orderRequestDto.DeliveryOrder.LoyalPointToUse.Value, money);
-                                        money -= loyaltyDiscount;
-
-                                        // Ensure the total doesn't go below zero
-                                        money = Math.Max(0, money);
-
-                                        // Update the customer's loyalty points
-                                        accountDb.LoyaltyPoint -= (int)loyaltyDiscount;
-
-                                        // Create a new loyalty point history entry for the point usage
-                                        var loyalPointUsageHistory = new LoyalPointsHistory
-                                        {
-                                            LoyalPointsHistoryId = Guid.NewGuid(),
-                                            TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
-                                            OrderId = order.OrderId,
-                                            PointChanged = -(int)loyaltyDiscount,
-                                            NewBalance = accountDb.LoyaltyPoint
-                                        };
-
-                                        await loyalPointsHistoryRepository!.Insert(loyalPointUsageHistory);
-                                    }
-                                    else
-                                    {
-                                        // Handle the case where the user doesn't have enough points
-                                        return BuildAppActionResultError(result, "Không đủ điểm tích lũy để sử dụng.");
-                                    }
+                                    break;
                                 }
 
-                                if (accountDb != null)
+                                var coupon = couponDb.Items.FirstOrDefault(c => c.CouponProgramId == couponId);
+
+                                if (coupon == null)
                                 {
-                                    var newLoyalPointHistory = new LoyalPointsHistory
-                                    {
-                                        LoyalPointsHistoryId = Guid.NewGuid(),
-                                        TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
-                                        OrderId = order.OrderId,
-                                        PointChanged = (int)money / 100,
-                                        NewBalance = accountDb.LoyaltyPoint + (int)money / 100
-                                    };
-
-                                    await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
-
-
-                                    accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
+                                    return BuildAppActionResultError(result, $"Không tìm thấy coupon với id {couponId}");
                                 }
+
+                                var orderAppliedCoupon = new OrderAppliedCoupon
+                                {
+                                    OrderAppliedCouponId = Guid.NewGuid(),
+                                    CouponProgramId = couponId,
+                                    OrderId = order.OrderId
+                                };
+
+                                double discountMoney = money * (coupon.DiscountPercent * 0.01);
+                                money -= discountMoney;
+                                money = Math.Max(0, money);
+
+                                await orderAppliedCouponRepository.Insert(orderAppliedCoupon);
                             }
                         }
+
+                        if (orderRequestDto.DeliveryOrder.LoyalPointToUse.HasValue && orderRequestDto.DeliveryOrder.LoyalPointToUse > 0)
+                        {
+                            // Check if the user has enough points
+                            if (accountDb!.LoyaltyPoint >= orderRequestDto.DeliveryOrder.LoyalPointToUse)
+                            {
+                                // Calculate the discount (assuming 1 point = 1 currency unit)
+                                double loyaltyDiscount = Math.Min(orderRequestDto.DeliveryOrder.LoyalPointToUse.Value, money);
+                                money -= loyaltyDiscount;
+
+                                // Ensure the total doesn't go below zero
+                                money = Math.Max(0, money);
+
+                                // Update the customer's loyalty points
+                                accountDb.LoyaltyPoint -= (int)loyaltyDiscount;
+
+                                // Create a new loyalty point history entry for the point usage
+                                var loyalPointUsageHistory = new LoyalPointsHistory
+                                {
+                                    LoyalPointsHistoryId = Guid.NewGuid(),
+                                    TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
+                                    OrderId = order.OrderId,
+                                    PointChanged = -(int)loyaltyDiscount,
+                                    NewBalance = accountDb.LoyaltyPoint
+                                };
+
+                                await loyalPointsHistoryRepository!.Insert(loyalPointUsageHistory);
+                            }
+                            else
+                            {
+                                // Handle the case where the user doesn't have enough points
+                                return BuildAppActionResultError(result, "Không đủ điểm tích lũy để sử dụng.");
+                            }
+                        }
+
+                        var newLoyalPointHistory = new LoyalPointsHistory
+                        {
+                            LoyalPointsHistoryId = Guid.NewGuid(),
+                            TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
+                            OrderId = order.OrderId,
+                            PointChanged = (int)money / 100,
+                            NewBalance = accountDb.LoyaltyPoint + (int)money / 100
+                        };
+
+                        await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
+
+                        accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
+
+                        await _repository.Insert(order);
+                        orderWithPayment.Order = order;
+
+                        if (orderDetails.Count > 0)
+                        {
+                            orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Pending);
+                        }
+                        await orderDetailRepository.InsertRange(orderDetails);
+
+                        if (!BuildAppActionResultIsError(result))
+                        {
+                            await accountRepository.Update(accountDb);
+                            if (orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.PaymentMethod != PaymentMethod.Cash ||
+                                orderRequestDto.ReservationOrder != null && orderRequestDto.ReservationOrder.PaymentMethod != PaymentMethod.Cash)
+                            {
+                                var paymentRequest = new PaymentRequestDto
+                                {
+                                    OrderId = order.OrderId,
+                                    PaymentMethod = orderRequestDto.DeliveryOrder != null ? orderRequestDto.DeliveryOrder.PaymentMethod : orderRequestDto.ReservationOrder.PaymentMethod,
+                                };
+                                var linkPaymentDb = await transcationService!.CreatePayment(paymentRequest, httpContext);
+                                if (!linkPaymentDb.IsSuccess)
+                                {
+                                    return BuildAppActionResultError(result, "Tạo thanh toán thất bại");
+                                }
+                                orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
+                            }
+                            result.Result = orderWithPayment;
+                        }
+
                     }
-
-                    await _repository.Insert(order);
-                    orderWithPayment.Order = order;
-
-                    if (orderDetails.Count > 0)
-                    {
-                        orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Pending);
-                    }
-                    await orderDetailRepository.InsertRange(orderDetails);
-
                     if (!BuildAppActionResultIsError(result))
                     {
+                        await _repository.Insert(order);
                         await _unitOfWork.SaveChangesAsync();
-                        if (orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.PaymentMethod != PaymentMethod.Cash ||
-                            orderRequestDto.ReservationOrder != null && orderRequestDto.ReservationOrder.PaymentMethod != PaymentMethod.Cash)
-                        {
-                            var paymentRequest = new PaymentRequestDto
-                            {
-                                OrderId = order.OrderId,
-                                PaymentMethod = orderRequestDto.DeliveryOrder != null ? orderRequestDto.DeliveryOrder.PaymentMethod : orderRequestDto.ReservationOrder.PaymentMethod,
-                            };
-                            var linkPaymentDb = await transcationService!.CreatePayment(paymentRequest, httpContext);
-                            if (!linkPaymentDb.IsSuccess)
-                            {
-                                return BuildAppActionResultError(result, "Tạo thanh toán thất bại");
-                            }
-                            orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
-                        }
-                        result.Result = orderWithPayment;
                         scope.Complete();
                     }
                 }
@@ -632,19 +639,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetAllOrderByAccountId(string accountId, OrderStatus? status, OrderType? orderType, int pageNumber, int pageSize)
+        public async Task<AppActionResult> GetAllOrderByCustomertId(string customerId, OrderStatus? status, OrderType? orderType, int pageNumber, int pageSize)
         {
             AppActionResult result = new AppActionResult();
             try
             {
                 if (status.HasValue)
                 {
-                    result.Result = await _repository.GetAllDataByExpression((o => o.CustomerInfo.AccountId.Equals(accountId) && (
+                    result.Result = await _repository.GetAllDataByExpression((o => o.Account.CustomerId.Equals(customerId) && (
                     o.StatusId == status && o.OrderTypeId == orderType) ||
                     (o.StatusId == status) ||
                     (o.OrderTypeId == orderType)), pageNumber, pageSize, o => o.OrderDate, false,
                      p => p.Status!,
-                     p => p.CustomerInfo!.Account!,
+                     p => p.Account!,
                      p => p.PaymentMethod!,
                      p => p.LoyalPointsHistory!,
                      p => p.OrderType!
@@ -652,9 +659,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else
                 {
-                    result.Result = await _repository.GetAllDataByExpression(o => o.CustomerInfo.AccountId.Equals(accountId), pageNumber, pageSize, o => o.OrderDate, false, p => p.PaymentMethod!,
+                    result.Result = await _repository.GetAllDataByExpression(o => o.Account.CustomerId.Equals(customerId), pageNumber, pageSize, o => o.OrderDate, false, p => p.PaymentMethod!,
                         p => p.Status!,
-                        p => p.CustomerInfo!.Account!,
+                        p => p.Account!,
                         p => p.PaymentMethod!,
                         p => p.LoyalPointsHistory!,
                         p => p.OrderType!
@@ -673,9 +680,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var orderDb = await _repository.GetAllDataByExpression(p => p.OrderId == orderId, 0, 0, null, false, p => p.CustomerInfo!.Account!,
+                var orderDb = await _repository.GetAllDataByExpression(p => p.OrderId == orderId, 0, 0, null, false, p => p.Account!,
                         p => p.Status!,
-                        p => p.CustomerInfo!.Account!,
+                        p => p.Account!,
                         p => p.PaymentMethod!,
                         p => p.LoyalPointsHistory!,
                         p => p.OrderType!
@@ -726,144 +733,130 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 AppActionResult result = new AppActionResult();
                 try
                 {
+                        var accountRepository = Resolve<IGenericRepository<Account>>();
+                        var couponRepository = Resolve<IGenericRepository<CouponProgram>>();
+                        var orderAppliedCouponRepository = Resolve<IGenericRepository<OrderAppliedCoupon>>();
+                    var customerInfoRepository = Resolve<IGenericRepository<Account>>();
+                        var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
+                        var transactionService = Resolve<ITransactionService>();
+                    var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                    var utility = Resolve<Utility>();
                     var orderDb = await _repository.GetById(orderRequestDto.OrderId);
                     if (orderDb == null)
                     {
                         return BuildAppActionResultError(result, $"Không tìm thấy đơn với id {orderRequestDto.OrderId}");
                     }
 
-                    if(orderDb.OrderTypeId == OrderType.Delivery)
+                    if (orderDb.OrderTypeId == OrderType.Delivery)
                     {
                         return BuildAppActionResultError(result, $"Đơn hàng giao tận nơi đã có giao dịch");
                     }
 
-                    var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                     var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderRequestDto.OrderId && o.OrderDetailStatusId != OrderDetailStatus.Cancelled, 0, 0, null, false, null);
                     double money = 0;
                     orderDetailDb.Items.ForEach(o => money += o.Price * o.Quantity);
 
-                    orderDb.TotalAmount = money - ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0) ? orderDb.Deposit.Value : 0);
+                    money -= ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0) ? orderDb.Deposit.Value : 0);
 
-                    if (orderDb.CustomerId.HasValue)
+                    if (!string.IsNullOrEmpty(orderDb.AccountId))
                     {
-                        var couponRepository = Resolve<IGenericRepository<Coupon>>();
-                        var customerSavedCouponRepository = Resolve<IGenericRepository<CustomerSavedCoupon>>();
-                        var customerInfoRepository = Resolve<IGenericRepository<CustomerInfo>>();
-                        var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
-                        var transactionService = Resolve<ITransactionService>();
-                        var customerInfoListDb = await customerInfoRepository.GetAllDataByExpression(p => p.CustomerId == orderDb.CustomerId, 0, 0, null, false, p => p.Account!);
-                        if (customerInfoListDb.Items.Count == 0)
+                        Account accountDb = await accountRepository.GetByExpression(c => c.CustomerId == orderDb.AccountId.ToString(), null);
+                        if (accountDb == null)
                         {
-                            return BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng với id {orderDb.CustomerId}");
+                            return BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng. Đặt hàng thất bại");
                         }
 
-                        if (customerInfoListDb.Items.Count > 1)
+                        if (string.IsNullOrEmpty(accountDb.Address))
                         {
-                            return BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng với id {orderDb.CustomerId}");
+                            return BuildAppActionResultError(result, $"Địa chỉ của bạn không tồn tại. Vui lòng cập nhập địa chỉ");
                         }
 
-                        var customerInfo = customerInfoListDb.Items.FirstOrDefault();
-
-                        var utility = Resolve<Utility>();
-                        var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => !string.IsNullOrEmpty(customerInfo.AccountId) 
-                                                                                                                && p.AccountId == customerInfo.AccountId
-                                                                                                                && orderRequestDto.CouponIds.Contains(p.CouponId), 0, 0, null, false, p => p.Coupon!);
-                        if (customerSavedCouponDb.Items.Count != orderRequestDto.CouponIds.Count)
+                        var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                        var customerSavedCouponDb = await couponRepository!.GetAllDataByExpression(c => currentTime > c.StartDate && currentTime < c.ExpiryDate && c.MinimumAmount <= money && c.Quantity > 0, 0, 0, null, false, null);
+                        if (customerSavedCouponDb.Items!.Count > 0 && customerSavedCouponDb.Items != null
+                            && orderRequestDto.CouponIds.Count > 0)
                         {
-                            var customerSavedCouponIds = customerSavedCouponDb.Items.DistinctBy(c => c.CouponId).Select(c => c.CouponId).ToList();
-                            var unbelonginCouponIds = orderRequestDto.CouponIds.Where(c => !customerSavedCouponIds.Contains(c));
-                            string errorMessage = string.Join(", ", unbelonginCouponIds);
-                            return BuildAppActionResultError(result, $"Các coupon với id: {errorMessage} không khả dụn hoặc không áp được cho người dùng");
-                        }
-
-                        if (customerSavedCouponDb.Items!.Count > 0 && customerSavedCouponDb.Items != null && orderRequestDto.CouponIds.Count > 0)
-                        {
-                            foreach (var coupon in customerSavedCouponDb.Items)
+                            foreach (var couponId in orderRequestDto.CouponIds)
                             {
                                 if (money <= 0)
                                 {
                                     break;
                                 }
 
-                                if(coupon == null || coupon != null && coupon.IsUsedOrExpired)
+                                var coupon = customerSavedCouponDb.Items.FirstOrDefault(c => c.CouponProgramId == couponId);
+
+                                if (coupon == null)
                                 {
-                                    return BuildAppActionResultError(result, $"Coupon với {coupon.CouponId} không được khả dụng");
+                                    return BuildAppActionResultError(result, $"Không tìm thấy coupon với id {couponId}");
                                 }
 
-                                if (coupon.Coupon != null && coupon.Coupon.ExpiryDate > utility.GetCurrentDateTimeInTimeZone())
+                                var orderAppliedCoupon = new OrderAppliedCoupon
                                 {
-                                    double discountMoney = money * (coupon.Coupon.DiscountPercent * 0.01);
-                                    money -= discountMoney;
-                                }
-                                else if (coupon.Coupon.ExpiryDate < utility.GetCurrentDateTimeInTimeZone())
-                                {
-                                    return BuildAppActionResultError(result, $"Mã giảm giá của bạn đã hết hạn");
-                                }
+                                    OrderAppliedCouponId = Guid.NewGuid(),
+                                    CouponProgramId = couponId,
+                                    OrderId = orderDb.OrderId
+                                };
 
+                                double discountMoney = money * (coupon.DiscountPercent * 0.01);
+                                money -= discountMoney;
                                 money = Math.Max(0, money);
 
-                                // Update the coupon usage
-                                coupon.IsUsedOrExpired = true;
-                                coupon.OrderId = orderDb.OrderId;
-
-                                await couponRepository.Update(coupon.Coupon);
+                                await orderAppliedCouponRepository.Insert(orderAppliedCoupon);
                             }
                         }
 
-                        if (customerInfo.Account != null)
+                        if (orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse > 0)
                         {
-                            if (orderRequestDto.LoyalPointsToUse > 0)
+                            // Check if the user has enough points
+                            if (accountDb!.LoyaltyPoint >= orderRequestDto.LoyalPointsToUse)
                             {
-                                // Check if the user has enough points
-                                if (customerInfo.Account!.LoyaltyPoint >= orderRequestDto.LoyalPointsToUse)
+                                // Calculate the discount (assuming 1 point = 1 currency unit)
+                                double loyaltyDiscount = Math.Min(orderRequestDto.LoyalPointsToUse.Value, money);
+                                money -= loyaltyDiscount;
+
+                                // Ensure the total doesn't go below zero
+                                money = Math.Max(0, money);
+
+                                // Update the customer's loyalty points
+                                accountDb.LoyaltyPoint -= (int)loyaltyDiscount;
+
+                                // Create a new loyalty point history entry for the point usage
+                                var loyalPointUsageHistory = new LoyalPointsHistory
                                 {
-                                    // Calculate the discount (assuming 1 point = 1 currency unit)
-                                    double loyaltyDiscount = Math.Min(orderRequestDto.LoyalPointsToUse.Value, money);
-                                    money -= loyaltyDiscount;
+                                    LoyalPointsHistoryId = Guid.NewGuid(),
+                                    TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
+                                    OrderId = orderDb.OrderId,
+                                    PointChanged = -(int)loyaltyDiscount,
+                                    NewBalance = accountDb.LoyaltyPoint
+                                };
 
-                                    // Ensure the total doesn't go below zero
-                                    money = Math.Max(0, money);
-
-                                    // Update the customer's loyalty points
-                                    customerInfo.Account.LoyaltyPoint -= (int)loyaltyDiscount;
-
-                                    // Create a new loyalty point history entry for the point usage
-                                    var loyalPointUsageHistory = new LoyalPointsHistory
-                                    {
-                                        LoyalPointsHistoryId = Guid.NewGuid(),
-                                        TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
-                                        OrderId = orderDb.OrderId,
-                                        PointChanged = -(int)loyaltyDiscount,
-                                        NewBalance = customerInfo.Account.LoyaltyPoint
-                                    };
-
-                                    await loyalPointsHistoryRepository!.Insert(loyalPointUsageHistory);
-                                }
-                                else
-                                {
-                                    // Handle the case where the user doesn't have enough points
-                                    return BuildAppActionResultError(result, "Không đủ điểm tích lũy để sử dụng.");
-                                }
+                                await loyalPointsHistoryRepository!.Insert(loyalPointUsageHistory);
                             }
-
-                            var newLoyalPointHistory = new LoyalPointsHistory
+                            else
                             {
-                                LoyalPointsHistoryId = Guid.NewGuid(),
-                                TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
-                                OrderId = orderDb.OrderId,
-                                PointChanged = (int)money / 100,
-                                NewBalance = customerInfo.Account.LoyaltyPoint + (int)money / 100
-                            };
-
-                            await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
-                            customerInfo.Account.LoyaltyPoint = newLoyalPointHistory.NewBalance;
+                                // Handle the case where the user doesn't have enough points
+                                return BuildAppActionResultError(result, "Không đủ điểm tích lũy để sử dụng.");
+                            }
                         }
 
-                        orderDb.TotalAmount = money;
+                        var newLoyalPointHistory = new LoyalPointsHistory
+                        {
+                            LoyalPointsHistoryId = Guid.NewGuid(),
+                            TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
+                            OrderId = orderDb.OrderId,
+                            PointChanged = (int)money / 100,
+                            NewBalance = accountDb.LoyaltyPoint + (int)money / 100
+                        };
+
+                        await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
+
+                        accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
+                        await customerInfoRepository.Update(accountDb);
+                    }
 
                         if (!BuildAppActionResultIsError(result))
                         {
-                            await customerInfoRepository.Update(customerInfo);
+                            orderDb.TotalAmount = money;
                             await _repository.Update(orderDb);
                             await _unitOfWork.SaveChangesAsync();
 
@@ -883,7 +876,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             result.Result = orderWithPayment;
                             scope.Complete();
                         }
-                    }
 
                 }
                 catch (Exception ex)
@@ -901,7 +893,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //    try
         //    {
         //        var utility = Resolve<Utility>();
-        //        var customerInfoRepository = Resolve<IGenericRepository<CustomerInfo>>();
+        //        var customerInfoRepository = Resolve<IGenericRepository<Account>>();
         //        if (orderRequestDto.CustomerId.HasValue)
         //        {
         //            var data = new CalculateOrderResponse();
@@ -919,7 +911,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //            {
         //                data.PaidDeposit = reservationDb.Deposit;
         //            }
-        //            var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => !string.IsNullOrEmpty(customerInfoDb.AccountId) && p.AccountId == customerInfoDb.AccountId, 0, 0, null, false, p => p.Coupon!);
+        //            var customerSavedCouponDb = await customerSavedCouponRepository!.GetAllDataByExpression(p => !string.IsNullOrEmpty(customerInfoDb.CustomerId) && p.CustomerId == customerInfoDb.CustomerId, 0, 0, null, false, p => p.Coupon!);
         //            if (customerSavedCouponDb.Items!.Count > 0 && customerSavedCouponDb.Items != null)
         //            {
         //                if (orderRequestDto.CouponId.HasValue)
@@ -985,9 +977,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var orderListDb = await
-                    _repository.GetAllDataByExpression(p => p.CustomerInfo!.PhoneNumber == phoneNumber, pageNumber, pageSize, p => p.OrderDate, false,
+                    _repository.GetAllDataByExpression(p => p.Account!.PhoneNumber == phoneNumber, pageNumber, pageSize, p => p.OrderDate, false,
                         p => p.Status!,
-                        p => p.CustomerInfo!.Account!,
+                        p => p.Account!,
                         p => p.PaymentMethod!,
                         p => p.LoyalPointsHistory!,
                         p => p.OrderType!
@@ -1008,9 +1000,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 if (status.HasValue || orderType.HasValue)
                 {
-                    result.Result = await _repository.GetAllDataByExpression(o => o.StatusId == status || o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.CustomerInfo!.Account!,
+                    result.Result = await _repository.GetAllDataByExpression(o => o.StatusId == status || o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
                         p => p.Status!,
-                        p => p.CustomerInfo!.Account!,
+                        p => p.Account!,
                         p => p.PaymentMethod!,
                         p => p.LoyalPointsHistory!,
                         p => p.OrderType!
@@ -1018,9 +1010,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else if (status.HasValue && orderType.HasValue)
                 {
-                    result.Result = await _repository.GetAllDataByExpression(o => o.OrderTypeId == orderType && o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.CustomerInfo!.Account!,
+                    result.Result = await _repository.GetAllDataByExpression(o => o.OrderTypeId == orderType && o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
                         p => p.Status!,
-                        p => p.CustomerInfo!.Account!,
+                        p => p.Account!,
                         p => p.PaymentMethod!,
                         p => p.LoyalPointsHistory!,
                         p => p.OrderType!
@@ -1028,9 +1020,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else
                 {
-                    result.Result = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, o => o.OrderDate, false, p => p.CustomerInfo!.Account!,
+                    result.Result = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
                         p => p.Status!,
-                        p => p.CustomerInfo!.Account!,
+                        p => p.Account!,
                         p => p.PaymentMethod!,
                         p => p.LoyalPointsHistory!,
                         p => p.OrderType!
@@ -1050,15 +1042,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var utility = Resolve<Utility>();
-                var currentTime = utility.GetCurrentDateTimeInTimeZone();
-                var targetTimeCompleted = currentTime.AddMinutes(-minute.GetValueOrDefault(0));
-                var orderDb = await _repository.GetAllDataByExpression(p => p.MealTime == targetTimeCompleted && p.StatusId == OrderStatus.Dining,
-                    pageNumber, pageSize, p => p.MealTime, false, p => p.CustomerInfo!.Account!,
+                var currentTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(-minute.GetValueOrDefault(0));
+                var orderDb = await _repository.GetAllDataByExpression(p => p.MealTime <= currentTime && p.StatusId == OrderStatus.Dining,
+                    pageNumber, pageSize, p => p.MealTime, false, p => p.Account!,
                         p => p.Status!,
-                        p => p.CustomerInfo!.Account!,
+                        p => p.Account!,
                         p => p.PaymentMethod!,
                         p => p.LoyalPointsHistory!,
                         p => p.OrderType!);
+                result.Result = orderDb;
             }
             catch (Exception ex)
             {
@@ -1267,26 +1259,28 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
         public async Task<AppActionResult> SuggestTable(SuggestTableDto dto)
         {
             AppActionResult result = new AppActionResult();
             try
             {
                 if (dto.NumOfPeople <= 0)
+                {
+                    return null;
+                }
+
+                //Get All Available Table
+                var availableTableResult = await GetAvailableTable(dto.StartTime, dto.EndTime, dto.NumOfPeople, 0, 0);
+                if (availableTableResult.IsSuccess)
+                {
+                    var availableTable = (PagedResult<Table>)availableTableResult.Result!;
+                    if (availableTable.Items!.Count > 0)
                     {
-                        return null;
+                        var suitableTables = await GetTables(availableTable.Items, dto.NumOfPeople, dto.IsPrivate);
+                        result.Result = suitableTables.Count == 0 ? new List<Table>() : suitableTables;
                     }
-                    //Get All Available Table
-                    var availableTableResult = await GetAvailableTable(dto.StartTime, dto.EndTime, dto.NumOfPeople, 0, 0);
-                    if (availableTableResult.IsSuccess)
-                    {
-                        var availableTable = (PagedResult<Table>)availableTableResult.Result!;
-                        if (availableTable.Items!.Count > 0)
-                        {
-                            var suitableTables = await GetTables(availableTable.Items, dto.NumOfPeople, dto.IsPrivate);
-                            result.Result = suitableTables[0];
-                        }
-                    }
+                }
             }
             catch (Exception ex)
             {
@@ -1308,8 +1302,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var tableType = allAvailableTables.Where(t => t.TableName.Contains(tableCode)).GroupBy(t => t.TableSizeId)
                                                   .ToDictionary(k => k.Key, k => k.ToList());
+                if (tableType.Count == 0)
+                {
+                    return result;
+                }
 
-                if (!tableType.Equals("V"))
+                if (!tableCode.Equals("V"))
                 {
                     if (quantity <= 2)
                     {
@@ -1366,9 +1364,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
 
         }
-        public async Task<Table> GetSuitableTable(SuggestTableDto dto)
+        public async Task<List<Table>> GetSuitableTable(SuggestTableDto dto)
         {
-            Table result = null;
+            List<Table> result = null;
             try
             {
                 if (dto.NumOfPeople <= 0)
@@ -1383,13 +1381,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (availableTable.Items!.Count > 0)
                     {
                         var suitableTables = await GetTables(availableTable.Items, dto.NumOfPeople, dto.IsPrivate);
-                        result = suitableTables[0];
+                        result = suitableTables.Count > 0 ? suitableTables : new List<Table>();
                     }
                 }
             }
             catch (Exception ex)
             {
-                result = null;
+                result = new List<Table>();
             }
             return result;
         }
@@ -1528,14 +1526,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 foreach (var cartItem in cart.items)
                 {
                     comboDb = await comboRepository.GetById(Guid.Parse(cartItem.comboId));
-                    if(comboDb == null)
+                    if (comboDb == null)
                     {
                         cart.items.Remove(cartItem);
                         if (cart.items.Count == 0) break;
-                        continue;   
+                        continue;
                     }
 
-                    if(comboDb.EndDate <= currentTime)
+                    if (comboDb.EndDate <= currentTime)
                     {
                         cart.items.Remove(cartItem);
                         if (cart.items.Count == 0) break;
@@ -1543,12 +1541,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
 
                     cartItem.price = comboDb.Price;
-                    foreach(var dishDetailList in cartItem.selectedDishes.Values)
+                    foreach (var dishDetailList in cartItem.selectedDishes.Values)
                     {
-                        foreach(var dishDetail in dishDetailList)
+                        foreach (var dishDetail in dishDetailList)
                         {
                             dishComboDb = await dishComboRepository.GetById(Guid.Parse(dishDetail.dishComboId));
-                            if(dishComboDb == null)
+                            if (dishComboDb == null)
                             {
                                 dishDetailList.Remove(dishDetail);
                                 if (dishDetailList.Count == 0) break;
@@ -1558,7 +1556,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             dishSizeDetailDb = await dishSizeDetailRepository.GetById(Guid.Parse(dishDetail.dishSizeDetail.dishSizeDetailId));
                             if (dishSizeDetailDb == null)
                             {
-                                cart.items.Remove(cartItem); 
+                                cart.items.Remove(cartItem);
                                 if (dishDetailList.Count == 0) break;
                                 continue;
                             }
@@ -1569,7 +1567,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 if (dishDetailList.Count == 0) break;
                                 continue;
                             }
-                            
+
                             dishDetail.dishSizeDetail.price = dishSizeDetailDb.Price;
                             dishDetail.dishSizeDetail.discount = dishSizeDetailDb.Discount;
 
@@ -1600,7 +1598,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 string formattedJson = unProcessedJson.Replace("\\", "");
                 result.Result = formattedJson;
                 //for each check dish dishSizeDetailId Price Isavailable, dishId Hin2h anh3 is Available
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 result = BuildAppActionResultError(result, ex.Message);
             }
@@ -1748,6 +1747,209 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
+        }
+
+        public async Task<AppActionResult> GetTableReservationWithTime(Guid tableId, DateTime? time)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var tableRepository = Resolve<IGenericRepository<Table>>();
+                var reservationTableRepository = Resolve<IGenericRepository<TableDetail>>();
+                var tableDb = await tableRepository!.GetById(tableId);
+                if (tableDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy bàn với id {tableId}");
+                }
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var configDb = await configurationRepository!.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TIME_TO_LOOK_UP_FOR_RESERVATION), null);
+                if (configDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy cấu hình với tên {SD.DefaultValue.TIME_TO_LOOK_UP_FOR_RESERVATION}");
+                }
+
+                if (!time.HasValue)
+                {
+                    var utility = Resolve<Utility>();
+                    time = utility!.GetCurrentDateTimeInTimeZone();
+                }
+                var nearReservationDb = await reservationTableRepository.GetAllDataByExpression(r => r.TableId == tableId
+                                                                && r.Order!.ReservationDate <= time.Value.AddHours(double.Parse(configDb.CurrentValue))
+                                                                && r.Order.ReservationDate.Value.AddHours(double.Parse(configDb.CurrentValue)) >= time, 0, 0, r => r.Order!.ReservationDate, true, null);
+                if (nearReservationDb.Items.Count > 0)
+                {
+                    result = await GetAllReservationDetail(nearReservationDb.Items[0].OrderId);
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetAllReservationDetail2(Guid orderId)
+        {
+            try
+            {
+                var reservation = await _repository.GetByExpression(r => r.OrderId == orderId, r => r.Account!);
+                if (reservation == null)
+                {
+                    return BuildAppActionResultError(new AppActionResult(), $"Không tìm thấy thông tin đặt bàn với id {orderId}");
+                }
+
+                var reservationTableDetails = await GetReservationTableDetails(orderId);
+                var reservationDishes = await GetReservationDishes(orderId);
+
+                var data = new ReservationReponse
+                {
+                    Order = reservation,
+                    OrderTables = reservationTableDetails,
+                    OrderDishes = reservationDishes
+                };
+
+                return new AppActionResult { Result = data };
+            }
+            catch (Exception ex)
+            {
+                return BuildAppActionResultError(new AppActionResult(), ex.Message);
+            }
+        }
+
+        private async Task<List<TableDetail>> GetReservationTableDetails(Guid orderId)
+        {
+            var reservationTableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
+            var result = await reservationTableDetailRepository!.GetAllDataByExpression(
+                o => o.OrderId == orderId,
+                0, 0, null, false,
+                o => o.Table!,
+                o => o.Order!
+            );
+            return result.Items!;
+        }
+
+        private async Task<List<Common.DTO.Response.OrderDishDto>> GetReservationDishes(Guid orderId)
+        {
+            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+            var reservationDishDb = await orderDetailRepository!.GetAllDataByExpression(
+                o => o.OrderId == orderId,
+                0, 0, null, false,
+                o => o.Combo!,
+                o => o.DishSizeDetail!.Dish!,
+                o => o.DishSizeDetail!.DishSize!
+            );
+
+            var reservationDishes = new List<Common.DTO.Response.OrderDishDto>();
+            var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+
+            foreach (var r in reservationDishDb.Items)
+            {
+                if (r.Combo != null)
+                {
+                    var comboDishDto = await CreateComboDishDto(r, comboOrderDetailRepository);
+                    reservationDishes.Add(new Common.DTO.Response.OrderDishDto
+                    {
+                        OrderDetailsId = r.OrderDetailId,
+                        ComboDish = comboDishDto
+                    });
+                }
+                else
+                {
+                    reservationDishes.Add(new Common.DTO.Response.OrderDishDto
+                    {
+                        OrderDetailsId = r.OrderDetailId,
+                        DishSizeDetailId = r.DishSizeDetailId,
+                        DishSizeDetail = r.DishSizeDetail
+                    });
+                }
+            }
+
+            return reservationDishes;
+        }
+
+        private async Task<ComboDishDto> CreateComboDishDto(OrderDetail r, IGenericRepository<ComboOrderDetail> comboOrderDetailRepository)
+        {
+            var comboOrderDetails = await comboOrderDetailRepository!.GetAllDataByExpression(
+                d => d.OrderDetailId == r.OrderDetailId,
+                0, 0, null, false,
+                d => d.DishCombo.DishSizeDetail!.Dish,
+                d => d.DishCombo.DishSizeDetail.DishSize,
+                d => d.DishCombo.ComboOptionSet
+            );
+
+            return new ComboDishDto
+            {
+                ComboId = r.Combo.ComboId,
+                Combo = r.Combo,
+                DishCombos = comboOrderDetails.Items.Select(d => d.DishCombo).ToList()
+            };
+        }
+
+        public async Task<AppActionResult> GetAllReservationDetail(Guid reservationId)
+        {
+            try
+            {
+                var reservation = await _repository.GetByExpression(r => r.OrderId == reservationId, r => r.Account);
+                if (reservation == null)
+                {
+                    return BuildAppActionResultError(new AppActionResult(), $"Không tìm thấy thông tin đặt bàn với id {reservationId}");
+                }
+
+                var reservationTableDetails = await GetReservationTableDetails(reservationId);
+                var reservationDishes = await GetReservationDishes2(reservationId);
+
+                var data = new ReservationReponse
+                {
+                    Order = reservation,
+                    OrderTables = reservationTableDetails,
+                    OrderDishes = reservationDishes
+                };
+
+                return new AppActionResult { Result = data };
+            }
+            catch (Exception ex)
+            {
+                return BuildAppActionResultError(new AppActionResult(), ex.Message);
+            }
+        }
+
+        private async Task<List<Common.DTO.Response.OrderDishDto>> GetReservationDishes2(Guid reservationId)
+        {
+            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+            var reservationDishDb = await orderDetailRepository.GetAllDataByExpression(
+                o => o.OrderId == reservationId,
+                0, 0, null, false,
+                o => o.DishSizeDetail.Dish,
+                o => o.DishSizeDetail.DishSize,
+                o => o.Combo
+            );
+
+            var reservationDishes = new List<Common.DTO.Response.OrderDishDto>();
+            var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+
+            foreach (var r in reservationDishDb.Items)
+            {
+                if (r.Combo != null)
+                {
+                    var comboDishDto = await CreateComboDishDto(r, comboOrderDetailRepository);
+                    reservationDishes.Add(new Common.DTO.Response.OrderDishDto
+                    {
+                        OrderDetailsId = r.OrderDetailId,
+                        ComboDish = comboDishDto
+                    });
+                }
+                else
+                {
+                    reservationDishes.Add(new Common.DTO.Response.OrderDishDto
+                    {
+                        OrderDetailsId = r.OrderDetailId,
+                        DishSizeDetailId = r.DishSizeDetailId,
+                        DishSizeDetail = r.DishSizeDetail
+                    });
+                }
+            }
+
+            return reservationDishes;
         }
 
     }

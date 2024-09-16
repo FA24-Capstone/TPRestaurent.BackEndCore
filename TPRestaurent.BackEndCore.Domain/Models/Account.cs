@@ -1,25 +1,31 @@
-﻿using Castle.Core.Resource;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
 {
     public class Account : IdentityUser
     {
-        public override string? PhoneNumber { get; set; }
-        public string? FirstName { get; set; }
-        public string? LastName { get; set; }
-        public bool Gender { get; set; }
+        [Key]
+        public string CustomerId { get; set; }
+        public string FirstName { get; set; } = null!;
+        public string LastName { get; set; } = null!;
+        public string PhoneNumber { get; set; } = null!;
+        public DateTime? DOB { get; set; }
+        public bool? Gender { get; set; }
+        public string? Address { get; set; } = null!;
+        public bool IsVerified { get; set; }
+        public string? VerifyCode { get; set; }
         public bool IsDeleted { get; set; } = false;
         public int LoyaltyPoint { get; set; }
-        public bool IsVerified { get; set; } = false;
-        public string? Avatar {  get; set; }
-        public string? VerifyCode { get; set; }
+        public string? Avatar { get; set; }
         public string? RefreshToken { get; set; }
         public DateTime RefreshTokenExpiryTime { get; set; }
-        public Guid? CustomerId { get; set; }
-        [ForeignKey(nameof(CustomerId))]
-        public CustomerInfo? Customer { get; set; }
-        public bool IsManuallyCreated { get; set; }   
+        public bool IsManuallyCreated { get; set; }
     }
 }

@@ -18,7 +18,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-order-by-status/{pageNumber}/{pageSize}")]
-        public async Task<AppActionResult> GetAllOrderByStatus(Domain.Enums.OrderStatus? status, OrderType orderType ,int pageNumber = 1, int pageSize = 10)
+        public async Task<AppActionResult> GetAllOrderByStatus(Domain.Enums.OrderStatus? status, OrderType orderType, int pageNumber = 1, int pageSize = 10)
         {
             return await _service.GetAllOrderByStatus(status, orderType, pageNumber, pageSize);
         }
@@ -26,7 +26,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpGet("get-order-by-account-id/{accountId}/{pageNumber}/{pageSize}")]
         public async Task<AppActionResult> GetAllOrderByAccountId(string accountId, Domain.Enums.OrderStatus? status, OrderType? orderType, int pageNumber = 1, int pageSize = 10)
         {
-            return await _service.GetAllOrderByAccountId(accountId, status, orderType, 1, 10);
+            return await _service.GetAllOrderByCustomertId(accountId, status, orderType, 1, 10);
         }
 
         [HttpGet("get-all-order-by-phone-number/{pageNumber}/{pageSize}")]
@@ -36,21 +36,21 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-order-by-time/{pageNumber}/{pageSize}")]
-        public async Task<AppActionResult> GetOrderByTime(double? minute, int pageNumber, int pageSize)
+        public async Task<AppActionResult> GetOrderByTime(double? minute, int pageNumber = 1, int pageSize = 10)
         {
-            return await _service.GetOrderByTime(minute, pageNumber, pageSize); 
+            return await _service.GetOrderByTime(minute, pageNumber, pageSize);
         }
 
         [HttpGet("get-order-detail/{orderId}")]
         public async Task<AppActionResult> GetOrderDetail(Guid orderId)
         {
-            return await _service.GetOrderDetail(orderId);
+            return await _service.GetAllReservationDetail(orderId);
         }
 
         [HttpPost("calculate-reservation")]
-        public async Task<AppActionResult> CalculateReservation([FromBody]ReservationDto request)
+        public async Task<AppActionResult> CalculateReservation([FromBody] ReservationDto request)
         {
-            return await _service.CalculateReservation(request);    
+            return await _service.CalculateReservation(request);
         }
 
         [HttpPost("add-dish-to-order/{orderId}")]
@@ -99,6 +99,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         public async Task<AppActionResult> SuggestTable(SuggestTableDto dto)
         {
             return await _service.SuggestTable(dto);
+        }
+
+        [HttpGet("get-table-reservation-with-time")]
+        public async Task<AppActionResult> GetTableReservationWithTime(Guid tableId, DateTime? time)
+        {
+            return await _service.GetTableReservationWithTime(tableId, time);
         }
 
         //[HttpPut("change-order-status/{orderId}")]

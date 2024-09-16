@@ -19,8 +19,8 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public string RefreshTokenValue { get; set; } = null!;
         public DateTime CreateRefreshToken { get; set; }
         public DateTime ExpiryTimeRefreshToken { get; set; }
-        public bool IsActive { get; set; }  
-        public string AccountId { get; set; } = null!;
+        public bool IsActive { get; set; }
+        public string? AccountId { get; set; }
         [ForeignKey(nameof(AccountId))]
         public Account? Account { get; set; }
     }
