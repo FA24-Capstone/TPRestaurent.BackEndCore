@@ -3,6 +3,7 @@ using Castle.DynamicProxy.Generators;
 using Firebase.Auth;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
+using Hangfire.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -79,7 +80,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
                 var user = await _accountRepository.GetByExpression(u =>
                     u!.PhoneNumber!.ToLower() == loginRequest.PhoneNumber.ToLower() && u.IsDeleted == false);
-                var customerInfo = await _accountRepository!.GetByExpression(p => p.CustomerId == user.CustomerId, null);
+                var customerInfo = await _accountRepository!.GetByExpression(p => p.Id == user.Id, null);
                 var otpCodeListDb = await _otpRepository.GetAllDataByExpression(p => p.Code == loginRequest.OTPCode && (p.Type == OTPType.Login || p.Type == OTPType.ConfirmPhone) && p.ExpiredTime > currentTime && !p.IsUsed, 0, 0, null, false, null);
 
                 if (otpCodeListDb.Items.Count > 1)
@@ -242,6 +243,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> CreateAccount(SignUpRequestDto signUpRequest, bool isGoogle)
         {
             var result = new AppActionResult();
+            var utility = Resolve<Utility>();
             try
             {
                 if (await _accountRepository.GetByExpression(r => r!.PhoneNumber == signUpRequest.PhoneNumber) != null)
@@ -254,6 +256,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var random = new Random();
                     var verifyCode = string.Empty;
                     verifyCode = random.Next(100000, 999999).ToString();
+                    var currentTime = utility.GetCurrentDateTimeInTimeZone();
 
                     var user = new Account
                     {
@@ -266,7 +269,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         VerifyCode = verifyCode,
                         LoyaltyPoint = 0,
                         IsVerified = isGoogle ? true : false,
-                        IsManuallyCreated = true
+                        IsManuallyCreated = true,
+                        RefreshTokenExpiryTime = currentTime.AddDays(30)
                     };
                     var resultCreateUser = await _userManager.CreateAsync(user, signUpRequest.Password);
                     if (resultCreateUser.Succeeded)
@@ -285,11 +289,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     var resultCreateRole = await _userManager.AddToRoleAsync(user, "CUSTOMER");
                     if (!resultCreateRole.Succeeded) result = BuildAppActionResultError(result, $"Cấp quyền khách hàng không thành công");
-                    bool customerAdded = await AddCustomerInformation(user);
-                    if (!customerAdded)
-                    {
-                        result = BuildAppActionResultError(result, $"Tạo thông tin khách hàng không thành công");
-                    }
+                    //bool customerAdded = await AddCustomerInformation(user);
+                    //if (!customerAdded)
+                    //{
+                    //    result = BuildAppActionResultError(result, $"Tạo thông tin khách hàng không thành công");
+                    //}
 
                     var configurationRepository = Resolve<IGenericRepository<Configuration>>();
                     var configurationDb = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.EXPIRE_TIME_FOR_STORE_CREDIT), null);
@@ -326,11 +330,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var customer = new Account
                 {
-                    CustomerId = Guid.NewGuid().ToString(),
+                    Id = Guid.NewGuid().ToString(),
                     FirstName = user.FirstName,
                     LastName = user.LastName,
                     PhoneNumber = user.PhoneNumber,
-                    Address = ""
+                    Address = user.Address,
+                    DOB = user.DOB,
+                    Gender = user.Gender,
+                    IsVerified = false
                 };
                 var customerRepository = Resolve<IGenericRepository<Account>>();
                 await customerRepository!.Insert(customer);
@@ -478,7 +485,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     Email = $"{SD.AccountDefaultInfomation.DEFAULT_EMAIL}{accountRandomNumber}{SD.DEFAULT_EMAIL_DOMAIN}",
                     UserName = $"{SD.AccountDefaultInfomation.DEFAULT_EMAIL}{accountRandomNumber}{SD.DEFAULT_EMAIL_DOMAIN}",
-                    LastName = SD.AccountDefaultInfomation.DEFAULT_FIRSTNAME + " " + SD.AccountDefaultInfomation.DEFAULT_LASTNAME,
+                    FirstName = SD.AccountDefaultInfomation.DEFAULT_FIRSTNAME,
+                    LastName =   SD.AccountDefaultInfomation.DEFAULT_LASTNAME,
                     PhoneNumber = phoneNumber,
                     Gender = true,
                     VerifyCode = verifyCode,
@@ -1196,57 +1204,57 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> AddNewCustomerInfo(CustomerInforRequest customerInforRequest)
-        {
-            var result = new AppActionResult();
-            try
-            {
-                if (!string.IsNullOrEmpty(customerInforRequest.AccountId))
-                {
-                    var accountDb = await _accountRepository.GetByExpression(p => p.Id == customerInforRequest.AccountId);
-                    if (accountDb == null)
-                    {
-                        result = BuildAppActionResultError(result, $"Tài khoản với số điện thoại {customerInforRequest.AccountId} không tồn tại!");
-                    }
-                }
+        //public async Task<AppActionResult> AddNewCustomerInfo(CustomerInforRequest customerInforRequest)
+        //{
+        //    var result = new AppActionResult();
+        //    try
+        //    {
+        //        if (!string.IsNullOrEmpty(customerInforRequest.AccountId))
+        //        {
+        //            var accountDb = await _accountRepository.GetByExpression(p => p.Id == customerInforRequest.AccountId);
+        //            if (accountDb == null)
+        //            {
+        //                result = BuildAppActionResultError(result, $"Tài khoản với số điện thoại {customerInforRequest.AccountId} không tồn tại!");
+        //            }
+        //        }
 
-                var customerInfoDb = await _accountRepository.GetAllDataByExpression(c => c.PhoneNumber.Equals(customerInforRequest.PhoneNumber), 0, 0, null, false, null);
-                if (customerInfoDb.Items.Count > 1)
-                {
-                    result = BuildAppActionResultError(result, $"Có nhiều hơn 1 thông tin người dùng với sđt {customerInforRequest.PhoneNumber} đã tồn tại");
-                    return result;
-                }
+        //        var customerInfoDb = await _accountRepository.GetAllDataByExpression(c => c.PhoneNumber.Equals(customerInforRequest.PhoneNumber), 0, 0, null, false, null);
+        //        if (customerInfoDb.Items.Count > 1)
+        //        {
+        //            result = BuildAppActionResultError(result, $"Có nhiều hơn 1 thông tin người dùng với sđt {customerInforRequest.PhoneNumber} đã tồn tại");
+        //            return result;
+        //        }
 
-                if (customerInfoDb.Items.Count == 1)
-                {
-                    result = BuildAppActionResultError(result, $"Thông tin người dùng với sđt {customerInforRequest.PhoneNumber} đã tồn tại");
-                    result.Result = customerInfoDb.Items.SingleOrDefault();
-                    return result;
-                }
+        //        if (customerInfoDb.Items.Count == 1)
+        //        {
+        //            result = BuildAppActionResultError(result, $"Thông tin người dùng với sđt {customerInforRequest.PhoneNumber} đã tồn tại");
+        //            result.Result = customerInfoDb.Items.SingleOrDefault();
+        //            return result;
+        //        }
 
-                var customerInfo = new Account
-                {
-                    CustomerId = Guid.NewGuid().ToString(),
-                    FirstName = customerInforRequest.FirstName,
-                    LastName = customerInforRequest.LastName,
-                    PhoneNumber = customerInforRequest.PhoneNumber,
-                    Address = customerInforRequest.Address,
-                    DOB = customerInforRequest.DOB,
-                    Gender = customerInforRequest.Gender,
-                    IsVerified = false
-                };
+        //        var customerInfo = new Account
+        //        {
+        //            CustomerId = Guid.NewGuid().ToString(),
+        //            FirstName = customerInforRequest.FirstName,
+        //            LastName = customerInforRequest.LastName,
+        //            PhoneNumber = customerInforRequest.PhoneNumber,
+        //            Address = customerInforRequest.Address,
+        //            DOB = customerInforRequest.DOB,
+        //            Gender = customerInforRequest.Gender,
+        //            IsVerified = false
+        //        };
 
-                await _accountRepository.Insert(customerInfo);
-                await _unitOfWork.SaveChangesAsync();
-                await SendCustomerInfoOTP(customerInfo.PhoneNumber, OTPType.Register);
-                result.Result = customerInfo;
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
-        }
+        //        await _accountRepository.Insert(customerInfo);
+        //        await _unitOfWork.SaveChangesAsync();
+        //        await SendCustomerInfoOTP(customerInfo.PhoneNumber, OTPType.Register);
+        //        result.Result = customerInfo;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        result = BuildAppActionResultError(result, ex.Message);
+        //    }
+        //    return result;
+        //}
 
         public async Task<AppActionResult> GenerateCustomerInfoOTP(Account customerDb, OTPType otpType)
         {
@@ -1256,7 +1264,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 //Check Customermust be unverified
                 if (customerDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"Không tìm thấy thông tin người dùng với id {customerDb.CustomerId}");
+                    result = BuildAppActionResultError(result, $"Không tìm thấy thông tin người dùng với id {customerDb.Id}");
                     return result;
                 }
 
@@ -1273,7 +1281,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     OTPId = Guid.NewGuid(),
                     Type = otpType,
-                    AccountId = customerDb.CustomerId,
+                    AccountId = customerDb.Id,
                     Code = code,
                     ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
                     IsUsed = false,
@@ -1371,7 +1379,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 //{
                 //    result = BuildAppActionResultError(result, $"Tài khoản với số điện thoại {customerInforRequest.AccountId} không tồn tại!");
                 //}
-                var updateCustomerInfoList = await _accountRepository.GetAllDataByExpression(p => p.CustomerId == customerInforRequest.CustomerId.ToString() && p.PhoneNumber.Equals(customerInforRequest.PhoneNumber), 0, 0, null, false, null);
+                var updateCustomerInfoList = await _accountRepository.GetAllDataByExpression(p => p.Id == customerInforRequest.CustomerId.ToString() && p.PhoneNumber.Equals(customerInforRequest.PhoneNumber), 0, 0, null, false, null);
 
                 if (updateCustomerInfoList.Items!.Count == 0)
                 {
@@ -1396,7 +1404,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         updateCustomerInfo.Address = customerInfoAddressDb.CustomerInfoAddressName;
                         customerInfoAddressDb.IsCurrentUsed = true;
-                        var currentCustomerInfoAddressListDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.AccountId == updateCustomerInfo.CustomerId
+                        var currentCustomerInfoAddressListDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.AccountId == updateCustomerInfo.Id
                                                                                                                 && c.IsCurrentUsed, 0, 0, null, false, null);
                         if (currentCustomerInfoAddressListDb.Items.Count > 1)
                         {
@@ -1420,11 +1428,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         CustomerInfoAddressId = Guid.NewGuid(),
                         CustomerInfoAddressName = customerInforRequest.Address!,
-                        AccountId = updateCustomerInfo.CustomerId,
+                        AccountId = updateCustomerInfo.Id,
                         IsCurrentUsed = true
                     });
 
-                    var currentCustomerInfoAddressListDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.AccountId == updateCustomerInfo.CustomerId
+                    var currentCustomerInfoAddressListDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.AccountId == updateCustomerInfo.Id
                                                                                                                 && c.IsCurrentUsed, 0, 0, null, false, null);
                     if (currentCustomerInfoAddressListDb.Items.Count > 1)
                     {
@@ -1454,7 +1462,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-
         public async Task<AppActionResult> GetAllCustomerInfoByAccountId(string accountId, int pageNumber, int pageSize)
         {
             var result = new AppActionResult();
@@ -1481,7 +1488,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                var customerInfoDb = await _accountRepository.GetByExpression(p => p.CustomerId == customerId.ToString());
+                var customerInfoDb = await _accountRepository.GetByExpression(p => p.Id == customerId.ToString());
                 if (customerInfoDb == null)
                 {
                     result = BuildAppActionResultError(result, $"Thông tin và địa chỉ của khách với id {customerId} không tồn tại");
@@ -1500,7 +1507,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                var customerInfoDb = await _accountRepository.GetByExpression(p => p.CustomerId == customerId.ToString());
+                var customerInfoDb = await _accountRepository.GetByExpression(p => p.Id == customerId.ToString());
                 if (customerInfoDb == null)
                 {
                     result = BuildAppActionResultError(result, $"Thông tin và địa chỉ của khách với id {customerId} không tồn tại");
@@ -1616,7 +1623,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var customerInfoListDb = await _accountRepository.GetAllDataByExpression(c => c.PhoneNumber.Equals(phoneNumber), 0, 0, null, false, null);
-                if (customerInfoListDb.Items.Count > 1)
+                if (customerInfoListDb!.Items!.Count > 1)
                 {
                     return BuildAppActionResultError(result, $"Có nhiều hơn 1 thông tin người dùng với số điện thoại {phoneNumber}");
                 }
@@ -1629,11 +1636,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var customerInfo = customerInfoListDb.Items[0];
 
                 var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
-                var customerInfoAddressDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.AccountId == customerInfo.CustomerId, 0, 0, null, false, null);
+                var customerInfoAddressDb = await customerInfoAddressRepository!.GetAllDataByExpression(c => c.AccountId == customerInfo.Id, 0, 0, null, false, null);
 
                 var data = new CustomerInfoAddressResponse();
                 data.CustomerInfo = customerInfo;
-                data.CustomerAddresses = customerInfoAddressDb.Items;
+                data.CustomerAddresses = customerInfoAddressDb!.Items!;
 
                 result.Result = data;
             }
