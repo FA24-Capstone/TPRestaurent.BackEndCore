@@ -43,6 +43,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> VerifyCustomerInfoOTP(string phoneNUmber, string code, OTPType otpType);
         Task<AppActionResult> SendCustomerInfoOTP(string phoneNumber, OTPType otpType);
         Task<AppActionResult> GetCustomerInfoByPhoneNumber(string phoneNumber);
+        Task DeleteOverdueOTP();
 
     }
 }
