@@ -103,7 +103,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 //}
                                 if (paymentRequest.OrderId.HasValue)
                                 {
-                                    var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.CustomerInfo!.Account!);
+                                    var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
@@ -118,8 +118,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         OrderID = orderDb.OrderId.ToString(),
                                         PaymentMethod = paymentRequest.PaymentMethod,
                                         Amount = (double)(orderDb.TotalAmount > 0 ? orderDb.TotalAmount : orderDb.Deposit),
-                                        CustomerName = orderDb!.CustomerInfo!.Name,
-                                        AccountID = orderDb.CustomerInfo.AccountId,
+                                        CustomerName = orderDb!.Account!.LastName,
+                                        AccountID = orderDb.AccountId,
                                     };
 
 
@@ -263,7 +263,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 //}
                                 if (paymentRequest.OrderId.HasValue)
                                 {
-                                    var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.CustomerInfo!.Account!);
+                                    var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
 
                                     transaction = new Transaction
                                     {
@@ -443,7 +443,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 //}
                                 if (paymentRequest.OrderId.HasValue)
                                 {
-                                    var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.CustomerInfo!.Account!);
+                                    var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
 
                                     transaction = new Transaction
                                     {

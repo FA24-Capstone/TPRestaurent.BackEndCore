@@ -22,6 +22,5 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public bool? IsManuallyUpdate { get; set; }  
         public List<IdentityRole> Roles { get; set; }
         public string MainRole { get; set; }
-        public CustomerInfo CustomerInfo { get; set; }
     }
 }

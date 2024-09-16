@@ -12,6 +12,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
+using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
@@ -37,7 +38,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
                     var comboOptionSetRepository = Resolve<IGenericRepository<ComboOptionSet>>();
                     var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
-                    var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
+                    var staticFileRepository = Resolve<IGenericRepository<Image>>();
                     var firebaseService = Resolve<IFirebaseService>();
 
 
@@ -67,14 +68,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                    
                     comboDb.Image = uploadMainPicture!.Result!.ToString()!;
 
-                    List<StaticFile> staticList = new List<StaticFile>();
+                    List<Image> staticList = new List<Image>();
 
 
                     foreach (var file in comboDto!.ImageFiles!)
                     {
                         var pathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDb.ComboId}{Guid.NewGuid()}.jpg";
                         var upload = await firebaseService!.UploadFileToFirebase(file, pathName );
-                        var staticImg = new StaticFile
+                        var staticImg = new Image
                         {
                             StaticFileId = Guid.NewGuid(),
                             ComboId = comboDb.ComboId,
@@ -161,18 +162,67 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> GetAllCombo(string? keyword, int pageNumber, int pageSize)
         {
             var result = new AppActionResult();
-            var utility = Resolve<Utility>();
             try
             {
-                var comboDb = 
-                    await _comboRepository.GetAllDataByExpression((p => (p.Name.Contains(keyword) || string.IsNullOrEmpty(keyword)) && p.EndDate > utility.GetCurrentDateTimeInTimeZone()), pageNumber, pageSize, null, false, c => c.Category);
-                result.Result = comboDb;        
+                var currentDateTime = Resolve<Utility>().GetCurrentDateTimeInTimeZone();
+                var comboDb = await _comboRepository.GetAllDataByExpression(
+                    p => (string.IsNullOrEmpty(keyword) || p.Name.Contains(keyword)) && p.EndDate > currentDateTime,
+                    pageNumber, pageSize, null, false, c => c.Category
+                );
+
+                if (comboDb.Items.Count > 0)
+                {
+                    var comboResponses = comboDb.Items
+                        .Select(c => new ComboResponseDto { Combo = c })
+                        .ToList();
+
+                    result.Result = await GetListDishRatingInformation(comboResponses);
+                }
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 result = BuildAppActionResultError(result, ex.Message);
             }
+
             return result;
+        }
+
+        private async Task<List<ComboResponseDto>> GetListDishRatingInformation(List<ComboResponseDto> comboResponses)
+        {
+            var responses = comboResponses.ToList();
+            try
+            {
+                var comboIds = comboResponses.Select(c => c.Combo.ComboId).ToList();
+
+                var ratingRepository = Resolve<IGenericRepository<Rating>>();
+                var ratingDb = await ratingRepository.GetAllDataByExpression(
+                    o => o.OrderDetailId.HasValue && o.OrderDetail.ComboId.HasValue && comboIds.Contains(o.OrderDetail.ComboId.Value),
+                    0, 0, null, false, null
+                );
+
+                if (ratingDb.Items.Count > 0)
+                {
+                    var comboRatings = ratingDb.Items
+                        .GroupBy(r => r.OrderDetail.ComboId)
+                        .ToDictionary(g => g.Key, g => g.ToList());
+
+                    foreach (var response in responses)
+                    {
+                        if (comboRatings.TryGetValue(response.Combo.ComboId, out var ratings))
+                        {
+                            response.NumberOfRating = ratings.Count;
+                            response.AverageRating = ratings.Average(r => (int)r.PointId); // Assuming PointId is an enum
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the exception or handle it accordingly
+                // Keeping the original list intact if the rating fetch fails
+            }
+
+            return responses;
         }
 
         public async Task<AppActionResult> GetComboById(Guid comboId)
@@ -181,8 +231,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
-                var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
-                var comboResponse = new ComboResponseDto();
+                var staticFileRepository = Resolve<IGenericRepository<Image>>();
+                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var ratingRepository = Resolve<IGenericRepository<Rating>>();
+                var comboResponse = new ComboDetailResponseDto();
+                var ratingListDb = new List<Rating>();
                 var comboDb = await _comboRepository.GetByExpression(p => p!.ComboId == comboId, p => p.Category);
                 if (comboDb == null)
                 {
@@ -206,8 +259,46 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 comboResponse.DishCombo = comboResponse.DishCombo.OrderBy(c => c.OptionSetNumber).ToList();
                 comboResponse.DishCombo.ForEach(d => d.DishCombo.ForEach(dc => dc.ComboOptionSet = null));
-                comboResponse.Imgs = staticFileDb.Items!.Select(s => s.Path).ToList();
+                comboResponse.Imgs = staticFileDb.Items!.ToList();
                 comboResponse.Combo = comboDb!;
+
+                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => p.Combo!.ComboId == comboId && p.Order!.StatusId == OrderStatus.Completed, 0, 0, null, false, null);
+                if (orderDetailDb!.Items!.Count > 0 && orderDetailDb.Items != null)
+                {
+                    foreach (var orderDetail in orderDetailDb.Items)
+                    {
+                        var ratingDb = await ratingRepository!.GetByExpression(p => p.OrderDetailId == orderDetail.OrderDetailId);
+                        ratingListDb.Add(ratingDb);
+                    }
+                }
+
+                if (ratingListDb.Count > 0)
+                {
+                    foreach (var rating in ratingListDb)
+                    {
+                        var ratingStaticFileDb = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == rating.RatingId, 0, 0, null, false, null);
+                        var ratingDishResponse = new RatingResponse
+                        {
+                            Rating = rating,
+                            RatingImgs = ratingStaticFileDb.Items!
+                        };
+                        comboResponse.ComboRatings.Add(ratingDishResponse);
+                    }
+                    comboResponse.NumberOfRating = ratingListDb.Count();
+                    comboResponse.AverageRating = ratingListDb.Average(r =>
+                    {
+                        if (r.PointId == RatingPoint.One) return 1;
+                        if (r.PointId == RatingPoint.Two) return 2;
+                        if (r.PointId == RatingPoint.Three) return 3;
+                        if (r.PointId == RatingPoint.Four) return 4;
+                        return 5;
+                    });
+                }
+
+                comboResponse.Combo = comboDb!;
+                comboResponse.Imgs = staticFileDb.Items!;
+                result.Result = comboDb;
+
                 result.Result = comboResponse;
             }
             catch (Exception ex)
@@ -223,8 +314,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
-                var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
-                var comboResponse = new ComboResponseDto();
+                var staticFileRepository = Resolve<IGenericRepository<Image>>();
+                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var ratingRepository = Resolve<IGenericRepository<Rating>>();
+                var comboResponse = new ComboDetailResponseDto();
+                var ratingListDb = new List<Rating>();
                 var comboDb = await _comboRepository.GetByExpression(p => p!.ComboId == comboId, p => p.Category);
                 if (comboDb == null)
                 {
@@ -249,7 +343,41 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 comboResponse.DishCombo = comboResponse.DishCombo.OrderBy(c => c.OptionSetNumber).ToList();
                 comboResponse.DishCombo.ForEach(d => d.DishCombo.ForEach(dc => dc.ComboOptionSet = null));
-                comboResponse.Imgs = staticFileDb.Items!.Select(s => s.Path).ToList();
+                comboResponse.Imgs = staticFileDb.Items!.ToList();
+
+                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => p.Combo!.ComboId == comboId && p.Order!.StatusId == OrderStatus.Completed, 0, 0, null, false, null);
+                if (orderDetailDb!.Items!.Count > 0 && orderDetailDb.Items != null)
+                {
+                    foreach (var orderDetail in orderDetailDb.Items)
+                    {
+                        var ratingDb = await ratingRepository!.GetByExpression(p => p.OrderDetailId == orderDetail.OrderDetailId);
+                        ratingListDb.Add(ratingDb);
+                    }
+                }
+
+                if (ratingListDb.Count > 0)
+                {
+                    foreach (var rating in ratingListDb)
+                    {
+                        var ratingStaticFileDb = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == rating.RatingId, 0, 0, null, false, null);
+                        var ratingDishResponse = new RatingResponse
+                        {
+                            Rating = rating,
+                            RatingImgs = ratingStaticFileDb.Items!
+                        };
+                        comboResponse.ComboRatings.Add(ratingDishResponse);
+                    }
+                    comboResponse.NumberOfRating = ratingListDb.Count();
+                    comboResponse.AverageRating = ratingListDb.Average(r =>
+                    {
+                        if (r.PointId == RatingPoint.One) return 1;
+                        if (r.PointId == RatingPoint.Two) return 2;
+                        if (r.PointId == RatingPoint.Three) return 3;
+                        if (r.PointId == RatingPoint.Four) return 4;
+                        return 5;
+                    });
+                }
+
                 comboResponse.Combo = comboDb!;
                 result.Result = comboResponse;
             }

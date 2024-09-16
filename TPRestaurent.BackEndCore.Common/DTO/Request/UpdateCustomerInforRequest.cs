@@ -10,7 +10,8 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
     {
         public Guid CustomerId { get; set; }
         public string PhoneNumber { get; set; }
-        public string Name { get; set; } = null!;
+        public string FirstName { get; set; } = null!;
+        public string LastName { get; set; } = null!;
         public DateTime DOB { get; set; } 
         public string? Address { get; set; } = null!;
         public Guid? AddressId { get; set; }
