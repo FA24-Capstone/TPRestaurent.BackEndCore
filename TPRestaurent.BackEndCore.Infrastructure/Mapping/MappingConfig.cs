@@ -64,7 +64,28 @@ public class MappingConfig
             .ReverseMap();
             ;
 
+            config.CreateMap<Combo, ComboResponseDto>()
+            .ForMember(dest => dest.ComboId, act => act.MapFrom(src => src.ComboId))
+            .ForMember(dest => dest.Name, act => act.MapFrom(src => src.Name))
+            .ForMember(dest => dest.Description, act => act.MapFrom(src => src.Description))
+            .ForMember(dest => dest.Image, act => act.MapFrom(src => src.Image))
+            .ForMember(dest => dest.Price, act => act.MapFrom(src => src.Price))
+            .ForMember(dest => dest.Discount, act => act.MapFrom(src => src.Discount))
+            .ForMember(dest => dest.CategoryId, act => act.MapFrom(src => src.CategoryId))
+            .ForMember(dest => dest.Category, act => act.MapFrom(src => src.Category))
+            .ForMember(dest => dest.StartDate, act => act.MapFrom(src => src.StartDate))
+            .ForMember(dest => dest.EndDate, act => act.MapFrom(src => src.EndDate));
+
+            config.CreateMap<Dish, DishReponse>()
+            .ForMember(dest => dest.DishId, act => act.MapFrom(src => src.DishId))
+            .ForMember(dest => dest.Name, act => act.MapFrom(src => src.Name))
+            .ForMember(dest => dest.Description, act => act.MapFrom(src => src.Description))
+            .ForMember(dest => dest.Image, act => act.MapFrom(src => src.Image))
+            .ForMember(dest => dest.DishItemTypeId, act => act.MapFrom(src => src.DishItemTypeId))
+            .ForMember(dest => dest.DishItemType, act => act.MapFrom(src => src.DishItemType))
+            .ForMember(dest => dest.IsAvailable, act => act.MapFrom(src => src.isAvailable));
         });
+
         // Trong class MappingConfig
 
         return mappingConfig;
