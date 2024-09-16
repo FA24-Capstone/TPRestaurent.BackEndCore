@@ -1643,5 +1643,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+        public async Task DeleteOverdueOTP()
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var utility = Resolve<Utility>();
+                var otpRepository = Resolve<IGenericRepository<OTP>>();
+                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+                var otpDb = await otpRepository!.GetAllDataByExpression(p => p.ExpiredTime < currentTime, 0, 0, null, false, null);
+                if (otpDb!.Items!.Count > 0 && otpDb.Items != null)
+                {
+                    await otpRepository.DeleteRange(otpDb.Items);
+                }
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+            }
+            Task.CompletedTask.Wait();
+        }
     }
 }
