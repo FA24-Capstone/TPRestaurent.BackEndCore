@@ -280,7 +280,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var order = new Order()
                     {
                         OrderId = Guid.NewGuid(),
-                        AccountId = orderRequestDto.CustomerId.ToString(),
                         OrderTypeId = orderRequestDto.OrderType,
                         Note = orderRequestDto.Note,
                         PaymentMethodId = PaymentMethod.VNPAY
@@ -294,6 +293,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             return BuildAppActionResultError(result, $"Xảy ra lỗi");
                         }
+
+                        order.AccountId = orderRequestDto.CustomerId.ToString();
                     }
 
                     List<OrderDetail> orderDetails = new List<OrderDetail>();
@@ -360,10 +361,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         money = orderDetails.Sum(o => o.Quantity * o.Price);
                     }
 
-                    if (comboOrderDetails.Count > 0)
+                    if (orderDetails.Count > 0)
                     {
-                        await comboOrderDetailRepository.InsertRange(comboOrderDetails);
+                        await orderDetailRepository.InsertRange(orderDetails);
+                        if (comboOrderDetails.Count > 0)
+                        {
+                            await comboOrderDetailRepository.InsertRange(comboOrderDetails);
+                        }
                     }
+
 
                     List<TableDetail> tableDetails = new List<TableDetail>();
 
@@ -598,7 +604,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         if (!BuildAppActionResultIsError(result))
                         {
-                            await _unitOfWork.SaveChangesAsync();
+                            await accountRepository.Update(accountDb);
                             if (orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.PaymentMethod != PaymentMethod.Cash ||
                                 orderRequestDto.ReservationOrder != null && orderRequestDto.ReservationOrder.PaymentMethod != PaymentMethod.Cash)
                             {
@@ -615,9 +621,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
                             }
                             result.Result = orderWithPayment;
-                            scope.Complete();
                         }
 
+                    }
+                    if (!BuildAppActionResultIsError(result))
+                    {
+                        await _repository.Insert(order);
+                        await _unitOfWork.SaveChangesAsync();
+                        scope.Complete();
                     }
                 }
                 catch (Exception ex)
@@ -628,7 +639,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetAllOrderByCustomerId(string customerId, OrderStatus? status, OrderType? orderType, int pageNumber, int pageSize)
+        public async Task<AppActionResult> GetAllOrderByCustomertId(string customerId, OrderStatus? status, OrderType? orderType, int pageNumber, int pageSize)
         {
             AppActionResult result = new AppActionResult();
             try
