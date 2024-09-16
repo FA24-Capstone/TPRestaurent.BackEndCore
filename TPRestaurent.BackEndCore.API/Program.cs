@@ -31,7 +31,7 @@ app.UseAuthorization();
 //app.UseMiddleware<TokenValidationMiddleware>();
 
 app.MapControllers();
-//ApplyMigration();
+ApplyMigration();
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
     Authorization = new[] { new DashboardNoAuthorizationFilter() }
