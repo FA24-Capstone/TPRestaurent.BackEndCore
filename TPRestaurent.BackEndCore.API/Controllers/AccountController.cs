@@ -123,11 +123,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.UpdateAccountInformation(request); 
         }
 
-        [HttpPost("add-new-customer-info")]
-        public async Task<AppActionResult> AddNewCustomerInfo(CustomerInforRequest customerInforRequest)
-        {
-            return await _accountService.AddNewCustomerInfo(customerInforRequest);  
-        }
+        //[HttpPost("add-new-customer-info")]
+        //public async Task<AppActionResult> AddNewCustomerInfo(CustomerInforRequest customerInforRequest)
+        //{
+        //    return await _accountService.AddNewCustomerInfo(customerInforRequest);  
+        //}
 
         [HttpPut("update-customer-info")]
         public async Task<AppActionResult> UpdateCustomerInfo(UpdateCustomerInforRequest customerInforRequest)
