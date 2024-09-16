@@ -16,7 +16,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private IConfigService _configService; 
         private IOrderService _orderService; 
         private IUnitOfWork _unitOfWork;
-        private IStoreCreditService _storeCreditService;    
+        private IStoreCreditService _storeCreditService;  
+        private IAccountService _accountService;
 
         public WorkerService(IServiceProvider serviceProvider,
             BackEndLogger logger,
@@ -24,7 +25,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             IOrderService orderService,
             //IReservationService reservationService,
             IConfigService configService,
-            IStoreCreditService storeCreditService
+            IStoreCreditService storeCreditService,
+            IAccountService accountService
             ) : base(serviceProvider)
         {
             _logger = logger;
@@ -33,6 +35,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _configService = configService;
             _orderService = orderService;
             _storeCreditService = storeCreditService;   
+            _accountService = accountService;   
         }
 
         public async Task Start()
@@ -42,6 +45,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             //RecurringJob.AddOrUpdate(() => _orderService.CancelOverReservation(), Cron.DayInterval(1), vietnamTimeZone);
             //RecurringJob.AddOrUpdate(() => _orderService.UpdateOrderDetailStatusBeforeDining(), Cron.DayInterval(1), vietnamTimeZone);
             //RecurringJob.AddOrUpdate(() => _storeCreditService.ChangeOverdueStoreCredit(), Cron.DayInterval(1), vietnamTimeZone);
+            //BackgroundJob.Enqueue(() => _accountService.DeleteOverdueOTP());
         }
     }
 }

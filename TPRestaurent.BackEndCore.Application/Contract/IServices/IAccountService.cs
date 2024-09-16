@@ -33,7 +33,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GetAccountsByRoleName(string roleName, int pageNumber, int pageSize);
         Task<AppActionResult> GetAccountsByRoleId(Guid Id, int pageNumber, int pageSize);
         Task<AppActionResult> GenerateOTP(string phoneNumber);
-        Task<AppActionResult> AddNewCustomerInfo(CustomerInforRequest customerInforRequest);
+        //Task<AppActionResult> AddNewCustomerInfo(CustomerInforRequest customerInforRequest);
         Task<AppActionResult> UpdateCustomerInfo(UpdateCustomerInforRequest customerInforRequest);
         Task<AppActionResult> GetAllCustomerInfoByAccountId(string accountId, int pageNumber, int pageSize);
         Task<AppActionResult> GetCustomerInfo(Guid customerId);
@@ -43,6 +43,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> VerifyCustomerInfoOTP(string phoneNUmber, string code, OTPType otpType);
         Task<AppActionResult> SendCustomerInfoOTP(string phoneNumber, OTPType otpType);
         Task<AppActionResult> GetCustomerInfoByPhoneNumber(string phoneNumber);
+        Task DeleteOverdueOTP();
 
     }
 }
