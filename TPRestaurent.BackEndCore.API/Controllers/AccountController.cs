@@ -57,7 +57,6 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-account")]
-        [TokenValidationMiddleware]
         public async Task<AppActionResult> GetAllAccount(int pageIndex = 1, int pageSize = 10)
         {
             return await _accountService.GetAllAccount(pageIndex, pageSize);
@@ -124,11 +123,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.UpdateAccountInformation(request); 
         }
 
-        [HttpPost("add-new-customer-info")]
-        public async Task<AppActionResult> AddNewCustomerInfo(CustomerInforRequest customerInforRequest)
-        {
-            return await _accountService.AddNewCustomerInfo(customerInforRequest);  
-        }
+        //[HttpPost("add-new-customer-info")]
+        //public async Task<AppActionResult> AddNewCustomerInfo(CustomerInforRequest customerInforRequest)
+        //{
+        //    return await _accountService.AddNewCustomerInfo(customerInforRequest);  
+        //}
 
         [HttpPut("update-customer-info")]
         public async Task<AppActionResult> UpdateCustomerInfo(UpdateCustomerInforRequest customerInforRequest)

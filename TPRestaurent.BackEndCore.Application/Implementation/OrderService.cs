@@ -288,7 +288,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     Account accountDb = null;
                     if (orderRequestDto.CustomerId.HasValue)
                     {
-                        accountDb = await accountRepository.GetByExpression(c => c.CustomerId == orderRequestDto.CustomerId.Value.ToString(), null);
+                        accountDb = await accountRepository.GetByExpression(c => c.Id == orderRequestDto.CustomerId.Value.ToString(), null);
                         if (accountDb == null)
                         {
                             return BuildAppActionResultError(result, $"Xảy ra lỗi");
@@ -646,7 +646,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 if (status.HasValue)
                 {
-                    result.Result = await _repository.GetAllDataByExpression((o => o.Account.CustomerId.Equals(customerId) && (
+                    result.Result = await _repository.GetAllDataByExpression((o => o.Account.Id.Equals(customerId) && (
                     o.StatusId == status && o.OrderTypeId == orderType) ||
                     (o.StatusId == status) ||
                     (o.OrderTypeId == orderType)), pageNumber, pageSize, o => o.OrderDate, false,
@@ -659,7 +659,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else
                 {
-                    result.Result = await _repository.GetAllDataByExpression(o => o.Account.CustomerId.Equals(customerId), pageNumber, pageSize, o => o.OrderDate, false, p => p.PaymentMethod!,
+                    result.Result = await _repository.GetAllDataByExpression(o => o.Account.Id.Equals(customerId), pageNumber, pageSize, o => o.OrderDate, false, p => p.PaymentMethod!,
                         p => p.Status!,
                         p => p.Account!,
                         p => p.PaymentMethod!,
@@ -760,7 +760,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     if (!string.IsNullOrEmpty(orderDb.AccountId))
                     {
-                        Account accountDb = await accountRepository.GetByExpression(c => c.CustomerId == orderDb.AccountId.ToString(), null);
+                        Account accountDb = await accountRepository.GetByExpression(c => c.Id == orderDb.AccountId.ToString(), null);
                         if (accountDb == null)
                         {
                             return BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng. Đặt hàng thất bại");

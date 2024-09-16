@@ -170,8 +170,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var dishDetailsListDb = await dishDetailsRepository!.GetAllDataByExpression(p => p.DishId == item.DishId, 0, 0, null, false, p => p.DishSize!);
                     var dishSizeResponse = new DishSizeResponse();
-                    dishSizeResponse.Dish = item;
-                    dishSizeResponse.dishSizeDetails = dishDetailsListDb.Items!.OrderBy(d => d.DishSizeId).ToList();
+                    dishSizeResponse.Dish = _mapper.Map<DishReponse>(item);
+                    dishSizeResponse.DishSizeDetails = dishDetailsListDb.Items!.OrderBy(d => d.DishSizeId).ToList();
                     dishSizeList.Add(dishSizeResponse); 
                 }
                 result.Result = new PagedResult<DishSizeResponse>
@@ -200,8 +200,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var dishRating = ratingDb.Items.GroupBy(r => r.OrderDetail.DishSizeDetail.DishId).ToDictionary(r => r.Key, r => r.ToList());
                     foreach (var response in responses)
                     {
-                        response.NumberOfRating = dishRating[response.Dish.DishId].Count();
-                        response.AverageRating = dishRating[response.Dish.DishId].Average(r =>
+                        response.Dish.NumberOfRating = dishRating[response.Dish.DishId].Count();
+                        response.Dish.AverageRating = dishRating[response.Dish.DishId].Average(r =>
                         {
                             if (r.PointId == RatingPoint.One) return 1;
                             if (r.PointId == RatingPoint.Two) return 2;
@@ -223,7 +223,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> GetDishById(Guid dishId)
         {
             var result = new AppActionResult();
-            var dishResponse = new DishResponse();
+            var dishResponse = new DishDetailResponse();
             var staticFileRepository = Resolve<IGenericRepository<Image>>();
             var ratingRepository = Resolve<IGenericRepository<Rating>>();
             var dishSizeRepository = Resolve<IGenericRepository<DishSizeDetail>>();
@@ -241,7 +241,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, $"size món ăn với id {dishId} không tồn tại");
                 }
-                dishResponse.dishSizeDetails = dishSizeDetailsDb!.Items!.OrderBy(d => d.DishSizeId).ToList();
+
+                dishResponse.Dish = new DishSizeResponse();
+                dishResponse.Dish.Dish = _mapper.Map<DishReponse>(dishDb);
+                dishResponse.Dish.DishSizeDetails = dishSizeDetailsDb!.Items!.OrderBy(d => d.DishSizeId).ToList();
                 var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, null);
 
                 var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => p.DishSizeDetail!.DishId == dishId && p.Order!.StatusId == OrderStatus.Completed, 0, 0, null, false, null);
@@ -277,8 +280,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         return 5;
                     });
                 }
-
-                dishResponse.Dish = dishDb!;
                 dishResponse.DishImgs = staticFileDb.Items!;
                     
                 result.Result = dishResponse;

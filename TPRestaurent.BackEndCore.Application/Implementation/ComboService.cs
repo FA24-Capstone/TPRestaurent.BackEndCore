@@ -1,4 +1,5 @@
-﻿using Humanizer;
+﻿using AutoMapper;
+using Humanizer;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -20,11 +21,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     public class ComboService : GenericBackendService , IComboService
     {
         private  IGenericRepository<Combo> _comboRepository;
+        private IMapper _mapper;
         private  IUnitOfWork _unitOfWork;
 
-        public ComboService(IServiceProvider serviceProvider, IGenericRepository<Combo> comboRepository, IUnitOfWork unitOfWork) : base(serviceProvider)
+        public ComboService(IServiceProvider serviceProvider, IGenericRepository<Combo> comboRepository, IMapper mapper, IUnitOfWork unitOfWork) : base(serviceProvider)
         {
-            _comboRepository = comboRepository;   
+            _comboRepository = comboRepository;
+            _mapper = mapper;
             _unitOfWork = unitOfWork;   
         }
 
@@ -173,7 +176,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (comboDb.Items.Count > 0)
                 {
                     var comboResponses = comboDb.Items
-                        .Select(c => new ComboResponseDto { Combo = c })
+                        .Select(c => _mapper.Map<ComboResponseDto>(c))
                         .ToList();
 
                     result.Result = await GetListDishRatingInformation(comboResponses);
@@ -192,7 +195,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var responses = comboResponses.ToList();
             try
             {
-                var comboIds = comboResponses.Select(c => c.Combo.ComboId).ToList();
+                var comboIds = comboResponses.Select(c => c.ComboId).ToList();
 
                 var ratingRepository = Resolve<IGenericRepository<Rating>>();
                 var ratingDb = await ratingRepository.GetAllDataByExpression(
@@ -208,7 +211,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     foreach (var response in responses)
                     {
-                        if (comboRatings.TryGetValue(response.Combo.ComboId, out var ratings))
+                        if (comboRatings.TryGetValue(response.ComboId, out var ratings))
                         {
                             response.NumberOfRating = ratings.Count;
                             response.AverageRating = ratings.Average(r => (int)r.PointId); // Assuming PointId is an enum
@@ -260,7 +263,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 comboResponse.DishCombo = comboResponse.DishCombo.OrderBy(c => c.OptionSetNumber).ToList();
                 comboResponse.DishCombo.ForEach(d => d.DishCombo.ForEach(dc => dc.ComboOptionSet = null));
                 comboResponse.Imgs = staticFileDb.Items!.ToList();
-                comboResponse.Combo = comboDb!;
+                comboResponse.Combo = _mapper.Map<ComboResponseDto>(comboDb);
 
                 var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => p.Combo!.ComboId == comboId && p.Order!.StatusId == OrderStatus.Completed, 0, 0, null, false, null);
                 if (orderDetailDb!.Items!.Count > 0 && orderDetailDb.Items != null)
@@ -284,8 +287,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         };
                         comboResponse.ComboRatings.Add(ratingDishResponse);
                     }
-                    comboResponse.NumberOfRating = ratingListDb.Count();
-                    comboResponse.AverageRating = ratingListDb.Average(r =>
+                    comboResponse.Combo.NumberOfRating = ratingListDb.Count();
+                    comboResponse.Combo.AverageRating = ratingListDb.Average(r =>
                     {
                         if (r.PointId == RatingPoint.One) return 1;
                         if (r.PointId == RatingPoint.Two) return 2;
@@ -294,8 +297,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         return 5;
                     });
                 }
-
-                comboResponse.Combo = comboDb!;
                 comboResponse.Imgs = staticFileDb.Items!;
                 result.Result = comboDb;
 
@@ -344,6 +345,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 comboResponse.DishCombo = comboResponse.DishCombo.OrderBy(c => c.OptionSetNumber).ToList();
                 comboResponse.DishCombo.ForEach(d => d.DishCombo.ForEach(dc => dc.ComboOptionSet = null));
                 comboResponse.Imgs = staticFileDb.Items!.ToList();
+                comboResponse.Combo = _mapper.Map<ComboResponseDto>(comboDb)!;
 
                 var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => p.Combo!.ComboId == comboId && p.Order!.StatusId == OrderStatus.Completed, 0, 0, null, false, null);
                 if (orderDetailDb!.Items!.Count > 0 && orderDetailDb.Items != null)
@@ -367,8 +369,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         };
                         comboResponse.ComboRatings.Add(ratingDishResponse);
                     }
-                    comboResponse.NumberOfRating = ratingListDb.Count();
-                    comboResponse.AverageRating = ratingListDb.Average(r =>
+                    comboResponse.Combo.NumberOfRating = ratingListDb.Count();
+                    comboResponse.Combo.AverageRating = ratingListDb.Average(r =>
                     {
                         if (r.PointId == RatingPoint.One) return 1;
                         if (r.PointId == RatingPoint.Two) return 2;
@@ -378,7 +380,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     });
                 }
 
-                comboResponse.Combo = comboDb!;
                 result.Result = comboResponse;
             }
             catch (Exception ex)
