@@ -117,60 +117,36 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.VerifyNumberAccount(phoneNumber, optCode); 
         }
 
-        [HttpPut("update-account-information")]
-        public async Task<AppActionResult> UpdateAccountInformation(UpdateAccountInformationRequest request)
+        [HttpPut("update-account")]
+        public async Task<AppActionResult> UpdateAccount(UpdateAccountInfoRequest updateAccountRequest)
         {
-            return await _accountService.UpdateAccountInformation(request); 
+            return await _accountService.UpdateAccount(updateAccountRequest);  
         }
 
-        //[HttpPost("add-new-customer-info")]
-        //public async Task<AppActionResult> AddNewCustomerInfo(CustomerInforRequest customerInforRequest)
-        //{
-        //    return await _accountService.AddNewCustomerInfo(customerInforRequest);  
-        //}
 
-        [HttpPut("update-customer-info")]
-        public async Task<AppActionResult> UpdateCustomerInfo(UpdateCustomerInforRequest customerInforRequest)
+        [HttpDelete("delete-account")]
+        public async Task<AppActionResult> DeleteAccount(Guid customerId)
         {
-            return await _accountService.UpdateCustomerInfo(customerInforRequest);  
+            return await _accountService.DeleteAccount(customerId);    
         }
 
-        [HttpGet("get-all-customer-info-by-account-id/{accountId}/{pageNumber}/{pageSize}")]
-        public async Task<AppActionResult> GetAllCustomerInfoByAccountId(string accountId, int pageNumber = 1, int pageSize = 10)
+        [HttpPost("verify-account-otp")]
+        public async Task<AppActionResult> VerifyAccountOTP(string phoneNumber, string code, OTPType otpType)
         {
-            return await _accountService.GetAllCustomerInfoByAccountId(accountId, pageNumber, pageSize);
+            return await _accountService.VerifyAccountOTP(phoneNumber, code, otpType);
         }
 
-        [HttpGet("get-customer-info")]
-        public async Task<AppActionResult> GetCustomerInfo(Guid customerId)
-        {
-            return await _accountService.GetCustomerInfo(customerId);   
-        }
-
-        [HttpDelete("delete-customer-info")]
-        public async Task<AppActionResult> DeleteCustomerInfo(Guid customerId)
-        {
-            return await _accountService.DeleteCustomerInfo(customerId);    
-        }
-
-        [HttpPost("verify-customer-info-otp")]
-        public async Task<AppActionResult> VerifyCustomerInfoOTP(string phoneNumber, string code, OTPType otpType)
-        {
-            return await _accountService.VerifyCustomerInfoOTP(phoneNumber, code, otpType);
-        }
-
-        [HttpPost("send-customer-info-otp")]
+        [HttpPost("send-account-otp")]
         public async Task<AppActionResult> SendCustomerInfoOTP(string phoneNumber, OTPType otpType)
         {
-            return await _accountService.SendCustomerInfoOTP(phoneNumber, otpType);
+            return await _accountService.SendAccountOTP(phoneNumber, otpType);
         }
 
-        [HttpGet("get-customer-info-by-phonenumber")]
+        [HttpGet("get-account-by-phone-number")]
         public async Task<AppActionResult> GetCustomerInfoByPhoneNumber(string phoneNumber)
         {
-            return await _accountService.GetCustomerInfoByPhoneNumber(phoneNumber);
+            return await _accountService.GetAccountByPhoneNumber(phoneNumber);
         }
-
 
     }
 }
