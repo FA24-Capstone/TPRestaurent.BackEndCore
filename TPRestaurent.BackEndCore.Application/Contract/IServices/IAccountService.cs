@@ -18,7 +18,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> CreateAccount(SignUpRequestDto signUpRequest, bool isGoogle);
         Task<AppActionResult> VerifyNumberAccount(string phoneNumber, string optCode);
         Task<AppActionResult> UpdateAccountPhoneNumber(UpdatePhoneRequestDto applicationUser);
-        Task<AppActionResult> UpdateAccountInformation(UpdateAccountInformationRequest request);
         Task<AppActionResult> SendOTP(string phoneNumber, OTPType otp);
         Task<AppActionResult> VerifyForReservation(string phoneNumber, string code);
         Task<AppActionResult> ChangePassword(ChangePasswordDto changePasswordDto);
@@ -33,16 +32,13 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GetAccountsByRoleName(string roleName, int pageNumber, int pageSize);
         Task<AppActionResult> GetAccountsByRoleId(Guid Id, int pageNumber, int pageSize);
         Task<AppActionResult> GenerateOTP(string phoneNumber);
-        //Task<AppActionResult> AddNewCustomerInfo(CustomerInforRequest customerInforRequest);
-        Task<AppActionResult> UpdateCustomerInfo(UpdateCustomerInforRequest customerInforRequest);
-        Task<AppActionResult> GetAllCustomerInfoByAccountId(string accountId, int pageNumber, int pageSize);
-        Task<AppActionResult> GetCustomerInfo(Guid customerId);
-        Task<AppActionResult> DeleteCustomerInfo(Guid customerId);
+        Task<AppActionResult> UpdateAccount(UpdateAccountInfoRequest updateAccountRequest);
+        Task<AppActionResult> DeleteAccount(Guid customerId);
         Task<AppActionResult> SendEmailForActiveCode(string email);
         Task<AppActionResult> GenerateCustomerInfoOTP(Account customerInfo, OTPType otpType);
-        Task<AppActionResult> VerifyCustomerInfoOTP(string phoneNUmber, string code, OTPType otpType);
-        Task<AppActionResult> SendCustomerInfoOTP(string phoneNumber, OTPType otpType);
-        Task<AppActionResult> GetCustomerInfoByPhoneNumber(string phoneNumber);
+        Task<AppActionResult> VerifyAccountOTP(string phoneNUmber, string code, OTPType otpType);
+        Task<AppActionResult> SendAccountOTP(string phoneNumber, OTPType otpType);
+        Task<AppActionResult> GetAccountByPhoneNumber(string phoneNumber);
         Task DeleteOverdueOTP();
 
     }
