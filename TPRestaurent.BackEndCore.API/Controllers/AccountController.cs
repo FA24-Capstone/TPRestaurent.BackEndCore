@@ -131,11 +131,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.VerifyAccountOTP(phoneNumber, code, otpType);
         }
 
-        [HttpPost("send-account-otp")]
-        public async Task<AppActionResult> SendCustomerInfoOTP(string phoneNumber, OTPType otpType)
-        {
-            return await _accountService.SendAccountOTP(phoneNumber, otpType);
-        }
+        //[HttpPost("send-account-otp")]
+        //public async Task<AppActionResult> SendCustomerInfoOTP(string phoneNumber, OTPType otpType)
+        //{
+        //    return await _accountService.SendAccountOTP(phoneNumber, otpType);
+        //}
 
         [HttpGet("get-account-by-phone-number")]
         public async Task<AppActionResult> GetCustomerInfoByPhoneNumber(string phoneNumber)

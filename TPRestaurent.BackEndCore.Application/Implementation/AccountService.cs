@@ -861,71 +861,66 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         private async Task<AppActionResult> LoginDefault(string phoneNumber, Account? user)
         {
-            var tokenRepository = Resolve<IGenericRepository<Token>>();
             var result = new AppActionResult();
+            try
+            {
+                var tokenRepository = Resolve<IGenericRepository<Token>>();
+                var jwtService = Resolve<IJwtService>();
+                var utility = Resolve<Utility>();
+                var token = await jwtService!.GenerateAccessToken(new LoginRequestDto { PhoneNumber = phoneNumber });
+                var refreshToken = jwtService.GenerateRefreshToken();
 
-            var jwtService = Resolve<IJwtService>();
-            var utility = Resolve<Utility>();
-            var token = await jwtService!.GenerateAccessToken(new LoginRequestDto { PhoneNumber = phoneNumber });
+                _tokenDto.Token = token;
+                _tokenDto.RefreshToken = refreshToken;
+                _tokenDto.Account = _mapper.Map<AccountResponse>(user);
 
-            var userTokebDb = await tokenRepository!.GetByExpression(p => p.AccountId == user.Id);
-            if (userTokebDb == null)
-            {
-                userTokebDb.RefreshTokenValue = jwtService.GenerateRefreshToken();
-                userTokebDb.ExpiryTimeRefreshToken = utility!.GetCurrentDateInTimeZone().AddDays(1);
-            }
+                var roleList = new List<string>();
+                var roleListDb = await _userRoleRepository.GetAllDataByExpression(r => r.UserId.Equals(user.Id), 0, 0, null, false, null);
+                if (roleListDb.Items == null || roleListDb.Items.Count == 0)
+                {
+                    roleList = new List<string>();
+                }
+                roleList = roleListDb.Items!.Select(r => r.RoleId).ToList();
 
-            if (userTokebDb.ExpiryTimeRefreshToken <= utility!.GetCurrentDateInTimeZone())
-            {
-                userTokebDb.ExpiryTimeRefreshToken = utility.GetCurrentDateInTimeZone().AddDays(1);
-                userTokebDb.RefreshTokenValue = jwtService.GenerateRefreshToken();
-            }
+                var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
+                var roleNameList = new List<string>();
+                var roleNameDb = await roleRepository!.GetAllDataByExpression(p => roleList.Contains(p.Id), 0, 0, null, false, null);
+                if (roleNameDb.Items!.Count == 0)
+                {
+                    roleNameList = new List<string>();
+                }
+                roleNameList = roleNameDb.Items!.DistinctBy(i => i.Id).Select(i => i.Name).ToList();
+                if (roleNameList.Contains("MANAGER"))
+                {
+                    _tokenDto.MainRole = "MANAGER";
+                }
+                else if (roleNameList.Contains("STAFF"))
+                {
+                    _tokenDto.MainRole = "STAFF";
+                }
+                else if (roleNameList.Contains("CHEF"))
+                {
+                    _tokenDto.MainRole = "CHEF";
+                }
+                else if (roleNameList.Count > 1)
+                {
+                    _tokenDto.MainRole = roleNameList.FirstOrDefault(n => !n.Equals("CUSTOMER"));
+                }
+                else
+                {
+                    _tokenDto.MainRole = "CUSTOMER";
+                }
+                _tokenDto.Account.Roles = roleNameDb.Items;
+                _tokenDto.Account.MainRole = _tokenDto.MainRole;
+                result.Result = _tokenDto;
 
-            _tokenDto.Token = token;
-            _tokenDto.RefreshToken = userTokebDb.RefreshTokenValue;
-            _tokenDto.Account = _mapper.Map<AccountResponse>(user);
+                await _unitOfWork.SaveChangesAsync();
 
-            var roleList = new List<string>();
-            var roleListDb = await _userRoleRepository.GetAllDataByExpression(r => r.UserId.Equals(user.Id), 0, 0, null, false, null);
-            if (roleListDb.Items == null || roleListDb.Items.Count == 0)
-            {
-                roleList = new List<string>();
             }
-            roleList = roleListDb.Items!.Select(r => r.RoleId).ToList();
-
-            var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
-            var roleNameList = new List<string>();
-            var roleNameDb = await roleRepository!.GetAllDataByExpression(p => roleList.Contains(p.Id), 0, 0, null, false, null);
-            if (roleNameDb.Items!.Count == 0)
+            catch (Exception ex)
             {
-                roleNameList = new List<string>();
+                result = BuildAppActionResultError(result, ex.Message);
             }
-            roleNameList = roleNameDb.Items!.DistinctBy(i => i.Id).Select(i => i.Name).ToList();
-            if (roleNameList.Contains("MANAGER"))
-            {
-                _tokenDto.MainRole = "MANAGER";
-            }
-            else if (roleNameList.Contains("STAFF"))
-            {
-                _tokenDto.MainRole = "STAFF";
-            }
-            else if (roleNameList.Contains("CHEF"))
-            {
-                _tokenDto.MainRole = "CHEF";
-            }
-            else if (roleNameList.Count > 1)
-            {
-                _tokenDto.MainRole = roleNameList.FirstOrDefault(n => !n.Equals("CUSTOMER"));
-            }
-            else
-            {
-                _tokenDto.MainRole = "CUSTOMER";
-            }
-            _tokenDto.Account.Roles = roleNameDb.Items;
-            _tokenDto.Account.MainRole = _tokenDto.MainRole;
-            result.Result = _tokenDto;
-            await _unitOfWork.SaveChangesAsync();
-
             return result;
         }
 
@@ -1179,76 +1174,76 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> SendAccountOTP(string phoneNumber, OTPType otpType)
-        {
-            AppActionResult result = new AppActionResult();
-            try
-            {
-                var customerListDb = await _accountRepository.GetAllDataByExpression(c => c.PhoneNumber.Equals(phoneNumber), 0, 0, null, false, null);
+        //public async Task<AppActionResult> SendAccountOTP(string phoneNumber, OTPType otpType)
+        //{
+        //    AppActionResult result = new AppActionResult();
+        //    try
+        //    {
+        //        var customerListDb = await _accountRepository.GetAllDataByExpression(c => c.PhoneNumber.Equals(phoneNumber), 0, 0, null, false, null);
 
-                if (customerListDb.Items.Count > 1)
-                {
-                    result = BuildAppActionResultError(result, $"Xảy ra lỗi khi tìm thông tin người dùng với sđt {phoneNumber}");
-                    return result;
-                }
+        //        if (customerListDb.Items.Count > 1)
+        //        {
+        //            result = BuildAppActionResultError(result, $"Xảy ra lỗi khi tìm thông tin người dùng với sđt {phoneNumber}");
+        //            return result;
+        //        }
 
-                if (customerListDb.Items.Count == 0)
-                {
-                    result = BuildAppActionResultError(result, $"Không tìm thấy thông tin người dùng với sđt {phoneNumber}");
-                    return result;
-                }
-                var customerDb = customerListDb.Items[0];
-                if (otpType == OTPType.Register)
-                {
-                    if (customerDb.IsVerified)
-                    {
-                        result = BuildAppActionResultError(result, $"Thông tin người dùng đã được xác thực");
-                        return result;
-                    }
-                }
-                else
-                {
-                    if (!customerDb.IsVerified)
-                    {
-                        result = BuildAppActionResultError(result, $"Thông tin người dùng đã chưa được xác thực");
-                        return result;
-                    }
-                }
+        //        if (customerListDb.Items.Count == 0)
+        //        {
+        //            result = BuildAppActionResultError(result, $"Không tìm thấy thông tin người dùng với sđt {phoneNumber}");
+        //            return result;
+        //        }
+        //        var customerDb = customerListDb.Items[0];
+        //        if (otpType == OTPType.Register)
+        //        {
+        //            if (customerDb.IsVerified)
+        //            {
+        //                result = BuildAppActionResultError(result, $"Thông tin người dùng đã được xác thực");
+        //                return result;
+        //            }
+        //        }
+        //        else
+        //        {
+        //            if (!customerDb.IsVerified)
+        //            {
+        //                result = BuildAppActionResultError(result, $"Thông tin người dùng đã chưa được xác thực");
+        //                return result;
+        //            }
+        //        }
 
-                var otpRepository = Resolve<IGenericRepository<OTP>>();
-                var utility = Resolve<Utility>();
-                var availableOTPDb = await otpRepository.GetAllDataByExpression(o => o.Account.PhoneNumber == phoneNumber && !o.IsUsed && o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && o.Type == otpType, 0, 0, null, false, null);
-                if (availableOTPDb.Items.Count > 1)
-                {
-                    result = BuildAppActionResultError(result, $"Xảy ra lỗi vì có nhiều hơn mã OTP hữu dụng tồn tại trong hệ thống. Vui lòng thử lại sau");
-                    return result;
-                }
+        //        var otpRepository = Resolve<IGenericRepository<OTP>>();
+        //        var utility = Resolve<Utility>();
+        //        var availableOTPDb = await otpRepository.GetAllDataByExpression(o => o.Account.PhoneNumber == phoneNumber && !o.IsUsed && o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && o.Type == otpType, 0, 0, null, false, null);
+        //        if (availableOTPDb.Items.Count > 1)
+        //        {
+        //            result = BuildAppActionResultError(result, $"Xảy ra lỗi vì có nhiều hơn mã OTP hữu dụng tồn tại trong hệ thống. Vui lòng thử lại sau");
+        //            return result;
+        //        }
 
-                if (availableOTPDb.Items.Count == 1)
-                {
-                    result.Result = availableOTPDb.Items[0].Code;
-                    return result;
-                }
+        //        if (availableOTPDb.Items.Count == 1)
+        //        {
+        //            result.Result = availableOTPDb.Items[0].Code;
+        //            return result;
+        //        }
 
-                var otp = await GenerateCustomerInfoOTP(customerDb, otpType);
-                if (!otp.IsSuccess)
-                {
-                    return BuildAppActionResultError(result, $"Tạo OTP thất bại. Vui lòng thử lại");
-                }
+        //        var otp = await GenerateCustomerInfoOTP(customerDb, otpType);
+        //        if (!otp.IsSuccess)
+        //        {
+        //            return BuildAppActionResultError(result, $"Tạo OTP thất bại. Vui lòng thử lại");
+        //        }
 
-                await _accountRepository.Update(customerDb);
-                await _unitOfWork.SaveChangesAsync();
-                var smsService = Resolve<ISmsService>();
-                var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {otp.Result.ToString()}",
-                    customerDb.PhoneNumber);
-                result.Result = customerDb;
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
-        }
+        //        await _accountRepository.Update(customerDb);
+        //        await _unitOfWork.SaveChangesAsync();
+        //        var smsService = Resolve<ISmsService>();
+        //        var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {otp.Result.ToString()}",
+        //            customerDb.PhoneNumber);
+        //        result.Result = customerDb;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        result = BuildAppActionResultError(result, ex.Message);
+        //    }
+        //    return result;
+        //}
 
         public async Task<AppActionResult> UpdateAccount(UpdateAccountInfoRequest updateAccountRequest)
         {
