@@ -261,6 +261,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     var user = new Account
                     {
+                        Id = Guid.NewGuid().ToString(),
                         Email = signUpRequest.Email,
                         UserName = signUpRequest.Email,
                         FirstName = signUpRequest.FirstName,
