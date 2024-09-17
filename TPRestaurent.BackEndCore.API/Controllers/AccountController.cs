@@ -92,11 +92,6 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.ForgotPassword(dto);
         }
 
-        [HttpPut("active-account/{email}/{verifyCode}")]
-        public async Task<AppActionResult> ActiveAccount(string email, string verifyCode)
-        {
-            return await _accountService.ActiveAccount(email, verifyCode);
-        }
 
         [HttpPost("google-callback")]
         public async Task<AppActionResult> GoogleCallBack([FromBody] string accessTokenFromGoogle)

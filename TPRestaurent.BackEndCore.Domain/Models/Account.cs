@@ -18,12 +18,9 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public bool? Gender { get; set; }
         public string? Address { get; set; } = null!;
         public bool IsVerified { get; set; }
-        public string? VerifyCode { get; set; }
         public bool IsDeleted { get; set; } = false;
         public int LoyaltyPoint { get; set; }
         public string? Avatar { get; set; }
-        public string? RefreshToken { get; set; }
-        public DateTime RefreshTokenExpiryTime { get; set; }
         public bool IsManuallyCreated { get; set; }
     }
 }

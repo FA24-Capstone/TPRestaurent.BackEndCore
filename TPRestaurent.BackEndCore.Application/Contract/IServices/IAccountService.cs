@@ -25,7 +25,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GetAllAccount(int pageIndex, int pageSize);
         Task<AppActionResult> GetNewToken(string refreshToken, string userId);
         Task<AppActionResult> ForgotPassword(ForgotPasswordDto dto);
-        Task<AppActionResult> ActiveAccount(string email, string verifyCode);
         Task<string> GenerateVerifyCode(string email, bool isForForgettingPassword);
         Task<string> GenerateVerifyCodeSms(string phoneNumber, bool isForForgettingPassword);
         Task<AppActionResult> GoogleCallBack(string accessTokenFromGoogle);
