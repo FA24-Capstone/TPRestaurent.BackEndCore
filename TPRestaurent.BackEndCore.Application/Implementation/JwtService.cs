@@ -125,6 +125,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         public async Task<TokenDto> GetNewToken(string refreshToken, string accountId)
         {
+            var tokenRepository = Resolve<IGenericRepository<Token>>();
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
                 var accessTokenNew = "";
@@ -135,8 +136,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var utility = Resolve<Common.Utils.Utility>();
 
                     var user = await accountRepository!.GetByExpression(u => u!.Id.ToLower() == accountId);
+                    var refreshTokenDb = await tokenRepository.GetByExpression(p => p.AccountId == user.Id);
 
-                    if (user != null && user.RefreshToken == refreshToken)
+                    if (user != null && refreshTokenDb != null && refreshTokenDb.RefreshTokenValue == refreshToken)
                     {
                         var roles = await _userManager.GetRolesAsync(user);
                         var claims = new List<Claim>
@@ -158,11 +160,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         );
 
                         accessTokenNew = new JwtSecurityTokenHandler().WriteToken(token);
-                        if (user.RefreshTokenExpiryTime <= utility.GetCurrentDateInTimeZone())
+                        if (refreshTokenDb.ExpiryTimeRefreshToken <= utility.GetCurrentDateInTimeZone())
                         {
-                            user.RefreshToken = GenerateRefreshToken();
-                            user.RefreshTokenExpiryTime = utility.GetCurrentDateInTimeZone().AddDays(1);
-                            refreshTokenNew = user.RefreshToken;
+                            refreshTokenDb.RefreshTokenValue = GenerateRefreshToken();
+                            refreshTokenDb.ExpiryTimeRefreshToken = utility.GetCurrentDateInTimeZone().AddDays(1);
+                            refreshTokenNew = refreshTokenDb.RefreshTokenValue;
                         }
                         else
                         {

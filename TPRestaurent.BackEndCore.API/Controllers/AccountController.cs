@@ -92,11 +92,6 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.ForgotPassword(dto);
         }
 
-        [HttpPut("active-account/{email}/{verifyCode}")]
-        public async Task<AppActionResult> ActiveAccount(string email, string verifyCode)
-        {
-            return await _accountService.ActiveAccount(email, verifyCode);
-        }
 
         [HttpPost("google-callback")]
         public async Task<AppActionResult> GoogleCallBack([FromBody] string accessTokenFromGoogle)
@@ -136,11 +131,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.VerifyAccountOTP(phoneNumber, code, otpType);
         }
 
-        [HttpPost("send-account-otp")]
-        public async Task<AppActionResult> SendCustomerInfoOTP(string phoneNumber, OTPType otpType)
-        {
-            return await _accountService.SendAccountOTP(phoneNumber, otpType);
-        }
+        //[HttpPost("send-account-otp")]
+        //public async Task<AppActionResult> SendCustomerInfoOTP(string phoneNumber, OTPType otpType)
+        //{
+        //    return await _accountService.SendAccountOTP(phoneNumber, otpType);
+        //}
 
         [HttpGet("get-account-by-phone-number")]
         public async Task<AppActionResult> GetCustomerInfoByPhoneNumber(string phoneNumber)
