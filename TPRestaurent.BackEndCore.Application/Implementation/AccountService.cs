@@ -273,7 +273,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         IsManuallyCreated = true,
                         RefreshTokenExpiryTime = currentTime.AddDays(30)
                     };
-                    var resultCreateUser = await _userManager.CreateAsync(user, signUpRequest.Password);
+                    var resultCreateUser = await _userManager.CreateAsync(user);
                     if (resultCreateUser.Succeeded)
                     {
                         result.Result = user;
@@ -874,7 +874,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     FirstName = name!,
                                     Gender = true,
                                     LastName = string.Empty,
-                                    Password = "Google123@",
                                     PhoneNumber = string.Empty
                                 }, true);
                         if (resultCreate.IsSuccess)
