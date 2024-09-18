@@ -287,37 +287,36 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         TemplateMappingHelper.ContentEmailType.VERIFICATION_CODE, verifyCode,
                                         user.LastName));
                         }
-                        else
-                        {
-                            var availableOtp = await _otpRepository.GetAllDataByExpression(o => o.Account.PhoneNumber.
-                            Equals(user.PhoneNumber) && o.Type == OTPType.Register && o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && !o.IsUsed, 0, 0, null, false, null);
-                            if (availableOtp.Items.Count > 1)
-                            {
-                                result = BuildAppActionResultError(result, "Xảy ra lỗi trong quá trình xử lí, có nhiều hơn 1 otp khả dụng. Vui lòng thử lại sau ít phút");
-                                return result;
-                            }
 
-                            if (availableOtp.Items.Count == 1)
-                            {
-                                result.Result = availableOtp.Items[0];
-                                return result;
-                            }
-                            if (!BuildAppActionResultIsError(result))
-                            {
-                                string code = await GenerateVerifyCodeSms(user.PhoneNumber, true); ;
-                                var otpsDb = new OTP
-                                {
-                                    OTPId = Guid.NewGuid(),
-                                    Type = OTPType.Register,
-                                    AccountId = user.Id,
-                                    Code = code,
-                                    ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
-                                    IsUsed = false,
-                                };
-                                await _otpRepository.Insert(otpsDb);
-                                await _unitOfWork.SaveChangesAsync();
-                            }
+                        var availableOtp = await _otpRepository.GetAllDataByExpression(o => o.Account.PhoneNumber.
+                        Equals(user.PhoneNumber) && o.Type == OTPType.Register && o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && !o.IsUsed, 0, 0, null, false, null);
+                        if (availableOtp.Items.Count > 1)
+                        {
+                            result = BuildAppActionResultError(result, "Xảy ra lỗi trong quá trình xử lí, có nhiều hơn 1 otp khả dụng. Vui lòng thử lại sau ít phút");
+                            return result;
                         }
+
+                        if (availableOtp.Items.Count == 1)
+                        {
+                            result.Result = availableOtp.Items[0];
+                            return result;
+                        }
+                        if (!BuildAppActionResultIsError(result))
+                        {
+                            string code = await GenerateVerifyCodeSms(user.PhoneNumber, true); ;
+                            var otpsDb = new OTP
+                            {
+                                OTPId = Guid.NewGuid(),
+                                Type = OTPType.Register,
+                                AccountId = user.Id,
+                                Code = code,
+                                ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
+                                IsUsed = false,
+                            };
+                            await _otpRepository.Insert(otpsDb);
+                            await _unitOfWork.SaveChangesAsync();
+                        }
+
                     }
                     else
                     {
