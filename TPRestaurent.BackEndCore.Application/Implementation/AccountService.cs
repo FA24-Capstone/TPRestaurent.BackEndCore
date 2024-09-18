@@ -28,6 +28,7 @@ using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
 using Twilio.Types;
+using static Org.BouncyCastle.Crypto.Engines.SM2Engine;
 using static System.Net.WebRequestMethods;
 using Utility = TPRestaurent.BackEndCore.Common.Utils.Utility;
 
@@ -244,6 +245,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var utility = Resolve<Utility>();
             var jwtService = Resolve<IJwtService>();
             var tokenRepository = Resolve<IGenericRepository<Token>>();
+            var otpRepository = Resolve<IGenericRepository<OTP>>();
             try
             {
                 if (await _accountRepository.GetByExpression(r => r!.PhoneNumber == signUpRequest.PhoneNumber) != null)
@@ -262,7 +264,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         Id = Guid.NewGuid().ToString(),
                         Email = signUpRequest.Email,
-                        UserName = signUpRequest.Email,
+                        UserName = $"{signUpRequest.FirstName}{signUpRequest.LastName}",
                         FirstName = signUpRequest.FirstName,
                         LastName = signUpRequest.LastName,
                         PhoneNumber = signUpRequest.PhoneNumber,
@@ -277,11 +279,45 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (resultCreateUser.Succeeded)
                     {
                         result.Result = user;
-                        if (!isGoogle)
-                            emailService!.SendEmail(user.Email, SD.SubjectMail.VERIFY_ACCOUNT,
-                                TemplateMappingHelper.GetTemplateOTPEmail(
-                                    TemplateMappingHelper.ContentEmailType.VERIFICATION_CODE, verifyCode,
-                                    user.LastName));
+                        if (!string.IsNullOrEmpty(signUpRequest.Email))
+                        {
+                            if (!isGoogle)
+                                emailService!.SendEmail(user.Email, SD.SubjectMail.VERIFY_ACCOUNT,
+                                    TemplateMappingHelper.GetTemplateOTPEmail(
+                                        TemplateMappingHelper.ContentEmailType.VERIFICATION_CODE, verifyCode,
+                                        user.LastName));
+                        }
+                        else
+                        {
+                            var availableOtp = await _otpRepository.GetAllDataByExpression(o => o.Account.PhoneNumber.
+                            Equals(user.PhoneNumber) && o.Type == OTPType.Register && o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && !o.IsUsed, 0, 0, null, false, null);
+                            if (availableOtp.Items.Count > 1)
+                            {
+                                result = BuildAppActionResultError(result, "Xảy ra lỗi trong quá trình xử lí, có nhiều hơn 1 otp khả dụng. Vui lòng thử lại sau ít phút");
+                                return result;
+                            }
+
+                            if (availableOtp.Items.Count == 1)
+                            {
+                                result.Result = availableOtp.Items[0];
+                                return result;
+                            }
+                            if (!BuildAppActionResultIsError(result))
+                            {
+                                string code = await GenerateVerifyCodeSms(user.PhoneNumber, true); ;
+                                var otpsDb = new OTP
+                                {
+                                    OTPId = Guid.NewGuid(),
+                                    Type = OTPType.Register,
+                                    AccountId = user.Id,
+                                    Code = code,
+                                    ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
+                                    IsUsed = false,
+                                };
+                                await _otpRepository.Insert(otpsDb);
+                                await _unitOfWork.SaveChangesAsync();
+                            }
+                        }
                     }
                     else
                     {
