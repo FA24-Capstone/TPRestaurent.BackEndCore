@@ -126,9 +126,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("verify-account-otp")]
-        public async Task<AppActionResult> VerifyAccountOTP(string phoneNumber, string code)
+        public async Task<AppActionResult> VerifyAccountOTP(string phoneNumber, string code, OTPType type)
         {
-            return await _accountService.VerifyAccountOTP(phoneNumber, code);
+            return await _accountService.VerifyAccountOTP(phoneNumber, code, type);
         }
 
         //[HttpPost("send-account-otp")]
