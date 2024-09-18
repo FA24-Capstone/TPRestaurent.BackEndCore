@@ -264,7 +264,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         Id = Guid.NewGuid().ToString(),
                         Email = signUpRequest.Email,
-                        UserName = $"{signUpRequest.FirstName}{signUpRequest.LastName}",
+                        UserName = signUpRequest.PhoneNumber,
                         FirstName = signUpRequest.FirstName,
                         LastName = signUpRequest.LastName,
                         PhoneNumber = signUpRequest.PhoneNumber,
