@@ -130,7 +130,7 @@ public class TemplateMappingHelper
             font-size: 30px;
           ""
         >
-          Nhà hàng Thiên Phú
+          Nhà hàng lẩu - nướng Thiên Phú
         </p>
       </div>
       <div class=""mainBody"">
@@ -140,30 +140,30 @@ public class TemplateMappingHelper
         <p class=""greeting""></p>
 
         <p class=""emailBody"">
-          You are currently registering an account through <b><i>Nhà hàng Thiên Phú </i></b>.
+          Hiện tại bạn đang đăng ký tài khoản tại <b><i>Nhà hàng Thiên Phú </i></b>.
         </p>
         <p class=""emailBody"">
-          Below is your OTP information:
+          Bên dưới là mã xác nhận của bạn:
           <b><i> " + body + @"</i></b>
         </p>
 
         <p class=""emailBody"">
-          Please enter the code above into the system to proceed to the next step
+          Vui lòng nhập mã xác nhận vào hệ thốn để đến bước tiếp theo
           <a href=""https://lovehouse.vercel.app/""
             ><span style=""font-weight: bold; text-transform: uppercase""
-              >here</span
+              >Tại đây</span
             ></a
           >
         </p>
         <p class=""support"">
-          Thank you for your interest in the services of <b><i>Nhà hàng Thiên Phú</i></b
-          >, for any inquiries, please contact
-          <u><i>qk.backend@gmail.com</i></u> for support
+          Cảm ơn bạn đã quan tâm đến dịch vụ của <b><i>Nhà hàng Thiên Phú</i></b
+          >, nếu có bất kỳ thắc mắc nào, vui lòng liên hệ
+          <u><i>qk.backend@gmail.com</i></u> để được hỗ trợ
         </p>
         <div class=""signature"">
-          <p>Best regards,</p>
+          <p>Thân chào,</p>
           <p>
-            <b><i>Nhà hàng Thiên Phú Team</i></b>
+            <b><i>Nhà hàng Thiên Phú</i></b>
           </p>
         </div>
       </div>
