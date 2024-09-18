@@ -1443,7 +1443,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> VerifyAccountOTP(string phoneNumber, string code)
+        public async Task<AppActionResult> VerifyAccountOTP(string phoneNumber, string code, OTPType otpType)
         {
             var result = new AppActionResult();
             try
@@ -1456,7 +1456,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var utility = Resolve<Utility>();
 
-                var optUser = await _otpRepository.GetByExpression(p => p!.Code == code && p.Type == OTPType.Register && !p.IsUsed && p.ExpiredTime > utility.GetCurrentDateTimeInTimeZone(), p => p.Account!);
+                var optUser = await _otpRepository.GetByExpression(p => p!.Code == code && p.Type == otpType && !p.IsUsed && p.ExpiredTime > utility.GetCurrentDateTimeInTimeZone(), p => p.Account!);
                 if (optUser == null)
                 {
                     result = BuildAppActionResultError(result, $"Mã Otp không tồn tại!");
@@ -1476,7 +1476,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if (!BuildAppActionResultIsError(result))
                 {
-                    user.IsVerified = true;
+                    if (otpType == OTPType.Register)
+                    {
+                        user.IsVerified = true;
+                    }
                     await _accountRepository.Update(user);
 
                     optUser.IsUsed = true;
