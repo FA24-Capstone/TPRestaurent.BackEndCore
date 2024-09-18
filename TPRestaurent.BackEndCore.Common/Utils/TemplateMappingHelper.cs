@@ -130,7 +130,7 @@ public class TemplateMappingHelper
             font-size: 30px;
           ""
         >
-          Cóc Travel
+          Nhà hàng Thiên Phú
         </p>
       </div>
       <div class=""mainBody"">
@@ -140,7 +140,7 @@ public class TemplateMappingHelper
         <p class=""greeting""></p>
 
         <p class=""emailBody"">
-          You are currently registering an account through <b><i>Cóc Travel </i></b>.
+          You are currently registering an account through <b><i>Nhà hàng Thiên Phú </i></b>.
         </p>
         <p class=""emailBody"">
           Below is your OTP information:
@@ -156,14 +156,14 @@ public class TemplateMappingHelper
           >
         </p>
         <p class=""support"">
-          Thank you for your interest in the services of <b><i>Cóc Travel</i></b
+          Thank you for your interest in the services of <b><i>Nhà hàng Thiên Phú</i></b
           >, for any inquiries, please contact
           <u><i>qk.backend@gmail.com</i></u> for support
         </p>
         <div class=""signature"">
           <p>Best regards,</p>
           <p>
-            <b><i>Cóc Travel Team</i></b>
+            <b><i>Nhà hàng Thiên Phú Team</i></b>
           </p>
         </div>
       </div>
@@ -292,7 +292,7 @@ public class TemplateMappingHelper
             font-size: 30px;
           ""
         >
-          Cóc Travel
+         Nhà hàng Thiên Phú
         </p>
       </div>
       <div class=""mainBody"">
@@ -302,7 +302,7 @@ public class TemplateMappingHelper
         <p class=""greeting""></p>
 
         <p class=""emailBody"">
-          You are in the process of completing contract procedures through <b><i>Cóc Travel </i></b>.
+          You are in the process of completing contract procedures through <b><i>Nhà hàng Thiên Phú </i></b>.
         </p>
         <p class=""emailBody"">
           Below is your OTP information:
@@ -318,14 +318,14 @@ public class TemplateMappingHelper
           >
         </p>
         <p class=""support"">
-          Thank you for your interest in the services of <b><i>Cóc Travel</i></b
+          Thank you for your interest in the services of <b><i>Nhà hàng Thiên Phú</i></b
           >, for any inquiries, please contact
           <u><i>qk.backend@gmail.com</i></u> for support
         </p>
         <div class=""signature"">
           <p>Best regards,</p>
           <p>
-            <b><i>Cóc Travel Team</i></b>
+            <b><i>Nhà hàng Thiên Phú Team</i></b>
           </p>
         </div>
       </div>
@@ -454,7 +454,7 @@ public class TemplateMappingHelper
             font-size: 30px;
           ""
         >
-          Cóc Travel
+          Nhà hàng Thiên Phú
         </p>
       </div>
       <div class=""mainBody"">
@@ -464,7 +464,7 @@ public class TemplateMappingHelper
         <p class=""greeting""></p>
 
         <p class=""emailBody"">
-         You have accidentally forgotten your password through <b><i>Cóc Travel </i></b>.
+         You have accidentally forgotten your password through <b><i>Nhà hàng Thiên Phú </i></b>.
         </p>
         <p class=""emailBody"">
           Below is your OTP information:
@@ -480,14 +480,14 @@ public class TemplateMappingHelper
           >
         </p>
         <p class=""support"">
-          Thank you for your interest in the services of <b><i>Cóc Travel</i></b
+          Thank you for your interest in the services of <b><i>Nhà hàng Thiên Phú</i></b
           >, for any inquiries, please contact
           <u><i>qk.backend@gmail.com</i></u> for support
         </p>
         <div class=""signature"">
           <p>Best regards,</p>
           <p>
-            <b><i>Cóc Travel Team</i></b>
+            <b><i>Nhà hàng Thiên Phú Team</i></b>
           </p>
         </div>
       </div>
@@ -618,7 +618,7 @@ public class TemplateMappingHelper
             font-size: 30px;
           ""
         >
-          Cóc Travel
+          Nhà hàng Thiên Phú
         </p>
       </div>
       <div class=""mainBody"">
@@ -628,7 +628,7 @@ public class TemplateMappingHelper
         <p class=""greeting""></p>
 
         <p class=""emailBody"">
-         Tài khoản hướng dẫn viên của bạn đã được tọ thành công <b><i>Cóc Travel </i></b>.
+         Tài khoản hướng dẫn viên của bạn đã được tọ thành công <b><i>Nhà hàng Thiên Phú </i></b>.
         </p>
         <p class=""emailBody"">
           Đây là thông tin tài khoản của bạn, hãy thay đỗi mật khẩu
@@ -644,14 +644,14 @@ public class TemplateMappingHelper
           >
         </p>
         <p class=""support"">
-          Thank you for your interest in the services of <b><i>Cóc Travel</i></b
+          Thank you for your interest in the services of <b><i>Nhà hàng Thiên Phú</i></b
           >, for any inquiries, please contact
           <u><i>qk.backend@gmail.com</i></u> for support
         </p>
         <div class=""signature"">
           <p>Best regards,</p>
           <p>
-            <b><i>Cóc Travel Team</i></b>
+            <b><i>Nhà hàng Thiên Phú Team</i></b>
           </p>
         </div>
       </div>
@@ -784,7 +784,7 @@ public class TemplateMappingHelper
             font-size: 30px;
           ""
         >
-          Cóc Travel
+          Nhà hàng Thiên Phú
         </p>
       </div>
       <div class=""mainBody"">
@@ -794,7 +794,7 @@ public class TemplateMappingHelper
         <p class=""greeting""></p>
 
         <p class=""emailBody"">
-         Your quote request has been completed at <b><i>Cóc Travel </i></b>.
+         Your quote request has been completed at <b><i>Nhà hàng Thiên Phú </i></b>.
         </p>
         <p class=""emailBody"">
          Please enter the system to view the quote and moderate this quote
@@ -805,14 +805,14 @@ public class TemplateMappingHelper
             ></a
           >
         <p class=""support"">
-          Thank you for your interest in the services of <b><i>Cóc Travel</i></b
+          Thank you for your interest in the services of <b><i>Nhà hàng Thiên Phú</i></b
           >, for any inquiries, please contact
           <u><i>qk.backend@gmail.com</i></u> for support
         </p>
         <div class=""signature"">
           <p>Best regards,</p>
           <p>
-            <b><i>Cóc Travel Team</i></b>
+            <b><i>Nhà hàng Thiên Phú Team</i></b>
           </p>
         </div>
       </div>
