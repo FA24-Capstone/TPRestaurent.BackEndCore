@@ -255,9 +255,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var emailService = Resolve<IEmailService>();
                     var smsService = Resolve<ISmsService>();
-                    var random = new Random();
-                    var verifyCode = string.Empty;
-                    verifyCode = random.Next(100000, 999999).ToString();
                     var currentTime = utility.GetCurrentDateTimeInTimeZone();
 
                     var user = new Account
@@ -279,13 +276,31 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (resultCreateUser.Succeeded)
                     {
                         result.Result = user;
-                        if (!string.IsNullOrEmpty(signUpRequest.Email))
+                        if ((!string.IsNullOrEmpty(signUpRequest.Email) && !string.IsNullOrEmpty(signUpRequest.PhoneNumber) || (!string.IsNullOrEmpty(signUpRequest.Email))))
                         {
                             if (!isGoogle)
+                            {
+                                var random = new Random();
+                                var verifyCode = string.Empty;
+                                verifyCode = random.Next(100000, 999999).ToString();
+
                                 emailService!.SendEmail(user.Email, SD.SubjectMail.VERIFY_ACCOUNT,
-                                    TemplateMappingHelper.GetTemplateOTPEmail(
-                                        TemplateMappingHelper.ContentEmailType.VERIFICATION_CODE, verifyCode,
-                                        user.LastName));
+                                   TemplateMappingHelper.GetTemplateOTPEmail(
+                                       TemplateMappingHelper.ContentEmailType.VERIFICATION_CODE, verifyCode,
+                                       user.LastName));
+
+                                var otpsDb = new OTP
+                                {
+                                    OTPId = Guid.NewGuid(),
+                                    Type = OTPType.Register,
+                                    AccountId = user.Id,
+                                    Code = verifyCode,
+                                    ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
+                                    IsUsed = false,
+                                };
+                                await _otpRepository.Insert(otpsDb);
+                                await _unitOfWork.SaveChangesAsync();
+                            }
                         }
                         else
                         {
