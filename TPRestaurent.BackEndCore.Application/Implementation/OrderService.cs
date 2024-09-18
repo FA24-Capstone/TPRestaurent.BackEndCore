@@ -1106,8 +1106,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return BuildAppActionResultError(result, $"Xảy ra lỗi khi lấy thông số cấu hình {SD.DefaultValue.DEPOSIT_PERCENT}");
                 }
 
-                //double deposit = total * double.Parse(configurationDb.Items[0].PreValue);
-                double deposit = 0;
+                double deposit = total * double.Parse(configurationDb.Items[0].CurrentValue);
                 string tableTypeDeposit = SD.DefaultValue.DEPOSIT_FOR_NORMAL_TABLE;
                 if (request.IsPrivate)
                 {
@@ -1122,9 +1121,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     return BuildAppActionResultError(result, $"Xảy ra lỗi khi lấy thông số cấu hình {tableTypeDeposit}");
                 }
-                //deposit += double.Parse(tableConfigurationDb.Items[0].PreValue);
-                deposit = 0;
-                request.Deposit = deposit;
+                deposit += double.Parse(tableConfigurationDb.Items[0].CurrentValue);
                 result.Result = deposit;
             }
             catch (Exception ex)
