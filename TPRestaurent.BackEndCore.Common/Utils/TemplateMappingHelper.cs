@@ -140,7 +140,7 @@ public class TemplateMappingHelper
         <p class=""greeting""></p>
 
         <p class=""emailBody"">
-          You are currently registering an account through <b><i>Cóc Travel </i></b>.
+          Hiện tại bạn đang đăng ký tài khoản tại <b><i>Nhà hàng Thiên Phú </i></b>.
         </p>
         <p class=""emailBody"">
           Bên dưới là mã xác nhận của bạn:
@@ -156,14 +156,14 @@ public class TemplateMappingHelper
           >
         </p>
         <p class=""support"">
-          Thank you for your interest in the services of <b><i>Cóc Travel</i></b
-          >, for any inquiries, please contact
-          <u><i>qk.backend@gmail.com</i></u> for support
+          Cảm ơn bạn đã quan tâm đến dịch vụ của <b><i>Nhà hàng Thiên Phú</i></b
+          >, nếu có bất kỳ thắc mắc nào, vui lòng liên hệ
+          <u><i>qk.backend@gmail.com</i></u> để được hỗ trợ
         </p>
         <div class=""signature"">
           <p>Thân chào,</p>
           <p>
-            <b><i>Cóc Travel Team</i></b>
+            <b><i>Nhà hàng Thiên Phú</i></b>
           </p>
         </div>
       </div>
