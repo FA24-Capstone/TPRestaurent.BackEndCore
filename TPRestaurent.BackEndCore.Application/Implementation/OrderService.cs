@@ -490,6 +490,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
 
                             await tableDetailRepository.InsertRange(tableDetails);
+                            orderWithPayment.Order = order;
                         }
                         else
                         {
@@ -620,9 +621,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
                                 orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
                             }
-                            result.Result = orderWithPayment;
                         }
-
                     }
                     if (!BuildAppActionResultIsError(result))
                     {
@@ -630,6 +629,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await _unitOfWork.SaveChangesAsync();
                         scope.Complete();
                     }
+                    result.Result = orderWithPayment;
                 }
                 catch (Exception ex)
                 {
