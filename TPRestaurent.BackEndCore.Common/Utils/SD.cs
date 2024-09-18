@@ -94,7 +94,7 @@ public class SD
 
     public class SubjectMail
     {
-        public static string VERIFY_ACCOUNT = "CHÀO MỪNG BẠN ĐẾN VỚINHÀ HÀNG THIÊN PHÚ. VUI LÒNG XÁC MINH TÀI KHOẢN";
+        public static string VERIFY_ACCOUNT = "CHÀO MỪNG BẠN ĐẾN VỚI NHÀ HÀNG THIÊN PHÚ. VUI LÒNG XÁC MINH TÀI KHOẢN";
         public static string WELCOME = "CHÀO MỪNG BẠN ĐẾN VỚINHÀ HÀNG THIÊN PHÚ";
         public static string REMIND_PAYMENT = "NHẮC NHỞ THANH TOÁN";
         public static string PASSCODE_FORGOT_PASSWORD = "MÃ XÁC THỰC QUÊN MẬT KHẨU";
