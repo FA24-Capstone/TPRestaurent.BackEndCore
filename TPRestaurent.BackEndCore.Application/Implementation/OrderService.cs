@@ -437,7 +437,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             TableDetailId = Guid.NewGuid(),
                             OrderId = order.OrderId,
-                            TableId = suggestedTables[0].TableId
+                            TableId = suggestedTables[0].TableId,
+                            StartTime = orderRequestDto.ReservationOrder.MealTime
                         });
 
                         await tableDetailRepository.InsertRange(reservationTableDetails);
@@ -612,6 +613,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     if (!BuildAppActionResultIsError(result))
                     {
+                        await _repository.Insert(order);
+                        await _unitOfWork.SaveChangesAsync();
                         if (orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.PaymentMethod != PaymentMethod.Cash ||
                                 orderRequestDto.ReservationOrder != null && orderRequestDto.ReservationOrder.PaymentMethod != PaymentMethod.Cash)
                         {
@@ -627,8 +630,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                             orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
                         }
-                        await _repository.Insert(order);
-                        await _unitOfWork.SaveChangesAsync();
                         scope.Complete();
                     }
                     result.Result = orderWithPayment;
@@ -1218,14 +1219,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     return BuildAppActionResultError(result, $"Xảy ra lỗi khi lấy thông số cấu hình {SD.DefaultValue.AVERAGE_MEAL_DURATION}");
                 }
-                //if (!endTime.HasValue)
-                //{
+                if (!endTime.HasValue)
+                {
 
-                //    endTime = startTime.AddHours(double.Parse(configurationDb.Items[0].PreValue));
-                //}
+                    endTime = startTime.AddHours(double.Parse(configurationDb.Items[0].CurrentValue));
+                }
 
-                //conditions.Add(() => r => !(endTime < r.ReservationDate || (r.EndTime.HasValue && r.EndTime.Value < startTime || !r.EndTime.HasValue && r.ReservationDate.Value.AddHours(double.Parse(configurationDb.Items[0].PreValue)) < startTime))
-                //                          && r.StatusId != OrderStatus.Cancelled);
+                conditions.Add(() => r => !(endTime < r.ReservationDate || (r.EndTime.HasValue && r.EndTime.Value < startTime || !r.EndTime.HasValue && r.ReservationDate.Value.AddHours(double.Parse(configurationDb.Items[0].CurrentValue)) < startTime))
+                                          && r.StatusId != OrderStatus.Cancelled);
 
                 Expression<Func<Order, bool>> expression = r => true; // Default expression to match all
 
@@ -1773,8 +1774,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     time = utility!.GetCurrentDateTimeInTimeZone();
                 }
                 var nearReservationDb = await reservationTableRepository.GetAllDataByExpression(r => r.TableId == tableId
-                                                                && r.Order!.ReservationDate <= time.Value.AddHours(double.Parse(configDb.CurrentValue))
-                                                                && r.Order.ReservationDate.Value.AddHours(double.Parse(configDb.CurrentValue)) >= time, 0, 0, r => r.Order!.ReservationDate, true, null);
+                                                                && r.Order!.MealTime <= time.Value.AddHours(double.Parse(configDb.CurrentValue))
+                                                                && r.Order.MealTime.Value.AddHours(double.Parse(configDb.CurrentValue)) >= time, 0, 0, r => r.Order!.ReservationDate, true, null);
                 if (nearReservationDb.Items.Count > 0)
                 {
                     result = await GetAllReservationDetail(nearReservationDb.Items[0].OrderId);
