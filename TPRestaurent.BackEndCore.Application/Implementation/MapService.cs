@@ -94,7 +94,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var destinationResponse = await client.ExecuteAsync(findDestinationRequest);
                 if (!BuildAppActionResultIsError(result))
                 {
-                    result.Result = destinationResponse;
+                    result.Result = JsonConvert.SerializeObject(destinationResponse);
                 }
             }
             catch (Exception e)

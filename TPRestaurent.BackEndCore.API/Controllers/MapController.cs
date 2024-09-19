@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
+using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
@@ -27,10 +28,10 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.Geocode(address);
         }
 
-        [HttpGet("geo-code")]
-        public async Task<AppActionResult> GetEstimateDeliveryTime(double[] dest, double[]? start)
+        [HttpPost("get-estimate-delivery-time")]
+        public async Task<AppActionResult> GetEstimateDeliveryTime([FromBody]GetEstimateTimeRequest dto)
         {
-            return await _service.GetEstimateDeliveryTime(dest, start);
+            return await _service.GetEstimateDeliveryTime(dto.desc, dto.start);
         }
 
     }
