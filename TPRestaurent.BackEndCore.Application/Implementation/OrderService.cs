@@ -302,6 +302,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     double money = 0;
                     if (orderRequestDto.OrderDetailsDtos != null && orderRequestDto.OrderDetailsDtos.Count > 0)
                     {
+                        var orderTime = (orderRequestDto.OrderType != OrderType.Reservation) ? utility.GetCurrentDateTimeInTimeZone() : orderRequestDto.ReservationOrder.MealTime;
                         foreach (var item in orderRequestDto.OrderDetailsDtos)
                         {
                             var orderDetail = new OrderDetail()
@@ -309,7 +310,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 OrderDetailId = Guid.NewGuid(),
                                 Quantity = item.Quantity,
                                 Note = item.Note,
-                                OrderId = order.OrderId
+                                OrderId = order.OrderId,
+                                OrderTime = orderTime,
                             };
 
                             if (item.DishSizeDetailId.HasValue)
@@ -435,7 +437,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             TableDetailId = Guid.NewGuid(),
                             OrderId = order.OrderId,
-                            TableId = suggestedTables[0].TableId
+                            TableId = suggestedTables[0].TableId,
+                            StartTime = orderRequestDto.ReservationOrder.MealTime
                         });
 
                         await tableDetailRepository.InsertRange(reservationTableDetails);
@@ -606,27 +609,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (!BuildAppActionResultIsError(result))
                         {
                             await accountRepository.Update(accountDb);
-                            if (orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.PaymentMethod != PaymentMethod.Cash ||
-                                orderRequestDto.ReservationOrder != null && orderRequestDto.ReservationOrder.PaymentMethod != PaymentMethod.Cash)
-                            {
-                                var paymentRequest = new PaymentRequestDto
-                                {
-                                    OrderId = order.OrderId,
-                                    PaymentMethod = orderRequestDto.DeliveryOrder != null ? orderRequestDto.DeliveryOrder.PaymentMethod : orderRequestDto.ReservationOrder.PaymentMethod,
-                                };
-                                var linkPaymentDb = await transcationService!.CreatePayment(paymentRequest, httpContext);
-                                if (!linkPaymentDb.IsSuccess)
-                                {
-                                    return BuildAppActionResultError(result, "Tạo thanh toán thất bại");
-                                }
-                                orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
-                            }
                         }
                     }
                     if (!BuildAppActionResultIsError(result))
                     {
                         await _repository.Insert(order);
                         await _unitOfWork.SaveChangesAsync();
+                        if (orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.PaymentMethod != PaymentMethod.Cash ||
+                                orderRequestDto.ReservationOrder != null && orderRequestDto.ReservationOrder.PaymentMethod != PaymentMethod.Cash)
+                        {
+                            var paymentRequest = new PaymentRequestDto
+                            {
+                                OrderId = order.OrderId,
+                                PaymentMethod = orderRequestDto.DeliveryOrder != null ? orderRequestDto.DeliveryOrder.PaymentMethod : orderRequestDto.ReservationOrder.PaymentMethod,
+                            };
+                            var linkPaymentDb = await transcationService!.CreatePayment(paymentRequest, httpContext);
+                            if (!linkPaymentDb.IsSuccess)
+                            {
+                                return BuildAppActionResultError(result, "Tạo thanh toán thất bại");
+                            }
+                            orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
+                        }
                         scope.Complete();
                     }
                     result.Result = orderWithPayment;
@@ -1771,8 +1774,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     time = utility!.GetCurrentDateTimeInTimeZone();
                 }
                 var nearReservationDb = await reservationTableRepository.GetAllDataByExpression(r => r.TableId == tableId
-                                                                && r.Order!.ReservationDate <= time.Value.AddHours(double.Parse(configDb.CurrentValue))
-                                                                && r.Order.ReservationDate.Value.AddHours(double.Parse(configDb.CurrentValue)) >= time, 0, 0, r => r.Order!.ReservationDate, true, null);
+                                                                && r.Order!.MealTime <= time.Value.AddHours(double.Parse(configDb.CurrentValue))
+                                                                && r.Order.MealTime.Value.AddHours(double.Parse(configDb.CurrentValue)) >= time, 0, 0, r => r.Order!.ReservationDate, true, null);
                 if (nearReservationDb.Items.Count > 0)
                 {
                     result = await GetAllReservationDetail(nearReservationDb.Items[0].OrderId);
@@ -1932,7 +1935,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     reservationDishes.Add(new Common.DTO.Response.OrderDishDto
                     {
                         OrderDetailsId = r.OrderDetailId,
-                        ComboDish = comboDishDto
+                        ComboDish = comboDishDto,
+                        Quantity = r.Quantity,  
+                        OrderTime = r.OrderTime,    
+                        Note = r.Note       
                     });
                 }
                 else
@@ -1941,7 +1947,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         OrderDetailsId = r.OrderDetailId,
                         DishSizeDetailId = r.DishSizeDetailId,
-                        DishSizeDetail = r.DishSizeDetail
+                        DishSizeDetail = r.DishSizeDetail,
+                        Quantity = r.Quantity,
+                        OrderTime = r.OrderTime,    
+                        Note = r.Note
                     });
                 }
             }

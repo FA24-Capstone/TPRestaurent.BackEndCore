@@ -18,9 +18,12 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
     public class OrderDishDto
     {
         public Guid OrderDetailsId { get; set; }
+        public int Quantity { get; set; }   
         public Guid? DishSizeDetailId { get; set; }
         public DishSizeDetail? DishSizeDetail { get; set; }
         public ComboDishDto? ComboDish { get; set; }
+        public string Note { get; set; }    
+        public DateTime OrderTime { get; set; }     
     }
 
     public class ComboDishDto
