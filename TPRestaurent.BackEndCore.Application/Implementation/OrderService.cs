@@ -1822,7 +1822,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = await reservationTableDetailRepository!.GetAllDataByExpression(
                 o => o.OrderId == orderId,
                 0, 0, null, false,
-                o => o.Table!,
+                o => o.Table!.Room,
                 o => o.Order!
             );
             return result.Items!;
