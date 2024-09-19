@@ -1932,7 +1932,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     reservationDishes.Add(new Common.DTO.Response.OrderDishDto
                     {
                         OrderDetailsId = r.OrderDetailId,
-                        ComboDish = comboDishDto
+                        ComboDish = comboDishDto,
+                        Quantity = r.Quantity,  
+                        OrderTime = r.OrderTime,    
+                        Note = r.Note       
                     });
                 }
                 else
@@ -1941,7 +1944,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         OrderDetailsId = r.OrderDetailId,
                         DishSizeDetailId = r.DishSizeDetailId,
-                        DishSizeDetail = r.DishSizeDetail
+                        DishSizeDetail = r.DishSizeDetail,
+                        Quantity = r.Quantity,
+                        OrderTime = r.OrderTime,    
+                        Note = r.Note
                     });
                 }
             }
