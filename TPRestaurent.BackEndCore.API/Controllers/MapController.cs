@@ -27,11 +27,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.Geocode(address);
         }
 
-        //[HttpGet("geo-code")]
-        //public async Task<AppActionResult> Geocode(string address)
-        //{
-        //    return await _service.Geocode(address);
-        //}
+        [HttpGet("geo-code")]
+        public async Task<AppActionResult> GetEstimateDeliveryTime(double[] dest, double[]? start)
+        {
+            return await _service.GetEstimateDeliveryTime(dest, start);
+        }
 
     }
 }

@@ -19,6 +19,7 @@ public class ServiceInstaller : IInstaller
         services.AddScoped<IDishService, DishService>();
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IComboService, ComboService>();
+        services.AddScoped<IMapService, MapService>();
         //services.AddScoped<IReservationService, ReservationService>();
         services.AddScoped<IReservationRequestService, ReservationRequestService>();
         services.AddScoped<IOrderService, OrderService>();
