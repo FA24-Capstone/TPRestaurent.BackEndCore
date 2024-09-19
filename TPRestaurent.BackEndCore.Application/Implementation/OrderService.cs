@@ -302,6 +302,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     double money = 0;
                     if (orderRequestDto.OrderDetailsDtos != null && orderRequestDto.OrderDetailsDtos.Count > 0)
                     {
+                        var orderTime = (orderRequestDto.OrderType != OrderType.Reservation) ? utility.GetCurrentDateTimeInTimeZone() : orderRequestDto.ReservationOrder.MealTime;
                         foreach (var item in orderRequestDto.OrderDetailsDtos)
                         {
                             var orderDetail = new OrderDetail()
@@ -309,7 +310,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 OrderDetailId = Guid.NewGuid(),
                                 Quantity = item.Quantity,
                                 Note = item.Note,
-                                OrderId = order.OrderId
+                                OrderId = order.OrderId,
+                                OrderTime = orderTime,
                             };
 
                             if (item.DishSizeDetailId.HasValue)
@@ -606,25 +608,25 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (!BuildAppActionResultIsError(result))
                         {
                             await accountRepository.Update(accountDb);
-                            if (orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.PaymentMethod != PaymentMethod.Cash ||
-                                orderRequestDto.ReservationOrder != null && orderRequestDto.ReservationOrder.PaymentMethod != PaymentMethod.Cash)
-                            {
-                                var paymentRequest = new PaymentRequestDto
-                                {
-                                    OrderId = order.OrderId,
-                                    PaymentMethod = orderRequestDto.DeliveryOrder != null ? orderRequestDto.DeliveryOrder.PaymentMethod : orderRequestDto.ReservationOrder.PaymentMethod,
-                                };
-                                var linkPaymentDb = await transcationService!.CreatePayment(paymentRequest, httpContext);
-                                if (!linkPaymentDb.IsSuccess)
-                                {
-                                    return BuildAppActionResultError(result, "Tạo thanh toán thất bại");
-                                }
-                                orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
-                            }
                         }
                     }
                     if (!BuildAppActionResultIsError(result))
                     {
+                        if (orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.PaymentMethod != PaymentMethod.Cash ||
+                                orderRequestDto.ReservationOrder != null && orderRequestDto.ReservationOrder.PaymentMethod != PaymentMethod.Cash)
+                        {
+                            var paymentRequest = new PaymentRequestDto
+                            {
+                                OrderId = order.OrderId,
+                                PaymentMethod = orderRequestDto.DeliveryOrder != null ? orderRequestDto.DeliveryOrder.PaymentMethod : orderRequestDto.ReservationOrder.PaymentMethod,
+                            };
+                            var linkPaymentDb = await transcationService!.CreatePayment(paymentRequest, httpContext);
+                            if (!linkPaymentDb.IsSuccess)
+                            {
+                                return BuildAppActionResultError(result, "Tạo thanh toán thất bại");
+                            }
+                            orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
+                        }
                         await _repository.Insert(order);
                         await _unitOfWork.SaveChangesAsync();
                         scope.Complete();
