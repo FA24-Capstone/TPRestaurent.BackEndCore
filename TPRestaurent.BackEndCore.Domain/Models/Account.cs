@@ -11,8 +11,6 @@ namespace TPRestaurent.BackEndCore.Domain.Models
 {
     public class Account : IdentityUser
     {
-        [Key]
-        public string Id { get; set; }
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;
         public string PhoneNumber { get; set; } = null!;
@@ -20,12 +18,9 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public bool? Gender { get; set; }
         public string? Address { get; set; } = null!;
         public bool IsVerified { get; set; }
-        public string? VerifyCode { get; set; }
         public bool IsDeleted { get; set; } = false;
         public int LoyaltyPoint { get; set; }
         public string? Avatar { get; set; }
-        public string? RefreshToken { get; set; }
-        public DateTime RefreshTokenExpiryTime { get; set; }
         public bool IsManuallyCreated { get; set; }
     }
 }

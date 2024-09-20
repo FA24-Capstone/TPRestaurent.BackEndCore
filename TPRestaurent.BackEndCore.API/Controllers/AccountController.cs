@@ -57,6 +57,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-account")]
+        [TokenValidationMiddleware("CUSTOMER")]
         public async Task<AppActionResult> GetAllAccount(int pageIndex = 1, int pageSize = 10)
         {
             return await _accountService.GetAllAccount(pageIndex, pageSize);
@@ -92,11 +93,6 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.ForgotPassword(dto);
         }
 
-        [HttpPut("active-account/{email}/{verifyCode}")]
-        public async Task<AppActionResult> ActiveAccount(string email, string verifyCode)
-        {
-            return await _accountService.ActiveAccount(email, verifyCode);
-        }
 
         [HttpPost("google-callback")]
         public async Task<AppActionResult> GoogleCallBack([FromBody] string accessTokenFromGoogle)
@@ -131,16 +127,16 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("verify-account-otp")]
-        public async Task<AppActionResult> VerifyAccountOTP(string phoneNumber, string code, OTPType otpType)
+        public async Task<AppActionResult> VerifyAccountOTP(string phoneNumber, string code, OTPType type)
         {
-            return await _accountService.VerifyAccountOTP(phoneNumber, code, otpType);
+            return await _accountService.VerifyAccountOTP(phoneNumber, code, type);
         }
 
-        [HttpPost("send-account-otp")]
-        public async Task<AppActionResult> SendCustomerInfoOTP(string phoneNumber, OTPType otpType)
-        {
-            return await _accountService.SendAccountOTP(phoneNumber, otpType);
-        }
+        //[HttpPost("send-account-otp")]
+        //public async Task<AppActionResult> SendCustomerInfoOTP(string phoneNumber, OTPType otpType)
+        //{
+        //    return await _accountService.SendAccountOTP(phoneNumber, otpType);
+        //}
 
         [HttpGet("get-account-by-phone-number")]
         public async Task<AppActionResult> GetCustomerInfoByPhoneNumber(string phoneNumber)
