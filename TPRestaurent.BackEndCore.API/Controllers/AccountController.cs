@@ -57,6 +57,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-account")]
+        [TokenValidationMiddleware("CUSTOMER")]
         public async Task<AppActionResult> GetAllAccount(int pageIndex = 1, int pageSize = 10)
         {
             return await _accountService.GetAllAccount(pageIndex, pageSize);
