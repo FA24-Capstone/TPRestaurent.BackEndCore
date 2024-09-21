@@ -28,7 +28,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                            .Build();
             string key = config["HashingKeys:PaymentLink"];
             var paymentUrl = "";
-            var momo = new PaymentInformationRequest
+            var vnpay = new PaymentInformationRequest
             {
                 AccountID = requestDto.AccountID,
                 Amount = requestDto.Amount,
@@ -61,14 +61,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             pay.AddRequestData("vnp_OrderType", "other");
             pay.AddRequestData("vnp_ReturnUrl", urlCallBack);
-            if (!string.IsNullOrEmpty(requestDto.OrderID))
-            {
-                pay.AddRequestData("vnp_TxnRef", requestDto.OrderID);
-            }
-            else
-            {
-                pay.AddRequestData("vnp_TxnRef", requestDto.StoreCreditID);
-            }
+            pay.AddRequestData("vnp_TxnRef", requestDto.TransactionID);
             paymentUrl = pay.CreateRequestUrl(_configuration["Vnpay:BaseUrl"], _configuration["Vnpay:HashSecret"]);
 
             return paymentUrl;
