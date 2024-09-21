@@ -73,7 +73,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         {
             [JsonProperty("results")] public List<Result> Results { get; set; }
 
-            [JsonProperty("status")] public string Status { get; set; }
+            [JsonProperty("Status")] public string Status { get; set; }
         }
     }
 }

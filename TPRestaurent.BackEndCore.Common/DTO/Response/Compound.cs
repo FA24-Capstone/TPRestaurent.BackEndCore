@@ -69,7 +69,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
 
         [JsonProperty("execution_time")] public string ExecutionTime { get; set; }
 
-        [JsonProperty("status")] public string Status { get; set; }
+        [JsonProperty("Status")] public string Status { get; set; }
     }
 
     public class StructuredFormatting
@@ -89,7 +89,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
     {
         [JsonProperty("offset")] public int Offset { get; set; }
 
-        [JsonProperty("value")] public string Value { get; set; }
+        [JsonProperty("Value")] public string Value { get; set; }
     }
 
     public class CompoundInfo

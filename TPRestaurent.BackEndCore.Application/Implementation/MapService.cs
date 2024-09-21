@@ -92,14 +92,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var findDestinationRequest = new RestRequest(endpoint);
 
                 var destinationResponse = await client.ExecuteAsync(findDestinationRequest);
-                if (!BuildAppActionResultIsError(result))
+                if (destinationResponse.IsSuccessStatusCode)
                 {
-                    result.Result = JsonConvert.SerializeObject(destinationResponse);
+                    var apiData = destinationResponse.Content;
+                    if (!BuildAppActionResultIsError(result))
+                    {
+                        var estimatedTimeList = JsonConvert.DeserializeObject<EstimatedDeliveryTimeDto.Root>(apiData);
+                        var data = new EstimatedDeliveryTimeDto.Response();
+                        data.Elements = estimatedTimeList.Rows[0].Elements;
+                        data.TotalDistance = (double)estimatedTimeList.Rows[0].Elements.Sum(e => e.Distance.Value) / 1000;
+                        data.TotalDuration = (double)estimatedTimeList.Rows[0].Elements.Sum(e => e.Duration.Value) / 3600;
+                        result.Result = data;
+                    }
                 }
             }
             catch (Exception e)
             {
-
+                result.Result = BuildAppActionResultError(result, e.Message);
 
             }
             return result;
