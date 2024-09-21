@@ -20,7 +20,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _configuration = configuration;
             _hashingService = hashingService;
         }
-        public async Task<string> CreatePaymentUrlVnpay(PaymentInformationRequest requestDto, HttpContext httpContext)
+        public async Task<string> CreatePaymentUrlVnpay(PaymentInformationRequest requestDto)
         {
             IConfiguration config = new ConfigurationBuilder()
                            .SetBasePath(Directory.GetCurrentDirectory())
@@ -50,7 +50,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             pay.AddRequestData("vnp_Amount", ((int)requestDto.Amount * 100).ToString());
             pay.AddRequestData("vnp_CreateDate", timeNow.ToString("yyyyMMddHHmmss"));
             pay.AddRequestData("vnp_CurrCode", _configuration["Vnpay:CurrCode"]);
-            pay.AddRequestData("vnp_IpAddr", pay.GetIpAddress(httpContext));
+            pay.AddRequestData("vnp_IpAddr", pay.GenerateRandomIPAddress());
             pay.AddRequestData("vnp_Locale", _configuration["Vnpay:Locale"]);
             if (!string.IsNullOrEmpty(requestDto.OrderID))
             {
