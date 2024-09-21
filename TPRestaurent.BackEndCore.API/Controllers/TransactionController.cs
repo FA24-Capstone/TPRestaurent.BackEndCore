@@ -25,7 +25,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPost("create-payment")]
         public async Task<AppActionResult> CreatePayment([FromBody] PaymentRequestDto paymentRequest)
         {
-            return await _service.CreatePayment(paymentRequest, HttpContext);
+            return await _service.CreatePayment(paymentRequest);
         }
 
         //[HttpGet("get-all-payment/{pageIndex}/{pageSize}")]
