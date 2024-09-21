@@ -17,7 +17,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             _service = service;
         }
 
-        [HttpGet("get-all-order-by-status/{pageNumber}/{pageSize}")]
+        [HttpGet("get-all-order-by-Status/{pageNumber}/{pageSize}")]
         public async Task<AppActionResult> GetAllOrderByStatus(Domain.Enums.OrderStatus? status, OrderType orderType, int pageNumber = 1, int pageSize = 10)
         {
             return await _service.GetAllOrderByStatus(status, orderType, pageNumber, pageSize);
@@ -83,7 +83,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.GetUpdateCartDishDto(cartItem);
         }
 
-        [HttpPost("update-order-detail-status")]
+        [HttpPost("update-order-detail-Status")]
         public async Task<AppActionResult> UpdatePrelistOrderStatus(List<Guid> list, bool? isSuccessful = true)
         {
             return await _service.UpdateOrderDetailStatus(list, !isSuccessful.HasValue || isSuccessful.HasValue && isSuccessful.Value);

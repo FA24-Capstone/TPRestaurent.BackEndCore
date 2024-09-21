@@ -39,12 +39,12 @@ public class TemplateMappingHelper
       }
 
       .header {
-        text-align: center;
+        Text-align: center;
         background-color: #ffba00; /* Header background color */
         padding: 20px;
       }
       .header-title {
-        text-align: left;
+        Text-align: left;
         background-color: #2ad65e; /* Header background color */
         padding: 20px;
         color: white;
@@ -94,18 +94,18 @@ public class TemplateMappingHelper
 
       .footer {
         font-size: 14px;
-        text-align: center;
+        Text-align: center;
         background-color: #ffba00; /* Header background color */
         padding: 10px;
         display: flex;
         justify-content: center;
         flex-direction: column;
       }
-      .footer-text {
+      .footer-Text {
         font-weight: 600;
       }
       .signature {
-        text-align: right;
+        Text-align: right;
         font-size: 16px;
         margin: 5 5;
       }
@@ -125,7 +125,7 @@ public class TemplateMappingHelper
         <p
           style=""
             color: #515151;
-            text-align: center;
+            Text-align: center;
             margin: auto 0;
             font-size: 30px;
           ""
@@ -150,7 +150,7 @@ public class TemplateMappingHelper
         <p class=""emailBody"">
           Vui lòng nhập mã xác nhận vào hệ thốn để đến bước tiếp theo
           <a href=""https://lovehouse.vercel.app/""
-            ><span style=""font-weight: bold; text-transform: uppercase""
+            ><span style=""font-weight: bold; Text-transform: uppercase""
               >Tại đây</span
             ></a
           >
@@ -201,12 +201,12 @@ public class TemplateMappingHelper
       }
 
       .header {
-        text-align: center;
+        Text-align: center;
         background-color: #ffba00; /* Header background color */
         padding: 20px;
       }
       .header-title {
-        text-align: left;
+        Text-align: left;
         background-color: #2ad65e; /* Header background color */
         padding: 20px;
         color: white;
@@ -256,18 +256,18 @@ public class TemplateMappingHelper
 
       .footer {
         font-size: 14px;
-        text-align: center;
+        Text-align: center;
         background-color: #ffba00; /* Header background color */
         padding: 10px;
         display: flex;
         justify-content: center;
         flex-direction: column;
       }
-      .footer-text {
+      .footer-Text {
         font-weight: 600;
       }
       .signature {
-        text-align: right;
+        Text-align: right;
         font-size: 16px;
         margin: 5 5;
       }
@@ -287,7 +287,7 @@ public class TemplateMappingHelper
         <p
           style=""
             color: #515151;
-            text-align: center;
+            Text-align: center;
             margin: auto 0;
             font-size: 30px;
           ""
@@ -312,7 +312,7 @@ public class TemplateMappingHelper
         <p class=""emailBody"">
           Please enter the code above into the system to proceed to the next step
           <a href=""https://lovehouse.vercel.app/""
-            ><span style=""font-weight: bold; text-transform: uppercase""
+            ><span style=""font-weight: bold; Text-transform: uppercase""
               >here</span
             ></a
           >
@@ -363,12 +363,12 @@ public class TemplateMappingHelper
       }
 
       .header {
-        text-align: center;
+        Text-align: center;
         background-color: #ffba00; /* Header background color */
         padding: 20px;
       }
       .header-title {
-        text-align: left;
+        Text-align: left;
         background-color: #2ad65e; /* Header background color */
         padding: 20px;
         color: white;
@@ -418,18 +418,18 @@ public class TemplateMappingHelper
 
       .footer {
         font-size: 14px;
-        text-align: center;
+        Text-align: center;
         background-color: #ffba00; /* Header background color */
         padding: 10px;
         display: flex;
         justify-content: center;
         flex-direction: column;
       }
-      .footer-text {
+      .footer-Text {
         font-weight: 600;
       }
       .signature {
-        text-align: right;
+        Text-align: right;
         font-size: 16px;
         margin: 5 5;
       }
@@ -449,7 +449,7 @@ public class TemplateMappingHelper
         <p
           style=""
             color: #515151;
-            text-align: center;
+            Text-align: center;
             margin: auto 0;
             font-size: 30px;
           ""
@@ -474,7 +474,7 @@ public class TemplateMappingHelper
         <p class=""emailBody"">
           Please enter the code above into the system to proceed to the next step
           <a href=""https://lovehouse.vercel.app/""
-            ><span style=""font-weight: bold; text-transform: uppercase""
+            ><span style=""font-weight: bold; Text-transform: uppercase""
               >here</span
             ></a
           >
@@ -527,12 +527,12 @@ public class TemplateMappingHelper
       }
 
       .header {
-        text-align: center;
+        Text-align: center;
         background-color: #ffba00; /* Header background color */
         padding: 20px;
       }
       .header-title {
-        text-align: left;
+        Text-align: left;
         background-color: #2ad65e; /* Header background color */
         padding: 20px;
         color: white;
@@ -582,18 +582,18 @@ public class TemplateMappingHelper
 
       .footer {
         font-size: 14px;
-        text-align: center;
+        Text-align: center;
         background-color: #ffba00; /* Header background color */
         padding: 10px;
         display: flex;
         justify-content: center;
         flex-direction: column;
       }
-      .footer-text {
+      .footer-Text {
         font-weight: 600;
       }
       .signature {
-        text-align: right;
+        Text-align: right;
         font-size: 16px;
         margin: 5 5;
       }
@@ -613,7 +613,7 @@ public class TemplateMappingHelper
         <p
           style=""
             color: #515151;
-            text-align: center;
+            Text-align: center;
             margin: auto 0;
             font-size: 30px;
           ""
@@ -638,7 +638,7 @@ public class TemplateMappingHelper
         <p class=""emailBody"">
           Please enter the code above into the system to proceed to the next step
           <a href=""https://lovehouse.vercel.app/""
-            ><span style=""font-weight: bold; text-transform: uppercase""
+            ><span style=""font-weight: bold; Text-transform: uppercase""
               >here</span
             ></a
           >
@@ -693,12 +693,12 @@ public class TemplateMappingHelper
       }
 
       .header {
-        text-align: center;
+        Text-align: center;
         background-color: #ffba00; /* Header background color */
         padding: 20px;
       }
       .header-title {
-        text-align: left;
+        Text-align: left;
         background-color: #2ad65e; /* Header background color */
         padding: 20px;
         color: white;
@@ -748,18 +748,18 @@ public class TemplateMappingHelper
 
       .footer {
         font-size: 14px;
-        text-align: center;
+        Text-align: center;
         background-color: #ffba00; /* Header background color */
         padding: 10px;
         display: flex;
         justify-content: center;
         flex-direction: column;
       }
-      .footer-text {
+      .footer-Text {
         font-weight: 600;
       }
       .signature {
-        text-align: right;
+        Text-align: right;
         font-size: 16px;
         margin: 5 5;
       }
@@ -779,7 +779,7 @@ public class TemplateMappingHelper
         <p
           style=""
             color: #515151;
-            text-align: center;
+            Text-align: center;
             margin: auto 0;
             font-size: 30px;
           ""
@@ -800,7 +800,7 @@ public class TemplateMappingHelper
          Please enter the system to view the quote and moderate this quote
         </p>
             <a href=""https://lovehouse.vercel.app/""
-            ><span style=""font-weight: bold; text-transform: uppercase""
+            ><span style=""font-weight: bold; Text-transform: uppercase""
               >here</span
             ></a
           >

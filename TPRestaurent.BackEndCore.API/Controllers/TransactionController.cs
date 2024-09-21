@@ -41,7 +41,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         //}
 
 
-        [HttpPut("update-transaction-status/{transactionId}/{transactionStatus}")]
+        [HttpPut("update-transaction-Status/{transactionId}/{transactionStatus}")]
         public async Task<AppActionResult> UpdateTransactionStatus(Guid transactionId, Domain.Enums.TransationStatus transactionStatus)
         {
             return await _service.UpdateTransactionStatus(transactionId, transactionStatus);
