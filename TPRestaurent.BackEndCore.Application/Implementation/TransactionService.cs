@@ -280,7 +280,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     string orderInfo = hasingService.Hashing("OR", key);
                                     string redirectUrl = $"{_momoConfiguration.RedirectUrl}/{transaction.OrderId}";
                                     string ipnUrl = _momoConfiguration.IPNUrl;
-                                    string requestType = "captureWallet";
+                                    string requestType = "payWithATM";
 
                                     string amount = Math.Ceiling(transaction.Amount).ToString();
                                     string orderId = Guid.NewGuid().ToString();
