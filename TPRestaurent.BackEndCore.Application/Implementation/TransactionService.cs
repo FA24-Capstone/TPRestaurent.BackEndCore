@@ -44,7 +44,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         }
 
 
-        public async Task<AppActionResult> CreatePayment(PaymentRequestDto paymentRequest, HttpContext context)
+        public async Task<AppActionResult> CreatePayment(PaymentRequestDto paymentRequest)
         {
             AppActionResult result = new AppActionResult();
             using (var scope = new System.Transactions.TransactionScope(System.Transactions.TransactionScopeAsyncFlowOption.Enabled))
@@ -124,7 +124,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
 
                                     await _repository.Insert(transaction);
-                                    paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest, context);
+                                    paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest);
 
                                     result.Result = paymentUrl;
                                 }

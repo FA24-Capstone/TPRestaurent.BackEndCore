@@ -62,13 +62,13 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPost("create-order")]
         public async Task<AppActionResult> CreateOrder([FromBody] OrderRequestDto dto)
         {
-            return await _service.CreateOrder(dto, HttpContext);
+            return await _service.CreateOrder(dto);
         }
 
         [HttpPost("make-dine-in-order-bill")]
         public async Task<AppActionResult> MakeDineInOrderBill([FromBody] OrderPaymentRequestDto dto)
         {
-            return await _service.MakeDineInOrderBill(dto, HttpContext);
+            return await _service.MakeDineInOrderBill(dto);
         }
 
         [HttpGet("get-cart-combo-item")]

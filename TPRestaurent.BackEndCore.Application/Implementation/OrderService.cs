@@ -253,7 +253,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto, HttpContext httpContext)
+        public async Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto)
         {
             var result = new AppActionResult();
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
@@ -628,7 +628,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 OrderId = order.OrderId,
                                 PaymentMethod = orderRequestDto.DeliveryOrder != null ? orderRequestDto.DeliveryOrder.PaymentMethod : orderRequestDto.ReservationOrder.PaymentMethod,
                             };
-                            var linkPaymentDb = await transcationService!.CreatePayment(paymentRequest, httpContext);
+                            var linkPaymentDb = await transcationService!.CreatePayment(paymentRequest);
                             if (!linkPaymentDb.IsSuccess)
                             {
                                 return BuildAppActionResultError(result, "Tạo thanh toán thất bại");
@@ -734,7 +734,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> MakeDineInOrderBill(OrderPaymentRequestDto orderRequestDto, HttpContext context)
+        public async Task<AppActionResult> MakeDineInOrderBill(OrderPaymentRequestDto orderRequestDto)
         {
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
@@ -873,7 +873,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 OrderId = orderDb.OrderId,
                                 PaymentMethod = orderRequestDto.PaymentMethod,
                             };
-                            var linkPaymentDb = await transactionService!.CreatePayment(paymentRequest, context);
+                            var linkPaymentDb = await transactionService!.CreatePayment(paymentRequest);
                             if (!linkPaymentDb.IsSuccess)
                             {
                                 return BuildAppActionResultError(result, "Tạo thanh toán thất bại");
