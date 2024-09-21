@@ -296,6 +296,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         order.AccountId = orderRequestDto.CustomerId.ToString();
                     }
+                    if (orderRequestDto.OrderType != OrderType.MealWithoutReservation && ((orderRequestDto!.ReservationOrder != null && orderRequestDto.ReservationOrder.PaymentMethod == 0 ) 
+                        || (orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.PaymentMethod == 0)))
+                    {
+                        return BuildAppActionResultError(result, $"Yêu cầu phương thức thanh toán");
+                    }
 
                     List<OrderDetail> orderDetails = new List<OrderDetail>();
                     List<ComboOrderDetail> comboOrderDetails = new List<ComboOrderDetail>();

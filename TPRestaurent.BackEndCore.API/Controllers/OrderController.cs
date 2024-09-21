@@ -107,11 +107,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.GetTableReservationWithTime(tableId, time);
         }
 
-        //[HttpPut("change-order-status/{orderId}")]
-        //public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool isSuccessful)
-        //{
-        //    return await _service.ChangeOrderStatus(orderId, isSuccessful);
-        //}
+        [HttpPut("change-order-status/{orderId}")]
+        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool isSuccessful)
+        {
+            return await _service.ChangeOrderStatus(orderId, isSuccessful);
+        }
 
         //[HttpPost("calculate-order-total")]
         //public async Task<AppActionResult> GetOrderTotal([FromBody]CalculateOrderRequest dto)
