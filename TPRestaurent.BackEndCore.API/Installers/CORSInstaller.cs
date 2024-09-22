@@ -13,7 +13,9 @@ namespace TPRestaurent.BackEndCore.API.Installers
                 {
                     policy.WithOrigins(allowedOrigins)
                           .AllowAnyHeader()
-                          .AllowAnyMethod();
+                          .AllowCredentials()   
+                          .AllowAnyMethod()
+                          ;
                 });
             });
         }
