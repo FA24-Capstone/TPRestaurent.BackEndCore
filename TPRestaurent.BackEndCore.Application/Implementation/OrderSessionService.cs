@@ -173,10 +173,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public Task<AppActionResult> UpdateOrderSession()
-        {
-            throw new NotImplementedException();
-        }
 
         public Task<AppActionResult> UpdateOrderSessionStatus(Guid orderSessionId, OrderSessionStatus orderSessionStatus)
         {
