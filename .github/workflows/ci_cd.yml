@@ -10,6 +10,7 @@ env:
   AZURE_WEBAPP_NAME: tprestaurant
   AZURE_WEBAPP_PACKAGE_PATH: '.'
   DOTNET_VERSION: '8.0.x'
+  DOCKER_IMAGE_NAME: hongquan0312/restaurant
 
 jobs:
   build:
@@ -26,6 +27,20 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+    
+    # New steps for Docker
+    - name: Build Docker image
+      run: docker build -t ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} .
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+    - name: Push Docker image to Docker Hub
+      run: |
+        docker push ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
+        docker tag ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} ${{ env.DOCKER_IMAGE_NAME }}:latest
+        docker push ${{ env.DOCKER_IMAGE_NAME }}:latest
 
   deploy:
     needs: build
