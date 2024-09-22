@@ -60,7 +60,6 @@ jobs:
   deploy-to-container-apps:
     needs: docker
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
     - name: Azure Login
       uses: azure/login@v1
