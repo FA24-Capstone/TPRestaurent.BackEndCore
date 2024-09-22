@@ -30,7 +30,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public OrderDetailStatus OrderDetailStatusId { get; set; }
         [ForeignKey(nameof(OrderDetailStatusId))]
         public EnumModels.OrderDetailStatus? OrderDetailStatus { get; set; }     
-        public Guid OrderSessionId { get; set; }    
+        public Guid? OrderSessionId { get; set; }    
         [ForeignKey(nameof(OrderSessionId))]
         public OrderSession? OrderSession { get; set; }  
 

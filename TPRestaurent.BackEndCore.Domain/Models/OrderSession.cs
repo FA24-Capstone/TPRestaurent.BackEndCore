@@ -14,6 +14,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         [Key]
         public Guid OrderSessionId { get; set; }
         public DateTime OrderSessionTime { get; set; }  
+        public int OrderSessionNumber { get; set; } 
         public Enums.OrderSessionStatus OrderSessionStatusId { get; set; }
         [ForeignKey(nameof(OrderSessionStatusId))]
         public EnumModels.OrderSessionStatus? OrderSessionStatus { get; set; }   

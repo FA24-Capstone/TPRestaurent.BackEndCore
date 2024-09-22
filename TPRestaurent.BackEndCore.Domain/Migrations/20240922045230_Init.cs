@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
-    public partial class Initial : Migration
+    public partial class Init : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -28,19 +28,16 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    CustomerId = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DOB = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Gender = table.Column<bool>(type: "bit", nullable: true),
                     Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsVerified = table.Column<bool>(type: "bit", nullable: false),
-                    VerifyCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     LoyaltyPoint = table.Column<int>(type: "int", nullable: false),
                     Avatar = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    RefreshToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    RefreshTokenExpiryTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsManuallyCreated = table.Column<bool>(type: "bit", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -125,6 +122,19 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_OrderDetailStatuses", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OrderSessionStatus",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    VietnameseName = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OrderSessionStatus", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -540,7 +550,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Image = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DishItemTypeId = table.Column<int>(type: "int", nullable: false),
-                    isAvailable = table.Column<bool>(type: "bit", nullable: false)
+                    isAvailable = table.Column<bool>(type: "bit", nullable: false),
+                    PreparationTime = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -549,6 +560,25 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         name: "FK_Dishes_DishItemTypes_DishItemTypeId",
                         column: x => x.DishItemTypeId,
                         principalTable: "DishItemTypes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OrderSession",
+                columns: table => new
+                {
+                    OrderSessionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    OrderSessionTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    OrderSessionStatusId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OrderSession", x => x.OrderSessionId);
+                    table.ForeignKey(
+                        name: "FK_OrderSession_OrderSessionStatus_OrderSessionStatusId",
+                        column: x => x.OrderSessionStatusId,
+                        principalTable: "OrderSessionStatus",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -802,7 +832,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     OrderTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ReadyToServeTime = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    OrderDetailStatusId = table.Column<int>(type: "int", nullable: false)
+                    OrderDetailStatusId = table.Column<int>(type: "int", nullable: false),
+                    OrderSessionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -829,6 +860,11 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         principalTable: "Orders",
                         principalColumn: "OrderId",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_OrderDetails_OrderSession_OrderSessionId",
+                        column: x => x.OrderSessionId,
+                        principalTable: "OrderSession",
+                        principalColumn: "OrderSessionId");
                 });
 
             migrationBuilder.CreateTable(
@@ -1284,6 +1320,11 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 column: "OrderId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_OrderDetails_OrderSessionId",
+                table: "OrderDetails",
+                column: "OrderSessionId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Orders_AccountId",
                 table: "Orders",
                 column: "AccountId");
@@ -1307,6 +1348,11 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 name: "IX_Orders_StatusId",
                 table: "Orders",
                 column: "StatusId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderSession_OrderSessionStatusId",
+                table: "OrderSession",
+                column: "OrderSessionStatusId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OTPs_AccountId",
@@ -1531,6 +1577,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 name: "OrderDetailStatuses");
 
             migrationBuilder.DropTable(
+                name: "OrderSession");
+
+            migrationBuilder.DropTable(
                 name: "ComboCategories");
 
             migrationBuilder.DropTable(
@@ -1538,6 +1587,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
             migrationBuilder.DropTable(
                 name: "DishSizes");
+
+            migrationBuilder.DropTable(
+                name: "OrderSessionStatus");
 
             migrationBuilder.DropTable(
                 name: "DishItemTypes");

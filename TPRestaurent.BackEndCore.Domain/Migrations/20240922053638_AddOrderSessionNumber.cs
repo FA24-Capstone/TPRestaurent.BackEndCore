@@ -4,23 +4,23 @@
 
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
-    public partial class AddManuallyAttribute : Migration
+    public partial class AddOrderSessionNumber : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
-                name: "IsManuallyCreated",
-                table: "AspNetUsers",
-                type: "bit",
+            migrationBuilder.AddColumn<int>(
+                name: "OrderSessionNumber",
+                table: "OrderSession",
+                type: "int",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: 0);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "IsManuallyCreated",
-                table: "AspNetUsers");
+                name: "OrderSessionNumber",
+                table: "OrderSession");
         }
     }
 }
