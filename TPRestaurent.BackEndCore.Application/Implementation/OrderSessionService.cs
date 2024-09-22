@@ -14,7 +14,7 @@ using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
-    public class OrderSessionService : GenericBackendService ,IOrderSessionService
+    public class OrderSessionService : GenericBackendService , IOrderSessionService
     {
         private readonly IGenericRepository<OrderSession> _orderSessionRepository;
         private readonly IUnitOfWork _unitOfWork;
@@ -26,18 +26,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         }
 
         
-        public async Task<AppActionResult> CreateOrderSession()
+        public async Task DeleteOrderSession()
         {
-            var result = new AppActionResult();
             try
             {
-
+                var orderSessionDb = await _orderSessionRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
+                if (orderSessionDb!.Items!.Count > 0 && orderSessionDb.Items != null)
+                {
+                    await _orderSessionRepository.DeleteRange(orderSessionDb.Items);
+                    await _unitOfWork.SaveChangesAsync();
+                }
             }
             catch (Exception ex) 
-            { 
-                result = BuildAppActionResultError(result, ex.Message);
+            {
             }
-            return result;
+            Task.CompletedTask.Wait();  
         }
 
         public async Task<AppActionResult> GetAllOrderSession(DateTime? time, int pageNumber, int pageSize)

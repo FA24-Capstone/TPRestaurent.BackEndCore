@@ -14,5 +14,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GetAllOrderSession(DateTime? time, int pageNumber, int pageSize);
         Task<AppActionResult> GetOrderSessionById(Guid orderSessionId);
         Task<AppActionResult> UpdateOrderSessionStatus(Guid orderSessionId, OrderSessionStatus orderSessionStatus);
+        Task DeleteOrderSession();
     }
 }
