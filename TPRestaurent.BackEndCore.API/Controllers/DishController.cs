@@ -54,5 +54,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _dishService.GetAllDishType(pageNumber, pageSize);
         }
+
+        [HttpPut("update-inactive-dish")]
+        public async Task<AppActionResult> UpdateInactiveADish(Guid dishId)
+        {
+            return await _dishService.UpdateInactiveADish(dishId);
+        }
     }
 }

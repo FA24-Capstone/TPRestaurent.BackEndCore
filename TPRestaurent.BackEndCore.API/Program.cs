@@ -5,7 +5,6 @@ using TPRestaurent.BackEndCore.API.Middlewares;
 using TPRestaurent.BackEndCore.Application.Implementation;
 using TPRestaurent.BackEndCore.Domain.Data;
 
-var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -22,7 +21,7 @@ app.UseSwaggerUI(options =>
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
     options.RoutePrefix = string.Empty;
 });
-app.UseCors(MyAllowSpecificOrigins);
+app.UseCors();
 
 app.UseHttpsRedirection();
 app.UseAuthentication();

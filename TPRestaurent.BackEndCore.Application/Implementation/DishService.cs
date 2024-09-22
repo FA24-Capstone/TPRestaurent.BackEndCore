@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Humanizer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -62,7 +63,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     List<DishSizeDetail> dishSizeDetails = new List<DishSizeDetail>();
                     if (dto.DishSizeDetailDtos.Count > 0)
                     {
-                        if(dto.DishSizeDetailDtos.Count(d => d.DishSize == DishSize.SMALL) > 1 
+                        if (dto.DishSizeDetailDtos.Count(d => d.DishSize == DishSize.SMALL) > 1
                         || dto.DishSizeDetailDtos.Count(d => d.DishSize == DishSize.MEDIUM) > 1
                         || dto.DishSizeDetailDtos.Count(d => d.DishSize == DishSize.LARGE) > 1)
                         {
@@ -76,7 +77,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 Discount = d.Discount,
                                 DishSizeId = d.DishSize,
                                 IsAvailable = true,
-                                Price = d.Price                                
+                                Price = d.Price
                             }));
                     }
 
@@ -117,7 +118,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (!BuildAppActionResultIsError(result))
                     {
                         await _dishRepository.Insert(dish);
-                        if(dto.DishSizeDetailDtos.Count > 0)
+                        if (dto.DishSizeDetailDtos.Count > 0)
                         {
                             await dishSizeDetailRepository!.InsertRange(dishSizeDetails);
                         }
@@ -172,7 +173,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var dishSizeResponse = new DishSizeResponse();
                     dishSizeResponse.Dish = _mapper.Map<DishReponse>(item);
                     dishSizeResponse.DishSizeDetails = dishDetailsListDb.Items!.OrderBy(d => d.DishSizeId).ToList();
-                    dishSizeList.Add(dishSizeResponse); 
+                    dishSizeList.Add(dishSizeResponse);
                 }
                 result.Result = new PagedResult<DishSizeResponse>
                 {
@@ -227,8 +228,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var staticFileRepository = Resolve<IGenericRepository<Image>>();
             var ratingRepository = Resolve<IGenericRepository<Rating>>();
             var dishSizeRepository = Resolve<IGenericRepository<DishSizeDetail>>();
-            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();     
-            var ratingListDb = new List<Rating>();  
+            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+            var ratingListDb = new List<Rating>();
             try
             {
                 var dishDb = await _dishRepository.GetByExpression(p => p.DishId == dishId, p => p.DishItemType);
@@ -281,7 +282,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     });
                 }
                 dishResponse.DishImgs = staticFileDb.Items!;
-                    
+
                 result.Result = dishResponse;
             }
             catch (Exception ex)
@@ -428,7 +429,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                         });
                     }
-                    
+
 
                     if (!BuildAppActionResultIsError(result))
                     {
@@ -437,7 +438,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             await dishSizeDetailRepository!.UpdateRange(updateDishSizeDetails);
                         }
-                        if(addDishSizeDetails.Count > 0)
+                        if (addDishSizeDetails.Count > 0)
                         {
                             await dishSizeDetailRepository!.InsertRange(addDishSizeDetails);
                         }
@@ -451,6 +452,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, ex.Message);
                 }
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> UpdateInactiveADish(Guid dishId)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var dishDb = await _dishRepository.GetById(dishId);
+                if (dishDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Món ăn với id {dishId} không tồn tại");
+                }
+                dishDb!.isAvailable = false;
+                await _dishRepository.Update(dishDb);
+                await _unitOfWork.SaveChangesAsync();       
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
