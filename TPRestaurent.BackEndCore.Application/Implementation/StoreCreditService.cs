@@ -53,67 +53,51 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             Task.CompletedTask.Wait();
         }
 
-        //public async Task<AppActionResult> AddStoreCredit(Guid transactionId)
-        //{
-        //    AppActionResult result = new AppActionResult();
-        //    using (var scope = new System.Transactions.TransactionScope(System.Transactions.TransactionScopeAsyncFlowOption.Enabled))
-        //    {
-        //        try
-        //        {
-        //            //Validate in transaction
-        //            var transactionRepository = Resolve<IGenericRepository<Transaction>>();
-        //            var transactionDb = await transactionRepository.GetByExpression(t => t.Id == transactionId && t.TransationStatusId == Domain.Enums.TransationStatus.SUCCESSFUL, null);
-        //            if (transactionDb == null || !transactionDb.StoreCreditHistoryId.HasValue)
-        //            {
-        //                return BuildAppActionResultError(result, $"Không tìm thấy thông tin giao dịch cho việc nộp ví");
-        //            }
-        //            var storeCreditDb = await _historyRepository.GetByExpression(t => t.StoreCreditHistoryId == transactionDb.StoreCreditHistoryId, t => t.StoreCredit);
-        //            if (storeCreditDb == null)
-        //            {
-        //                return BuildAppActionResultError(result, $"Không tìm thấy thông tin ví với id {storeCreditDb.StoreCredit}");
-        //            }
+        public async Task<AppActionResult> AddStoreCredit(Guid transactionId)
+        {
+            AppActionResult result = new AppActionResult();
+            using (var scope = new System.Transactions.TransactionScope(System.Transactions.TransactionScopeAsyncFlowOption.Enabled))
+            {
+                try
+                {
+                    //Validate in transaction
+                    var transactionRepository = Resolve<IGenericRepository<Transaction>>();
+                    var transactionDb = await transactionRepository.GetByExpression(t => t.Id == transactionId && t.TransationStatusId == Domain.Enums.TransationStatus.SUCCESSFUL, t => t.StoreCredit);
+                    if (transactionDb == null || !transactionDb.StoreCreditId.HasValue)
+                    {
+                        return BuildAppActionResultError(result, $"Không tìm thấy thông tin giao dịch cho việc nộp ví");
+                    }
 
-        //            var appliedTransactionDb = await _historyRepository.GetAllDataByExpression(h =>  h.TransactionId == transactionId,0,0, null, false, null);
-        //            if (appliedTransactionDb.Items.Count == 0)
-        //            {
-        //                return BuildAppActionResultError(result, $"Giao dịch với id {transactionId} không được áp dụng cho bất kì lịch sử nạp ví nào");
-        //            }
+                    if (transactionDb.TransationStatusId == Domain.Enums.TransationStatus.APPLIED)
+                    {
+                        return BuildAppActionResultError(result, $"Giao dịch với id {transactionId} đã được cập nhật vào ví");
+                    }
 
-        //            storeCreditDb.StoreCredit.Amount += transactionDb.Amount;
+                    transactionDb.StoreCredit.Amount += transactionDb.Amount;
 
-        //            var utility = Resolve<Utility>();
-        //            var configurationRepository = Resolve<IGenericRepository<Configuration>>();
-        //            var configurationDb = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.EXPIRE_TIME_FOR_STORE_CREDIT), null);
-        //            if (configurationDb == null)
-        //            {
-        //                result = BuildAppActionResultError(result, $"Xảy ra lỗi khi ghi lại thông tin nạp tiền. Vui lòng thử lại");
-        //            }
-        //            var expireTimeInDay = double.Parse(configurationDb.PreValue);
+                    var utility = Resolve<Utility>();
+                    var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                    var configurationDb = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.EXPIRE_TIME_FOR_STORE_CREDIT), null);
+                    if (configurationDb == null)
+                    {
+                        result = BuildAppActionResultError(result, $"Xảy ra lỗi khi ghi lại thông tin nạp tiền. Vui lòng thử lại");
+                    }
+                    var expireTimeInDay = double.Parse(configurationDb.CurrentValue);
 
-        //            storeCreditDb.StoreCredit!.ExpiredDate = utility.GetCurrentDateInTimeZone().AddDays(expireTimeInDay);
-
-        //            //var storeCreditHistory = new StoreCreditHistory
-        //            //{
-        //            //    StoreCreditHistoryId = Guid.NewGuid(),
-        //            //    StoreCreditId = storeCreditDb.StoreCreditId,
-        //            //    Date = utility.GetCurrentDateInTimeZone(),
-        //            //    Amount = transactionDb.Amount,
-        //            //    IsInput = true,
-        //            //    TransactionId = transactionId,
-        //            //};
-        //            transactionDb.TransationStatusId = Domain.Enums.TransationStatus.APPLIED;
-        //            await transactionRepository.Update(transactionDb);
-        //            await _repository.Update(storeCreditDb.StoreCredit!);
-        //            await _unitOfWork.SaveChangesAsync();
-        //            scope.Complete();
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            result = BuildAppActionResultError(result, ex.Message);
-        //        }
-        //        return result;
-        //    }
-        //}
+                    transactionDb.StoreCredit!.ExpiredDate = utility.GetCurrentDateInTimeZone().AddDays(expireTimeInDay);
+                    transactionDb.TransationStatusId = Domain.Enums.TransationStatus.APPLIED;
+                    await transactionRepository.Update(transactionDb);
+                    await _repository.Update(transactionDb.StoreCredit!);
+                    await _unitOfWork.SaveChangesAsync();
+                    scope.Complete();
+                }
+                catch (Exception ex)
+                {
+                    result = BuildAppActionResultError(result, ex.Message);
+                }
+                return result;
+            }
+        }
 
         //public async Task<AppActionResult> GetStoreCreditByAccountId(string accountId)
         //{

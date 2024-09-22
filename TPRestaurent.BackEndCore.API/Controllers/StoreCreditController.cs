@@ -23,11 +23,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         //    return await _service.GetStoreCreditByAccountId(accountId);
         //}
 
-        //[HttpPost("add-store-credit")]
-        //public async Task<AppActionResult> AddStoreCredit(Guid transactionId)
-        //{
-        //    return await _service.AddStoreCredit(transactionId);
-        //}
+        [HttpPost("add-store-credit")]
+        public async Task<AppActionResult> AddStoreCredit(Guid transactionId)
+        {
+            return await _service.AddStoreCredit(transactionId);
+        }
 
         [HttpPost("refund-reservation")]
         public async Task<AppActionResult> RefundReservation(Guid reservationId)
