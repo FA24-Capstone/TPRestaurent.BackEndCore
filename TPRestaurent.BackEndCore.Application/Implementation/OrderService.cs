@@ -22,6 +22,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
+using Transaction = TPRestaurent.BackEndCore.Domain.Models.Transaction;
 using Utility = TPRestaurent.BackEndCore.Common.Utils.Utility;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
@@ -283,7 +284,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         OrderId = Guid.NewGuid(),
                         OrderTypeId = orderRequestDto.OrderType,
                         Note = orderRequestDto.Note,
-                        PaymentMethodId = PaymentMethod.VNPAY
                     };
 
                     Account accountDb = null;
@@ -385,6 +385,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     if (orderDetails.Count > 0)
                     {
+                        order.TotalAmount = money;
                         await orderDetailRepository.InsertRange(orderDetails);
                         if (comboOrderDetails.Count > 0)
                         {
@@ -422,7 +423,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.EndTime = orderRequestDto.ReservationOrder.EndTime;
                         order.IsPrivate = orderRequestDto.ReservationOrder.IsPrivate;
                         order.Deposit = orderRequestDto.ReservationOrder.Deposit;
-                        order.PaymentMethodId = orderRequestDto.ReservationOrder.PaymentMethod;
 
                         var suggestTableDto = new SuggestTableDto
                         {
@@ -678,17 +678,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     (o.OrderTypeId == orderType)), pageNumber, pageSize, o => o.OrderDate, false,
                      p => p.Status!,
                      p => p.Account!,
-                     p => p.PaymentMethod!,
                      p => p.LoyalPointsHistory!,
                      p => p.OrderType!
                     );
                 }
                 else
                 {
-                    result.Result = await _repository.GetAllDataByExpression(o => o.Account.Id.Equals(customerId), pageNumber, pageSize, o => o.OrderDate, false, p => p.PaymentMethod!,
+                    result.Result = await _repository.GetAllDataByExpression(o => o.Account.Id.Equals(customerId), pageNumber, pageSize, o => o.OrderDate, false,
                         p => p.Status!,
                         p => p.Account!,
-                        p => p.PaymentMethod!,
                         p => p.LoyalPointsHistory!,
                         p => p.OrderType!
                         );
@@ -709,7 +707,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderDb = await _repository.GetAllDataByExpression(p => p.OrderId == orderId, 0, 0, null, false, p => p.Account!,
                         p => p.Status!,
                         p => p.Account!,
-                        p => p.PaymentMethod!,
                         p => p.LoyalPointsHistory!,
                         p => p.OrderType!
                     );
@@ -1006,7 +1003,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     _repository.GetAllDataByExpression(p => p.Account!.PhoneNumber == phoneNumber, pageNumber, pageSize, p => p.OrderDate, false,
                         p => p.Status!,
                         p => p.Account!,
-                        p => p.PaymentMethod!,
                         p => p.LoyalPointsHistory!,
                         p => p.OrderType!
                     );
@@ -1029,7 +1025,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result.Result = await _repository.GetAllDataByExpression(o => o.StatusId == status || o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
                         p => p.Status!,
                         p => p.Account!,
-                        p => p.PaymentMethod!,
                         p => p.LoyalPointsHistory!,
                         p => p.OrderType!
                   );
@@ -1039,7 +1034,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result.Result = await _repository.GetAllDataByExpression(o => o.OrderTypeId == orderType && o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
                         p => p.Status!,
                         p => p.Account!,
-                        p => p.PaymentMethod!,
                         p => p.LoyalPointsHistory!,
                         p => p.OrderType!
                         );
@@ -1049,7 +1043,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result.Result = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
                         p => p.Status!,
                         p => p.Account!,
-                        p => p.PaymentMethod!,
                         p => p.LoyalPointsHistory!,
                         p => p.OrderType!
                         );
@@ -1073,7 +1066,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     pageNumber, pageSize, p => p.MealTime, false, p => p.Account!,
                         p => p.Status!,
                         p => p.Account!,
-                        p => p.PaymentMethod!,
                         p => p.LoyalPointsHistory!,
                         p => p.OrderType!);
                 result.Result = orderDb;
@@ -1815,18 +1807,32 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             try
             {
-                var reservation = await _repository.GetByExpression(r => r.OrderId == orderId, r => r.Account!);
-                if (reservation == null)
+                var order = await _repository.GetByExpression(r => r.OrderId == orderId, r => r.Account!);
+                if (order == null)
                 {
                     return BuildAppActionResultError(new AppActionResult(), $"Không tìm thấy thông tin đặt bàn với id {orderId}");
                 }
 
+                var transactionRepository = Resolve<IGenericRepository<Transaction>>();
+                var orderTransactionDb = await transactionRepository.GetAllDataByExpression(o => o.OrderId.HasValue && o.OrderId == orderId && o.TransationStatusId == TransationStatus.SUCCESSFUL, 0, 0, null, false, null);
                 var reservationTableDetails = await GetReservationTableDetails(orderId);
                 var reservationDishes = await GetReservationDishes(orderId);
+                var orderResponse = _mapper.Map<OrderResponse>(order);
+                var successfulDepositTransaction = orderTransactionDb.Items.Where(o => o.TransactionTypeId == TransactionType.Deposit).ToList();
+                if (successfulDepositTransaction.Count() == 1)
+                {
+                    orderResponse.DepositPaidDate = successfulDepositTransaction[0].PaidDate;
+                }
+
+                var successfulOrderTransaction = orderTransactionDb.Items.Where(o => o.TransactionTypeId == TransactionType.Order).ToList();
+                if (successfulOrderTransaction.Count() == 1)
+                {
+                    orderResponse.OrderPaidDate = successfulOrderTransaction[0].PaidDate;
+                }
 
                 var data = new ReservationReponse
                 {
-                    Order = reservation,
+                    Order = orderResponse,
                     OrderTables = reservationTableDetails,
                     OrderDishes = reservationDishes
                 };
@@ -1912,18 +1918,31 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             try
             {
-                var reservation = await _repository.GetByExpression(r => r.OrderId == reservationId, r => r.Account);
-                if (reservation == null)
+                var order = await _repository.GetByExpression(r => r.OrderId == reservationId, r => r.Account);
+                if (order == null)
                 {
                     return BuildAppActionResultError(new AppActionResult(), $"Không tìm thấy thông tin đặt bàn với id {reservationId}");
                 }
+                var transactionRepository = Resolve<IGenericRepository<Transaction>>();
+                var orderTransactionDb = await transactionRepository.GetAllDataByExpression(o => o.OrderId.HasValue && o.OrderId == reservationId && o.TransationStatusId == TransationStatus.SUCCESSFUL, 0, 0, null, false, null);
+                var orderResponse = _mapper.Map<OrderResponse>(order);
+                var successfulDepositTransaction = orderTransactionDb.Items.Where(o => o.TransactionTypeId == TransactionType.Deposit).ToList();
+                if (successfulDepositTransaction.Count() == 1)
+                {
+                    orderResponse.DepositPaidDate = successfulDepositTransaction[0].PaidDate;
+                }
 
+                var successfulOrderTransaction = orderTransactionDb.Items.Where(o => o.TransactionTypeId == TransactionType.Order).ToList();
+                if (successfulOrderTransaction.Count() == 1)
+                {
+                    orderResponse.OrderPaidDate = successfulOrderTransaction[0].PaidDate;
+                }
                 var reservationTableDetails = await GetReservationTableDetails(reservationId);
                 var reservationDishes = await GetReservationDishes2(reservationId);
 
                 var data = new ReservationReponse
                 {
-                    Order = reservation,
+                    Order = orderResponse,
                     OrderTables = reservationTableDetails,
                     OrderDishes = reservationDishes
                 };
