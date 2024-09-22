@@ -34,6 +34,9 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public string? AccountId { get; set; }
         [ForeignKey(nameof(AccountId))]
         public Account? Account { get; set; }
+        public Domain.Enums.PaymentMethod PaymentMethodId { get; set; }
+        [ForeignKey(nameof(PaymentMethodId))]
+        public Domain.Models.EnumModels.PaymentMethod? PaymentMethod { get; set; }
         public Guid? LoyalPointsHistoryId { get; set; }
         [ForeignKey(nameof(LoyalPointsHistoryId))]
         public LoyalPointsHistory? LoyalPointsHistory { get; set; }
