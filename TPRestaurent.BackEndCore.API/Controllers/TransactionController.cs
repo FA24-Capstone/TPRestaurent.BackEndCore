@@ -28,17 +28,17 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.CreatePayment(paymentRequest);
         }
 
-        //[HttpGet("get-all-payment/{pageIndex}/{pageSize}")]
-        //public async Task<AppActionResult> GetAllPayment(Domain.Enums.TransationStatus transationStatus, int pageIndex = 1, int pageSize = 10)
-        //{
-        //    return await _service.GetAllPayment(pageIndex, pageSize, transationStatus);
-        //}
+        [HttpGet("get-all-payment/{pageIndex}/{pageSize}")]
+        public async Task<AppActionResult> GetAllPayment(Domain.Enums.TransationStatus? transationStatus, int pageIndex = 1, int pageSize = 10)
+        {
+            return await _service.GetAllTransaction(transationStatus, pageIndex, pageSize);
+        }
 
-        //[HttpGet("get-payment-by-id/{paymentId}")]
-        //public async Task<AppActionResult> GetPaymentById(Guid paymentId)
-        //{
-        //    return await _service.GetPaymentById(paymentId);
-        //}
+        [HttpGet("get-payment-by-id/{paymentId}")]
+        public async Task<AppActionResult> GetPaymentById(Guid paymentId)
+        {
+            return await _service.GetTransactionById(paymentId);
+        }
 
 
         [HttpPut("update-transaction-Status/{transactionId}/{transactionStatus}")]

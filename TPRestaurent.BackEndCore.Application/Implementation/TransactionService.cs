@@ -3,6 +3,7 @@ using MailKit.Search;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
+using NPOI.SS.Formula.Functions;
 using OfficeOpenXml.Style;
 using RestSharp;
 using System;
@@ -74,33 +75,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         switch (paymentRequest.PaymentMethod)
                         {
                             case Domain.Enums.PaymentMethod.VNPAY:
-                                //if (paymentRequest.ReservationId.HasValue)
-                                //{
-                                //    var reservationDb = await reservationRepository!.GetByExpression(p => p.ReservationId == paymentRequest.ReservationId, p => p.CustomerInfo!.Account!);
-
-                                //    transaction = new Transaction
-                                //    {
-                                //        Id = Guid.NewGuid(),
-                                //        Amount = reservationDb.Deposit,
-                                //        PaymentMethodId = Domain.Enums.PaymentMethod.VNPAY,
-                                //        ReservationId = reservationDb.ReservationId,
-                                //        Date = utility!.GetCurrentDateTimeInTimeZone()
-                                //    };
-
-                                //    PaymentInformationRequest paymentInformationRequest = new Common.DTO.Payment.PaymentRequest.PaymentInformationRequest
-                                //    {
-                                //        ReservationID = reservationDb.ReservationId.ToString(),
-                                //        Amount = reservationDb.Deposit,
-                                //        CustomerName = reservationDb.CustomerInfo.Name,
-                                //        AccountID = reservationDb.CustomerInfo.AccountId,
-                                //        PaymentMethod = paymentRequest.PaymentMethod,
-                                //    };
-
-                                //    await _repository.Insert(transaction);
-                                //    paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest, context);
-
-                                //    result.Result = paymentUrl;
-                                //}
                                 if (paymentRequest.OrderId.HasValue)
                                 {
                                     var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
@@ -115,156 +89,53 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                     var paymentInformationRequest = new PaymentInformationRequest
                                     {
-                                        OrderID = orderDb.OrderId.ToString(),
+                                        TransactionID  = transaction.Id.ToString(),
                                         PaymentMethod = paymentRequest.PaymentMethod,
                                         Amount = (double)(orderDb.TotalAmount > 0 ? orderDb.TotalAmount : orderDb.Deposit),
                                         CustomerName = orderDb!.Account!.LastName,
                                         AccountID = orderDb.AccountId,
                                     };
 
-
                                     await _repository.Insert(transaction);
                                     paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest);
 
                                     result.Result = paymentUrl;
                                 }
-                                //else if (paymentRequest.StoreCreditId.HasValue)
-                                //{
-                                //    if (paymentRequest.StoreCreditAmount.HasValue)
-                                //    {
-                                //        var storeCreditDb = await storeCreditRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p.Account!);
-                                //        if (storeCreditDb == null)
-                                //        {
-                                //            result = BuildAppActionResultError(result, $"Khong tìm thấy thông tin ví với id {paymentRequest.StoreCreditId}");
-                                //            return result;
-                                //        }
+                                else if (paymentRequest.StoreCreditId.HasValue)
+                                {
+                                    if (paymentRequest.StoreCreditAmount.HasValue)
+                                    {
+                                        var storeCreditDb = await storeCreditRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p.Account!);
+                                        transaction = new Transaction
+                                        {
+                                            Id = Guid.NewGuid(),
+                                            Amount = (double)(paymentRequest.StoreCreditAmount),
+                                            PaymentMethodId = Domain.Enums.PaymentMethod.VNPAY,
+                                            StoreCreditId = paymentRequest.StoreCreditId,
+                                            Date = utility!.GetCurrentDateTimeInTimeZone()
+                                        };
 
-                                //        var storeCreditHistory = new StoreCreditHistory
-                                //        {
-                                //            StoreCreditHistoryId = Guid.NewGuid(),
-                                //            IsInput = true,
-                                //            Date = utility!.GetCurrentDateTimeInTimeZone(),
-                                //            Amount = paymentRequest.StoreCreditAmount.Value,
-                                //            StoreCreditId = paymentRequest.StoreCreditId.Value,
-                                //        };
+                                        var paymentInformationRequest = new PaymentInformationRequest
+                                        {
+                                            TransactionID = transaction.Id.ToString(),
+                                            PaymentMethod = paymentRequest.PaymentMethod,
+                                            Amount = (double)paymentRequest.StoreCreditAmount,
+                                            CustomerName = storeCreditDb!.Account!.LastName,
+                                            AccountID = storeCreditDb.AccountId,
+                                        };
 
-                                //        await storeCreditHistoryRepository.Insert(storeCreditHistory);
-                                //        await _unitOfWork.SaveChangesAsync();
+                                        await _repository.Insert(transaction);
+                                        paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest);
 
-                                //        transaction = new Transaction
-                                //        {
-                                //            Id = Guid.NewGuid(),
-                                //            Amount = paymentRequest.StoreCreditAmount.Value,
-                                //            PaymentMethodId = Domain.Enums.PaymentMethod.VNPAY,
-                                //            StoreCreditHistoryId = storeCreditHistory.StoreCreditHistoryId,
-                                //            Date = utility!.GetCurrentDateTimeInTimeZone()
-                                //        };
-
-                                //        storeCreditHistory.TransactionId = transaction.Id;
-
-                                //        var paymentInformationRequest = new PaymentInformationRequest
-                                //        {
-                                //            TransactionID = transaction.Id.ToString(),
-                                //            PaymentMethod = paymentRequest.PaymentMethod,
-                                //            Amount = paymentRequest.StoreCreditAmount.Value,
-                                //            CustomerName = "",
-                                //            AccountID = storeCreditDb!.AccountId,
-                                //        };
-
-
-                                //        await _repository.Insert(transaction);
-                                //        await storeCreditHistoryRepository.Update(storeCreditHistory);
-                                //        paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest, context);
-
-                                //        result.Result = paymentUrl;
-                                //    }
-                                //}
+                                        result.Result = paymentUrl;
+                                    }
+                                }
                                 break;
 
                             case Domain.Enums.PaymentMethod.MOMO:
-
-                                //if (paymentRequest.ReservationId.HasValue)
-                                //{
-                                //    var reservationDb = await reservationRepository!.GetByExpression(p => p.ReservationId == paymentRequest.ReservationId, p => p.CustomerInfo!.Account!);
-
-                                //    transaction = new Transaction
-                                //    {
-                                //        Id = Guid.NewGuid(),
-                                //        Amount = reservationDb.Deposit,
-                                //        PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
-                                //        ReservationId = reservationDb.ReservationId,
-                                //        Date = utility!.GetCurrentDateTimeInTimeZone()
-                                //    };
-
-                                //    var paymentInformationRequest = new PaymentInformationRequest
-                                //    {
-                                //        ReservationID = reservationDb.ReservationId.ToString(),
-                                //        PaymentMethod = paymentRequest.PaymentMethod,
-                                //        Amount = reservationDb.Deposit,
-                                //        CustomerName = reservationDb.CustomerInfo!.Name,
-                                //        AccountID = reservationDb.CustomerInfo.AccountId,
-                                //    };
-
-                                //    string endpoint = _momoConfiguration.Api;
-                                //    string partnerCode = _momoConfiguration.PartnerCode;
-                                //    string accessKey = _momoConfiguration.AccessKey;
-                                //    string secretkey = _momoConfiguration.Secretkey;
-                                //    string orderInfo = hasingService.Hashing("RE", key);
-                                //    string redirectUrl = $"{_momoConfiguration.RedirectUrl}/{transaction.ReservationId}";
-                                //    string ipnUrl = _momoConfiguration.IPNUrl;
-                                //    string requestType = "captureWallet";
-
-                                //    string amount = Math.Ceiling(transaction.Amount).ToString();
-                                //    string orderId = Guid.NewGuid().ToString();
-                                //    string requestId = Guid.NewGuid().ToString();
-                                //    string extraData = transaction.ReservationId.ToString();
-
-                                //    string rawHash = "accessKey=" + accessKey +
-                                //                     "&amount=" + amount +
-                                //                     "&extraData=" + extraData +
-                                //                     "&ipnUrl=" + ipnUrl +
-                                //                     "&orderId=" + orderId +
-                                //                     "&orderInfo=" + orderInfo +
-                                //                     "&partnerCode=" + partnerCode +
-                                //                     "&redirectUrl=" + redirectUrl +
-                                //                     "&requestId=" + requestId +
-                                //                     "&requestType=" + requestType;
-
-                                //    MomoSecurity crypto = new MomoSecurity();
-                                //    string signature = crypto.signSHA256(rawHash, secretkey);
-
-                                //    JObject message = new JObject
-                                //{
-                                //    { "partnerCode", partnerCode },
-                                //    { "partnerName", "Test" },
-                                //    { "storeId", "MomoTestStore" },
-                                //    { "requestId", requestId },
-                                //    { "amount", amount },
-                                //    { "orderId", orderId },
-                                //    { "orderInfo", orderInfo },
-                                //    { "redirectUrl", redirectUrl },
-                                //    { "ipnUrl", ipnUrl },
-                                //    { "lang", "en" },
-                                //    { "extraData", extraData },
-                                //    { "requestType", requestType },
-                                //    { "signature", signature }
-                                //};
-
-                                //    var client = new RestClient();
-                                //    var request = new RestRequest(endpoint, Method.Post);
-                                //    request.AddJsonBody(message.ToString());
-                                //    RestResponse response = await client.ExecuteAsync(request);
-                                //    if (response.StatusCode == HttpStatusCode.OK)
-                                //    {
-                                //        JObject jmessage = JObject.Parse(response.Content);
-                                //        await _repository.Insert(transaction);
-                                //        result.Result = jmessage.GetValue("payUrl").ToString();
-                                //    }
-                                //}
                                 if (paymentRequest.OrderId.HasValue)
                                 {
                                     var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
-
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
@@ -283,7 +154,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     string requestType = "payWithATM";
 
                                     string amount = Math.Ceiling(transaction.Amount).ToString();
-                                    string orderId = Guid.NewGuid().ToString();
                                     string requestId = Guid.NewGuid().ToString();
                                     string extraData = transaction.OrderId.ToString();
 
@@ -291,7 +161,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                      "&amount=" + amount +
                                                      "&extraData=" + extraData +
                                                      "&ipnUrl=" + ipnUrl +
-                                                     "&orderId=" + orderId +
+                                                     "&orderId=" + transaction.Id +
                                                      "&orderInfo=" + orderInfo +
                                                      "&partnerCode=" + partnerCode +
                                                      "&redirectUrl=" + redirectUrl +
@@ -308,7 +178,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     { "storeId", "MomoTestStore" },
                                     { "requestId", requestId },
                                     { "amount", amount },
-                                    { "orderId", orderId },
+                                    { "orderId", transaction.Id },
                                     { "orderInfo", orderInfo },
                                     { "redirectUrl", redirectUrl },
                                     { "ipnUrl", ipnUrl },
@@ -329,118 +199,81 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         result.Result = jmessage.GetValue("payUrl").ToString();
                                     }
                                 }
-                                //else if (paymentRequest.StoreCreditId.HasValue)
-                                //{
-                                //    if (paymentRequest.StoreCreditAmount.HasValue)
-                                //    {
-                                //        var storeCreditDb = await storeCreditHistoryRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p.StoreCredit!.Account!);
+                                else if (paymentRequest.StoreCreditId.HasValue)
+                                {
+                                    if(paymentRequest.StoreCreditAmount > 0)
+                                    {
+                                        {
+                                            var storCreditDb = await storeCreditRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p.Account!);
+                                            transaction = new Transaction
+                                            {
+                                                Id = Guid.NewGuid(),
+                                                Amount = (double)(paymentRequest.StoreCreditAmount),
+                                                PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
+                                                StoreCreditId = storCreditDb.StoreCreditId,
+                                                Date = utility!.GetCurrentDateTimeInTimeZone()
+                                            };
+                                            string endpoint = _momoConfiguration.Api;
+                                            string partnerCode = _momoConfiguration.PartnerCode;
+                                            string accessKey = _momoConfiguration.AccessKey;
+                                            string secretkey = _momoConfiguration.Secretkey;
+                                            string orderInfo = hasingService.Hashing("OR", key);
+                                            string redirectUrl = $"{_momoConfiguration.RedirectUrl}/{transaction.OrderId}";
+                                            string ipnUrl = _momoConfiguration.IPNUrl;
+                                            string requestType = "payWithATM";
 
-                                //        if (storeCreditDb == null)
-                                //        {
-                                //            result = BuildAppActionResultError(result, $"Khong tìm thấy thông tin ví với id {paymentRequest.StoreCreditId}");
-                                //            return result;
-                                //        }
+                                            string amount = Math.Ceiling(transaction.Amount).ToString();
+                                            string requestId = Guid.NewGuid().ToString();
+                                            string extraData = transaction.OrderId.ToString();
 
-                                //        var storeCreditHistory = new StoreCreditHistory
-                                //        {
-                                //            StoreCreditHistoryId = Guid.NewGuid(),
-                                //            IsInput = true,
-                                //            Date = utility!.GetCurrentDateTimeInTimeZone(),
-                                //            Amount = paymentRequest.StoreCreditAmount.Value,
-                                //            StoreCreditId = paymentRequest.StoreCreditId.Value,
-                                //        };
+                                            string rawHash = "accessKey=" + accessKey +
+                                                             "&amount=" + amount +
+                                                             "&extraData=" + extraData +
+                                                             "&ipnUrl=" + ipnUrl +
+                                                             "&orderId=" + transaction.Id +
+                                                             "&orderInfo=" + orderInfo +
+                                                             "&partnerCode=" + partnerCode +
+                                                             "&redirectUrl=" + redirectUrl +
+                                                             "&requestId=" + requestId +
+                                                             "&requestType=" + requestType;
 
-                                //        await storeCreditHistoryRepository.Insert(storeCreditHistory);
-                                //        await _unitOfWork.SaveChangesAsync();
+                                            MomoSecurity crypto = new MomoSecurity();
+                                            string signature = crypto.signSHA256(rawHash, secretkey);
 
-                                //        transaction = new Transaction
-                                //        {
-                                //            Id = Guid.NewGuid(),
-                                //            Amount = paymentRequest.StoreCreditAmount.Value,
-                                //            PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
-                                //            StoreCreditHistoryId = storeCreditDb.StoreCreditHistoryId,
-                                //            Date = utility!.GetCurrentDateTimeInTimeZone()
-                                //        };
+                                            JObject message = new JObject
+                                {
+                                    { "partnerCode", partnerCode },
+                                    { "partnerName", "Test" },
+                                    { "storeId", "MomoTestStore" },
+                                    { "requestId", requestId },
+                                    { "amount", amount },
+                                    { "orderId", transaction.Id },
+                                    { "orderInfo", orderInfo },
+                                    { "redirectUrl", redirectUrl },
+                                    { "ipnUrl", ipnUrl },
+                                    { "lang", "en" },
+                                    { "extraData", extraData },
+                                    { "requestType", requestType },
+                                    { "signature", signature }
+                                };
 
-                                //        storeCreditHistory.TransactionId = transaction.Id;
-
-                                //        string endpoint = _momoConfiguration.Api;
-                                //        string partnerCode = _momoConfiguration.PartnerCode;
-                                //        string accessKey = _momoConfiguration.AccessKey;
-                                //        string secretkey = _momoConfiguration.Secretkey;
-                                //        string orderInfo = hasingService.Hashing($"CR_{transaction.Id}", key);
-                                //        string redirectUrl = $"{_momoConfiguration.RedirectUrl}/{transaction.OrderId}";
-                                //        string ipnUrl = _momoConfiguration.IPNUrl;
-                                //        string requestType = "captureWallet";
-
-                                //        string amount = Math.Ceiling(transaction.Amount).ToString();
-                                //        string orderId = Guid.NewGuid().ToString();
-                                //        string requestId = Guid.NewGuid().ToString();
-                                //        string extraData = transaction.OrderId.ToString();
-
-                                //        string rawHash = "accessKey=" + accessKey +
-                                //                         "&amount=" + amount +
-                                //                         "&extraData=" + extraData +
-                                //                         "&ipnUrl=" + ipnUrl +
-                                //                         "&orderId=" + orderId +
-                                //                         "&orderInfo=" + orderInfo +
-                                //                         "&partnerCode=" + partnerCode +
-                                //                         "&redirectUrl=" + redirectUrl +
-                                //                         "&requestId=" + requestId +
-                                //                         "&requestType=" + requestType;
-
-                                //        MomoSecurity crypto = new MomoSecurity();
-                                //        string signature = crypto.signSHA256(rawHash, secretkey);
-
-                                //        JObject message = new JObject
-                                //{
-                                //    { "partnerCode", partnerCode },
-                                //    { "partnerName", "Test" },
-                                //    { "storeId", "MomoTestStore" },
-                                //    { "requestId", requestId },
-                                //    { "amount", amount },
-                                //    { "orderId", orderId },
-                                //    { "orderInfo", orderInfo },
-                                //    { "redirectUrl", redirectUrl },
-                                //    { "ipnUrl", ipnUrl },
-                                //    { "lang", "en" },
-                                //    { "extraData", extraData },
-                                //    { "requestType", requestType },
-                                //    { "signature", signature }
-                                //};
-
-                                //        var client = new RestClient();
-                                //        var request = new RestRequest(endpoint, Method.Post);
-                                //        request.AddJsonBody(message.ToString());
-                                //        RestResponse response = await client.ExecuteAsync(request);
-                                //        if (response.StatusCode == HttpStatusCode.OK)
-                                //        {
-                                //            JObject jmessage = JObject.Parse(response.Content);
-                                //            await _repository.Insert(transaction);
-                                //            await storeCreditHistoryRepository.Update(storeCreditHistory);
-                                //            result.Result = jmessage.GetValue("payUrl").ToString();
-                                //        }
-                                //    }
-                                //}
+                                            var client = new RestClient();
+                                            var request = new RestRequest(endpoint, Method.Post);
+                                            request.AddJsonBody(message.ToString());
+                                            RestResponse response = await client.ExecuteAsync(request);
+                                            if (response.StatusCode == HttpStatusCode.OK)
+                                            {
+                                                JObject jmessage = JObject.Parse(response.Content);
+                                                await _repository.Insert(transaction);
+                                                result.Result = jmessage.GetValue("payUrl").ToString();
+                                            }
+                                        }
+                                    }
+                                }
                                 break;
 
                             default:
-                                // Handle other payment methods if needed
-                                //if (paymentRequest.ReservationId.HasValue)
-                                //{
-                                //    var reservationDb = await reservationRepository!.GetByExpression(p => p.ReservationId == paymentRequest.ReservationId, p => p.CustomerInfo!.Account!);
-
-                                //    transaction = new Transaction
-                                //    {
-                                //        Id = Guid.NewGuid(),
-                                //        Amount = reservationDb.Deposit,
-                                //        PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
-                                //        ReservationId = reservationDb.ReservationId,
-                                //        Date = utility!.GetCurrentDateTimeInTimeZone()
-                                //    };
-                                //    await _repository.Insert(transaction);
-                                //    result.Result = transaction;
-                                //}
+                                
                                 if (paymentRequest.OrderId.HasValue)
                                 {
                                     var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
@@ -456,47 +289,30 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     await _repository.Insert(transaction);
                                     result.Result = transaction;
                                 }
-                                //else if (paymentRequest.StoreCreditId.HasValue)
-                                //{
-                                //    if (paymentRequest.StoreCreditAmount.HasValue)
-                                //    {
-                                //        var storeCreditDb = await storeCreditRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p.Account!);
+                                else if (paymentRequest.StoreCreditId.HasValue)
+                                {
+                                    if (paymentRequest.StoreCreditAmount.HasValue)
+                                    {
+                                        var storeCreditDb = await storeCreditRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p.Account!);
 
-                                //        if (storeCreditDb == null)
-                                //        {
-                                //            result = BuildAppActionResultError(result, $"Khong tìm thấy thông tin ví với id {paymentRequest.StoreCreditId}");
-                                //            return result;
-                                //        }
+                                        if (storeCreditDb == null)
+                                        {
+                                            result = BuildAppActionResultError(result, $"Khong tìm thấy thông tin ví với id {paymentRequest.StoreCreditId}");
+                                            return result;
+                                        }
 
-                                //        var storeCreditHistory = new StoreCreditHistory
-                                //        {
-                                //            StoreCreditHistoryId = Guid.NewGuid(),
-                                //            IsInput = true,
-                                //            Date = utility!.GetCurrentDateTimeInTimeZone(),
-                                //            Amount = paymentRequest.StoreCreditAmount.Value,
-                                //            StoreCreditId = paymentRequest.StoreCreditId.Value,
-                                //        };
-
-                                //        await storeCreditHistoryRepository.Insert(storeCreditHistory);
-                                //        await _unitOfWork.SaveChangesAsync();
-
-                                //        transaction = new Transaction
-                                //        {
-                                //            Id = Guid.NewGuid(),
-                                //            Amount = paymentRequest.StoreCreditAmount.Value,
-                                //            PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
-                                //            StoreCreditHistoryId = storeCreditHistory.StoreCreditId,
-                                //            Date = utility!.GetCurrentDateTimeInTimeZone()
-                                //        };
-
-                                //        storeCreditHistory.TransactionId = transaction.Id;
-
-
-                                //        await _repository.Insert(transaction);
-                                //        await storeCreditHistoryRepository.Update(storeCreditHistory);
-                                //        result.Result = transaction;
-                                //    }
-                                //}
+                                        transaction = new Transaction
+                                        {
+                                            Id = Guid.NewGuid(),
+                                            Amount = paymentRequest.StoreCreditAmount.Value,
+                                            PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
+                                            StoreCreditId = storeCreditDb.StoreCreditId,
+                                            Date = utility!.GetCurrentDateTimeInTimeZone()
+                                        };
+                                        await _repository.Insert(transaction);
+                                        result.Result = transaction;
+                                    }
+                                }
                                 break;
                         }
                     }
@@ -540,9 +356,34 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //    return result;
         //}
 
-        public Task<AppActionResult> GetAllTransaction(int pageNumber, int pageSize)
+        public async Task<AppActionResult> GetAllTransaction(Domain.Enums.TransationStatus? transactionStatus, int pageNumber, int pageSize)
         {
-            throw new NotImplementedException();
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var transactionDb = await _repository.GetAllDataByExpression(t => !transactionStatus.HasValue || (transactionStatus.HasValue && transactionStatus.Value == t.TransationStatusId), pageNumber, pageSize, null, false , t => t.StoreCredit, t => t.Order);
+                result.Result = transactionDb;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetTransactionById(Guid paymentId)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var transactionDb = await _repository.GetByExpression(t => t.Id == paymentId, t => t.StoreCredit, t => t.Order);
+                result.Result = transactionDb;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         }
 
         //public async Task<AppActionResult> GetPaymentById(Guid paymentId)
@@ -570,14 +411,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var transactionDb = await _repository.GetById(transactionId);
-                if(transactionDb.TransationStatusId == TransationStatus.PENDING && transactionStatus != TransationStatus.PENDING)
+                if(transactionDb.TransationStatusId == TransationStatus.PENDING && transactionStatus != TransationStatus.PENDING && transactionStatus != TransationStatus.APPLIED)
                 {
                     transactionDb.TransationStatusId = transactionStatus;
                     await _repository.Update(transactionDb);
+                    if (transactionDb.OrderId.HasValue)
+                    {
+                        var orderService = Resolve<IOrderService>();
+                        await orderService.ChangeOrderStatus(transactionDb.OrderId.Value, transactionStatus == TransationStatus.SUCCESSFUL);
+                    }
                     await _unitOfWork.SaveChangesAsync();
                 } else
                 {
-                    result = BuildAppActionResultError(result, $"Để cập nhật, Trạn thanh toán phải chờ xử l1 và trạng thái mong muốn phải khác chờ xử lí");
+                    result = BuildAppActionResultError(result, $"Để cập nhật, Trạn thanh toán phải chờ xử lí và trạng thái mong muốn phải khác chờ xử lí");
                 }
             }
             catch (Exception ex)
