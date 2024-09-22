@@ -19,6 +19,7 @@ using TPRestaurent.BackEndCore.Common.ConfigurationModel;
 using TPRestaurent.BackEndCore.Common.DTO.Payment.PaymentLibrary;
 using TPRestaurent.BackEndCore.Common.DTO.Payment.PaymentRequest;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
+using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
@@ -376,8 +377,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var transactionDb = await _repository.GetByExpression(t => t.Id == paymentId, t => t.StoreCredit, t => t.Order);
-                result.Result = transactionDb;
+                var data = new TransactionReponse();
+                var transactionDb = await _repository.GetByExpression(t => t.Id == paymentId, t => t.StoreCredit);
+                data.Transaction = transactionDb;
+                if (transactionDb.OrderId.HasValue)
+                {
+                    var orderService = Resolve<IOrderService>();
+                    var order = await orderService.GetAllReservationDetail(transactionDb.OrderId.Value);
+                    data.Order = order.Result as ReservationReponse;
+                }
+                result.Result = data;
             }
             catch (Exception ex)
             {
