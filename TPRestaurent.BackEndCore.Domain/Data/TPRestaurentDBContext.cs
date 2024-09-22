@@ -110,6 +110,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             SeedEnumTable<Models.EnumModels.TransationStatus, Enums.TransationStatus>(builder, enums);
             SeedEnumTable<Models.EnumModels.OrderDetailStatus, Enums.OrderDetailStatus>(builder, enums);
             SeedEnumTable<Models.EnumModels.OrderType, Enums.OrderType>(builder, enums);
+            SeedEnumTable<Models.EnumModels.TransactionType, Enums.TransactionType>(builder, enums);
         }
 
         private static void SeedEnumTable<TEntity, TEnum>(ModelBuilder modelBuilder, IConfiguration enums)
