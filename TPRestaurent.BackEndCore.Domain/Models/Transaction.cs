@@ -16,6 +16,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid Id { get; set; }
         public double Amount { get; set; }
         public DateTime Date { get; set; }
+        public DateTime? PaidDate { get; set; }
         public Enums.PaymentMethod PaymentMethodId { get; set; }
         [ForeignKey(nameof(PaymentMethodId))]
         public PaymentMethod? PaymentMethod { get; set; }
