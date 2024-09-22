@@ -60,6 +60,9 @@
     "FOUR": "4",
     "SIX": "6",
     "EIGHT": "8",
-    "TEN": "10"
+    "TEN": "10",
+    "Deposit": "Đặt cọc",
+    "Order": "Đơn",
+    "CreditStore":  "Nạp tài khoản"
   }
 }
