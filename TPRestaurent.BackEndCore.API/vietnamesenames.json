@@ -63,8 +63,6 @@
     "TEN": "10",
     "Deposit": "Đặt cọc",
     "Order": "Đơn",
-    "CreditStore": "Nạp tài khoản",
-    "PreOrder":  "Đã đặt trước",
-    "Confirmed":  "Xác nhận"
+    "CreditStore":  "Nạp tài khoản"
   }
 }
