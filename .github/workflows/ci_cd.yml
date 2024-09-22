@@ -75,13 +75,7 @@ jobs:
         registryUrl: docker.io
         registryUsername: ${{ secrets.DOCKER_HUB_USERNAME }}
         registryPassword: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-    - name: Azure Container Apps Logs
-      if: always()
-      run: |
-        echo "Container App Revision Details:"
-        az containerapp revision list --name ${{ env.AZURE_CONTAINER_APP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --output yaml
-        echo "Container App Logs:"
-        az containerapp logs show --name ${{ env.AZURE_CONTAINER_APP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --follow
+    
     - name: Azure logout
       run: az logout
       if: always()
