@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
-    [Route("prelist-order")]
-    [ApiController]
-    public class PrelistOrderController : ControllerBase
-    {
-    }
+    //[Route("prelist-order")]
+    //[ApiController]
+    //public class PrelistOrderController : ControllerBase
+    //{
+    //}
 }
