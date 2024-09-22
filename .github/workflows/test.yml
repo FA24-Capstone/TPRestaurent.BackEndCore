@@ -58,7 +58,7 @@ jobs:
       uses: azure/container-apps-deploy-action@v1
       with:
         appSourcePath: ${{ github.workspace }}
-        acrName: ${{ secrets.AZURE_CONTAINER_REGISTRY }}
+        acrName: ${{ env.AZURE_CONTAINER_APP_NAME }}
         containerAppName: ${{ env.AZURE_CONTAINER_APP_NAME }}
         resourceGroup: ${{ env.AZURE_RESOURCE_GROUP }}
         imageToDeploy: ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
