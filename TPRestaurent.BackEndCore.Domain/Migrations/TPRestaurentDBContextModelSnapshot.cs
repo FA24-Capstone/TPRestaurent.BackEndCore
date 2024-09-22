@@ -569,6 +569,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("PreparationTime")
+                        .HasColumnType("int");
+
                     b.Property<bool>("isAvailable")
                         .HasColumnType("bit");
 
@@ -889,6 +892,23 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                             Name = "Cancelled",
                             VietnameseName = "Đã Huỷ"
                         });
+                });
+
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.OrderSessionStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("VietnameseName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OrderSessionStatus");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.OrderStatus", b =>
@@ -1401,6 +1421,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid>("OrderId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("OrderSessionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("OrderTime")
                         .HasColumnType("datetime2");
 
@@ -1423,7 +1446,31 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.HasIndex("OrderId");
 
+                    b.HasIndex("OrderSessionId");
+
                     b.ToTable("OrderDetails");
+                });
+
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.OrderSession", b =>
+                {
+                    b.Property<Guid>("OrderSessionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("OrderSessionNumber")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OrderSessionStatusId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("OrderSessionTime")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("OrderSessionId");
+
+                    b.HasIndex("OrderSessionStatusId");
+
+                    b.ToTable("OrderSession");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.OTP", b =>
@@ -2000,6 +2047,10 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.OrderSession", "OrderSession")
+                        .WithMany()
+                        .HasForeignKey("OrderSessionId");
+
                     b.Navigation("Combo");
 
                     b.Navigation("DishSizeDetail");
@@ -2007,6 +2058,19 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Navigation("Order");
 
                     b.Navigation("OrderDetailStatus");
+
+                    b.Navigation("OrderSession");
+                });
+
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.OrderSession", b =>
+                {
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.OrderSessionStatus", "OrderSessionStatus")
+                        .WithMany()
+                        .HasForeignKey("OrderSessionStatusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OrderSessionStatus");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.OTP", b =>

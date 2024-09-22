@@ -17,5 +17,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> UpdateDish(UpdateDishRequestDto dto);
         public Task<AppActionResult> DeleteDish(Guid dishId);
         public Task<AppActionResult> GetAllDishType(int pageNumber, int pagesize);
+        public Task<AppActionResult> UpdateInactiveADish(Guid dishId);
     }
 }

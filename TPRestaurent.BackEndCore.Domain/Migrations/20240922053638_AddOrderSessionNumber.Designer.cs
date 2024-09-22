@@ -12,8 +12,8 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    [Migration("20240915051403_Initial")]
-    partial class Initial
+    [Migration("20240922053638_AddOrderSessionNumber")]
+    partial class AddOrderSessionNumber
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -212,9 +212,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("CustomerId")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime?>("DOB")
                         .HasColumnType("datetime2");
 
@@ -224,6 +221,10 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool?>("Gender")
                         .HasColumnType("bit");
@@ -237,6 +238,10 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<bool>("IsVerified")
                         .HasColumnType("bit");
 
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -245,10 +250,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.Property<int>("LoyaltyPoint")
                         .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -268,12 +269,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<string>("RefreshToken")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("RefreshTokenExpiryTime")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
@@ -283,9 +278,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("VerifyCode")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -578,6 +570,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("PreparationTime")
+                        .HasColumnType("int");
 
                     b.Property<bool>("isAvailable")
                         .HasColumnType("bit");
@@ -899,6 +894,23 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                             Name = "Cancelled",
                             VietnameseName = "Đã Huỷ"
                         });
+                });
+
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.OrderSessionStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("VietnameseName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OrderSessionStatus");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.OrderStatus", b =>
@@ -1411,6 +1423,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid>("OrderId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("OrderSessionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("OrderTime")
                         .HasColumnType("datetime2");
 
@@ -1433,7 +1448,31 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.HasIndex("OrderId");
 
+                    b.HasIndex("OrderSessionId");
+
                     b.ToTable("OrderDetails");
+                });
+
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.OrderSession", b =>
+                {
+                    b.Property<Guid>("OrderSessionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("OrderSessionNumber")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OrderSessionStatusId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("OrderSessionTime")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("OrderSessionId");
+
+                    b.HasIndex("OrderSessionStatusId");
+
+                    b.ToTable("OrderSession");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.OTP", b =>
@@ -2010,6 +2049,10 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.OrderSession", "OrderSession")
+                        .WithMany()
+                        .HasForeignKey("OrderSessionId");
+
                     b.Navigation("Combo");
 
                     b.Navigation("DishSizeDetail");
@@ -2017,6 +2060,19 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Navigation("Order");
 
                     b.Navigation("OrderDetailStatus");
+
+                    b.Navigation("OrderSession");
+                });
+
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.OrderSession", b =>
+                {
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.OrderSessionStatus", "OrderSessionStatus")
+                        .WithMany()
+                        .HasForeignKey("OrderSessionStatusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OrderSessionStatus");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.OTP", b =>
