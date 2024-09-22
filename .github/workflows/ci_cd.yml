@@ -72,7 +72,7 @@ jobs:
         containerAppName: ${{ env.AZURE_CONTAINER_APP_NAME }}
         resourceGroup: ${{ env.AZURE_RESOURCE_GROUP }}
         imageToDeploy: ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
-        registryUrl: https://index.docker.io
+        registryUrl: docker.io
         registryUsername: ${{ secrets.DOCKER_HUB_USERNAME }}
         registryPassword: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
     - name: Azure Container Apps Logs
@@ -85,5 +85,4 @@ jobs:
     - name: Azure logout
       run: az logout
       if: always()
-
  
