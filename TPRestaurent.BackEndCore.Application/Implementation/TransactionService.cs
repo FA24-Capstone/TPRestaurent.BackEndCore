@@ -96,7 +96,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         AccountID = orderDb.AccountId,
                                     };
 
-
                                     await _repository.Insert(transaction);
                                     paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest);
 
@@ -124,7 +123,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             CustomerName = storeCreditDb!.Account!.LastName,
                                             AccountID = storeCreditDb.AccountId,
                                         };
-
 
                                         await _repository.Insert(transaction);
                                         paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest);
@@ -413,7 +411,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var transactionDb = await _repository.GetById(transactionId);
-                if(transactionDb.TransationStatusId == TransationStatus.PENDING && transactionStatus != TransationStatus.PENDING)
+                if(transactionDb.TransationStatusId == TransationStatus.PENDING && transactionStatus != TransationStatus.PENDING && transactionStatus != TransationStatus.APPLIED)
                 {
                     transactionDb.TransationStatusId = transactionStatus;
                     await _repository.Update(transactionDb);
@@ -425,7 +423,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await _unitOfWork.SaveChangesAsync();
                 } else
                 {
-                    result = BuildAppActionResultError(result, $"Để cập nhật, Trạn thanh toán phải chờ xử l1 và trạng thái mong muốn phải khác chờ xử lí");
+                    result = BuildAppActionResultError(result, $"Để cập nhật, Trạn thanh toán phải chờ xử lí và trạng thái mong muốn phải khác chờ xử lí");
                 }
             }
             catch (Exception ex)

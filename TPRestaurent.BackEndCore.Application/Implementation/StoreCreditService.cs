@@ -62,7 +62,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     //Validate in transaction
                     var transactionRepository = Resolve<IGenericRepository<Transaction>>();
-                    var transactionDb = await transactionRepository.GetByExpression(t => t.Id == transactionId && t.TransationStatusId == Domain.Enums.TransationStatus.SUCCESSFUL, null);
+                    var transactionDb = await transactionRepository.GetByExpression(t => t.Id == transactionId && t.TransationStatusId == Domain.Enums.TransationStatus.SUCCESSFUL, t => t.StoreCredit);
                     if (transactionDb == null || !transactionDb.StoreCreditId.HasValue)
                     {
                         return BuildAppActionResultError(result, $"Không tìm thấy thông tin giao dịch cho việc nộp ví");
@@ -70,7 +70,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     if (transactionDb.TransationStatusId == Domain.Enums.TransationStatus.APPLIED)
                     {
-                        return BuildAppActionResultError(result, $"Giao dịch với id {transactionId} không được áp dụng cho bất kì lịch sử nạp ví nào");
+                        return BuildAppActionResultError(result, $"Giao dịch với id {transactionId} đã được cập nhật vào ví");
                     }
 
                     transactionDb.StoreCredit.Amount += transactionDb.Amount;

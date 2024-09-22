@@ -43,6 +43,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 urlCallBack = $"{_configuration["Vnpay:ReturnUrl"]}/{requestDto.OrderID}";
             }
+            else
+            {
+                urlCallBack = $"{_configuration["Vnpay:ReturnUrl"]}/{requestDto.TransactionID}";
+            }
 
             pay.AddRequestData("vnp_Version", _configuration["Vnpay:Version"]);
             pay.AddRequestData("vnp_Command", _configuration["Vnpay:Command"]);
@@ -52,13 +56,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             pay.AddRequestData("vnp_CurrCode", _configuration["Vnpay:CurrCode"]);
             pay.AddRequestData("vnp_IpAddr", pay.GenerateRandomIPAddress());
             pay.AddRequestData("vnp_Locale", _configuration["Vnpay:Locale"]);
-            if (!string.IsNullOrEmpty(requestDto.OrderID))
-            {
-                pay.AddRequestData("vnp_OrderInfo", _hashingService.Hashing("OR", key));
-            } else
-            {
-                pay.AddRequestData("vnp_OrderInfo", _hashingService.Hashing($"CR_{requestDto.TransactionID}", key));
-            }
+            pay.AddRequestData("vnp_OrderInfo", requestDto.TransactionID);
             pay.AddRequestData("vnp_OrderType", "other");
             pay.AddRequestData("vnp_ReturnUrl", urlCallBack);
             pay.AddRequestData("vnp_TxnRef", requestDto.TransactionID);
