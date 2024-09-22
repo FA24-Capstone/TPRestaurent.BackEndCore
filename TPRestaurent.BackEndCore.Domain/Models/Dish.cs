@@ -20,6 +20,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         [ForeignKey(nameof(DishItemTypeId))]
         public EnumModels.DishItemType? DishItemType { get; set; }
         public bool isAvailable { get; set; }
+        public bool IsDeleted { get; set; }
         public int?  PreparationTime { get; set; }       
     }
 }
