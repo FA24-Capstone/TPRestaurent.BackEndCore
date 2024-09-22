@@ -423,6 +423,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if(transactionDb.TransationStatusId == TransationStatus.PENDING && transactionStatus != TransationStatus.PENDING && transactionStatus != TransationStatus.APPLIED)
                 {
                     transactionDb.TransationStatusId = transactionStatus;
+                    if(transactionStatus == TransationStatus.SUCCESSFUL)
+                    {
+                        var utility = Resolve<Utility>();
+                        transactionDb.PaidDate = utility.GetCurrentDateTimeInTimeZone();
+                    }
                     await _repository.Update(transactionDb);
                     if (transactionDb.OrderId.HasValue)
                     {
