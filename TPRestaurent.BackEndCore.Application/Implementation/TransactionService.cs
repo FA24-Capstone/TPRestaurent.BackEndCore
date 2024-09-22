@@ -85,14 +85,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         Amount = (double)(orderDb.TotalAmount > 0 ? orderDb.TotalAmount : orderDb.Deposit.Value),
                                         PaymentMethodId = Domain.Enums.PaymentMethod.VNPAY,
                                         OrderId = orderDb.OrderId,
-                                        Date = utility!.GetCurrentDateTimeInTimeZone()
+                                        Date = utility!.GetCurrentDateTimeInTimeZone(),
+                                        TransationStatusId = TransationStatus.PENDING,
+                                        TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned ? TransactionType.Deposit : TransactionType.Order
                                     };
 
                                     var paymentInformationRequest = new PaymentInformationRequest
                                     {
                                         TransactionID  = transaction.Id.ToString(),
                                         PaymentMethod = paymentRequest.PaymentMethod,
-                                        Amount = (double)(orderDb.TotalAmount > 0 ? orderDb.TotalAmount : orderDb.Deposit),
+                                        Amount = (double)(orderDb.StatusId == OrderStatus.Dining || orderDb.StatusId == OrderStatus.Delivering ? orderDb.TotalAmount : orderDb.Deposit),
                                         CustomerName = orderDb!.Account!.LastName,
                                         AccountID = orderDb.AccountId,
                                     };
@@ -113,7 +115,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             Amount = (double)(paymentRequest.StoreCreditAmount),
                                             PaymentMethodId = Domain.Enums.PaymentMethod.VNPAY,
                                             StoreCreditId = paymentRequest.StoreCreditId,
-                                            Date = utility!.GetCurrentDateTimeInTimeZone()
+                                            Date = utility!.GetCurrentDateTimeInTimeZone(),
+                                            TransationStatusId = TransationStatus.PENDING,
+                                            TransactionTypeId = TransactionType.CreditStore,
                                         };
 
                                         var paymentInformationRequest = new PaymentInformationRequest
@@ -140,11 +144,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
-                                        Amount = (double)(orderDb.TotalAmount > 0 ? orderDb.TotalAmount : orderDb.Deposit),
+                                        Amount = (double)(orderDb.StatusId == OrderStatus.Dining || orderDb.StatusId == OrderStatus.Delivering ? orderDb.TotalAmount : orderDb.Deposit),
                                         PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
                                         OrderId = orderDb.OrderId,
-                                        Date = utility!.GetCurrentDateTimeInTimeZone()
+                                        Date = utility!.GetCurrentDateTimeInTimeZone(),
+                                        TransationStatusId = TransationStatus.PENDING,
+                                        TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned ? TransactionType.Deposit : TransactionType.Order
                                     };
+
                                     string endpoint = _momoConfiguration.Api;
                                     string partnerCode = _momoConfiguration.PartnerCode;
                                     string accessKey = _momoConfiguration.AccessKey;
@@ -212,7 +219,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                 Amount = (double)(paymentRequest.StoreCreditAmount),
                                                 PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
                                                 StoreCreditId = storCreditDb.StoreCreditId,
-                                                Date = utility!.GetCurrentDateTimeInTimeZone()
+                                                Date = utility!.GetCurrentDateTimeInTimeZone(),
+                                                TransationStatusId = TransationStatus.PENDING,
+                                                TransactionTypeId = TransactionType.CreditStore
                                             };
                                             string endpoint = _momoConfiguration.Api;
                                             string partnerCode = _momoConfiguration.PartnerCode;
@@ -282,10 +291,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
-                                        Amount = (double)(orderDb.TotalAmount > 0 ? orderDb.TotalAmount : orderDb.Deposit),
+                                        Amount = (double)(orderDb.StatusId == OrderStatus.Dining || orderDb.StatusId == OrderStatus.Delivering ? orderDb.TotalAmount : orderDb.Deposit),
                                         PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
                                         OrderId = orderDb.OrderId,
-                                        Date = utility!.GetCurrentDateTimeInTimeZone()
+                                        Date = utility!.GetCurrentDateTimeInTimeZone(),
+                                        TransationStatusId = TransationStatus.PENDING,
+                                        TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned ? TransactionType.Deposit : TransactionType.Order
                                     };
                                     await _repository.Insert(transaction);
                                     result.Result = transaction;
@@ -308,7 +319,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             Amount = paymentRequest.StoreCreditAmount.Value,
                                             PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
                                             StoreCreditId = storeCreditDb.StoreCreditId,
-                                            Date = utility!.GetCurrentDateTimeInTimeZone()
+                                            Date = utility!.GetCurrentDateTimeInTimeZone(),
+                                            TransationStatusId = TransationStatus.PENDING,
+                                            TransactionTypeId = TransactionType.CreditStore
+
                                         };
                                         await _repository.Insert(transaction);
                                         result.Result = transaction;

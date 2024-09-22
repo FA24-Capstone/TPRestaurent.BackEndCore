@@ -23,6 +23,9 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Enums.TransationStatus TransationStatusId { get; set; }
         [ForeignKey(nameof(TransationStatusId))]
         public EnumModels.TransationStatus TransationStatus { get; set; }
+        public Enums.TransactionType TransactionTypeId { get; set; }
+        [ForeignKey(nameof(TransactionTypeId))]
+        public EnumModels.TransactionType TransactionType { get; set; }
         public Guid? OrderId { get; set; }
         [ForeignKey(nameof(OrderId))]
         public Order? Order { get; set; }
