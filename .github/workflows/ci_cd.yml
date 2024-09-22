@@ -1,17 +1,14 @@
 name: CI/CD Pipeline
-
 on:
   push:
     branches: ["main", "dev"]
   pull_request:
     branches: ["main", "dev"]
-
 env:
   AZURE_WEBAPP_NAME: tprestaurant
   AZURE_WEBAPP_PACKAGE_PATH: '.'
   DOTNET_VERSION: '8.0.x'
   DOCKER_IMAGE_NAME: hongquan0312/restaurant
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -28,11 +25,11 @@ jobs:
     - name: Test
       run: dotnet test --no-build --verbosity normal
     
-    # New steps for Docker
+    # Docker steps
     - name: Build Docker image
       run: |
-        cd TPRestaurent.BackEndCore.API
-        docker build -t ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} .
+        ls -R  # List all files and directories for debugging
+        docker build -t ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} -f TPRestaurent.BackEndCore.API/Dockerfile .
     - name: Log in to Docker Hub
       uses: docker/login-action@v1
       with:
@@ -43,7 +40,6 @@ jobs:
         docker push ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
         docker tag ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} ${{ env.DOCKER_IMAGE_NAME }}:latest
         docker push ${{ env.DOCKER_IMAGE_NAME }}:latest
-
   deploy:
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
