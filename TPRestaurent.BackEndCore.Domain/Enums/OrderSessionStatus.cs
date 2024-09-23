@@ -9,7 +9,7 @@ namespace TPRestaurent.BackEndCore.Domain.Enums
     public enum OrderSessionStatus
     {
         PreOrder,
-        Confirmation,
+        Confirmed,
         Processing,
         Completed,
         Cancelled

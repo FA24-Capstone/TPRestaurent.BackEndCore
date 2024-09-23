@@ -53,6 +53,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var dishRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                     var comboRepository = Resolve<IGenericRepository<Combo>>();
                     var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+                    var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
                     var orderDb = await _repository.GetById(dto.OrderId);
                     var utility = Resolve<Utility>();
                     if (orderDb == null)
@@ -60,6 +61,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         result = BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {dto.OrderId}");
                         return result;
                     }
+                    var orderSessionDb = await orderSessionRepository!.GetAllDataByExpression(null, 0, 0, null, false, null);
+                    var latestOrderSession = orderSessionDb.Items!.Count() + 1;
+                    var orderSession = new OrderSession()
+                    {
+                        OrderSessionId = Guid.NewGuid(),
+                        OrderSessionTime = utility!.GetCurrentDateTimeInTimeZone(),
+                        OrderSessionStatusId = OrderSessionStatus.Confirmed,
+                        OrderSessionNumber = latestOrderSession
+                    };
 
                     var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(o => o.OrderId == dto.OrderId, 0, 0, null, false, null);
                     var orderDetails = new List<OrderDetail>();
@@ -108,6 +118,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
 
                     await _repository.Update(orderDb);
+                    await orderSessionRepository.Insert(orderSession);
                     await orderDetailRepository.InsertRange(orderDetails);
                     await comboOrderDetailRepository!.InsertRange(comboOrderDetails);
                     await _unitOfWork.SaveChangesAsync();
@@ -312,7 +323,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         OrderSessionId = Guid.NewGuid(),
                         OrderSessionTime = utility!.GetCurrentDateTimeInTimeZone(),
-                        OrderSessionStatusId = OrderSessionStatus.PreOrder,
+                        OrderSessionStatusId = orderRequestDto.OrderType == OrderType.Reservation? OrderSessionStatus.PreOrder : OrderSessionStatus.Confirmed,
                         OrderSessionNumber = latestOrderSession
                     };
                     if (orderRequestDto.OrderDetailsDtos != null && orderRequestDto.OrderDetailsDtos.Count > 0)
