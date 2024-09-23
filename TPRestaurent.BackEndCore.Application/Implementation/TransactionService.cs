@@ -157,7 +157,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     string accessKey = _momoConfiguration.AccessKey;
                                     string secretkey = _momoConfiguration.Secretkey;
                                     string orderInfo = hasingService.Hashing("OR", key);
-                                    string redirectUrl = $"{_momoConfiguration.RedirectUrl}/{transaction.OrderId}";
+                                    string redirectUrl = $"{_momoConfiguration.RedirectUrl}";
                                     string ipnUrl = _momoConfiguration.IPNUrl;
                                     string requestType = "payWithATM";
 
@@ -228,7 +228,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             string accessKey = _momoConfiguration.AccessKey;
                                             string secretkey = _momoConfiguration.Secretkey;
                                             string orderInfo = hasingService.Hashing("OR", key);
-                                            string redirectUrl = $"{_momoConfiguration.RedirectUrl}/{transaction.OrderId}";
+                                            string redirectUrl = $"{_momoConfiguration.RedirectUrl}";
                                             string ipnUrl = _momoConfiguration.IPNUrl;
                                             string requestType = "payWithATM";
 
