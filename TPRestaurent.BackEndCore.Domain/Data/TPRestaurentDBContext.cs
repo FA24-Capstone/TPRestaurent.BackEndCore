@@ -56,6 +56,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.EnumModels.DishSize> DishSizes { get; set; } = null!;
         public DbSet<Models.EnumModels.OrderDetailStatus> OrderDetailStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.TransactionType> TransactionTypes { get; set; } = null!;
+        public DbSet<Models.EnumModels.OrderSessionStatus> OrderSessionStatuses { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -111,6 +112,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             SeedEnumTable<Models.EnumModels.OrderDetailStatus, Enums.OrderDetailStatus>(builder, enums);
             SeedEnumTable<Models.EnumModels.OrderType, Enums.OrderType>(builder, enums);
             SeedEnumTable<Models.EnumModels.TransactionType, Enums.TransactionType>(builder, enums);
+            SeedEnumTable<Models.EnumModels.OrderSessionStatus, Enums.OrderSessionStatus>(builder, enums);
         }
 
         private static void SeedEnumTable<TEntity, TEnum>(ModelBuilder modelBuilder, IConfiguration enums)
