@@ -916,6 +916,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var tokenRepository = Resolve<IGenericRepository<Token>>();
+                var storeCreditRepository = Resolve<IGenericRepository<StoreCredit>>();
                 var jwtService = Resolve<IJwtService>();
                 var utility = Resolve<Utility>();
                 var token = await jwtService!.GenerateAccessToken(new LoginRequestDto { PhoneNumber = phoneNumber });
@@ -924,6 +925,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 _tokenDto.Token = token;
                 _tokenDto.RefreshToken = refreshToken;
                 _tokenDto.Account = _mapper.Map<AccountResponse>(user);
+
+                var creditStoreDb = await storeCreditRepository.GetAllDataByExpression(c => c.AccountId.Equals(user.Id), 0, 0, null, false, null);
+                if(creditStoreDb.Items.Count() > 0)
+                {
+                    _tokenDto.Account.StoreCredit = creditStoreDb.Items[0].Amount;
+                    _tokenDto.Account.StoreCreditExpireDay = creditStoreDb.Items[0].ExpiredDate;
+                }
 
                 var roleList = new List<string>();
                 var roleListDb = await _userRoleRepository.GetAllDataByExpression(r => r.UserId.Equals(user.Id), 0, 0, null, false, null);
