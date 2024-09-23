@@ -45,7 +45,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             else
             {
-                urlCallBack = $"{_configuration["Vnpay:ReturnUrl"]}/{requestDto.TransactionID}";
+                urlCallBack = $"{_configuration["Vnpay:ReturnUrl"]}";
             }
 
             pay.AddRequestData("vnp_Version", _configuration["Vnpay:Version"]);
