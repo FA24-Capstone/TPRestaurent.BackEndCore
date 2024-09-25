@@ -917,6 +917,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var tokenRepository = Resolve<IGenericRepository<Token>>();
                 var storeCreditRepository = Resolve<IGenericRepository<StoreCredit>>();
+                var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
                 var jwtService = Resolve<IJwtService>();
                 var utility = Resolve<Utility>();
                 var token = await jwtService!.GenerateAccessToken(new LoginRequestDto { PhoneNumber = phoneNumber });
@@ -925,7 +926,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 _tokenDto.Token = token;
                 _tokenDto.RefreshToken = refreshToken;
                 _tokenDto.Account = _mapper.Map<AccountResponse>(user);
-
+                var customerInfoAddressDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.AccountId.Equals(user.Id), 0, 0, null, false, null);
+                if(customerInfoAddressDb.Items.Count() > 0)
+                {
+                    _tokenDto.Account.Addresses = customerInfoAddressDb.Items;
+                }
                 var creditStoreDb = await storeCreditRepository.GetAllDataByExpression(c => c.AccountId.Equals(user.Id), 0, 0, null, false, null);
                 if(creditStoreDb.Items.Count() > 0)
                 {
