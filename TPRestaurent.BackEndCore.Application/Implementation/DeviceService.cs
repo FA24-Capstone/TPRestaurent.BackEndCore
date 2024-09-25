@@ -108,7 +108,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var verifyPasswordHashed = BCrypt.Net.BCrypt.Verify(loginDeviceRequestDto.Password, device.DevicePassword);
                 var passwordSignIn = await _repository.GetByExpression(p => p.DeviceCode == loginDeviceRequestDto.DeviceCode);
-                if (passwordSignIn == null && verifyPasswordHashed == true) result = BuildAppActionResultError(result, "Đăng nhâp thất bại");
+                if (passwordSignIn == null || !verifyPasswordHashed) result = BuildAppActionResultError(result, "Đăng nhâp thất bại");
                 if (!BuildAppActionResultIsError(result)) result = await LoginDefaultDevice(loginDeviceRequestDto.DeviceCode, device);
             }
             catch (Exception ex)
