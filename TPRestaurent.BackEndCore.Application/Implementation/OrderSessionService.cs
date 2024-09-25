@@ -14,7 +14,7 @@ using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
-    public class OrderSessionService : GenericBackendService ,IOrderSessionService
+    public class OrderSessionService : GenericBackendService , IOrderSessionService
     {
         private readonly IGenericRepository<OrderSession> _orderSessionRepository;
         private readonly IUnitOfWork _unitOfWork;
@@ -26,18 +26,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         }
 
         
-        public async Task<AppActionResult> CreateOrderSession()
+        public async Task DeleteOrderSession()
         {
-            var result = new AppActionResult();
             try
             {
-
+                var orderSessionDb = await _orderSessionRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
+                if (orderSessionDb!.Items!.Count > 0 && orderSessionDb.Items != null)
+                {
+                    await _orderSessionRepository.DeleteRange(orderSessionDb.Items);
+                    await _unitOfWork.SaveChangesAsync();
+                }
             }
             catch (Exception ex) 
-            { 
-                result = BuildAppActionResultError(result, ex.Message);
+            {
             }
-            return result;
+            Task.CompletedTask.Wait();  
         }
 
         public async Task<AppActionResult> GetAllOrderSession(DateTime? time, int pageNumber, int pageSize)
@@ -139,7 +142,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderSessionResponse = new OrderSessionResponse();
                 if (orderSessionDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"Không tìm thấy phiên đặt bàn với id {orderSessionId}");
+                    return BuildAppActionResultError(result, $"Không tìm thấy phiên đặt bàn với id {orderSessionId}");
                 }
                 var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderSessionId == orderSessionDb.OrderSessionId, 0, 0, null, false, o => o.Combo!);
                 var orderDetailReponseList = new List<OrderDetailResponse>();
@@ -170,14 +173,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public Task<AppActionResult> UpdateOrderSession()
-        {
-            throw new NotImplementedException();
-        }
 
-        public Task<AppActionResult> UpdateOrderSessionStatus(Guid orderSessionId, OrderSessionStatus orderSessionStatus)
+        public async Task<AppActionResult> UpdateOrderSessionStatus(Guid orderSessionId, OrderSessionStatus orderSessionStatus)
         {
-            throw new NotImplementedException();
+            var result = new AppActionResult(); 
+            try
+            {
+                var orderSessionDb = await _orderSessionRepository.GetById(orderSessionId);
+                if (orderSessionId == null)
+                {
+                    return BuildAppActionResultError(result, $"Phiên đặt món với id {orderSessionId} không tồn tại");
+                }
+                orderSessionDb.OrderSessionStatusId = orderSessionStatus;
+                await _orderSessionRepository.Update(orderSessionDb);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         }
     }
 }
