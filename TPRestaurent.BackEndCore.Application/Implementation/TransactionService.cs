@@ -381,7 +381,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     t => t.Order!.Account!,
                     t => t.TransationStatus,
                     t => t.PaymentMethod!,
-                    t => t.TransactionType,
+                    t => t.TransactionType
                     );
                 result.Result = transactionDb;
             }
