@@ -157,7 +157,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 if (paymentRequest.OrderId.HasValue)
                                 {
                                     var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
-                                    if (orderDb.StatusId == OrderStatus.Dining || orderDb.StatusId == OrderStatus.Delivering)
+                                    if (orderDb.StatusId == OrderStatus.Dining || orderDb.StatusId == OrderStatus.Pending || orderDb.StatusId == OrderStatus.Delivering)
                                     {
                                         amount = orderDb.TotalAmount;
                                     }
