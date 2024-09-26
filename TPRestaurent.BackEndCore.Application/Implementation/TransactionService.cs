@@ -65,6 +65,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                           .Build();
                     string key = config["HashingKeys:PaymentLink"];
                     string paymentUrl = "";
+                    double amount = 0;
                     if (!paymentRequest.OrderId.HasValue && !paymentRequest.StoreCreditId.HasValue)
                     {
                         result = BuildAppActionResultError(result, $"Đơn hàng/Đặt bàn/Ví này không tồn tại");
@@ -79,10 +80,25 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 if (paymentRequest.OrderId.HasValue)
                                 {
                                     var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
+                                    if (orderDb.StatusId == OrderStatus.Dining || orderDb.StatusId == OrderStatus.Pending || orderDb.StatusId == OrderStatus.Delivering)
+                                    {
+                                        amount = orderDb.TotalAmount;
+                                    }
+                                    else
+                                    {
+                                        if (orderDb.Deposit.HasValue)
+                                        {
+                                            amount = orderDb.Deposit.Value;
+                                        }
+                                        else
+                                        {
+                                            return BuildAppActionResultError(result, $"Số tiền thanh toán không hợp lệ");
+                                        }
+                                    }
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
-                                        Amount = (double)(orderDb.TotalAmount > 0 ? orderDb.TotalAmount : orderDb.Deposit.Value),
+                                        Amount = amount,
                                         PaymentMethodId = Domain.Enums.PaymentMethod.VNPAY,
                                         OrderId = orderDb.OrderId,
                                         Date = utility!.GetCurrentDateTimeInTimeZone(),
@@ -94,7 +110,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     {
                                         TransactionID  = transaction.Id.ToString(),
                                         PaymentMethod = paymentRequest.PaymentMethod,
-                                        Amount = (double)(orderDb.StatusId == OrderStatus.Dining || orderDb.StatusId == OrderStatus.Delivering ? orderDb.TotalAmount : orderDb.Deposit),
+                                        Amount = amount,
                                         CustomerName = orderDb!.Account!.LastName,
                                         AccountID = orderDb.AccountId,
                                     };
@@ -141,10 +157,25 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 if (paymentRequest.OrderId.HasValue)
                                 {
                                     var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
+                                    if (orderDb.StatusId == OrderStatus.Dining || orderDb.StatusId == OrderStatus.Delivering)
+                                    {
+                                        amount = orderDb.TotalAmount;
+                                    }
+                                    else
+                                    {
+                                        if (orderDb.Deposit.HasValue)
+                                        {
+                                            amount = orderDb.Deposit.Value;
+                                        }
+                                        else
+                                        {
+                                            return BuildAppActionResultError(result, $"Số tiền thanh toán không hợp lệ");
+                                        }
+                                    }
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
-                                        Amount = (double)(orderDb.StatusId == OrderStatus.Dining || orderDb.StatusId == OrderStatus.Delivering ? orderDb.TotalAmount : orderDb.Deposit),
+                                        Amount = amount,
                                         PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
                                         OrderId = orderDb.OrderId,
                                         Date = utility!.GetCurrentDateTimeInTimeZone(),
@@ -161,12 +192,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     string ipnUrl = _momoConfiguration.IPNUrl;
                                     string requestType = "payWithATM";
 
-                                    string amount = Math.Ceiling(transaction.Amount).ToString();
                                     string requestId = Guid.NewGuid().ToString();
                                     string extraData = transaction.OrderId.ToString();
 
                                     string rawHash = "accessKey=" + accessKey +
-                                                     "&amount=" + amount +
+                                                     "&amount=" + Math.Ceiling(transaction.Amount).ToString() +
                                                      "&extraData=" + extraData +
                                                      "&ipnUrl=" + ipnUrl +
                                                      "&orderId=" + transaction.Id +
@@ -232,12 +262,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             string ipnUrl = _momoConfiguration.IPNUrl;
                                             string requestType = "payWithATM";
 
-                                            string amount = Math.Ceiling(transaction.Amount).ToString();
                                             string requestId = Guid.NewGuid().ToString();
                                             string extraData = transaction.OrderId.ToString();
 
                                             string rawHash = "accessKey=" + accessKey +
-                                                             "&amount=" + amount +
+                                                             "&amount=" + Math.Ceiling(transaction.Amount).ToString() +
                                                              "&extraData=" + extraData +
                                                              "&ipnUrl=" + ipnUrl +
                                                              "&orderId=" + transaction.Id +
@@ -287,11 +316,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 if (paymentRequest.OrderId.HasValue)
                                 {
                                     var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
+                                    if (orderDb.StatusId == OrderStatus.Dining || orderDb.StatusId == OrderStatus.Delivering )
+                                    {
+                                        amount = orderDb.TotalAmount;
+                                    } 
+                                    else
+                                    {
+                                        if (orderDb.Deposit.HasValue)
+                                        {
+                                            amount = orderDb.Deposit.Value;
+                                        }
+                                        else
+                                        {
+                                            return BuildAppActionResultError(result, $"Số tiền thanh toán không hợp lệ");
+                                        }
+                                    }
 
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
-                                        Amount = (double)(orderDb.StatusId == OrderStatus.Dining || orderDb.StatusId == OrderStatus.Delivering ? orderDb.TotalAmount : orderDb.Deposit),
+                                        Amount = amount,
                                         PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
                                         OrderId = orderDb.OrderId,
                                         Date = utility!.GetCurrentDateTimeInTimeZone(),

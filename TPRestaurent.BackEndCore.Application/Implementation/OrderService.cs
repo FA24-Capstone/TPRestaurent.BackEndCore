@@ -485,7 +485,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.OrderTypeId = OrderType.MealWithoutReservation;
                         order.StatusId = OrderStatus.Dining;
                         order.MealTime = utility.GetCurrentDateTimeInTimeZone();
-                        order.NumOfPeople = orderRequestDto.MealWithoutReservation.NumberOfPeople;
+                        order.NumOfPeople = 0;
                         order.TotalAmount = money;
                         if (orderDetails.Count > 0)
                         {
@@ -546,6 +546,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             return BuildAppActionResultError(result, $"Địa chỉ của bạn không tồn tại. Vui lòng cập nhập địa chỉ");
                         }
+
+                        order.AccountId = accountDb.Id;
 
                         var currentTime = utility.GetCurrentDateTimeInTimeZone();
                         var couponDb = await couponProgramRepository!.GetAllDataByExpression(c => currentTime > c.StartDate && currentTime < c.ExpiryDate && c.MinimumAmount <= money && c.Quantity > 0, 0, 0, null, false, null);
@@ -628,7 +630,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
 
-                        await _repository.Insert(order);
                         orderWithPayment.Order = order;
 
                         if (orderDetails.Count > 0)
