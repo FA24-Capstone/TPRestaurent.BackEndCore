@@ -376,7 +376,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var transactionDb = await _repository.GetAllDataByExpression(t => !transactionStatus.HasValue || (transactionStatus.HasValue && transactionStatus.Value == t.TransationStatusId), pageNumber, pageSize, null, false , t => t.StoreCredit, t => t.Order);
+                var transactionDb = await _repository.GetAllDataByExpression(t => !transactionStatus.HasValue || (transactionStatus.HasValue && transactionStatus.Value == t.TransationStatusId), pageNumber, pageSize, null, false , 
+                    t => t.StoreCredit!.Account!, 
+                    t => t.Order!.Account!,
+                    t => t.TransationStatus,
+                    t => t.PaymentMethod!,
+                    t => t.TransactionType
+                    );
                 result.Result = transactionDb;
             }
             catch (Exception ex)
