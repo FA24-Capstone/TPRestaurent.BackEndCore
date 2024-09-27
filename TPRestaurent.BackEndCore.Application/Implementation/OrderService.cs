@@ -1016,6 +1016,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         p => p.Status!,
                         p => p.Account!,
                         p => p.LoyalPointsHistory!,
+                        p => p.OrderType!,
                         p => p.OrderType!
                     );
                 result.Result = orderListDb;
@@ -1032,7 +1033,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                if (status.HasValue || orderType.HasValue)
+                if (((status.HasValue && status != null) && (!orderType.Equals(0))) || (status == null && orderType != 0))
                 {
                     result.Result = await _repository.GetAllDataByExpression(o => o.StatusId == status || o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
                         p => p.Status!,
