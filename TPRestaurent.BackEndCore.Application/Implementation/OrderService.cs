@@ -1033,7 +1033,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                if (((status.HasValue && status != null) && (!orderType.Equals(0))) || (status == null && orderType.HasValue))
+                if (((status.HasValue && status != null) && (!orderType.Equals(0))) || (status == null && orderType != 0))
                 {
                     result.Result = await _repository.GetAllDataByExpression(o => o.StatusId == status || o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
                         p => p.Status!,
