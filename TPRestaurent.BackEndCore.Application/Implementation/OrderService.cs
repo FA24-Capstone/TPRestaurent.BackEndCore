@@ -716,7 +716,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var orderDb = await _repository.GetAllDataByExpression(p => p.OrderId == orderId, 0, 0, null, false, p => p.Account!,
+                var orderDb = await _repository.GetAllDataByExpression(p => p.OrderId == orderId, 0, 0, p => p.OrderDate, false, p => p.Account!,
                         p => p.Status!,
                         p => p.Account!,
                         p => p.LoyalPointsHistory!,
@@ -787,7 +787,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         return BuildAppActionResultError(result, $"Đơn hàng giao tận nơi đã có giao dịch");
                     }
 
-                    var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderRequestDto.OrderId && o.OrderDetailStatusId != OrderDetailStatus.Cancelled, 0, 0, null, false, null);
+                    var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderRequestDto.OrderId && o.OrderDetailStatusId != OrderDetailStatus.Cancelled, 0, 0, p => p.OrderTime, false, null);
                     double money = 0;
                     orderDetailDb.Items.ForEach(o => money += o.Price * o.Quantity);
 
@@ -1757,7 +1757,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     List<KitchenTableSimpleResponse> data = new List<KitchenTableSimpleResponse>();
                     foreach (var item in latestSessionByTable)
                     {
-                        var uncheckedPreorderList = await orderDetailRepository.GetAllDataByExpression(p => p.OrderId == item.OrderId && p.OrderDetailStatusId == OrderDetailStatus.Unchecked, 0, 0, null, false, null);
+                        var uncheckedPreorderList = await orderDetailRepository.GetAllDataByExpression(p => p.OrderId == item.OrderId && p.OrderDetailStatusId == OrderDetailStatus.Unchecked, 0, 0, p => p.OrderTime, false, null);
                         data.Add(new KitchenTableSimpleResponse
                         {
                             TableId = item.TableId,
@@ -1826,7 +1826,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var transactionRepository = Resolve<IGenericRepository<Transaction>>();
-                var orderTransactionDb = await transactionRepository.GetAllDataByExpression(o => o.OrderId.HasValue && o.OrderId == orderId && o.TransationStatusId == TransationStatus.SUCCESSFUL, 0, 0, null, false, null);
+                var orderTransactionDb = await transactionRepository.GetAllDataByExpression(o => o.OrderId.HasValue && o.OrderId == orderId && o.TransationStatusId == TransationStatus.SUCCESSFUL, 0, 0, p => p.PaidDate, false, null);
                 var reservationTableDetails = await GetReservationTableDetails(orderId);
                 var reservationDishes = await GetReservationDishes(orderId);
                 var orderResponse = _mapper.Map<OrderResponse>(order);

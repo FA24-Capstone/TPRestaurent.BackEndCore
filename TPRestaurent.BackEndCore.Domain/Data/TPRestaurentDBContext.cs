@@ -64,16 +64,16 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             builder.Entity<IdentityRole>().HasData(new IdentityRole
             {
                 Id = "85b6791c-49d8-4a61-ad0b-8274ec27e764",
-                Name = "STAFF",
+                Name = "SHIPPER",
                 ConcurrencyStamp = "85b6791c-49d8-4a61-ad0b-8274ec27e764",
-                NormalizedName = "staff"
+                NormalizedName = "shipper"
             });
             builder.Entity<IdentityRole>().HasData(new IdentityRole
             {
                 Id = "814f9270-78f5-4503-b7d3-0c567e5812ba",
-                Name = "MANAGER",
+                Name = "ADMIN",
                 ConcurrencyStamp = "814f9270-78f5-4503-b7d3-0c567e5812ba",
-                NormalizedName = "manager"
+                NormalizedName = "admin"
             });
             builder.Entity<IdentityRole>().HasData(new IdentityRole
             {
