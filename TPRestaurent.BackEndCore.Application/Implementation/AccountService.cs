@@ -616,7 +616,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     item.MainRole = "SHIPPER";
                 }
-                else if (roleNameList.Contains("CHEF"))
+                else if (roleNameList.Contains("CHEF") && !roleNameList.Contains("ADMIN"))
                 {
                     item.MainRole = "CHEF";
                 }
@@ -954,13 +954,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     roleNameList = new List<string>();
                 }
                 roleNameList = roleNameDb.Items!.DistinctBy(i => i.Id).Select(i => i.Name).ToList();
-                if (roleNameList.Contains("MANAGER"))
+                if (roleNameList.Contains("ADMIN"))
                 {
-                    _tokenDto.MainRole = "MANAGER";
+                    _tokenDto.MainRole = "ADMIN";
                 }
-                else if (roleNameList.Contains("STAFF"))
+                else if (roleNameList.Contains("SHIPPER"))
                 {
-                    _tokenDto.MainRole = "STAFF";
+                    _tokenDto.MainRole = "SHIPPER";
                 }
                 else if (roleNameList.Contains("CHEF"))
                 {
