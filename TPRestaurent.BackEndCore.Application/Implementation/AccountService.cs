@@ -616,7 +616,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     item.MainRole = "SHIPPER";
                 }
-                else if (roleNameList.Contains("CHEF"))
+                else if (roleNameList.Contains("CHEF") && !roleNameList.Contains("ADMIN"))
                 {
                     item.MainRole = "CHEF";
                 }
