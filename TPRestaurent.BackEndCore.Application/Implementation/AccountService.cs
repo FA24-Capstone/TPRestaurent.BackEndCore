@@ -608,13 +608,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 item.Roles = userRole;
                 var roleNameList = userRole.DistinctBy(i => i.Id).Select(i => i.Name).ToList();
 
-                if (roleNameList.Contains("MANAGER"))
+                if (roleNameList.Contains("ADMIN"))
                 {
-                    item.MainRole = "MANAGER";
+                    item.MainRole = "ADMIN";
                 }
-                else if (roleNameList.Contains("STAFF"))
+                else if (roleNameList.Contains("SHIPPER"))
                 {
-                    item.MainRole = "STAFF";
+                    item.MainRole = "SHIPPER";
                 }
                 else if (roleNameList.Contains("CHEF"))
                 {
