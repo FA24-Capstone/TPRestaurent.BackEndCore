@@ -11,6 +11,7 @@ namespace TPRestaurent.BackEndCore.Domain.Enums
         Cash = 1,
         VNPAY = 2,
         MOMO = 3,
-        ZALOPAY = 4
+        ZALOPAY = 4,
+        STORE_CREDIT = 5
     }
 }

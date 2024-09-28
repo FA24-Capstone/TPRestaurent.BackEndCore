@@ -5,6 +5,7 @@ using MailKit.Search;
 using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using NPOI.POIFS.Crypt.Dsig;
 using Org.BouncyCastle.Utilities;
 using System;
 using System.Collections.Generic;
@@ -30,13 +31,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     public class OrderService : GenericBackendService, IOrderService
     {
         private readonly IGenericRepository<Order> _repository;
+        private readonly IGenericRepository<OrderDetail> _detailRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private BackEndLogger _logger;
 
-        public OrderService(IGenericRepository<Order> repository, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service, BackEndLogger logger) : base(service)
+        public OrderService(IGenericRepository<Order> repository, IGenericRepository<OrderDetail> detailRepository, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service, BackEndLogger logger) : base(service)
         {
             _repository = repository;
+            _detailRepository = detailRepository;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _logger = logger;
@@ -328,8 +331,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     };
                     if (orderRequestDto.OrderDetailsDtos != null && orderRequestDto.OrderDetailsDtos.Count > 0)
                     {
-
-                        var orderTime = (orderRequestDto.OrderType != OrderType.Reservation) ? utility.GetCurrentDateTimeInTimeZone() : orderRequestDto.ReservationOrder.MealTime;
+                        DateTime orderTime = utility.GetCurrentDateTimeInTimeZone();
+                        if(orderRequestDto.OrderType != OrderType.Reservation && orderRequestDto.ReservationOrder != null && orderRequestDto?.ReservationOrder?.MealTime > orderTime)
+                        {
+                            orderTime = (DateTime)(orderRequestDto?.ReservationOrder?.MealTime);
+                        }
                         foreach (var item in orderRequestDto.OrderDetailsDtos)
                         {
                             var orderDetail = new OrderDetail()
@@ -542,7 +548,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng. Đặt hàng thất bại");
                         }
 
-                        if (string.IsNullOrEmpty(accountDb.Address))
+                        if (string.IsNullOrEmpty(orderRequestDto.DeliveryOrder.Address))
                         {
                             return BuildAppActionResultError(result, $"Địa chỉ của bạn không tồn tại. Vui lòng cập nhập địa chỉ");
                         }
@@ -568,18 +574,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     return BuildAppActionResultError(result, $"Không tìm thấy coupon với id {couponId}");
                                 }
 
-                                var orderAppliedCoupon = new OrderAppliedCoupon
-                                {
-                                    OrderAppliedCouponId = Guid.NewGuid(),
-                                    CouponProgramId = couponId,
-                                    OrderId = order.OrderId
-                                };
+                                //var orderAppliedCoupon = new OrderAppliedCoupon
+                                //{
+                                //    OrderAppliedCouponId = Guid.NewGuid(),
+                                //    CouponProgramId = couponId,
+                                //    OrderId = order.OrderId
+                                //};
 
                                 double discountMoney = money * (coupon.DiscountPercent * 0.01);
                                 money -= discountMoney;
                                 money = Math.Max(0, money);
 
-                                await orderAppliedCouponRepository.Insert(orderAppliedCoupon);
+                                //await orderAppliedCouponRepository.Insert(orderAppliedCoupon);
                             }
                         }
 
@@ -682,9 +688,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
+                PagedResult<Order> data = new PagedResult<Order>();
                 if (status.HasValue)
                 {
-                    result.Result = await _repository.GetAllDataByExpression((o => o.Account.Id.Equals(customerId) && (
+                    data = await _repository.GetAllDataByExpression((o => o.Account.Id.Equals(customerId) && (
                     o.StatusId == status && o.OrderTypeId == orderType) ||
                     (o.StatusId == status) ||
                     (o.OrderTypeId == orderType)), pageNumber, pageSize, o => o.OrderDate, false,
@@ -696,13 +703,28 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else
                 {
-                    result.Result = await _repository.GetAllDataByExpression(o => o.Account.Id.Equals(customerId), pageNumber, pageSize, o => o.OrderDate, false,
+                    data = await _repository.GetAllDataByExpression(o => o.Account.Id.Equals(customerId), pageNumber, pageSize, o => o.OrderDate, false,
                         p => p.Status!,
                         p => p.Account!,
                         p => p.LoyalPointsHistory!,
                         p => p.OrderType!
                         );
                 }
+                data.Items = data.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
+                var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(data.Items);
+                foreach (var order in mappedData)
+                {
+                    var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo);
+                    if (orderDetailDb.Items.Count > 0)
+                    {
+                        order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
+                    }
+                }
+                result.Result = new PagedResult<OrderWithFirstDetailResponse>
+                {
+                    Items = mappedData,
+                    TotalPages = data.TotalPages,
+                };
             }
             catch (Exception ex)
             {
@@ -1019,7 +1041,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         p => p.OrderType!,
                         p => p.OrderType!
                     );
-                result.Result = orderListDb;
+                orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
+                var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
+                foreach (var order in mappedData)
+                {
+                    var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo);
+                    if (orderDetailDb.Items.Count > 0)
+                    {
+                        order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
+                    }
+                }
+                result.Result = new PagedResult<OrderWithFirstDetailResponse>
+                {
+                    Items = mappedData,
+                    TotalPages = orderListDb.TotalPages,
+                };
             }
             catch (Exception ex)
             {
@@ -1033,33 +1069,57 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                if (((status.HasValue && status != null) && (!orderType.Equals(0))) || (status == null && orderType != 0))
+                PagedResult<Order> data = new PagedResult<Order>();
+                if(status.HasValue && status > 0 && orderType.HasValue && orderType > 0)
                 {
-                    result.Result = await _repository.GetAllDataByExpression(o => o.StatusId == status || o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
-                        p => p.Status!,
-                        p => p.Account!,
-                        p => p.LoyalPointsHistory!,
-                        p => p.OrderType!
-                  );
-                }
-                else if (status.HasValue && orderType.HasValue)
+                    data = await _repository.GetAllDataByExpression(o => o.StatusId == status && o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                       p => p.Status!,
+                       p => p.Account!,
+                       p => p.LoyalPointsHistory!,
+                       p => p.OrderType!
+                       );
+                } else if(status.HasValue && status > 0)
                 {
-                    result.Result = await _repository.GetAllDataByExpression(o => o.OrderTypeId == orderType && o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
-                        p => p.Status!,
-                        p => p.Account!,
-                        p => p.LoyalPointsHistory!,
-                        p => p.OrderType!
-                        );
+                    data = await _repository.GetAllDataByExpression(o => o.StatusId == status, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                       p => p.Status!,
+                       p => p.Account!,
+                       p => p.LoyalPointsHistory!,
+                       p => p.OrderType!
+                       );
+                } else if (status.HasValue && status > 0)
+                {
+                    data = await _repository.GetAllDataByExpression(o => o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                       p => p.Status!,
+                       p => p.Account!,
+                       p => p.LoyalPointsHistory!,
+                       p => p.OrderType!
+                       );
                 }
                 else
                 {
-                    result.Result = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
-                        p => p.Status!,
-                        p => p.Account!,
-                        p => p.LoyalPointsHistory!,
-                        p => p.OrderType!
-                        );
+                    data = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                      p => p.Status!,
+                      p => p.Account!,
+                      p => p.LoyalPointsHistory!,
+                      p => p.OrderType!
+                      );
                 }
+
+                data.Items = data.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
+                var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(data.Items);
+                foreach (var order in mappedData)
+                {
+                    var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo);
+                    if (orderDetailDb.Items.Count > 0)
+                    {
+                        order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
+                    }
+                }
+                result.Result = new PagedResult<OrderWithFirstDetailResponse>
+                {
+                    Items = mappedData,
+                    TotalPages = data.TotalPages,
+                };
             }
             catch (Exception ex)
             {
