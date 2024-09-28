@@ -73,6 +73,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     ConfigurationId = Guid.NewGuid(),
                     Name = dto.Name,
                     CurrentValue = dto.CurrentValue,
+                    VietnameseName = dto.VietnameseName,    
+                    Unit = dto.Unit,    
                 };
 
                 await _repository.Insert(configuration);
@@ -174,19 +176,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy cấu hình với id {dto.ConfigurationId}");
                 }
-                if (dto.ActiveDate.HasValue)
-                {
-                    configurationVersionDb.ActiveDate = dto.ActiveDate.Value;
-                }
-                else
-                {
-                    if (string.IsNullOrEmpty(dto.CurrentValue))
-                    {
-                        var utility = Resolve<Utility>();
-                        configurationVersionDb.ActiveDate = utility.GetCurrentDateTimeInTimeZone();
-                    }
-                }
-
+            
+                configurationDb.Name = dto.Name;    
+                configurationDb.VietnameseName = dto.VietnameseName;    
+                configurationDb.Unit = dto.Unit;    
                 configurationDb.CurrentValue = dto.CurrentValue;
                 await _repository.Update(configurationDb);
                 await _unitOfWork.SaveChangesAsync();
