@@ -11,7 +11,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
     {
         public Task<AppActionResult> Geocode(string address);
         public Task<AppActionResult> AutoComplete(string address);
-        public Task<AppActionResult> GetEstimateDeliveryTime(double[] endCoordinate, double[]? startCoordinate);
-
+        public Task<AppActionResult> GetEstimateDeliveryResponse(double[] endCoordinate, double[]? startCoordinate);
     }
 }

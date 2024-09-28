@@ -28,10 +28,10 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.Geocode(address);
         }
 
-        [HttpPost("get-estimate-delivery-time")]
+        [HttpPost("get-estimate-delivery-response")]
         public async Task<AppActionResult> GetEstimateDeliveryTime([FromBody]GetEstimateTimeRequest dto)
         {
-            return await _service.GetEstimateDeliveryTime(dto.desc, dto.start);
+            return await _service.GetEstimateDeliveryResponse(dto.desc, dto.start);
         }
 
     }

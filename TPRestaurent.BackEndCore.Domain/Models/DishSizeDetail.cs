@@ -21,5 +21,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Enums.DishSize DishSizeId { get; set; }
         [ForeignKey(nameof(DishSizeId))]
         public EnumModels.DishSize? DishSize { get; set; }
+        public int? QuantityLeft { get; set; }
+        public int DailyCountdown { get; set; }
     }
 }
