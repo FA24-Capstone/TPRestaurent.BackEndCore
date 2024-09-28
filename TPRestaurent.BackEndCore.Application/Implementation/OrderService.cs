@@ -32,14 +32,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     {
         private readonly IGenericRepository<Order> _repository;
         private readonly IGenericRepository<OrderDetail> _detailRepository;
+        private readonly IGenericRepository<OrderSession> _sessionRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private BackEndLogger _logger;
 
-        public OrderService(IGenericRepository<Order> repository, IGenericRepository<OrderDetail> detailRepository, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service, BackEndLogger logger) : base(service)
+        public OrderService(IGenericRepository<Order> repository, IGenericRepository<OrderDetail> detailRepository, IGenericRepository<OrderSession> sessionRepository, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service, BackEndLogger logger) : base(service)
         {
             _repository = repository;
             _detailRepository = detailRepository;
+            _sessionRepository = sessionRepository;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _logger = logger;
@@ -1772,7 +1774,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => orderDetailIds.Contains(p.OrderDetailId), 0, 0, null, false, null);
+                var orderSessionService = Resolve<IOrderSessionService>();
+                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => orderDetailIds.Contains(p.OrderDetailId), 0, 0, null, false, o => o.OrderSession);
                 if (orderDetailDb.Items.Count != orderDetailIds.Count)
                 {
                     return BuildAppActionResultError(result, $"Tồn tại id gọi món hông nằm trong hệ thống");
@@ -1797,6 +1800,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 await orderDetailRepository.UpdateRange(orderDetailDb.Items);
+                var orderSessionDb = orderDetailDb.Items.DistinctBy(o => o.OrderSessionId).Select(o => o.OrderSession);
+                var orderSessionSet = new HashSet<Guid>();
+                foreach(var session in orderSessionDb)
+                {
+                    if (orderSessionSet.Contains(session.OrderSessionId))
+                    {
+                        continue;
+                    }
+                    if(orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
+                    {
+                        await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Cancelled);
+                    } else if(orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe))
+                    {
+                        await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Cancelled);
+                    }
+
+                    orderSessionSet.Add(session.OrderSessionId);
+                }
                 await _unitOfWork.SaveChangesAsync();
                 result.Result = orderDetailDb;
             }
@@ -1932,7 +1953,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             );
             return result.Items!;
         }
-
+        
         private async Task<List<Common.DTO.Response.OrderDishDto>> GetReservationDishes(Guid orderId)
         {
             var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
@@ -2075,6 +2096,5 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             return reservationDishes;
         }
-
     }
 }

@@ -43,92 +43,177 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             Task.CompletedTask.Wait();  
         }
 
-        public async Task<AppActionResult> GetAllOrderSession(DateTime? time, int pageNumber, int pageSize)
+        public async Task<AppActionResult> GetAllOrderSession(OrderSessionStatus? orderSessionStatus, int pageNumber, int pageSize)
         {
-            var result = new AppActionResult();
-            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-            var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+            AppActionResult result = new AppActionResult();
             try
             {
-                if (time.HasValue && time != null)
+                var orderRepository = Resolve<IGenericRepository<Order>>();
+                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var orderSessionDb = await _orderSessionRepository.GetAllDataByExpression(s => (orderSessionStatus.HasValue && s.OrderSessionStatusId == orderSessionStatus)
+                                                                                      || (!orderSessionStatus.HasValue
+                                                                                          && (s.OrderSessionStatusId != OrderSessionStatus.Completed
+                                                                                              || s.OrderSessionStatusId != OrderSessionStatus.Cancelled)
+                                                                                         ),
+                                                                                    pageNumber, pageSize, s => s.OrderSessionTime, false, s => s.OrderSessionStatus!);
+                var orderSessionResponseList = new List<OrderSessionResponse>();
+                if (orderSessionDb!.Items!.Count > 0 && orderSessionDb.Items != null)
                 {
-                    var orderSessionDb = await _orderSessionRepository.GetAllDataByExpression(p => p.OrderSessionTime <= time, pageNumber, pageSize, p => p.OrderSessionTime, false, p => p.OrderSessionStatus!);
-                    var orderSessionResponseList = new List<OrderSessionResponse>();
-                    if (orderSessionDb!.Items!.Count > 0 && orderSessionDb.Items != null)
-                    {
-                        return BuildAppActionResultError(result, $"Hiện tại không có phiên đặt bàn nào trong");
-                    }
-
-                    foreach (var orderSession in orderSessionDb.Items!)
-                    {
-                        var orderSessionResponse = new OrderSessionResponse();
-                        var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderSessionId == orderSession.OrderSessionId, 0, 0, null, false, o => o.Combo!);
-                        var orderDetailReponseList = new List<OrderDetailResponse>();
-                        foreach (var o in orderDetailDb!.Items!)
-                        {
-                            var comboOrderDetailsDb = await comboOrderDetailRepository!.GetAllDataByExpression(
-                                c => c.OrderDetailId == o.OrderDetailId,
-                                0,
-                                0,
-                                null,
-                                false,
-                                c => c.DishCombo!.DishSizeDetail!.Dish!
-                            );
-                            orderDetailReponseList.Add(new OrderDetailResponse
-                            {
-                                OrderDetail = o,
-                                ComboOrderDetails = comboOrderDetailsDb.Items!
-                            });
-                        }
-                        orderSessionResponse.OrderSession = orderSession;
-                        orderSessionResponse.OrderDetails = orderDetailReponseList;
-
-                        orderSessionResponseList.Add(orderSessionResponse);
-                    }
-                    result.Result = orderSessionResponseList;
+                    return BuildAppActionResultError(result, $"Hiện tại không có phiên đặt bàn");
                 }
-                else
-                {
-                    var orderSessionDb = await _orderSessionRepository.GetAllDataByExpression(null, pageNumber, pageSize, p => p.OrderSessionTime, false, p => p.OrderSessionStatus!);
-                    var orderSessionResponseList = new List<OrderSessionResponse>();
-                    if (orderSessionDb!.Items!.Count > 0 && orderSessionDb.Items != null)
-                    {
-                        return BuildAppActionResultError(result, $"Hiện tại không có phiên đặt bàn nào trong");
-                    }
-                    foreach (var orderSession in orderSessionDb.Items!)
-                    {
-                        var orderSessionResponse = new OrderSessionResponse();
-                        var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderSessionId == orderSession.OrderSessionId, 0, 0, null, false, o => o.Combo!);
-                        var orderDetailReponseList = new List<OrderDetailResponse>();
-                        foreach (var o in orderDetailDb!.Items!)
-                        {
-                            var comboOrderDetailsDb = await comboOrderDetailRepository!.GetAllDataByExpression(
-                                c => c.OrderDetailId == o.OrderDetailId,
-                                0,
-                                0,
-                                null,
-                                false,
-                                c => c.DishCombo!.DishSizeDetail!.Dish!
-                            );
-                            orderDetailReponseList.Add(new OrderDetailResponse
-                            {
-                                OrderDetail = o,
-                                ComboOrderDetails = comboOrderDetailsDb.Items!
-                            });
-                        }
-                        orderSessionResponse.OrderSession = orderSession;
-                        orderSessionResponse.OrderDetails = orderDetailReponseList;
 
-                        orderSessionResponseList.Add(orderSessionResponse);
+                Dictionary<Guid, Order> orders = new Dictionary<Guid, Order>();
+
+                foreach (var orderSession in orderSessionDb.Items!)
+                {
+                    var orderSessionResponse = new OrderSessionResponse();
+                    var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderSessionId == orderSession.OrderSessionId, 0, 0, null, false, o => o.Combo!);
+                    if(orderDetailDb.Items.Count > 0)
+                    {
+                        if (orders.ContainsKey(orderDetailDb.Items[0].OrderId))
+                        {
+                            orderSessionResponse.Order = orders[orderDetailDb.Items[0].OrderId];
+                        }
+                        else
+                        {
+                            orderSessionResponse.Order = (await orderDetailRepository.GetByExpression(o => o.OrderDetailId == orderDetailDb.Items[0].OrderDetailId, o => o.Order)).Order;
+                            orders.Add(orderSessionResponse.Order.OrderId, orderSessionResponse.Order);
+                        }
                     }
-                    result.Result = orderSessionResponseList;
+                    var orderDetailReponseList = new List<OrderDetailResponse>();
+                    foreach (var o in orderDetailDb!.Items!)
+                    {
+                        var comboOrderDetailsDb = await comboOrderDetailRepository!.GetAllDataByExpression(
+                            c => c.OrderDetailId == o.OrderDetailId,
+                            0,
+                            0,
+                            null,
+                            false,
+                            c => c.DishCombo!.DishSizeDetail!.Dish!
+                        );
+                        orderDetailReponseList.Add(new OrderDetailResponse
+                        {
+                            OrderDetail = o,
+                            ComboOrderDetails = comboOrderDetailsDb.Items!
+                        });
+                    }
+                    orderSessionResponse.OrderSession = orderSession;
+                    orderSessionResponse.OrderDetails = orderDetailReponseList;
+
+                    orderSessionResponseList.Add(orderSessionResponse);
+                }
+                result.Result = orderSessionResponseList;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetGroupedDish()
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderSession.OrderSessionStatusId != OrderSessionStatus.Completed 
+                                                                                            && o.OrderSession.OrderSessionStatusId != OrderSessionStatus.Cancelled, 
+                                                                                            0, 0, null, false, 
+                                                                                            o => o.OrderSession, 
+                                                                                            o => o.OrderDetailStatus, 
+                                                                                            o => o.DishSizeDetail.Dish, 
+                                                                                            o => o.Combo);
+                if(orderDetailDb.Items.Count > 0)
+                {
+                    var data = new KitchenGroupedDishResponse();
+                    var groupedOrder = orderDetailDb.Items.GroupBy(o => {
+                        if (o.DishSizeDetailId.HasValue)
+                        {
+                            return o.DishSizeDetail.DishId!;
+                        }
+                        return o.ComboId!;
+                    }).ToDictionary(o => o.Key, o => o.ToList());
+                    foreach (var item in groupedOrder)
+                    {
+                        if (item.Value[0].DishSizeDetailId.HasValue)
+                        {
+                            var total = item.Value.Count;
+                            var orderDetailResponse = new List<OrderDetailResponse>();
+                            foreach (var orderDetail in item.Value)
+                            {
+                                orderDetailResponse.Add(new OrderDetailResponse
+                                {
+                                    OrderDetail = orderDetail
+                                });
+                            }
+
+                            if (total > 1)
+                            {
+                                data.MutualOrderDishes.Add(new KitchenGroupedDishItemResponse
+                                {
+                                    Total = total,
+                                    orderDetailResponses = orderDetailResponse
+                                });
+
+                            }
+                            else
+                            {
+                                data.SingleOrderDishes.Add(new KitchenGroupedDishItemResponse
+                                {
+                                    Total = total,
+                                    orderDetailResponses = orderDetailResponse
+                                });
+                            }
+                        }
+                        else if (item.Value[0].ComboId.HasValue)
+                        {
+                            var total = item.Value.Count;
+                            var orderDetailResponse = new List<OrderDetailResponse>();
+                            foreach (var orderDetail in item!.Value)
+                            {
+                                var comboOrderDetailsDb = await comboOrderDetailRepository!.GetAllDataByExpression(
+                                    c => c.OrderDetailId == orderDetail.OrderDetailId,
+                                    0,
+                                    0,
+                                    null,
+                                    false,
+                                    c => c.DishCombo!.DishSizeDetail!.Dish!
+                                );
+                                orderDetailResponse.Add(new OrderDetailResponse
+                                {
+                                    OrderDetail = orderDetail,
+                                    ComboOrderDetails = comboOrderDetailsDb.Items
+                                });
+                            }
+                            if (total > 1)
+                            {
+                                data.MutualOrderDishes.Add(new KitchenGroupedDishItemResponse
+                                {
+                                    Total = total,
+                                    orderDetailResponses = orderDetailResponse
+                                });
+                            }
+                            else
+                            {
+                                data.SingleOrderDishes.Add(new KitchenGroupedDishItemResponse
+                                {
+                                    Total = total,
+                                    orderDetailResponses = orderDetailResponse
+                                });
+                            }
+                        }
+                    }
+                    result.Result = data;
                 }
             }
             catch (Exception ex)
             {
                 result = BuildAppActionResultError(result, ex.Message);
             }
-            return result;  
+            return result;
         }
 
         public async Task<AppActionResult> GetOrderSessionById(Guid orderSessionId)
