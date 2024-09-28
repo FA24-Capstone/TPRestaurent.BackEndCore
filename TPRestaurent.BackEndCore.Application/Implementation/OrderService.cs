@@ -311,6 +311,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         order.AccountId = orderRequestDto.CustomerId.ToString();
                     }
+
+                    if((orderRequestDto.OrderType == OrderType.Reservation && orderRequestDto.ReservationOrder == null)
+                        || (orderRequestDto.OrderType == OrderType.MealWithoutReservation && orderRequestDto.MealWithoutReservation == null)
+                        || (orderRequestDto.OrderType == OrderType.Delivery && orderRequestDto.DeliveryOrder == null))
+                    {
+                        return BuildAppActionResultError(result, $"Loại đơn hàng và dữ liệu không trùng khớp");
+                    }
+
+
                     if (orderRequestDto.OrderType != OrderType.MealWithoutReservation && ((orderRequestDto!.ReservationOrder != null && orderRequestDto.ReservationOrder.PaymentMethod == 0)
                         || (orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.PaymentMethod == 0)))
                     {
@@ -847,18 +856,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     return BuildAppActionResultError(result, $"Không tìm thấy coupon với id {couponId}");
                                 }
 
-                                var orderAppliedCoupon = new OrderAppliedCoupon
-                                {
-                                    OrderAppliedCouponId = Guid.NewGuid(),
-                                    CouponProgramId = couponId,
-                                    OrderId = orderDb.OrderId
-                                };
+                               
 
                                 double discountMoney = money * (coupon.DiscountPercent * 0.01);
                                 money -= discountMoney;
                                 money = Math.Max(0, money);
 
-                                await orderAppliedCouponRepository.Insert(orderAppliedCoupon);
                             }
                         }
 
