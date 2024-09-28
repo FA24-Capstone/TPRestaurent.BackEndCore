@@ -46,6 +46,7 @@
     "VNPAY": "VNPAY",
     "MOMO": "MOMO",
     "ZALOPAY": "ZALOPAY",
+    "STORE_CREDIT": "Số dư tài khoản",
     "UNCHECKED": "Chưa Xem",
     "READ": "Đã Xem",
     "READY_TO_SERVE": "Sẵn Sàng Phục Vụ",
@@ -64,7 +65,11 @@
     "Deposit": "Đặt cọc",
     "Order": "Đơn",
     "CreditStore": "Nạp tài khoản",
-    "PreOrder":  "Đã đặt trước",
-    "Confirmed":  "Xác nhận"
+    "PreOrder": "Đã đặt trước",
+    "Confirmed": "Xác nhận",
+    "Reservation": "Đặt bàn",
+    "Delivery": "Giao hàng tận nơi",
+    "MealWithoutReservation": "Dùng bữa tại quán khôn có đặt bàn",
+    "APPLIED":  "Đã áp dụng"
   }
 }
