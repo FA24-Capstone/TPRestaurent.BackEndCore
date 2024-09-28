@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240928140701_AddUnitConfiguration")]
+    partial class AddUnitConfiguration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -339,9 +341,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
-                    b.Property<int>("DailyCountdown")
-                        .HasColumnType("int");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -361,9 +360,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.Property<double>("Price")
                         .HasColumnType("float");
-
-                    b.Property<int?>("QuantityLeft")
-                        .HasColumnType("int");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
@@ -527,12 +523,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<bool>("IsCurrentUsed")
                         .HasColumnType("bit");
 
-                    b.Property<double>("Lat")
-                        .HasColumnType("float");
-
-                    b.Property<double>("Lng")
-                        .HasColumnType("float");
-
                     b.HasKey("CustomerInfoAddressId");
 
                     b.HasIndex("AccountId");
@@ -631,9 +621,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("DailyCountdown")
-                        .HasColumnType("int");
-
                     b.Property<double>("Discount")
                         .HasColumnType("float");
 
@@ -648,9 +635,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.Property<double>("Price")
                         .HasColumnType("float");
-
-                    b.Property<int?>("QuantityLeft")
-                        .HasColumnType("int");
 
                     b.HasKey("DishSizeDetailId");
 
@@ -939,14 +923,12 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         new
                         {
                             Id = 0,
-                            Name = "PreOrder",
-                            VietnameseName = "Đã đặt trước"
+                            Name = "PreOrder"
                         },
                         new
                         {
                             Id = 1,
-                            Name = "Confirmed",
-                            VietnameseName = "Xác nhận"
+                            Name = "Confirmed"
                         },
                         new
                         {
@@ -957,18 +939,12 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         new
                         {
                             Id = 3,
-                            Name = "LateWarning",
-                            VietnameseName = "Đang trễ"
-                        },
-                        new
-                        {
-                            Id = 4,
                             Name = "Completed",
                             VietnameseName = "Thành Công"
                         },
                         new
                         {
-                            Id = 5,
+                            Id = 4,
                             Name = "Cancelled",
                             VietnameseName = "Đã Huỷ"
                         });
@@ -1061,20 +1037,17 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         new
                         {
                             Id = 1,
-                            Name = "Reservation",
-                            VietnameseName = "Đặt bàn"
+                            Name = "Reservation"
                         },
                         new
                         {
                             Id = 2,
-                            Name = "Delivery",
-                            VietnameseName = "Giao hàng tận nơi"
+                            Name = "Delivery"
                         },
                         new
                         {
                             Id = 3,
-                            Name = "MealWithoutReservation",
-                            VietnameseName = "Dùng bữa tại quán khôn có đặt bàn"
+                            Name = "MealWithoutReservation"
                         });
                 });
 
@@ -1201,8 +1174,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         new
                         {
                             Id = 5,
-                            Name = "STORE_CREDIT",
-                            VietnameseName = "Số dư tài khoản"
+                            Name = "STORE_CREDIT"
                         });
                 });
 
@@ -1324,20 +1296,17 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         new
                         {
                             Id = 0,
-                            Name = "Deposit",
-                            VietnameseName = "Đặt cọc"
+                            Name = "Deposit"
                         },
                         new
                         {
                             Id = 1,
-                            Name = "Order",
-                            VietnameseName = "Đơn"
+                            Name = "Order"
                         },
                         new
                         {
                             Id = 2,
-                            Name = "CreditStore",
-                            VietnameseName = "Nạp tài khoản"
+                            Name = "CreditStore"
                         });
                 });
 
@@ -1379,8 +1348,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         new
                         {
                             Id = 3,
-                            Name = "APPLIED",
-                            VietnameseName = "Đã áp dụng"
+                            Name = "APPLIED"
                         });
                 });
 

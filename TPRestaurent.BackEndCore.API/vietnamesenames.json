@@ -8,6 +8,9 @@
     "TIME_TO_LOOK_UP_FOR_RESERVATION": "Thời Gian Tìm Kiếm Đặt Bàn",
     "DEPOSIT_FOR_NORMAL_TABLE": "Tiền Đặt Cọc Bàn Thường",
     "DEPOSIT_FOR_PRIVATE_TABLE": "Tiền Đặt Cọc Bàn Vip",
+    "MAX_DISTANCE": "Khoảng cách tối đa",
+    "DISTANCE_STEP": "Bước",
+    "FLAT_COST_DISTANCE": "Khoảng cách tính phí cố định",
     "APPETIZER": "Khai Vị",
     "SOUP": "Súp",
     "HOTPOT_BROTH": "Nước Lẩu",
@@ -67,9 +70,10 @@
     "CreditStore": "Nạp tài khoản",
     "PreOrder": "Đã đặt trước",
     "Confirmed": "Xác nhận",
+    "LateWarning": "Đang trễ",
     "Reservation": "Đặt bàn",
     "Delivery": "Giao hàng tận nơi",
     "MealWithoutReservation": "Dùng bữa tại quán khôn có đặt bàn",
-    "APPLIED":  "Đã áp dụng"
+    "APPLIED": "Đã áp dụng"
   }
 }
