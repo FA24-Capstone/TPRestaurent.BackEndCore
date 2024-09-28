@@ -11,9 +11,10 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
     public interface IOrderSessionService
     {
-        Task<AppActionResult> GetAllOrderSession(DateTime? time, int pageNumber, int pageSize);
+        Task<AppActionResult> GetAllOrderSession(OrderSessionStatus? orderSessionStatus, int pageNumber, int pageSize);
         Task<AppActionResult> GetOrderSessionById(Guid orderSessionId);
         Task<AppActionResult> UpdateOrderSessionStatus(Guid orderSessionId, OrderSessionStatus orderSessionStatus);
+        Task<AppActionResult> GetGroupedDish();
         Task DeleteOrderSession();
     }
 }
