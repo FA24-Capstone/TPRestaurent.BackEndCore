@@ -55,6 +55,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var paymentGatewayService = Resolve<IPaymentGatewayService>();
                     var orderRepository = Resolve<IGenericRepository<Order>>();
+                    var orderService = Resolve<IOrderService>();
                     var storeCreditRepository = Resolve<IGenericRepository<StoreCredit>>();
                     var hasingService = Resolve<IHashingService>();
                     var utility = Resolve<Utility>();
@@ -310,7 +311,61 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     }
                                 }
                                 break;
+                            case Domain.Enums.PaymentMethod.STORE_CREDIT:
+                                if (paymentRequest.OrderId.HasValue)
+                                {
+                                    var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
 
+                                    if(orderDb.Account == null)
+                                    {
+                                        return BuildAppActionResultError(result, $"Không tìm thấy tài khoản đặt hàng. Khôn thể thực hiện thanh toán với phương thức: Thanh toán với số dư tài khoản.");
+                                    }
+
+                                    if (orderDb.StatusId == OrderStatus.Dining || orderDb.StatusId == OrderStatus.Pending || orderDb.StatusId == OrderStatus.Delivering)
+                                    {
+                                        amount = orderDb.TotalAmount;
+                                    }
+                                    else
+                                    {
+                                        if (orderDb.Deposit.HasValue)
+                                        {
+                                            amount = orderDb.Deposit.Value;
+                                        }
+                                        else
+                                        {
+                                            return BuildAppActionResultError(result, $"Số tiền thanh toán không hợp lệ");
+                                        }
+                                    }
+
+                                    var storeCreditDb = await storeCreditRepository.GetByExpression(s => s.AccountId == orderDb.AccountId, null);
+                                    if(storeCreditDb == null)
+                                    {
+                                        return BuildAppActionResultError(result, $"Không tìm thấy số dư tài khoản khách hàng");
+                                    }
+
+                                    if(storeCreditDb.Amount < amount)
+                                    {
+                                        return BuildAppActionResultError(result, $"Số dư tài khoản của quý khách không đủ");
+                                    }
+
+                                    storeCreditDb.Amount -= amount;
+                                    transaction = new Transaction
+                                    {
+                                        Id = Guid.NewGuid(),
+                                        Amount = amount,
+                                        PaymentMethodId = Domain.Enums.PaymentMethod.STORE_CREDIT,
+                                        OrderId = orderDb.OrderId,
+                                        Date = utility!.GetCurrentDateTimeInTimeZone(),
+                                        PaidDate = utility!.GetCurrentDateTimeInTimeZone(),
+                                        TransationStatusId = TransationStatus.SUCCESSFUL,
+                                        TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned ? TransactionType.Deposit : TransactionType.Order
+                                    };
+
+                                    await _repository.Insert(transaction);
+                                    await orderService.ChangeOrderStatus(orderDb.OrderId, true);
+                                    await storeCreditRepository.Update(storeCreditDb);
+                                }
+                                break;
                             default:
                                 
                                 if (paymentRequest.OrderId.HasValue)
@@ -369,22 +424,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                         };
                                         await _repository.Insert(transaction);
-                                        result.Result = transaction;
                                     }
                                 }
                                 break;
                         }
+                    }
+                    if (!BuildAppActionResultIsError(result))
+                    {
+                        await _unitOfWork.SaveChangesAsync();
+                        scope.Complete();
                     }
                 }
                 catch (Exception ex)
                 {
                     result = BuildAppActionResultError(result, ex.Message);
                 }
-                if (!BuildAppActionResultIsError(result))
-                {
-                    await _unitOfWork.SaveChangesAsync();
-                    scope.Complete();
-                }
+                
             }
 
             return result;
@@ -420,7 +475,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var transactionDb = await _repository.GetAllDataByExpression(t => !transactionStatus.HasValue || (transactionStatus.HasValue && transactionStatus.Value == t.TransationStatusId), pageNumber, pageSize, p => p.PaidDate, false , 
+                var transactionDb = await _repository.GetAllDataByExpression(t => !transactionStatus.HasValue || (transactionStatus.HasValue && transactionStatus.Value == t.TransationStatusId), pageNumber, pageSize, p => p.Date, false , 
                     t => t.StoreCredit!.Account!, 
                     t => t.Order!.Account!,
                     t => t.TransationStatus,

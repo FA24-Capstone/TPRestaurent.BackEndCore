@@ -106,6 +106,28 @@ public class MappingConfig
     .ForMember(dest => dest.NumOfPeople, act => act.MapFrom(src => src.NumOfPeople))
     .ForMember(dest => dest.Deposit, act => act.MapFrom(src => src.Deposit))
     .ForMember(dest => dest.IsPrivate, act => act.MapFrom(src => src.IsPrivate));
+
+            config.CreateMap<Order, OrderWithFirstDetailResponse>()
+            .ForMember(dest => dest.OrderId, act => act.MapFrom(src => src.OrderId))
+            .ForMember(dest => dest.OrderDate, act => act.MapFrom(src => src.OrderDate))
+            .ForMember(dest => dest.DeliveryTime, act => act.MapFrom(src => src.DeliveryTime))
+            .ForMember(dest => dest.ReservationDate, act => act.MapFrom(src => src.ReservationDate))
+            .ForMember(dest => dest.MealTime, act => act.MapFrom(src => src.MealTime))
+            .ForMember(dest => dest.EndTime, act => act.MapFrom(src => src.EndTime))
+            .ForMember(dest => dest.TotalAmount, act => act.MapFrom(src => src.TotalAmount))
+            .ForMember(dest => dest.StatusId, act => act.MapFrom(src => src.StatusId))
+            .ForMember(dest => dest.Status, act => act.MapFrom(src => src.Status))
+            .ForMember(dest => dest.AccountId, act => act.MapFrom(src => src.AccountId))
+            .ForMember(dest => dest.Account, act => act.MapFrom(src => src.Account))
+            .ForMember(dest => dest.LoyalPointsHistoryId, act => act.MapFrom(src => src.LoyalPointsHistoryId))
+            .ForMember(dest => dest.LoyalPointsHistory, act => act.MapFrom(src => src.LoyalPointsHistory))
+            .ForMember(dest => dest.Note, act => act.MapFrom(src => src.Note))
+            .ForMember(dest => dest.OrderTypeId, act => act.MapFrom(src => src.OrderTypeId))
+            .ForMember(dest => dest.OrderType, act => act.MapFrom(src => src.OrderType))
+            .ForMember(dest => dest.NumOfPeople, act => act.MapFrom(src => src.NumOfPeople))
+            .ForMember(dest => dest.Deposit, act => act.MapFrom(src => src.Deposit))
+            .ForMember(dest => dest.IsPrivate, act => act.MapFrom(src => src.IsPrivate))
+            .ReverseMap();
         });
 
         // Trong class MappingConfig
