@@ -1583,6 +1583,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var newCustomerInfoAddress = new CustomerInfoAddress
                         {
                             CustomerInfoAddressId = Guid.NewGuid(),
+                            CustomerInfoAddressName = customerInfoAddressRequest.CustomerInfoAddressName,
                             IsCurrentUsed = customerInfoAddressRequest.IsCurrentUsed,
                             AccountId = customerInfoAddressRequest!.AccountId!,
                             Lat = location.Lat,
@@ -1603,6 +1604,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await customerInfoAddressRepository!.Insert(newCustomerInfoAddress);
                             await _unitOfWork.SaveChangesAsync();
                         }
+                        scope.Complete();
                     }
                 }
                 catch (Exception ex)
@@ -1621,7 +1623,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 try
                 {
-                    var customerInfoDb = await customerInfoAddressRepository!.GetByExpression(p => p.AccountId == updateCustomerInforAddress.AccountId);
+                    var customerInfoDb = await customerInfoAddressRepository!.GetByExpression(p => p.CustomerInfoAddressId == updateCustomerInforAddress.CustomerInfoAddressId);
                     if (customerInfoDb == null)
                     {
                         return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {updateCustomerInforAddress.AccountId}");
@@ -1630,14 +1632,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (addressLocation.Result is MapInfo.Root root && root.Results != null)
                     {
                         var location = root.Results[0].Geometry?.Location;
-                        var newCustomerInfoAddress = new CustomerInfoAddress
-                        {
-                            CustomerInfoAddressId = Guid.NewGuid(),
-                            IsCurrentUsed = updateCustomerInforAddress.IsCurrentUsed,
-                            AccountId = updateCustomerInforAddress!.AccountId!,
-                            Lat = location.Lat,
-                            Lng = location.Lng,
-                        };
+                        customerInfoDb.CustomerInfoAddressName = updateCustomerInforAddress.CustomerInfoAddressName;
+                        customerInfoDb.IsCurrentUsed = updateCustomerInforAddress.IsCurrentUsed;
+                        customerInfoDb.AccountId = updateCustomerInforAddress.AccountId;
+                        customerInfoDb.Lat = location.Lat;
+                        customerInfoDb.Lng = location.Lng;
+
                         if (updateCustomerInforAddress.IsCurrentUsed == true)
                         {
                             var mainAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.AccountId == updateCustomerInforAddress.AccountId && p.IsCurrentUsed == true);
@@ -1649,9 +1649,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await customerInfoAddressRepository.Update(mainAddressDb);
                             if (!BuildAppActionResultIsError(result))
                             {
-                                await customerInfoAddressRepository!.Insert(newCustomerInfoAddress);
+                                await customerInfoAddressRepository!.Update(customerInfoDb);
                                 await _unitOfWork.SaveChangesAsync();
                             }
+                            scope.Complete();
                         }
                     }
                 }
@@ -1668,28 +1669,25 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             var result = new AppActionResult();
             var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
-            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            try
             {
-                try
+                var customerInfoAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.CustomerInfoAddressId == customerInfoAddresId);
+                if (customerInfoAddressDb == null)
                 {
-                    var customerInfoAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.CustomerInfoAddressId == customerInfoAddresId);
-                    if (customerInfoAddressDb == null)
-                    {
-                        return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ khách hàng với id {customerInfoAddresId}");
-                    }
-                    if (customerInfoAddressDb.IsCurrentUsed == true)
-                    {
-                        return BuildAppActionResultError(result, $"Không thể xóa địa chỉ đang sử dụng, hãy sử dụng địa chỉ khác");
-                    }
-                    await customerInfoAddressRepository.DeleteById(customerInfoAddresId);   
-                    await _unitOfWork.SaveChangesAsync();   
+                    return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ khách hàng với id {customerInfoAddresId}");
                 }
-                catch (Exception ex)
+                if (customerInfoAddressDb.IsCurrentUsed == true)
                 {
-                    result = BuildAppActionResultError(result, ex.Message);
+                    return BuildAppActionResultError(result, $"Không thể xóa địa chỉ đang sử dụng, hãy sử dụng địa chỉ khác");
                 }
-                return result;
+                await customerInfoAddressRepository.DeleteById(customerInfoAddresId);
+                await _unitOfWork.SaveChangesAsync();
             }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         }
     }
 }
