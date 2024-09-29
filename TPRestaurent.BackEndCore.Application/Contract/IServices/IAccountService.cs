@@ -38,7 +38,9 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> VerifyAccountOTP(string phoneNumber, string code, OTPType type);
         //Task<AppActionResult> SendAccountOTP(string phoneNumber, OTPType otpType);
         Task<AppActionResult> GetAccountByPhoneNumber(string phoneNumber);
+        Task<AppActionResult> CreateCustomerInfoAddress(CustomerInfoAddressRequest customerInfoAddressRequest);
+        Task<AppActionResult> UpdateCustomerInfoAddress(UpdateCustomerInforAddressRequest updateCustomerInforAddress);
+        Task<AppActionResult> DeleteCustomerInfoAddress(Guid customerInfoAddresId);  
         Task DeleteOverdueOTP();
-
     }
 }

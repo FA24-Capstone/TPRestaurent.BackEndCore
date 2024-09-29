@@ -18,6 +18,7 @@ using System.Net;
 using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
+using System.Transactions;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.ConfigurationModel;
@@ -30,6 +31,8 @@ using TPRestaurent.BackEndCore.Domain.Models;
 using Twilio.Types;
 using static Org.BouncyCastle.Crypto.Engines.SM2Engine;
 using static System.Net.WebRequestMethods;
+using static TPRestaurent.BackEndCore.Common.DTO.Response.EstimatedDeliveryTimeDto;
+using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
 using Utility = TPRestaurent.BackEndCore.Common.Utils.Utility;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
@@ -46,6 +49,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly IEmailService _emailService;
         private readonly IExcelService _excelService;
         private readonly IGenericRepository<OTP> _otpRepository;
+        private readonly IMapService _mapService;
         public AccountService(
             IGenericRepository<Account> accountRepository,
             IUnitOfWork unitOfWork,
@@ -56,7 +60,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             IMapper mapper,
             IServiceProvider serviceProvider,
             IGenericRepository<IdentityUserRole<string>> userRoleRepository,
-            IGenericRepository<OTP> otpRepository
+            IGenericRepository<OTP> otpRepository,
+            IMapService mapService
         ) : base(serviceProvider)
         {
             _accountRepository = accountRepository;
@@ -70,6 +75,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _mapper = mapper;
             _userRoleRepository = userRoleRepository;
             _otpRepository = otpRepository;
+            _mapService = mapService;
         }
 
         public async Task<AppActionResult> Login(LoginRequestDto loginRequest, HttpContext httpContext)
@@ -927,12 +933,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 _tokenDto.RefreshToken = refreshToken;
                 _tokenDto.Account = _mapper.Map<AccountResponse>(user);
                 var customerInfoAddressDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.AccountId.Equals(user.Id), 0, 0, null, false, null);
-                if(customerInfoAddressDb.Items.Count() > 0)
+                if (customerInfoAddressDb.Items.Count() > 0)
                 {
                     _tokenDto.Account.Addresses = customerInfoAddressDb.Items;
                 }
                 var creditStoreDb = await storeCreditRepository.GetAllDataByExpression(c => c.AccountId.Equals(user.Id), 0, 0, null, false, null);
-                if(creditStoreDb.Items.Count() > 0)
+                if (creditStoreDb.Items.Count() > 0)
                 {
                     _tokenDto.Account.StoreCredit = creditStoreDb.Items[0].Amount;
                     _tokenDto.Account.StoreCreditExpireDay = creditStoreDb.Items[0].ExpiredDate;
@@ -1560,6 +1566,130 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
             }
             Task.CompletedTask.Wait();
+        }
+
+        public async Task<AppActionResult> CreateCustomerInfoAddress(CustomerInfoAddressRequest customerInfoAddressRequest)
+        {
+            var result = new AppActionResult();
+            var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            {
+                try
+                {
+                    var addressLocation = await _mapService.Geocode(customerInfoAddressRequest.CustomerInfoAddressName);
+                    if (addressLocation.Result is MapInfo.Root root && root.Results != null)
+                    {
+                        var location = root.Results[0].Geometry?.Location;
+                        var newCustomerInfoAddress = new CustomerInfoAddress
+                        {
+                            CustomerInfoAddressId = Guid.NewGuid(),
+                            IsCurrentUsed = customerInfoAddressRequest.IsCurrentUsed,
+                            AccountId = customerInfoAddressRequest!.AccountId!,
+                            Lat = location.Lat,
+                            Lng = location.Lng,
+                        };
+                        if (customerInfoAddressRequest.IsCurrentUsed == true)
+                        {
+                            var mainAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.AccountId == customerInfoAddressRequest.AccountId && p.IsCurrentUsed == true);
+                            if (mainAddressDb == null)
+                            {
+                                return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ khách hàng với id {customerInfoAddressRequest.AccountId}");
+                            }
+                            mainAddressDb.IsCurrentUsed = false;
+                            await customerInfoAddressRepository.Update(mainAddressDb);
+                        }
+                        if (!BuildAppActionResultIsError(result))
+                        {
+                            await customerInfoAddressRepository!.Insert(newCustomerInfoAddress);
+                            await _unitOfWork.SaveChangesAsync();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result = BuildAppActionResultError(result, ex.Message);
+                }
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> UpdateCustomerInfoAddress(UpdateCustomerInforAddressRequest updateCustomerInforAddress)
+        {
+            var result = new AppActionResult();
+            var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            {
+                try
+                {
+                    var customerInfoDb = await customerInfoAddressRepository!.GetByExpression(p => p.AccountId == updateCustomerInforAddress.AccountId);
+                    if (customerInfoDb == null)
+                    {
+                        return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {updateCustomerInforAddress.AccountId}");
+                    }
+                    var addressLocation = await _mapService.Geocode(updateCustomerInforAddress.CustomerInfoAddressName);
+                    if (addressLocation.Result is MapInfo.Root root && root.Results != null)
+                    {
+                        var location = root.Results[0].Geometry?.Location;
+                        var newCustomerInfoAddress = new CustomerInfoAddress
+                        {
+                            CustomerInfoAddressId = Guid.NewGuid(),
+                            IsCurrentUsed = updateCustomerInforAddress.IsCurrentUsed,
+                            AccountId = updateCustomerInforAddress!.AccountId!,
+                            Lat = location.Lat,
+                            Lng = location.Lng,
+                        };
+                        if (updateCustomerInforAddress.IsCurrentUsed == true)
+                        {
+                            var mainAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.AccountId == updateCustomerInforAddress.AccountId && p.IsCurrentUsed == true);
+                            if (mainAddressDb == null)
+                            {
+                                return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ khách hàng với id {updateCustomerInforAddress.AccountId}");
+                            }
+                            mainAddressDb.IsCurrentUsed = false;
+                            await customerInfoAddressRepository.Update(mainAddressDb);
+                            if (!BuildAppActionResultIsError(result))
+                            {
+                                await customerInfoAddressRepository!.Insert(newCustomerInfoAddress);
+                                await _unitOfWork.SaveChangesAsync();
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result = BuildAppActionResultError(result, ex.Message);
+                }
+                return result;
+            }
+        }
+
+
+        public async Task<AppActionResult> DeleteCustomerInfoAddress(Guid customerInfoAddresId)
+        {
+            var result = new AppActionResult();
+            var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            {
+                try
+                {
+                    var customerInfoAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.CustomerInfoAddressId == customerInfoAddresId);
+                    if (customerInfoAddressDb == null)
+                    {
+                        return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ khách hàng với id {customerInfoAddresId}");
+                    }
+                    if (customerInfoAddressDb.IsCurrentUsed == true)
+                    {
+                        return BuildAppActionResultError(result, $"Không thể xóa địa chỉ đang sử dụng, hãy sử dụng địa chỉ khác");
+                    }
+                    await customerInfoAddressRepository.DeleteById(customerInfoAddresId);   
+                    await _unitOfWork.SaveChangesAsync();   
+                }
+                catch (Exception ex)
+                {
+                    result = BuildAppActionResultError(result, ex.Message);
+                }
+                return result;
+            }
         }
     }
 }

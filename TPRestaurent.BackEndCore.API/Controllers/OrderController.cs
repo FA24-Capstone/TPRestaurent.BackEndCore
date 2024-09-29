@@ -30,9 +30,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-order-by-phone-number/{pageNumber}/{pageSize}")]
-        public async Task<AppActionResult> GetAllOrderByPhoneNumber(string phoneNumber, int pageNumber = 1, int pageSize = 10)
+        public async Task<AppActionResult> GetAllOrderByPhoneNumber(string phoneNumber, OrderStatus? status, OrderType? orderType, int pageNumber = 1, int pageSize = 10)
         {
-            return await _service.GetAllOrderByPhoneNumber(phoneNumber, pageNumber, pageSize);
+            return await _service.GetAllOrderByPhoneNumber(phoneNumber, status, orderType ,pageNumber, pageSize);
         }
 
         [HttpGet("get-order-by-time/{pageNumber}/{pageSize}")]

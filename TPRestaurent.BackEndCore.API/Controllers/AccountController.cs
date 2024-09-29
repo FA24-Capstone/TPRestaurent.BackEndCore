@@ -144,5 +144,22 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.GetAccountByPhoneNumber(phoneNumber);
         }
 
+        [HttpPost("create-customer-info-address")]
+        public async Task<AppActionResult> CreateCustomerInfoAddress(CustomerInfoAddressRequest customerInfoAddressRequest)
+        {
+            return await _accountService.CreateCustomerInfoAddress(customerInfoAddressRequest);
+        }
+
+        [HttpPut("update-customer-info-address")]
+        public async Task<AppActionResult> UpdateCustomerInfoAddress(UpdateCustomerInforAddressRequest updateCustomerInforAddress)
+        {
+            return await _accountService.UpdateCustomerInfoAddress(updateCustomerInforAddress);     
+        }
+
+        [HttpDelete("delete-customer-info-address")]
+        public async Task<AppActionResult> DeleteCustomerInfoAddress(Guid customerInfoAddresId)
+        {
+            return await _accountService.DeleteCustomerInfoAddress(customerInfoAddresId);       
+        }
     }
 }
