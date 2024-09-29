@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
+using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
@@ -16,7 +17,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 {
     public class MapService : GenericBackendService, IMapService
     {
-        public const string APIKEY = "aZAqCAyyPhqquItUWec6O0D0QUZ32DPE6ni9D6al";
+        public const string APIKEY = "YfkkZsLrlGAJHZjFaAqXPKoLNXdC32hOlCdJrP3U";
         private IUnitOfWork _unitOfWork;
 
         public MapService(IUnitOfWork unitOfWork, IServiceProvider serviceProvider) : base(serviceProvider)
@@ -24,15 +25,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<AppActionResult> AutoComplete(string address)
+        public async Task<AppActionResult> AutoComplete(MapAutoCompleteRequestDto dto)
         {
             AppActionResult result = new();
 
             try
             {
-                var endpoint = $"https://rsapi.goong.io/Place/AutoComplete?api_key={APIKEY}&input={address}";
+                StringBuilder endpoint = new StringBuilder();                   
+                endpoint.Append($"https://rsapi.goong.io/Place/AutoComplete?api_key={APIKEY}");
+                if(dto.Destination != null)
+                {
+                    endpoint.Append($"&location={dto.Destination[0]},{dto.Destination[1]}");
+                }
+                endpoint.Append($"&input={dto.Address}");
                 var client = new RestClient();
-                var request = new RestRequest(endpoint);
+                var request = new RestRequest(endpoint.ToString());
 
                 var response = await client.ExecuteAsync(request);
 

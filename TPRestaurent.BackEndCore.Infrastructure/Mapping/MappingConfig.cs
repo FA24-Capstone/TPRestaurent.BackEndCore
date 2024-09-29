@@ -75,7 +75,9 @@ public class MappingConfig
             .ForMember(dest => dest.CategoryId, act => act.MapFrom(src => src.CategoryId))
             .ForMember(dest => dest.Category, act => act.MapFrom(src => src.Category))
             .ForMember(dest => dest.StartDate, act => act.MapFrom(src => src.StartDate))
-            .ForMember(dest => dest.EndDate, act => act.MapFrom(src => src.EndDate));
+            .ForMember(dest => dest.EndDate, act => act.MapFrom(src => src.EndDate))
+            .ForMember(dest => dest.QuantityLeft, act => act.MapFrom(src => src.QuantityLeft))
+            .ForMember(dest => dest.DailyCountdown, act => act.MapFrom(src => src.DailyCountdown));
 
             config.CreateMap<Dish, DishReponse>()
             .ForMember(dest => dest.DishId, act => act.MapFrom(src => src.DishId))
