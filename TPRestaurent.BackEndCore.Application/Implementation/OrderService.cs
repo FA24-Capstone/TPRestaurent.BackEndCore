@@ -729,6 +729,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (orderDetailDb.Items.Count > 0)
                     {
                         order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
+                        order.ItemLeft = orderDetailDb.Items.Count() - 1;
                     }
                 }
                 result.Result = new PagedResult<OrderWithFirstDetailResponse>
@@ -1076,6 +1077,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (orderDetailDb.Items.Count > 0)
                         {
                             order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
+                            order.ItemLeft = orderDetailDb.Items.Count() - 1;
                         }
                     }
                     orderList.Items = mappedData;
@@ -1186,6 +1188,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (orderDetailDb.Items.Count > 0)
                     {
                         order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
+                        order.ItemLeft = orderDetailDb.Items.Count() - 1;
                     }
                 }
                 result.Result = new PagedResult<OrderWithFirstDetailResponse>

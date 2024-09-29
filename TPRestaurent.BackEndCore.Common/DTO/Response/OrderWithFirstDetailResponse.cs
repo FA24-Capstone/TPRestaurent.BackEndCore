@@ -35,5 +35,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public double? Deposit { get; set; }
         public bool? IsPrivate { get; set; }
         public OrderDetail? OrderDetail { get; set; }
+        public int ItemLeft { get; set; }
     }
 }
