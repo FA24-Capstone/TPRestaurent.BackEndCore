@@ -12,7 +12,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
     public class ReservationReponse
     {
         public OrderResponse Order { get; set; }    
-        public Transaction? Transaction { get; set; }
         public List<OrderDishDto> OrderDishes { get; set; } = new List<OrderDishDto>();
         public List<TableDetail> OrderTables { get; set; } = new List<TableDetail>();
     }
@@ -44,6 +43,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public int? NumOfPeople { get; set; }
         public double? Deposit { get; set; }
         public bool? IsPrivate { get; set; }
+        public Transaction? Transaction { get; set; }
     }
 
     public class OrderDishDto
