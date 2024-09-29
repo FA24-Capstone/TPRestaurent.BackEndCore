@@ -2209,15 +2209,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var distance = eletement!.TotalDistance;
                 var maxDistanceToOrder = double.Parse(restaurantMaxDistanceToOrderConfig!.CurrentValue);
                 var distanceStep = int.Parse(distanceStepConfig!.CurrentValue);
-                var distanceStepFee = double.Parse(distanceStepConfig!.CurrentValue);
+                var distanceStepFee = double.Parse(distanceStepFeeConfig!.CurrentValue);
                 if (distance > maxDistanceToOrder)
                 {
                     return BuildAppActionResultError(result, $"Nhà hàng chỉ hỗ trợ cho đơn giao hàng trong bán kính 10km");
                 }
                 else
                 {
-                    var step = distance / distanceStep;
-                    total = distanceStepFee * step; 
+                    int step = (int)Math.Ceiling(distance / distanceStep);
+                    total = Math.Ceiling(distanceStepFee * step); 
                 }
                 result.Result = total;
             }
