@@ -1576,36 +1576,32 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 try
                 {
-                    var addressLocation = await _mapService.Geocode(customerInfoAddressRequest.CustomerInfoAddressName);
-                    if (addressLocation.Result is MapInfo.Root root && root.Results != null)
+
+                    var newCustomerInfoAddress = new CustomerInfoAddress
                     {
-                        var location = root.Results[0].Geometry?.Location;
-                        var newCustomerInfoAddress = new CustomerInfoAddress
+                        CustomerInfoAddressId = Guid.NewGuid(),
+                        CustomerInfoAddressName = customerInfoAddressRequest.CustomerInfoAddressName,
+                        IsCurrentUsed = customerInfoAddressRequest.IsCurrentUsed,
+                        AccountId = customerInfoAddressRequest!.AccountId!,
+                        Lat = customerInfoAddressRequest.Lat,
+                        Lng = customerInfoAddressRequest.Lng,
+                    };
+                    if (customerInfoAddressRequest.IsCurrentUsed == true)
+                    {
+                        var mainAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.AccountId == customerInfoAddressRequest.AccountId && p.IsCurrentUsed == true);
+                        if (mainAddressDb == null)
                         {
-                            CustomerInfoAddressId = Guid.NewGuid(),
-                            CustomerInfoAddressName = customerInfoAddressRequest.CustomerInfoAddressName,
-                            IsCurrentUsed = customerInfoAddressRequest.IsCurrentUsed,
-                            AccountId = customerInfoAddressRequest!.AccountId!,
-                            Lat = location.Lat,
-                            Lng = location.Lng,
-                        };
-                        if (customerInfoAddressRequest.IsCurrentUsed == true)
-                        {
-                            var mainAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.AccountId == customerInfoAddressRequest.AccountId && p.IsCurrentUsed == true);
-                            if (mainAddressDb == null)
-                            {
-                                return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ khách hàng với id {customerInfoAddressRequest.AccountId}");
-                            }
-                            mainAddressDb.IsCurrentUsed = false;
-                            await customerInfoAddressRepository.Update(mainAddressDb);
+                            return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ khách hàng với id {customerInfoAddressRequest.AccountId}");
                         }
-                        if (!BuildAppActionResultIsError(result))
-                        {
-                            await customerInfoAddressRepository!.Insert(newCustomerInfoAddress);
-                            await _unitOfWork.SaveChangesAsync();
-                        }
-                        scope.Complete();
+                        mainAddressDb.IsCurrentUsed = false;
+                        await customerInfoAddressRepository.Update(mainAddressDb);
                     }
+                    if (!BuildAppActionResultIsError(result))
+                    {
+                        await customerInfoAddressRepository!.Insert(newCustomerInfoAddress);
+                        await _unitOfWork.SaveChangesAsync();
+                    }
+                    scope.Complete();
                 }
                 catch (Exception ex)
                 {
@@ -1628,32 +1624,28 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {updateCustomerInforAddress.AccountId}");
                     }
-                    var addressLocation = await _mapService.Geocode(updateCustomerInforAddress.CustomerInfoAddressName);
-                    if (addressLocation.Result is MapInfo.Root root && root.Results != null)
-                    {
-                        var location = root.Results[0].Geometry?.Location;
-                        customerInfoDb.CustomerInfoAddressName = updateCustomerInforAddress.CustomerInfoAddressName;
-                        customerInfoDb.IsCurrentUsed = updateCustomerInforAddress.IsCurrentUsed;
-                        customerInfoDb.AccountId = updateCustomerInforAddress.AccountId;
-                        customerInfoDb.Lat = location.Lat;
-                        customerInfoDb.Lng = location.Lng;
 
-                        if (updateCustomerInforAddress.IsCurrentUsed == true)
+                    customerInfoDb.CustomerInfoAddressName = updateCustomerInforAddress.CustomerInfoAddressName;
+                    customerInfoDb.IsCurrentUsed = updateCustomerInforAddress.IsCurrentUsed;
+                    customerInfoDb.AccountId = updateCustomerInforAddress.AccountId;
+                    customerInfoDb.Lat = updateCustomerInforAddress.Lat;
+                    customerInfoDb.Lng = updateCustomerInforAddress.Lng;
+
+                    if (updateCustomerInforAddress.IsCurrentUsed == true)
+                    {
+                        var mainAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.AccountId == updateCustomerInforAddress.AccountId && p.IsCurrentUsed == true);
+                        if (mainAddressDb == null)
                         {
-                            var mainAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.AccountId == updateCustomerInforAddress.AccountId && p.IsCurrentUsed == true);
-                            if (mainAddressDb == null)
-                            {
-                                return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ khách hàng với id {updateCustomerInforAddress.AccountId}");
-                            }
-                            mainAddressDb.IsCurrentUsed = false;
-                            await customerInfoAddressRepository.Update(mainAddressDb);
-                            if (!BuildAppActionResultIsError(result))
-                            {
-                                await customerInfoAddressRepository!.Update(customerInfoDb);
-                                await _unitOfWork.SaveChangesAsync();
-                            }
-                            scope.Complete();
+                            return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ khách hàng với id {updateCustomerInforAddress.AccountId}");
                         }
+                        mainAddressDb.IsCurrentUsed = false;
+                        await customerInfoAddressRepository.Update(mainAddressDb);
+                        if (!BuildAppActionResultIsError(result))
+                        {
+                            await customerInfoAddressRepository!.Update(customerInfoDb);
+                            await _unitOfWork.SaveChangesAsync();
+                        }
+                        scope.Complete();
                     }
                 }
                 catch (Exception ex)

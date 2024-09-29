@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using NPOI.POIFS.Crypt.Dsig;
+using NPOI.SS.Formula.Functions;
 using Org.BouncyCastle.Utilities;
 using System;
 using System.Collections.Generic;
@@ -2168,6 +2169,66 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
 
             return reservationDishes;
+        }
+
+        public async Task<AppActionResult> CalculateDeliveryOrder(Guid customerInfoAddressId)
+        {
+            var result = new AppActionResult();
+            var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+            var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+            var mapService = Resolve<IMapService>();
+            try
+            {
+                var restaurantLatConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LATITUDE);
+                var restaurantLngConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LNG);
+                var restaurantMaxDistanceToOrderConfig = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DISTANCE_ORDER);
+                var distanceStepConfig = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DISTANCE_STEP);
+                var flatCostDistance = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.FLAT_COST_DISTANCE);
+                var distanceStepFeeConfig = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DISTANCE_STEP_FEE);
+
+                double total = 0;
+                var customerInfoAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.CustomerInfoAddressId == customerInfoAddressId);
+                if (customerInfoAddressDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {customerInfoAddressId}");
+                }
+
+                var restaurantLat = Double.Parse(restaurantLatConfig.CurrentValue);
+                var restaurantLng = Double.Parse(restaurantLngConfig.CurrentValue);
+
+                double[] restaurantAddress = new double[]
+                {
+                    restaurantLat, restaurantLng
+                };
+
+                double[] customerAddress = new double[]
+                {
+                    customerInfoAddressDb.Lat, customerInfoAddressDb.Lng
+                };
+
+                var distanceResponse = await mapService!.GetEstimateDeliveryResponse(restaurantAddress, customerAddress);
+                var eletement = distanceResponse.Result as EstimatedDeliveryTimeDto.Response;
+
+                var distance = eletement!.TotalDistance;
+                var maxDistanceToOrder = double.Parse(restaurantMaxDistanceToOrderConfig!.CurrentValue);
+                var distanceStep = int.Parse(distanceStepConfig!.CurrentValue);
+                var distanceStepFee = double.Parse(distanceStepFeeConfig!.CurrentValue);
+                if (distance > maxDistanceToOrder)
+                {
+                    return BuildAppActionResultError(result, $"Nhà hàng chỉ hỗ trợ cho đơn giao hàng trong bán kính 10km");
+                }
+                else
+                {
+                    int step = (int)Math.Ceiling(distance / distanceStep);
+                    total = Math.Ceiling(distanceStepFee * step); 
+                }
+                result.Result = total;
+            }
+            catch (Exception ex)
+            {
+                return BuildAppActionResultError(new AppActionResult(), ex.Message);
+            }
+            return result;
         }
     }
 }

@@ -53,6 +53,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.CalculateReservation(request);
         }
 
+        [HttpPost("calculate-deliver-order")]
+        public async Task<AppActionResult> CalculateDeliveryOrder(Guid customerInfoAddressId)
+        {
+            return await _service.CalculateDeliveryOrder(customerInfoAddressId);        
+        }
+
         [HttpPost("add-dish-to-order/{orderId}")]
         public async Task<AppActionResult> AddDishToOrder([FromBody] AddDishToOrderRequestDto dto)
         {
