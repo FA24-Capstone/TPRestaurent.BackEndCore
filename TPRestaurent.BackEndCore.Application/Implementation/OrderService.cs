@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Castle.Core.Logging;
 using Humanizer;
+using MailKit;
 using MailKit.Search;
 using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
@@ -291,6 +292,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
                     var transcationService = Resolve<ITransactionService>();
                     var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
+                    var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                    var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+                    var mapService = Resolve<IMapService>();
                     var createdOrderId = new Guid();
                     var dishSizeDetail = new DishSizeDetail();
                     var combo = new Combo();
@@ -560,12 +564,45 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng. Đặt hàng thất bại");
                         }
 
-                        if (string.IsNullOrEmpty(orderRequestDto.DeliveryOrder.Address))
+                        if (string.IsNullOrEmpty(orderRequestDto.DeliveryOrder.AddressId.ToString()))
                         {
                             return BuildAppActionResultError(result, $"Địa chỉ của bạn không tồn tại. Vui lòng cập nhập địa chỉ");
                         }
 
                         order.AccountId = accountDb.Id;
+
+                        var restaurantLatConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LATITUDE);
+                        var restaurantLngConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LNG);
+                        var restaurantMaxDistanceToOrderConfig = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DISTANCE_ORDER);
+
+                        var customerInfoAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.CustomerInfoAddressId == orderRequestDto.DeliveryOrder.AddressId);
+                        if (customerInfoAddressDb == null)
+                        {
+                            return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {orderRequestDto.DeliveryOrder.AddressId}");
+                        }
+
+                        var restaurantLat = Double.Parse(restaurantLatConfig.CurrentValue);
+                        var restaurantLng = Double.Parse(restaurantLngConfig.CurrentValue);
+                        var maxDistanceToOrder = double.Parse(restaurantMaxDistanceToOrderConfig!.CurrentValue);
+
+                        double[] restaurantAddress = new double[]
+                        {
+                            restaurantLat, restaurantLng
+                        };
+
+                        double[] customerAddress = new double[]
+                        {
+                            customerInfoAddressDb.Lat, customerInfoAddressDb.Lng
+                        };
+
+                        var distanceResponse = await mapService!.GetEstimateDeliveryResponse(restaurantAddress, customerAddress);
+                        var eletement = distanceResponse.Result as EstimatedDeliveryTimeDto.Response;
+                        var distance = eletement!.TotalDistance;
+                        if (distance > maxDistanceToOrder)
+                        {
+                            return BuildAppActionResultError(result, $"Nhà hàng chỉ hỗ trợ cho đơn giao hàng trong bán kính 10km");
+                        }
+
 
                         var currentTime = utility.GetCurrentDateTimeInTimeZone();
                         var couponDb = await couponProgramRepository!.GetAllDataByExpression(c => currentTime > c.StartDate && currentTime < c.ExpiryDate && c.MinimumAmount <= money && c.Quantity > 0, 0, 0, null, false, null);
@@ -1875,16 +1912,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 await orderDetailRepository.UpdateRange(orderDetailDb.Items);
                 var orderSessionDb = orderDetailDb.Items.DistinctBy(o => o.OrderSessionId).Select(o => o.OrderSession);
                 var orderSessionSet = new HashSet<Guid>();
-                foreach(var session in orderSessionDb)
+                foreach (var session in orderSessionDb)
                 {
                     if (orderSessionSet.Contains(session.OrderSessionId))
                     {
                         continue;
                     }
-                    if(orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
+                    if (orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
                     {
                         await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Cancelled);
-                    } else if(orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe))
+                    }
+                    else if (orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe))
                     {
                         await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Cancelled);
                     }
@@ -2026,7 +2064,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             );
             return result.Items!;
         }
-        
+
         private async Task<List<Common.DTO.Response.OrderDishDto>> GetReservationDishes(Guid orderId)
         {
             var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
@@ -2220,7 +2258,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 else
                 {
                     int step = (int)Math.Ceiling(distance / distanceStep);
-                    total = Math.Ceiling(distanceStepFee * step); 
+                    total = Math.Ceiling(distanceStepFee * step);
                 }
                 result.Result = total;
             }
