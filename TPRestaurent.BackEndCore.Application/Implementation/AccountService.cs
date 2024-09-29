@@ -1590,12 +1590,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (customerInfoAddressRequest.IsCurrentUsed == true)
                     {
                         var mainAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.AccountId == customerInfoAddressRequest.AccountId && p.IsCurrentUsed == true);
-                        mainAddressDb.IsCurrentUsed = false;
+                        if (mainAddressDb != null)
+                        {
+                            mainAddressDb.IsCurrentUsed = false;
 
-                        var accountDb = await accountRepository.GetByExpression(p => p.Id == customerInfoAddressRequest.AccountId);
-                        accountDb.Address = newCustomerInfoAddress.CustomerInfoAddressName;
-                        await customerInfoAddressRepository.Update(mainAddressDb);
-                        await accountRepository.Update(accountDb);      
+                            var accountDb = await accountRepository.GetByExpression(p => p.Id == customerInfoAddressRequest.AccountId);
+                            accountDb.Address = newCustomerInfoAddress.CustomerInfoAddressName;
+                            await customerInfoAddressRepository.Update(mainAddressDb);
+                            await accountRepository.Update(accountDb);
+                        }
                     }
                     if (!BuildAppActionResultIsError(result))
                     {
@@ -1636,11 +1639,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (updateCustomerInforAddress.IsCurrentUsed == true)
                     {
                         var mainAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.AccountId == updateCustomerInforAddress.AccountId && p.IsCurrentUsed == true);
-
-                        var accountDb = await accountRepository.GetByExpression(p => p.Id == updateCustomerInforAddress.AccountId);
-                        accountDb.Address = updateCustomerInforAddress.CustomerInfoAddressName;
-                        mainAddressDb.IsCurrentUsed = false;
-                        await customerInfoAddressRepository.Update(mainAddressDb);
+                        if (mainAddressDb != null)
+                        {
+                            var accountDb = await accountRepository.GetByExpression(p => p.Id == updateCustomerInforAddress.AccountId);
+                            accountDb.Address = updateCustomerInforAddress.CustomerInfoAddressName;
+                            mainAddressDb.IsCurrentUsed = false;
+                            await customerInfoAddressRepository.Update(mainAddressDb);
+                            await accountRepository.Update(accountDb);      
+                        }
                         if (!BuildAppActionResultIsError(result))
                         {
                             await customerInfoAddressRepository!.Update(customerInfoDb);
