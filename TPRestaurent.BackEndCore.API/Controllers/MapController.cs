@@ -16,10 +16,10 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             _service = service;
         }
 
-        [HttpGet("auto-complete")]
-        public async Task<AppActionResult> AutoComplete(string address)
+        [HttpPost("auto-complete")]
+        public async Task<AppActionResult> AutoComplete([FromBody]MapAutoCompleteRequestDto dto)
         {
-            return await _service.AutoComplete(address);
+            return await _service.AutoComplete(dto);
         }
 
         [HttpGet("geo-code")]
