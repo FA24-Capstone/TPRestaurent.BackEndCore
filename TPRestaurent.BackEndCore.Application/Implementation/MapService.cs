@@ -47,11 +47,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var data = response.Content;
                     var obj = JsonConvert.DeserializeObject<Common.DTO.Response.AutoCompleteRoot>(data!);
-                    var selectedData = obj.Predictions.Select(p => new Prediction
+                    var selectedData = new List<Prediction>();
+                    foreach (var item in obj.Predictions)
                     {
-                        Description = p.Description,
-                        Compound = p.Compound
-                    }).ToList();
+                        await Task.Delay(255);
+                        var placeDestination = await GetPlaceById(item.PlaceId);
+                        selectedData.Add(new Prediction
+                        {
+                            Description = item.Description,
+                            Compound = item.Compound,
+                            Lat = placeDestination[0],
+                            Lng = placeDestination[1]
+
+                        });
+                    }
                     result.Result = selectedData;
                 }
             }
@@ -117,6 +126,37 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 result.Result = BuildAppActionResultError(result, e.Message);
 
+            }
+            return result;
+        }
+
+        public async Task<double[]> GetPlaceById(string id)
+        {
+            double[] result = new double[2];
+            try
+            {
+                var client = new RestClient();
+                var endpoint = $"https://rsapi.goong.io/Place/Detail?place_id={id}&api_key={APIKEY}";
+                var findDestinationRequest = new RestRequest(endpoint);
+
+                var destinationResponse = await client.ExecuteAsync(findDestinationRequest);
+                if (destinationResponse.IsSuccessStatusCode)
+                {
+                    var apiData = destinationResponse.Content;
+                    if (apiData != null)
+                    {
+                        var place = JsonConvert.DeserializeObject<PlaceDetailResponse>(apiData);
+                        if (place.status.Equals("OK")) 
+                        {
+                            result[0] = place.result.geometry.location.lat;
+                            result[1] = place.result.geometry.location.lng;
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                
             }
             return result;
         }
