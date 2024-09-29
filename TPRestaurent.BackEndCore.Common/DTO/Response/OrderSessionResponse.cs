@@ -10,6 +10,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
     public class OrderSessionResponse
     {
         public OrderSession OrderSession { get; set; } = null!;
+        public Order Order { get; set; } = null!;
         public List<OrderDetailResponse> OrderDetails { get; set; } = new List<OrderDetailResponse>();
     }
 }
