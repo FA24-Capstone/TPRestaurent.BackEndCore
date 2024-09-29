@@ -26,5 +26,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public bool IsAvailable { get; set; }
         public double AverageRating { get; set; } = 0;
         public int NumberOfRating { get; set; } = 0;
+
     }
 }

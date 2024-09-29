@@ -23,5 +23,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public DateTime EndDate { get; set; }
         public double AverageRating { get; set; } = 0;
         public int NumberOfRating { get; set; } = 0;
+        public int? QuantityLeft { get; set; }
+        public int DailyCountdown { get; set; }
     }
 }
