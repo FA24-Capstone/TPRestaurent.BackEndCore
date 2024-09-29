@@ -13,7 +13,5 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public string CustomerInfoAddressName { get; set; } = null!;
         public bool IsCurrentUsed { get; set; }
         public string? AccountId { get; set; }
-        [ForeignKey(nameof(AccountId))]
-        public Account? Account { get; set; }
     }
 }
