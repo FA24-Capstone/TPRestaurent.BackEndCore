@@ -1518,27 +1518,53 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var customerInfoListDb = await _accountRepository.GetAllDataByExpression(c => c.PhoneNumber.Equals(phoneNumber), 0, 0, null, false, null);
-                if (customerInfoListDb!.Items!.Count > 1)
-                {
-                    return BuildAppActionResultError(result, $"Có nhiều hơn 1 thông tin người dùng với số điện thoại {phoneNumber}");
-                }
+                var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
+                var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
+                var listRole = await roleRepository!.GetAllDataByExpression(null, 1, 100, null, false, null);
+                var customerInfoDb = await _accountRepository.GetByExpression(c => c.PhoneNumber.Equals(phoneNumber));
+                var listMap = _mapper.Map<AccountResponse>(customerInfoDb);
 
-                if (customerInfoListDb.Items.Count == 0)
+                if (customerInfoDb == null)
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy thông tin người dùng với số điện thoại {phoneNumber}");
                 }
 
-                var customerInfo = customerInfoListDb.Items[0];
+                var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>(); 
+                var customerInfoAddressDb = await customerInfoAddressRepository!.GetAllDataByExpression(c => c.AccountId == customerInfoDb.Id, 0, 0, null, false, null);
+                listMap.Addresses = customerInfoAddressDb.Items;
+                
+                var userRole = new List<IdentityRole>();
+                var role = await userRoleRepository!.GetAllDataByExpression(a => a.UserId == customerInfoDb.Id, 1, 100, null, false, null);
+                foreach (var itemRole in role.Items!)
+                {
+                    var roleUser = listRole.Items!.ToList().FirstOrDefault(a => a.Id == itemRole.RoleId);
+                    if (roleUser != null) userRole.Add(roleUser);
+                }
+                listMap.Roles = userRole;
+                var roleNameList = userRole.DistinctBy(i => i.Id).Select(i => i.Name).ToList();
 
-                var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
-                var customerInfoAddressDb = await customerInfoAddressRepository!.GetAllDataByExpression(c => c.AccountId == customerInfo.Id, 0, 0, null, false, null);
+                if (roleNameList.Contains("ADMIN"))
+                {
+                    listMap.MainRole = "ADMIN";
+                }
+                else if (roleNameList.Contains("SHIPPER"))
+                {
+                    listMap.MainRole = "SHIPPER";
+                }
+                else if (roleNameList.Contains("CHEF") && !roleNameList.Contains("ADMIN"))
+                {
+                    listMap.MainRole = "CHEF";
+                }
+                else if (roleNameList.Count > 1)
+                {
+                    listMap.MainRole = roleNameList.FirstOrDefault(n => !n.Equals("CUSTOMER"));
+                }
+                else
+                {
+                    listMap.MainRole = "CUSTOMER";
+                }
 
-                var data = new CustomerInfoAddressResponse();
-                data.CustomerInfo = customerInfo;
-                data.CustomerAddresses = customerInfoAddressDb!.Items!;
-
-                result.Result = data;
+                result.Result = listMap;
             }
             catch (Exception ex)
             {
@@ -1645,7 +1671,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             accountDb.Address = updateCustomerInforAddress.CustomerInfoAddressName;
                             mainAddressDb.IsCurrentUsed = false;
                             await customerInfoAddressRepository.Update(mainAddressDb);
-                            await accountRepository.Update(accountDb);      
+                            await accountRepository.Update(accountDb);
                         }
                         if (!BuildAppActionResultIsError(result))
                         {
@@ -1664,22 +1690,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         }
 
 
-        public async Task<AppActionResult> DeleteCustomerInfoAddress(Guid customerInfoAddresId)
+        public async Task<AppActionResult> DeleteCustomerInfoAddress(Guid customerInfoAddressId)
         {
             var result = new AppActionResult();
             var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
             try
             {
-                var customerInfoAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.CustomerInfoAddressId == customerInfoAddresId);
+                var customerInfoAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.CustomerInfoAddressId == customerInfoAddressId);
                 if (customerInfoAddressDb == null)
                 {
-                    return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ khách hàng với id {customerInfoAddresId}");
+                    return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ khách hàng với id {customerInfoAddressId}");
                 }
                 if (customerInfoAddressDb.IsCurrentUsed == true)
                 {
                     return BuildAppActionResultError(result, $"Không thể xóa địa chỉ đang sử dụng, hãy sử dụng địa chỉ khác");
                 }
-                await customerInfoAddressRepository.DeleteById(customerInfoAddresId);
+                await customerInfoAddressRepository.DeleteById(customerInfoAddressId);
                 await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
