@@ -54,11 +54,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderSessionDb = await _orderSessionRepository.GetAllDataByExpression(s => (orderSessionStatus.HasValue && s.OrderSessionStatusId == orderSessionStatus)
                                                                                       || (!orderSessionStatus.HasValue
                                                                                           && (s.OrderSessionStatusId != OrderSessionStatus.Completed
-                                                                                              || s.OrderSessionStatusId != OrderSessionStatus.Cancelled)
+                                                                                              || s.OrderSessionStatusId != OrderSessionStatus.Cancelled
+                                                                                              || s.OrderSessionStatusId != OrderSessionStatus.PreOrder)
                                                                                          ),
                                                                                     pageNumber, pageSize, s => s.OrderSessionTime, false, s => s.OrderSessionStatus!);
                 var orderSessionResponseList = new List<OrderSessionResponse>();
-                if (orderSessionDb!.Items!.Count > 0 && orderSessionDb.Items != null)
+                if (orderSessionDb!.Items!.Count == 0 && orderSessionDb.Items != null)
                 {
                     return BuildAppActionResultError(result, $"Hiện tại không có phiên đặt bàn");
                 }
