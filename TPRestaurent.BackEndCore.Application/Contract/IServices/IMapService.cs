@@ -10,6 +10,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
     public interface IMapService
     {
+        public Task<double[]> GetPlaceById(string id);
         public Task<AppActionResult> Geocode(string address);
         public Task<AppActionResult> AutoComplete(MapAutoCompleteRequestDto dto);
         public Task<AppActionResult> GetEstimateDeliveryResponse(double[] endCoordinate, double[]? startCoordinate);
