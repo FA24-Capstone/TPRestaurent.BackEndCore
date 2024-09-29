@@ -2095,13 +2095,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var successfulDepositTransaction = orderTransactionDb.Items.Where(o => o.TransactionTypeId == TransactionType.Deposit).ToList();
                 if (successfulDepositTransaction.Count() == 1)
                 {
-                    orderResponse.DepositPaidDate = successfulDepositTransaction[0].PaidDate;
+                    orderResponse.DepositPaidDate = successfulDepositTransaction.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).First().PaidDate;
+                    orderResponse.Transaction = successfulDepositTransaction.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).First();
                 }
 
                 var successfulOrderTransaction = orderTransactionDb.Items.Where(o => o.TransactionTypeId == TransactionType.Order).ToList();
                 if (successfulOrderTransaction.Count() == 1)
                 {
-                    orderResponse.OrderPaidDate = successfulOrderTransaction[0].PaidDate;
+                    orderResponse.OrderPaidDate = successfulOrderTransaction.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).First().PaidDate;
+                    orderResponse.Transaction = successfulOrderTransaction.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).First();
                 }
                 var reservationTableDetails = await GetReservationTableDetails(reservationId);
                 var reservationDishes = await GetReservationDishes2(reservationId);
