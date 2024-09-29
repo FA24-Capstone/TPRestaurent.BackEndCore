@@ -61,6 +61,10 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         [JsonProperty("types")] public List<object> Types { get; set; }
 
         [JsonProperty("distance_meters")] public object DistanceMeters { get; set; }
+        [JsonIgnore]
+        public double Lng {  get; set; }
+        [JsonIgnore]
+        public double Lat {  get; set; }
     }
 
     public class AutoCompleteRoot
