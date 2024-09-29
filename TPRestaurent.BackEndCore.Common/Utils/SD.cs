@@ -92,6 +92,12 @@ public class SD
         public static string TIME_TO_KEEP_RESERVATION = "TIME_TO_KEEP_RESERVATION";
         public static string OPEN_TIME = "OPEN_TIME";
         public static string CLOSED_TIME = "CLOSED_TIME";
+        public static string RESTAURANT_LATITUDE = "RESTAURANT_LATITUDE";
+        public static string RESTAURANT_LNG = "RESTAURANT_LNG";
+        public static string DISTANCE_STEP = "DISTANCE_STEP";
+        public static string DISTANCE_ORDER = "DISTANCE_ORDER";
+        public static string FLAT_COST_DISTANCE = "FLAT_COST_DISTANCE";
+        public static string DISTANCE_STEP_FEE = "DISTANCE_STEP_FEE";
     }
 
     public class SubjectMail
