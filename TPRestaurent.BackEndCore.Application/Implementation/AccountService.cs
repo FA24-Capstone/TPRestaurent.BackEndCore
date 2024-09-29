@@ -1572,6 +1572,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             var result = new AppActionResult();
             var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+            var accountRepository = Resolve<IGenericRepository<Account>>();
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
                 try
@@ -1589,12 +1590,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (customerInfoAddressRequest.IsCurrentUsed == true)
                     {
                         var mainAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.AccountId == customerInfoAddressRequest.AccountId && p.IsCurrentUsed == true);
-                        if (mainAddressDb == null)
-                        {
-                            return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ khách hàng với id {customerInfoAddressRequest.AccountId}");
-                        }
                         mainAddressDb.IsCurrentUsed = false;
+
+                        var accountDb = await accountRepository.GetByExpression(p => p.Id == customerInfoAddressRequest.AccountId);
+                        accountDb.Address = newCustomerInfoAddress.CustomerInfoAddressName;
                         await customerInfoAddressRepository.Update(mainAddressDb);
+                        await accountRepository.Update(accountDb);      
                     }
                     if (!BuildAppActionResultIsError(result))
                     {
@@ -1615,6 +1616,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             var result = new AppActionResult();
             var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+            var accountRepository = Resolve<IGenericRepository<Account>>();
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
                 try
@@ -1634,10 +1636,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (updateCustomerInforAddress.IsCurrentUsed == true)
                     {
                         var mainAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.AccountId == updateCustomerInforAddress.AccountId && p.IsCurrentUsed == true);
-                        if (mainAddressDb == null)
-                        {
-                            return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ khách hàng với id {updateCustomerInforAddress.AccountId}");
-                        }
+
+                        var accountDb = await accountRepository.GetByExpression(p => p.Id == updateCustomerInforAddress.AccountId);
+                        accountDb.Address = updateCustomerInforAddress.CustomerInfoAddressName;
                         mainAddressDb.IsCurrentUsed = false;
                         await customerInfoAddressRepository.Update(mainAddressDb);
                         if (!BuildAppActionResultIsError(result))
