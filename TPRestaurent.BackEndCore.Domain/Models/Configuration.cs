@@ -15,5 +15,6 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public string Name { get; set; } = null!;
         public string? VietnameseName { get; set; } = null!;
         public string CurrentValue { get; set; } = null!;
+        public string Unit { get; set; } = null!;
     }
 }

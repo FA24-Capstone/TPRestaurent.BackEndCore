@@ -11,6 +11,7 @@ namespace TPRestaurent.BackEndCore.Domain.Enums
         PreOrder,
         Confirmed,
         Processing,
+        LateWarning,
         Completed,
         Cancelled
     }

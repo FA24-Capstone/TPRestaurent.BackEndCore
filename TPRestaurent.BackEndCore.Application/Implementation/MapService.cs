@@ -81,7 +81,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetEstimateDeliveryTime(double[] endCoordinate, double[]? startCoordinate)
+        public async Task<AppActionResult> GetEstimateDeliveryResponse(double[] endCoordinate, double[]? startCoordinate)
         {
             AppActionResult result = new AppActionResult();
             try
