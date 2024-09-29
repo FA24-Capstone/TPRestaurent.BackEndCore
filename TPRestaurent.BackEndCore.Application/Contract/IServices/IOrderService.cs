@@ -19,6 +19,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> GetOrderDetail(Guid orderId);
         public Task<AppActionResult> GetOrderByTime(double? minute, int pageNumber, int pageSize);
         public Task<AppActionResult> CalculateReservation(ReservationDto request);
+        public Task<AppActionResult> CalculateDeliveryOrder(Guid customerInfoAddressId);
         public Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto);
         public Task<AppActionResult> MakeDineInOrderBill(OrderPaymentRequestDto orderRequestDto);
         public Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful);
