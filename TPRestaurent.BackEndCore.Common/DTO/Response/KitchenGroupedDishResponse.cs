@@ -9,13 +9,13 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
 {
     public class KitchenGroupedDishResponse
     {
-        public List<KitchenGroupedDishItemResponse> MutualOrderDishes { get; set; } = new List<KitchenGroupedDishItemResponse> { };
-        public List<KitchenGroupedDishItemResponse> SingleOrderDishes { get; set; } = new List<KitchenGroupedDishItemResponse> { };
+        public List<KitchenGroupedDishItemResponse> MutualOrderDishes { get; set; } = new List<KitchenGroupedDishItemResponse> ();
+        public List<KitchenGroupedDishItemResponse> SingleOrderDishes { get; set; } = new List<KitchenGroupedDishItemResponse> ();
     }
 
     public class KitchenGroupedDishItemResponse
     {
         public int Total { get; set; }
-        public List<OrderDetailResponse> orderDetailResponses = new List<OrderDetailResponse>();
+        public List<OrderDetailResponse> orderDetailResponses { get; set; } = new List<OrderDetailResponse>();
     }
 }
