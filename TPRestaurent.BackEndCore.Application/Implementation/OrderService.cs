@@ -25,6 +25,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
+using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
 using Transaction = TPRestaurent.BackEndCore.Domain.Models.Transaction;
 using Utility = TPRestaurent.BackEndCore.Common.Utils.Utility;
 
@@ -2265,6 +2266,57 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     total = Math.Ceiling(distanceStepFee * step);
                 }
                 result.Result = total;
+            }
+            catch (Exception ex)
+            {
+                return BuildAppActionResultError(new AppActionResult(), ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetAllTableDetails(OrderStatus orderStatus, int pageNumber, int pageSize)
+        {
+            var result = new AppActionResult();
+            var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
+            try
+            {
+                var tableDetailList = new List<TableDetail>();
+                var orderDb = await _repository.GetAllDataByExpression(p => p.StatusId == orderStatus && p.OrderTypeId == OrderType.MealWithoutReservation, pageNumber, pageSize, p => p.OrderDate, false, null);
+
+                if (orderDb.Items == null || !orderDb.Items.Any())
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy đơn đặt hàng với status {orderStatus}");
+                }
+
+                foreach (var order in orderDb.Items)
+                {
+                    var tableDetailDb = await tableDetailRepository!.GetAllDataByExpression(
+                        p => p.OrderId == order.OrderId,
+                        0,
+                        0,
+                        p => p.StartTime,
+                        false,
+                        p => p.Order!,
+                        p => p.Order!.Status!,
+                        p => p.Order!.Account,
+                        p => p.Order!.LoyalPointsHistory!,
+                        p => p.Order!.OrderType!,
+                        p => p.Table!.Room!,
+                        p => p.Table!.TableSize!
+                    );
+
+                    var tableDetail = tableDetailDb.Items.FirstOrDefault();
+                    if (tableDetail != null)
+                    {
+                        tableDetailList.Add(tableDetail);
+                    }
+                }
+
+                result.Result = new PagedResult<TableDetail>
+                {
+                    Items = tableDetailList,
+                    TotalPages = orderDb.TotalPages,
+                };
             }
             catch (Exception ex)
             {
