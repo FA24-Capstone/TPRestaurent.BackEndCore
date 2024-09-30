@@ -12,7 +12,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public DishSizeResponse Dish { get; set; } = null!;
         public List<Image> DishImgs { get; set; } = new List<Image>();
         public List<RatingResponse> RatingDish { get; set; } = new List<RatingResponse>();
-        public List<DishTag> DishTags = new List<DishTag>();
+        public List<DishTag> DishTags { get; set; } = new List<DishTag>();
         public double AverageRating { get; set; } = 0;
         public int NumberOfRating { get; set; } = 0;
     }

@@ -46,6 +46,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var firebaseService = Resolve<IFirebaseService>();
                     var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                     var staticFileRepository = Resolve<IGenericRepository<Image>>();
+                    var dishTagRepository = Resolve<IGenericRepository<DishTag>>();
+                    var tagRepository = Resolve<IGenericRepository<Tag>>();
                     var dishExsted = await _dishRepository.GetByExpression(p => p.Name == dto.Name);
                     if (dishExsted != null)
                     {
@@ -60,6 +62,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         DishItemTypeId = dto.DishItemType,
                         isAvailable = true,
                     };
+
+                    List<DishTag> dishTags = new List<DishTag>();
+                    foreach(var tagId in dto.TagIds)
+                    {
+                        var tagDb = await tagRepository.GetById(tagId);
+                        if (tagDb != null)
+                        {
+                            dishTags.Add(new DishTag
+                            {
+                                DishTagId = Guid.NewGuid(),
+                                DishId = dish.DishId,
+                                TagId = tagId
+                            });
+                        }
+                    }
+
                     List<DishSizeDetail> dishSizeDetails = new List<DishSizeDetail>();
                     if (dto.DishSizeDetailDtos.Count > 0)
                     {
@@ -118,6 +136,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (!BuildAppActionResultIsError(result))
                     {
                         await _dishRepository.Insert(dish);
+                        await dishTagRepository.InsertRange(dishTags);
                         if (dto.DishSizeDetailDtos.Count > 0)
                         {
                             await dishSizeDetailRepository!.InsertRange(dishSizeDetails);
@@ -220,7 +239,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return responses;
         }
 
-
         public async Task<AppActionResult> GetDishById(Guid dishId)
         {
             var result = new AppActionResult();
@@ -229,6 +247,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var ratingRepository = Resolve<IGenericRepository<Rating>>();
             var dishSizeRepository = Resolve<IGenericRepository<DishSizeDetail>>();
             var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+            var dishTagRepository = Resolve<IGenericRepository<DishTag>>();
             var ratingListDb = new List<Rating>();
             try
             {
@@ -237,6 +256,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, $"Món ăn với id {dishId} không tồn tại");
                 }
+
+                var dishTagDb = await dishTagRepository!.GetAllDataByExpression(d => d.DishId == dishId, 0, 0, null, false, d => d.Tag);
+                dishResponse.DishTags = dishTagDb.Items;
                 var dishSizeDetailsDb = await dishSizeRepository.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.Dish!, p => p.DishSize!);
                 if (dishSizeDetailsDb!.Items!.Count < 0 && dishSizeDetailsDb.Items == null)
                 {
@@ -254,7 +276,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     foreach (var orderDetail in orderDetailDb.Items)
                     {
                         var ratingDb = await ratingRepository!.GetByExpression(p => p.OrderDetailId == orderDetail.OrderDetailId);
-                        ratingListDb.Add(ratingDb);
+                        if (ratingDb != null)
+                        {
+                            ratingListDb.Add(ratingDb);
+                        }
                     }
                 }
 
@@ -473,6 +498,149 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             catch (Exception ex)
             {
                 result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetAllDishTag(int pageNumber, int pagesize)
+        {
+            var result = new AppActionResult();
+            var tagRepository = Resolve<IGenericRepository<TPRestaurent.BackEndCore.Domain.Models.Tag>>();
+            try
+            {
+                result.Result = await tagRepository!.GetAllDataByExpression(null, 0, 0, null, false, null);
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetAllDishSize(int pageNumber, int pagesize)
+        {
+            var result = new AppActionResult();
+            var dishSizeRepository = Resolve<IGenericRepository<TPRestaurent.BackEndCore.Domain.Models.EnumModels.DishSize>>();
+            try
+            {
+                result.Result = await dishSizeRepository!.GetAllDataByExpression(null, 0, 0, null, false, null);
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> InsertDishTag()
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var tagRepository = Resolve<IGenericRepository<Tag>>();
+                var comboRepository = Resolve<IGenericRepository<Combo>>();
+                var dishTagRepository = Resolve<IGenericRepository<DishTag>>();
+                var tagDb = await tagRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
+                var dishDb = await _dishRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
+                var comboDb = await comboRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
+                List<DishTag> dishTags = new List<DishTag>();
+                Random random = new Random();
+                int tagCount = tagDb.Items.Count();
+                foreach(var dish in dishDb.Items)
+                {
+                    dishTags.Add(new DishTag
+                    {
+                        DishTagId = Guid.NewGuid(),
+                        DishId = dish.DishId,
+                        TagId = tagDb.Items[random.Next(tagCount)].TagId
+                    });
+
+                    dishTags.Add(new DishTag
+                    {
+                        DishTagId = Guid.NewGuid(),
+                        DishId = dish.DishId,
+                        TagId = tagDb.Items[random.Next(tagCount)].TagId
+                    });
+
+                    dishTags.Add(new DishTag
+                    {
+                        DishTagId = Guid.NewGuid(),
+                        DishId = dish.DishId,
+                        TagId = tagDb.Items[random.Next(tagCount)].TagId
+                    });
+
+                    dishTags.Add(new DishTag
+                    {
+                        DishTagId = Guid.NewGuid(),
+                        DishId = dish.DishId,
+                        TagId = tagDb.Items[random.Next(tagCount)].TagId
+                    });
+
+                    dishTags.Add(new DishTag
+                    {
+                        DishTagId = Guid.NewGuid(),
+                        DishId = dish.DishId,
+                        TagId = tagDb.Items[random.Next(tagCount)].TagId
+                    });
+
+                    dishTags.Add(new DishTag
+                    {
+                        DishTagId = Guid.NewGuid(),
+                        DishId = dish.DishId,
+                        TagId = tagDb.Items[random.Next(tagCount)].TagId
+                    });
+
+                    dishTags.Add(new DishTag
+                    {
+                        DishTagId = Guid.NewGuid(),
+                        DishId = dish.DishId,
+                        TagId = tagDb.Items[random.Next(tagCount)].TagId
+                    });
+
+                    dishTags.Add(new DishTag
+                    {
+                        DishTagId = Guid.NewGuid(),
+                        DishId = dish.DishId,
+                        TagId = tagDb.Items[random.Next(tagCount)].TagId
+                    });
+                }
+
+                foreach (var combo in comboDb.Items)
+                {
+                    dishTags.Add(new DishTag
+                    {
+                        DishTagId = Guid.NewGuid(),
+                        ComboId = combo.ComboId,
+                        TagId = tagDb.Items[random.Next(tagCount)].TagId
+                    });
+
+                    dishTags.Add(new DishTag
+                    {
+                        DishTagId = Guid.NewGuid(),
+                        ComboId = combo.ComboId,
+                        TagId = tagDb.Items[random.Next(tagCount)].TagId
+                    });
+
+                    dishTags.Add(new DishTag
+                    {
+                        DishTagId = Guid.NewGuid(),
+                        ComboId = combo.ComboId,
+                        TagId = tagDb.Items[random.Next(tagCount)].TagId
+                    });
+
+                    dishTags.Add(new DishTag
+                    {
+                        DishTagId = Guid.NewGuid(),
+                        ComboId = combo.ComboId,
+                        TagId = tagDb.Items[random.Next(tagCount)].TagId
+                    });
+                }
+
+                await dishTagRepository.InsertRange(dishTags);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
             }
             return result;
         }

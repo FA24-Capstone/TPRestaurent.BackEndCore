@@ -14,7 +14,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public List<DishComboDto> DishCombo { get; set; } = new List<DishComboDto>();
         public List<Image> Imgs { get; set; } = new List<Image>();
         public List<RatingResponse> ComboRatings { get; set; } = new List<RatingResponse>();
-        public List<DishTag> DishTags = new List<DishTag>();
+        public List<DishTag> DishTags { get; set; } = new List<DishTag>();
     }
 
     public class DishComboDto
