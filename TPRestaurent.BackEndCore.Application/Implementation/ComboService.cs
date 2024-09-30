@@ -42,6 +42,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var comboOptionSetRepository = Resolve<IGenericRepository<ComboOptionSet>>();
                     var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                     var staticFileRepository = Resolve<IGenericRepository<Image>>();
+                    var tagRepository = Resolve<IGenericRepository<Tag>>();
+                    var dishTagRepository = Resolve<IGenericRepository<DishTag>>();
                     var firebaseService = Resolve<IFirebaseService>();
 
 
@@ -60,6 +62,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         Price = comboDto.Price,
                         StartDate = comboDto.StartDate,
                     };
+
+                    List<DishTag> dishTags = new List<DishTag>();
+                    foreach (var tagId in comboDto.TagIds)
+                    {
+                        var tagDb = await tagRepository.GetById(tagId);
+                        if (tagDb != null)
+                        {
+                            dishTags.Add(new DishTag
+                            {
+                                DishTagId = Guid.NewGuid(),
+                                ComboId = comboDb.ComboId,
+                                TagId = tagId
+                            });
+                        }
+                    }
 
                     var mainFile = comboDto.MainImg;
                     if (mainFile == null)
@@ -125,6 +142,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (!BuildAppActionResultIsError(result))
                     {
                         await _comboRepository.Insert(comboDb);
+                        await dishTagRepository.InsertRange(dishTags);
                         await staticFileRepository!.InsertRange(staticList);
                         await comboOptionSetRepository!.InsertRange(comboOptionSetList);
                         await dishComboRepository!.InsertRange(dishComboList);
@@ -237,6 +255,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var staticFileRepository = Resolve<IGenericRepository<Image>>();
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                 var ratingRepository = Resolve<IGenericRepository<Rating>>();
+                var dishTagRepository = Resolve<IGenericRepository<DishTag>>();
                 var comboResponse = new ComboDetailResponseDto();
                 var ratingListDb = new List<Rating>();
                 var comboDb = await _comboRepository.GetByExpression(p => p!.ComboId == comboId, p => p.Category);
@@ -265,12 +284,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 comboResponse.Imgs = staticFileDb.Items!.ToList();
                 comboResponse.Combo = _mapper.Map<ComboResponseDto>(comboDb);
 
+                var dishTagDb = await dishTagRepository!.GetAllDataByExpression(d => d.ComboId == comboId, 0, 0, null, false, d => d.Tag);
+                comboResponse.DishTags = dishTagDb.Items;
+
                 var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => p.Combo!.ComboId == comboId && p.Order!.StatusId == OrderStatus.Completed, 0, 0, null, false, null);
                 if (orderDetailDb!.Items!.Count > 0 && orderDetailDb.Items != null)
                 {
                     foreach (var orderDetail in orderDetailDb.Items)
                     {
                         var ratingDb = await ratingRepository!.GetByExpression(p => p.OrderDetailId == orderDetail.OrderDetailId);
+                        if(ratingDb != null)
+                        {
+                            ratingListDb.Add(ratingDb);
+                        }
                         ratingListDb.Add(ratingDb);
                     }
                 }
@@ -318,6 +344,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var staticFileRepository = Resolve<IGenericRepository<Image>>();
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                 var ratingRepository = Resolve<IGenericRepository<Rating>>();
+                var dishTagRepository = Resolve<IGenericRepository<DishTag>>();
                 var comboResponse = new ComboDetailResponseDto();
                 var ratingListDb = new List<Rating>();
                 var comboDb = await _comboRepository.GetByExpression(p => p!.ComboId == comboId, p => p.Category);
@@ -325,6 +352,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, $"Combo với id {comboId} không tồn tại");
                 }
+
+                var dishTagDb = await dishTagRepository!.GetAllDataByExpression(d => d.ComboId == comboId, 0, 0, null, false, d => d.Tag);
+                comboResponse.DishTags = dishTagDb.Items;
+
                 var dishComboDb = await dishComboRepository!.GetAllDataByExpression(p => p.ComboOptionSet.ComboId == comboId, 0, 0, null, false, p => p.DishSizeDetail.Dish!, p => p.DishSizeDetail.DishSize, p => p.ComboOptionSet.DishItemType);
                 var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.ComboId == comboId, 0, 0, null, false, null);
 
@@ -353,7 +384,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     foreach (var orderDetail in orderDetailDb.Items)
                     {
                         var ratingDb = await ratingRepository!.GetByExpression(p => p.OrderDetailId == orderDetail.OrderDetailId);
-                        ratingListDb.Add(ratingDb);
+                        if(ratingDb != null)
+                        {
+                            ratingListDb.Add(ratingDb);
+                        }
                     }
                 }
 

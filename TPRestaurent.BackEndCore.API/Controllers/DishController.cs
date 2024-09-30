@@ -55,10 +55,28 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _dishService.GetAllDishType(pageNumber, pageSize);
         }
 
+        [HttpGet("get-all-dish-tag/{pageNumber}/{pageSize}")]
+        public async Task<AppActionResult> GetAllDishTag(int pageNumber = 1, int pageSize = 10)
+        {
+            return await _dishService.GetAllDishTag(pageNumber, pageSize);
+        }
+
+        [HttpGet("get-all-dish-size/{pageNumber}/{pageSize}")]
+        public async Task<AppActionResult> GetAllDishSize(int pageNumber = 1, int pageSize = 10)
+        {
+            return await _dishService.GetAllDishSize(pageNumber, pageSize);
+        }
+
         [HttpPut("update-inactive-dish")]
         public async Task<AppActionResult> UpdateInactiveADish(Guid dishId)
         {
             return await _dishService.UpdateInactiveADish(dishId);
         }
+
+        //[HttpPost("upload-dish-tag")]
+        //public async Task<AppActionResult> InsertDishTag()
+        //{
+        //    return await _dishService.InsertDishTag();
+        //}
     }
 }

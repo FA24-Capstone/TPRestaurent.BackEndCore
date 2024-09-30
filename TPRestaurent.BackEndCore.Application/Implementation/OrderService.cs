@@ -200,6 +200,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                         else if (orderDb.StatusId == OrderStatus.Processing)
                         {
+                            orderDb.StatusId = IsSuccessful ? OrderStatus.ReadyForDelivery : OrderStatus.Cancelled;
+                        }
+                        else if (orderDb.StatusId == OrderStatus.ReadyForDelivery)
+                        {
                             orderDb.StatusId = IsSuccessful ? OrderStatus.Delivering : OrderStatus.Cancelled;
                         }
                         else if (orderDb.StatusId == OrderStatus.Delivering)
