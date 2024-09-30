@@ -14,5 +14,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> Geocode(string address);
         public Task<AppActionResult> AutoComplete(MapAutoCompleteRequestDto dto);
         public Task<AppActionResult> GetEstimateDeliveryResponse(double[] endCoordinate, double[]? startCoordinate);
+        public Task<AppActionResult> GetOptimalPath(List<Guid> orderIds);
     }
 }

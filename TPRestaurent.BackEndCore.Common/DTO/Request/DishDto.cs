@@ -14,7 +14,8 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public string Description { get; set; } = null!;
         public IFormFile? MainImageFile { get; set; }
         public List<IFormFile>? ImageFiles { get; set; } = new List<IFormFile>();
-        public List<DishSizeDetailDto> DishSizeDetailDtos { get; set; } = new List<DishSizeDetailDto> { };
+        public List<DishSizeDetailDto> DishSizeDetailDtos { get; set; } = new List<DishSizeDetailDto> ();
+        public List<Guid> TagIds { get; set; } = new List<Guid> ();
         public DishItemType DishItemType { get; set; }
     }
 

@@ -11,6 +11,7 @@ using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Domain.Models;
 using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
@@ -126,6 +127,126 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 result.Result = BuildAppActionResultError(result, e.Message);
 
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetOptimalPath(List<Guid> orderIds)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var orderRepository = Resolve<IGenericRepository<Order>>();
+                var orderToDeliver = await orderRepository!.GetAllDataByExpression(o => orderIds.Contains(o.OrderId), 0, 0, null, false, null);
+                if (orderToDeliver.Items.Count() != orderIds.Count())
+                {
+                    result = BuildAppActionResultError(result, $"Tồn tại ít nhất 1 id đơn hàng không tồn tại");
+                    return result;
+                }
+
+                if (orderToDeliver.Items.Where(o => o.OrderTypeId != Domain.Enums.OrderType.Delivery || o.StatusId != Domain.Enums.OrderStatus.ReadyForDelivery).Count() > 0)
+                {
+                    result = BuildAppActionResultError(result, $"Tồn tại ít nhất 1 id đơn hàng không tồn tại");
+                    return result;
+                }
+
+                //var onWayProvinces = await provinceRepository!.GetAllDataByExpression(p => DestinationIds.Contains(p.Id), 0, 0, null, false, null);
+                //if (onWayProvinces.Items!.Count != DestinationIds.Count)
+                //{
+                //    foreach (var item in onWayProvinces.Items)
+                //    {
+                //        if (!DestinationIds.Contains(item.Id))
+                //        {
+                //            result = BuildAppActionResultError(result, $"Không tìm thấy thông tin địa điểm với id {item.Id}");
+                //            return result;
+                //        }
+                //    }
+                //}
+
+                //if (true)
+                //{
+                //    string start = $"{startProvince.lat.ToString()},{startProvince.lng.ToString()}";
+                //    StringBuilder waypoints = new StringBuilder();
+                //    foreach (var item in onWayProvinces.Items)
+                //    {
+                //        waypoints.Append($"{item.lat.ToString()},{item.lng.ToString()};");
+                //    }
+                //    waypoints.Remove(waypoints.Length - 1, 1);
+                //    string endpoint = $"https://rsapi.goong.io/trip?origin={start}&waypoints={waypoints.ToString()}&api_key={APIKEY}";
+                //    var client = new RestClient();
+                //    var request = new RestRequest(endpoint);
+
+                //    var response = await client.ExecuteAsync(request);
+
+                //    if (response.IsSuccessStatusCode)
+                //    {
+                //        var data = response.Content;
+                //        var obj = JsonConvert.DeserializeObject<TripInfo.Root>(data!);
+                //        OptimalTripResponseDTO optimalTripResponseDTO = new OptimalTripResponseDTO();
+                //        optimalTripResponseDTO.TotalDistance = obj.Trips[0].Distance;
+                //        optimalTripResponseDTO.TotalDuration = obj.Trips[0].Duration;
+                //        string placeEndPoint = null;
+                //        TripInfo.Leg currentTrip = null;
+                //        TripInfo.Waypoint currentWaypoint = null;
+                //        //List<RestResponse> provinceResponse = new List<RestResponse>();
+                //        obj.Waypoints = obj.Waypoints.OrderBy(o => o.WaypointIndex).ToList();
+
+                //        //for(int i = 0; i < obj.Trips[0].Legs.Count; i++)
+                //        //{
+                //        //    placeEndPoint = $"https://rsapi.goong.io/Place/Detail?place_id={obj.Waypoints[i].PlaceId}&api_key={APIKEY}";
+                //        //    response = await client.ExecuteAsync(new RestRequest(placeEndPoint));
+                //        //    provinceResponse.Add(response);
+                //        //    await Task.Delay(350);
+                //        //}
+                //        Province currentProvinceName = null;
+
+                //        for (int i = 0; i < obj.Trips[0].Legs.Count; i++)
+                //        {
+                //            currentTrip = obj.Trips[0].Legs[i];
+                //            currentWaypoint = obj.Waypoints[i];
+                //            currentProvinceName = (await provinceRepository.GetByExpression(p => Math.Abs((double)(currentWaypoint.Location[0] - p.lat)) <= 0.0007
+                //                                                                              && Math.Abs((double)(currentWaypoint.Location[1] - p.lng)) <= 0.001))!;
+                //            if (currentProvinceName != null)
+                //            {
+                //                if (currentProvinceName.Name.Contains(startProvince.Name) || startProvince.Name.Contains(currentProvinceName.Name))
+                //                {
+                //                    optimalTripResponseDTO.OptimalTrip!.Add(new RouteNode
+                //                    {
+                //                        Index = currentWaypoint.WaypointIndex,
+                //                        ProvinceId = startProvince.Id,
+                //                        ProvinceName = startProvince.Name,
+                //                        VehicleToNextDestination = VehicleType.BUS,
+                //                        DistanceToNextDestination = currentTrip.Distance,
+                //                        Duration = currentTrip.Duration,
+                //                    });
+                //                    continue;
+                //                }
+                //                var province = onWayProvinces.Items.FirstOrDefault(p => currentProvinceName.Name.Contains(p.Name) || p.Name.Contains(currentProvinceName.Name));
+                //                if (province != null)
+                //                {
+                //                    optimalTripResponseDTO.OptimalTrip!.Add(new RouteNode
+                //                    {
+                //                        Index = currentWaypoint.WaypointIndex,
+                //                        ProvinceId = province.Id,
+                //                        ProvinceName = province.Name,
+                //                        VehicleToNextDestination = VehicleType.BUS,
+                //                        DistanceToNextDestination = currentTrip.Distance,
+                //                        Duration = currentTrip.Duration,
+                //                    });
+                //                }
+                //            }
+                //        }
+
+                //        result.Result = optimalTripResponseDTO.OptimalTrip.OrderBy(o => o.Index);
+                //    }
+                //}
+
+
+
+            }
+            catch (Exception e)
+            {
+                result = BuildAppActionResultError(result, e.Message);
             }
             return result;
         }
