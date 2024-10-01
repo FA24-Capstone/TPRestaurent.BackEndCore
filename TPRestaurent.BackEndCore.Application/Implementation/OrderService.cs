@@ -1900,9 +1900,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var time = utility.GetCurrentDateTimeInTimeZone();
                 if (orderDetailDb.Items[0].OrderDetailStatusId == OrderDetailStatus.Unchecked)
                 {
-                    orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = OrderDetailStatus.Read);
+                    orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = OrderDetailStatus.Processing);
+                    foreach (var item in orderDetailDb.Items)
+                    {
+                        if(item.OrderSession != null && item.OrderSession.OrderSessionStatusId == OrderSessionStatus.Confirmed)
+                        {
+                            await orderSessionService.UpdateOrderSessionStatus(item.OrderSession.OrderSessionId, OrderSessionStatus.Processing);
+                        }
+                    }
                 }
-                else if (orderDetailDb.Items[0].OrderDetailStatusId == OrderDetailStatus.Read)
+                else if (orderDetailDb.Items[0].OrderDetailStatusId == OrderDetailStatus.Processing)
                 {
                     if (isSuccessful)
                     {
@@ -1929,7 +1936,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     else if (orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe))
                     {
-                        await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Cancelled);
+                        await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Completed);
                     }
 
                     orderSessionSet.Add(session.OrderSessionId);

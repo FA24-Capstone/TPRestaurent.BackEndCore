@@ -355,6 +355,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<string>("Image")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -908,8 +911,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         new
                         {
                             Id = 3,
-                            Name = "Read",
-                            VietnameseName = "Đã Xem"
+                            Name = "Processing",
+                            VietnameseName = "Đang Xử Lý"
                         },
                         new
                         {

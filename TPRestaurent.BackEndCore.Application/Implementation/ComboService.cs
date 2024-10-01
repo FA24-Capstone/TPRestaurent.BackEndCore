@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Hangfire.Logging.LogProviders;
 using Humanizer;
 using System;
 using System.Collections.Generic;
@@ -488,6 +489,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var comboOptionSetRepository = Resolve<IGenericRepository<ComboOptionSet>>();
                     var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                     var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+                    var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+
+                    var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.ComboId != null && o.ComboId == comboDto.ComboId, 0, 0, null, false, null);
 
                     var comboDb = await _comboRepository.GetByExpression(p => p.ComboId == comboDto.ComboId);
                     if (comboDb == null)
@@ -522,47 +526,54 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                     }
 
-                    var existedComboOptionSetList = await comboOptionSetRepository.GetAllDataByExpression(c => c.ComboId == comboDto.ComboId, 0, 0, null, false, null);
-                    if(existedComboOptionSetList.Items.Count()  > 0)
-                    {
-                        var existedComboOptionSetListIds = existedComboOptionSetList.Items.Select(c => c.ComboOptionSetId).ToList();
-                        var existedDishComboList = await dishComboRepository.GetAllDataByExpression(d => existedComboOptionSetListIds.Contains((Guid)d.ComboOptionSetId), 0, 0, null, false, null);
-                        if (existedDishComboList.Items.Count() > 0)
-                        {
-                            await dishComboRepository.DeleteRange(existedDishComboList.Items);
-                        }
-                        await comboOptionSetRepository.DeleteRange(existedComboOptionSetList.Items);
-                    }  
-                    
                     List<ComboOptionSet> comboOptionSetList = new List<ComboOptionSet>();
                     List<DishCombo> dishComboList = new List<DishCombo>();
-                    foreach (var dishComboDto in comboDto.DishComboDtos)
+                    if(comboDto.DishComboDtos.Count > 0)
                     {
-                        var comboOptionSet = new ComboOptionSet
+                        if(orderDetailDb.Items.Count > 0)
                         {
-                            ComboOptionSetId = Guid.NewGuid(),
-                            DishItemTypeId = dishComboDto.DishItemType,
-                            NumOfChoice = dishComboDto.NumOfChoice,
-                            OptionSetNumber = dishComboDto.OptionSetNumber,
-                            ComboId = comboDb.ComboId
-                        };
-                        comboOptionSetList.Add(comboOptionSet);
-
-                        foreach (var dishId in dishComboDto.ListDishId)
+                            result = BuildAppActionResultError(result, $"Combo với id {comboDto.ComboId} đã có đặt món, không thể thực hiện cập nhật chi tiết món");
+                        }
+                        var existedComboOptionSetList = await comboOptionSetRepository.GetAllDataByExpression(c => c.ComboId == comboDto.ComboId, 0, 0, null, false, null);
+                        if(existedComboOptionSetList.Items.Count()  > 0)
                         {
-                            var dishExisted = await dishSizeDetailRepository!.GetById(dishId.DishSizeDetailId);
-                            if (dishExisted == null)
+                            var existedComboOptionSetListIds = existedComboOptionSetList.Items.Select(c => c.ComboOptionSetId).ToList();
+                            var existedDishComboList = await dishComboRepository.GetAllDataByExpression(d => existedComboOptionSetListIds.Contains((Guid)d.ComboOptionSetId), 0, 0, null, false, null);
+                            if (existedDishComboList.Items.Count() > 0)
                             {
-                                result = BuildAppActionResultError(result, $"size món ăn với id {dishId.DishSizeDetailId} không tồn tại");
+                                await dishComboRepository.DeleteRange(existedDishComboList.Items);
                             }
-                            var dishCombo = new DishCombo
+                            await comboOptionSetRepository.DeleteRange(existedComboOptionSetList.Items);
+                        }  
+                    
+                        foreach (var dishComboDto in comboDto.DishComboDtos)
+                        {
+                            var comboOptionSet = new ComboOptionSet
                             {
-                                DishComboId = Guid.NewGuid(),
-                                ComboOptionSetId = comboOptionSet.ComboOptionSetId,
-                                DishSizeDetailId = dishId.DishSizeDetailId,
-                                Quantity = dishId.Quantity
+                                ComboOptionSetId = Guid.NewGuid(),
+                                DishItemTypeId = dishComboDto.DishItemType,
+                                NumOfChoice = dishComboDto.NumOfChoice,
+                                OptionSetNumber = dishComboDto.OptionSetNumber,
+                                ComboId = comboDb.ComboId
                             };
-                            dishComboList.Add(dishCombo);
+                            comboOptionSetList.Add(comboOptionSet);
+
+                            foreach (var dishId in dishComboDto.ListDishId)
+                            {
+                                var dishExisted = await dishSizeDetailRepository!.GetById(dishId.DishSizeDetailId);
+                                if (dishExisted == null)
+                                {
+                                    result = BuildAppActionResultError(result, $"size món ăn với id {dishId.DishSizeDetailId} không tồn tại");
+                                }
+                                var dishCombo = new DishCombo
+                                {
+                                    DishComboId = Guid.NewGuid(),
+                                    ComboOptionSetId = comboOptionSet.ComboOptionSetId,
+                                    DishSizeDetailId = dishId.DishSizeDetailId,
+                                    Quantity = dishId.Quantity
+                                };
+                                dishComboList.Add(dishCombo);
+                            }
                         }
                     }
 

@@ -1089,7 +1089,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                 {
                     { 1, "Pending", "Chờ Xử Lý" },
                     { 2, "Unchecked", "Chưa Xem" },
-                    { 3, "Read", "Đã Xem" },
+                    { 3, "Processing", "Đã Xem" },
                     { 4, "ReadyToServe", null },
                     { 5, "Cancelled", "Đã Huỷ" }
                 });
