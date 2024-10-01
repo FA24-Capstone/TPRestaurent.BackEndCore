@@ -119,6 +119,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.ChangeOrderStatus(orderId, isSuccessful);
         }
 
+        [HttpGet("get-all-table-details/{pageNumber}/{pageSize}")]
+        public async Task<AppActionResult> GetAllTableDetails(OrderStatus orderStatus, int pageNumber = 1, int pageSize = 10)
+        {
+            return await _service.GetAllTableDetails(orderStatus, pageNumber, pageSize);
+        }
         //[HttpPost("calculate-order-total")]
         //public async Task<AppActionResult> GetOrderTotal([FromBody]CalculateOrderRequest dto)
         //{
