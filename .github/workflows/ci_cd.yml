@@ -70,7 +70,9 @@ jobs:
           imageToDeploy: ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
           registryUrl: docker.io
           registryUsername: ${{ secrets.DOCKER_HUB_USERNAME }}
-          registryPassword: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          registryPassword: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  
+          location: 'eastasia'  # Specify the East Asia region
+
       
       - name: Azure logout
         run: az logout
