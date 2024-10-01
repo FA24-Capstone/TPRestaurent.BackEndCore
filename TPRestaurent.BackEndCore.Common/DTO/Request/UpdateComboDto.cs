@@ -17,16 +17,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public double Price { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
-        public IFormFile MainImg { get; set; }
-        public List<IFormFile>? ImageFiles { get; set; }
-        public List<UpdateDishCombo> DishComboDtos { get; set; } = new List<UpdateDishCombo>();
-    }
-   
-    public class UpdateDishCombo
-    {
-        public Guid DishComboId { get; set; }
-        public bool HasOptions { get; set; }
-        public int? OptionSetNumber { get; set; }
-        public List<Guid> ListDishId { get; set; } = new List<Guid>();
+        public List<DishComboDto> DishComboDtos { get; set; } = new List<DishComboDto>();
+        public List<Guid> TagIds { get; set; } = new List<Guid>();
     }
 }
