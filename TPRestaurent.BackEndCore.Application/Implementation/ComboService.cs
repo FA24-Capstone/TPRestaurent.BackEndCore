@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Hangfire.Logging.LogProviders;
 using Humanizer;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
-    public class ComboService : GenericBackendService , IComboService
+    public class ComboService : GenericBackendService, IComboService
     {
         private  IGenericRepository<Combo> _comboRepository;
         private IMapper _mapper;
@@ -77,36 +78,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             });
                         }
                     }
-
-                    var mainFile = comboDto.MainImg;
-                    if (mainFile == null)
-                    {
-                        result = BuildAppActionResultError(result, $"The main picture of the dish is empty");
-                    }
-                    var mainPathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDb.ComboId}_main.jpg";
-                    var uploadMainPicture = await firebaseService!.UploadFileToFirebase(mainFile, mainPathName);
-                   
-                    comboDb.Image = uploadMainPicture!.Result!.ToString()!;
-
-                    List<Image> staticList = new List<Image>();
-
-
-                    foreach (var file in comboDto!.ImageFiles!)
-                    {
-                        var pathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDb.ComboId}{Guid.NewGuid()}.jpg";
-                        var upload = await firebaseService!.UploadFileToFirebase(file, pathName );
-                        var staticImg = new Image
-                        {
-                            StaticFileId = Guid.NewGuid(),
-                            ComboId = comboDb.ComboId,
-                            Path = upload!.Result!.ToString()!
-                        };
-                        staticList.Add(staticImg);
-                        if (!upload.IsSuccess)
-                        {
-                            result = BuildAppActionResultError(result, "Upload ảnh không thành công");
-                        }
-                    }
                     List<ComboOptionSet> comboOptionSetList =new List<ComboOptionSet>();
                     List<DishCombo> dishComboList =new List<DishCombo>();
                     foreach (var dishComboDto in comboDto.DishComboDtos)
@@ -143,7 +114,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         await _comboRepository.Insert(comboDb);
                         await dishTagRepository.InsertRange(dishTags);
-                        await staticFileRepository!.InsertRange(staticList);
                         await comboOptionSetRepository!.InsertRange(comboOptionSetList);
                         await dishComboRepository!.InsertRange(dishComboList);
                         await _unitOfWork.SaveChangesAsync();
@@ -423,139 +393,206 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        //public async Task<AppActionResult> UpdateCombo(UpdateComboDto comboDto)
-        //{
-        //    var result = new AppActionResult();
-        //    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-        //    {
-        //        try
-        //        {
-        //            var comboResponse = new ComboResponseDto();
-        //            var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
-        //            var firebaseService = Resolve<IFirebaseService>();
-        //            var staticFileRepository = Resolve<IGenericRepository<StaticFile>>();
+        public async Task<AppActionResult> UploadComboImages(ComboImageDto comboDto)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var comboDb = await _comboRepository.GetById(comboDto.ComboId);
+                if (comboDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy combo với id {comboDto.ComboId}");
+                }
+                var firebaseService = Resolve<IFirebaseService>();
+                var staticFileRepository = Resolve<IGenericRepository<Image>>();
+
+                if (comboDto.MainImg != null)
+                {
+                    var mainFile = comboDto.MainImg;
+                    if (mainFile == null)
+                    {
+                        result = BuildAppActionResultError(result, $"The main picture of the dish is empty");
+                    }
+
+                    if(comboDb.Image != null)
+                    {
+                        var deleteImage = await firebaseService.DeleteFileFromFirebase(comboDb.Image);
+                        if (!deleteImage.IsSuccess)
+                        {
+                            return BuildAppActionResultError(result, $"Xảy ra lỗi khi xoá ảnh");
+                        }
+                    }
+
+                    var mainPathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDb.ComboId}_main.jpg";
+                    var uploadMainPicture = await firebaseService!.UploadFileToFirebase(mainFile, mainPathName);
+                   
+                    comboDb.Image = uploadMainPicture!.Result!.ToString()!;
+                }
+
+                List<Image> staticList = new List<Image>();
+
+                var comboImageDb = await staticFileRepository.GetAllDataByExpression(c => c.ComboId.HasValue && c.ComboId.Value == comboDto.ComboId, 0, 0, null, false, null);
+                if (comboImageDb.Items.Count() > 0)
+                {
+                    foreach (var image in comboImageDb.Items)
+                    {
+                        var deleteImage = await firebaseService.DeleteFileFromFirebase(image.Path);
+                        if (!deleteImage.IsSuccess)
+                        {
+                            return BuildAppActionResultError(result, $"Xảy ra lỗi khi xoá ảnh");
+                        }
+                    }
+
+                    await staticFileRepository.DeleteRange(comboImageDb.Items);
+                }
+
+                foreach (var file in comboDto!.Imgs!)
+                {
+                    var pathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDb.ComboId}{Guid.NewGuid()}.jpg";
+                    var upload = await firebaseService!.UploadFileToFirebase(file, pathName);
+                    var staticImg = new Image
+                    {
+                        StaticFileId = Guid.NewGuid(),
+                        ComboId = comboDb.ComboId,
+                        Path = upload!.Result!.ToString()!
+                    };
+                    staticList.Add(staticImg);
+                    if (!upload.IsSuccess)
+                    {
+                        return BuildAppActionResultError(result, "Upload ảnh không thành công");
+                    }
+                }
+
+                await _comboRepository.Update(comboDb);
+                await staticFileRepository.InsertRange(staticList);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
 
 
+        public async Task<AppActionResult> UpdateCombo(UpdateComboDto comboDto)
+        {
+            var result = new AppActionResult();
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            {
+                try
+                {
+                    var comboResponse = new ComboResponseDto();
+                    var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
+                    var dishTagRepository = Resolve<IGenericRepository<DishTag>>();
+                    var tagRepository = Resolve<IGenericRepository<Tag>>();
+                    var comboOptionSetRepository = Resolve<IGenericRepository<ComboOptionSet>>();
+                    var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
+                    var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+                    var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
 
+                    var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.ComboId != null && o.ComboId == comboDto.ComboId, 0, 0, null, false, null);
 
-        //            var mainPathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDto!.ComboId}.jpg";
-        //            var mainImageResult = firebaseService!.DeleteFileFromFirebase(mainPathName);
-        //            if (mainImageResult != null)
-        //            {
-        //                result.Messages.Add("Xóa các file hình ảnh trên cloud thành công");
-        //            }
+                    var comboDb = await _comboRepository.GetByExpression(p => p.ComboId == comboDto.ComboId);
+                    if (comboDb == null)
+                    {
+                        result = BuildAppActionResultError(result, $"Combo với id {comboDto.ComboId} không tồn tại");
+                    }
+                    comboDb.Name = comboDto.Name;
+                    comboDb.Description = comboDto.Description;
+                    comboDb.StartDate = comboDto.StartDate;
+                    comboDb.EndDate = comboDto.EndDate;
+                    comboDb.Price = comboDto.Price;
 
-        //            var mainFile = comboDto.MainImg;
-        //            if (mainFile == null)
-        //            {
-        //                result = BuildAppActionResultError(result, $"The main picture of the dish is empty");
-        //            }
+                    List<DishTag> dishTags = new List<DishTag>();
 
-        //            var uploadMainPicture = await firebaseService!.UploadFileToFirebase(mainFile, mainPathName);
+                    var existedTagDb = await dishTagRepository.GetAllDataByExpression(d => d.ComboId == comboDto.ComboId, 0, 0, null, false, null);
+                    if (existedTagDb.Items.Count > 0)
+                    {
+                        await dishTagRepository.DeleteRange(existedTagDb.Items);
+                    }
 
-        //            var oldFiles = await staticFileRepository!.GetAllDataByExpression(p => p.ComboId == comboDto.ComboId, 0, 0, null, false,null);
-        //            if (oldFiles.Items == null || !oldFiles.Items.Any())
-        //            {
-        //                return BuildAppActionResultError(result, $"Các file hình ảnh của combo với id {comboDto.ComboId} không tồn tại");
-        //            }
-        //            var oldFileList = new List<StaticFile>();
-        //            foreach (var oldImg in oldFiles.Items!)
-        //            {
-        //                oldFileList.Add(oldImg);
-        //                var pathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDto!.ComboId}.jpg";
-        //                var imageResult = firebaseService!.DeleteFileFromFirebase(pathName);
-        //                if (imageResult != null)
-        //                {
-        //                    result.Messages.Add("Xóa các file hình ảnh trên cloud thành công");
-        //                }
-        //            }
-        //            if (!oldFileList.Any())
-        //            {
-        //                return BuildAppActionResultError(result, "Không còn hình ảnh nào để xóa");
-        //            }
+                    foreach (var tagId in comboDto.TagIds)
+                    {
+                        var tagDb = await tagRepository.GetById(tagId);
+                        if (tagDb != null)
+                        {
+                            dishTags.Add(new DishTag
+                            {
+                                DishTagId = Guid.NewGuid(),
+                                ComboId = comboDb.ComboId,
+                                TagId = tagId
+                            });
+                        }
+                    }
 
-        //            await staticFileRepository.DeleteRange(oldFileList);
+                    List<ComboOptionSet> comboOptionSetList = new List<ComboOptionSet>();
+                    List<DishCombo> dishComboList = new List<DishCombo>();
+                    if(comboDto.DishComboDtos.Count > 0)
+                    {
+                        if(orderDetailDb.Items.Count > 0)
+                        {
+                            result = BuildAppActionResultError(result, $"Combo với id {comboDto.ComboId} đã có đặt món, không thể thực hiện cập nhật chi tiết món");
+                        }
+                        var existedComboOptionSetList = await comboOptionSetRepository.GetAllDataByExpression(c => c.ComboId == comboDto.ComboId, 0, 0, null, false, null);
+                        if(existedComboOptionSetList.Items.Count()  > 0)
+                        {
+                            var existedComboOptionSetListIds = existedComboOptionSetList.Items.Select(c => c.ComboOptionSetId).ToList();
+                            var existedDishComboList = await dishComboRepository.GetAllDataByExpression(d => existedComboOptionSetListIds.Contains((Guid)d.ComboOptionSetId), 0, 0, null, false, null);
+                            if (existedDishComboList.Items.Count() > 0)
+                            {
+                                await dishComboRepository.DeleteRange(existedDishComboList.Items);
+                            }
+                            await comboOptionSetRepository.DeleteRange(existedComboOptionSetList.Items);
+                        }  
+                    
+                        foreach (var dishComboDto in comboDto.DishComboDtos)
+                        {
+                            var comboOptionSet = new ComboOptionSet
+                            {
+                                ComboOptionSetId = Guid.NewGuid(),
+                                DishItemTypeId = dishComboDto.DishItemType,
+                                NumOfChoice = dishComboDto.NumOfChoice,
+                                OptionSetNumber = dishComboDto.OptionSetNumber,
+                                ComboId = comboDb.ComboId
+                            };
+                            comboOptionSetList.Add(comboOptionSet);
 
+                            foreach (var dishId in dishComboDto.ListDishId)
+                            {
+                                var dishExisted = await dishSizeDetailRepository!.GetById(dishId.DishSizeDetailId);
+                                if (dishExisted == null)
+                                {
+                                    result = BuildAppActionResultError(result, $"size món ăn với id {dishId.DishSizeDetailId} không tồn tại");
+                                }
+                                var dishCombo = new DishCombo
+                                {
+                                    DishComboId = Guid.NewGuid(),
+                                    ComboOptionSetId = comboOptionSet.ComboOptionSetId,
+                                    DishSizeDetailId = dishId.DishSizeDetailId,
+                                    Quantity = dishId.Quantity
+                                };
+                                dishComboList.Add(dishCombo);
+                            }
+                        }
+                    }
 
-        //            var comboDb = await _comboRepository.GetByExpression(p => p.ComboId == comboDto.ComboId);
-        //            if (comboDb == null)
-        //            {
-        //                result = BuildAppActionResultError(result, $"Combo với id {comboDto.ComboId} không tồn tại");
-        //            }
-        //            comboDb.Name = comboDto.Name;
-        //            comboDb.Description = comboDto.Description;
-        //            comboDb.StartDate = comboDto.StartDate;
-        //            comboDb.EndDate = comboDto.EndDate;
-        //            comboDb.Price = comboDto.Price;
-        //            comboDb.Image = uploadMainPicture!.Result!.ToString()!;
-
-        //            List<StaticFile> staticList = new List<StaticFile>();
-        //            foreach (var file in comboDto!.ImageFiles!)
-        //            {
-        //                var pathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDb.ComboId}{Guid.NewGuid()}.jpg";
-        //                var upload = await firebaseService!.UploadFileToFirebase(file, pathName);
-        //                var staticImg = new StaticFile
-        //                {
-        //                    StaticFileId = Guid.NewGuid(),
-        //                    ComboId = comboDb.ComboId,
-        //                    Path = upload!.Result!.ToString()!,
-        //                };
-        //                staticList.Add(staticImg);
-
-        //                if (!upload.IsSuccess)
-        //                {
-        //                    return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
-        //                }
-
-        //            }
-
-        //            var dishComboDb = await dishComboRepository!.GetAllDataByExpression(p => p.ComboId == comboDb.ComboId, 0, 0, null, false, p => p.DishSizeDetail.Dish!);
-        //            foreach (var dishComboDto in comboDto.DishComboDtos)
-        //            {
-        //                foreach (var dishId in dishComboDto.ListDishId)
-        //                {
-        //                    var existingDishCombo = await dishComboRepository.GetById(dishComboDto.DishComboId);
-        //                    if (existingDishCombo == null)
-        //                    {
-        //                        var newDishCombo = new DishCombo
-        //                        {
-        //                            DishComboId = dishComboDto.DishComboId, 
-        //                            ComboId = comboDb.ComboId,
-        //                            HasOptions = dishComboDto.HasOptions,
-        //                            OptionSetNumber = dishComboDto.OptionSetNumber, 
-        //                            //DishSizeDetailId = dishId,    
-        //                        };
-        //                        await dishComboRepository.Insert(newDishCombo);
-        //                    }
-        //                    else
-        //                    {
-        //                        existingDishCombo.HasOptions = dishComboDto.HasOptions; 
-        //                        existingDishCombo.OptionSetNumber = dishComboDto.OptionSetNumber;
-        //                        //existingDishCombo.DishSizeDetailId = dishId;
-        //                        await dishComboRepository.Update(existingDishCombo);    
-        //                    }
-        //                }
-        //            }
-
-        //            var updatedDishComboIds = comboDto.DishComboDtos.Select(dc => dc.DishComboId).ToHashSet();
-        //            var dishCombosToRemove = dishComboDb.Items.Where(dc => !updatedDishComboIds.Contains(dc.DishComboId));
-        //            foreach (var dishComboToRemove in dishCombosToRemove)
-        //            {
-        //                await dishComboRepository.DeleteById(dishComboToRemove.DishComboId);
-        //            }
-        //            if (!BuildAppActionResultIsError(result))
-        //            {
-        //                await _comboRepository.Update(comboDb);
-        //                await _unitOfWork.SaveChangesAsync();
-        //                scope.Complete();
-        //            }
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            result = BuildAppActionResultError(result, ex.Message);
-        //        }
-        //        return result;
-        //    }
-        //}
+                    if (!BuildAppActionResultIsError(result))
+                    {
+                        await _comboRepository.Update(comboDb);
+                        await dishTagRepository.InsertRange(dishTags);
+                        await comboOptionSetRepository!.InsertRange(comboOptionSetList);
+                        await dishComboRepository!.InsertRange(dishComboList);
+                        await _unitOfWork.SaveChangesAsync();
+                        scope.Complete();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result = BuildAppActionResultError(result, ex.Message);
+                }
+                return result;
+            }
+        }
     }
 }

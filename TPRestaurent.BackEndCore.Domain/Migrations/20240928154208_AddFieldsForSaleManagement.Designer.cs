@@ -905,7 +905,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         new
                         {
                             Id = 3,
-                            Name = "Read",
+                            Name = "Processing",
                             VietnameseName = "Đã Xem"
                         },
                         new

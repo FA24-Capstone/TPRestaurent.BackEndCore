@@ -10,7 +10,7 @@ namespace TPRestaurent.BackEndCore.Domain.Enums
     {
         Pending = 1,
         Unchecked = 2,
-        Read = 3,
+        Processing = 3,
         ReadyToServe = 4,
         Cancelled = 5
     }

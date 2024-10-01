@@ -12,8 +12,8 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    [Migration("20240928034741_AddNewPaymentMethod")]
-    partial class AddNewPaymentMethod
+    [Migration("20241001141309_ReOrderDishTyeId")]
+    partial class ReOrderDishTyeId
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -341,6 +341,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
+                    b.Property<int>("DailyCountdown")
+                        .HasColumnType("int");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -360,6 +363,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.Property<double>("Price")
                         .HasColumnType("float");
+
+                    b.Property<int?>("QuantityLeft")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
@@ -430,6 +436,10 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Unit")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -518,6 +528,12 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.Property<bool>("IsCurrentUsed")
                         .HasColumnType("bit");
+
+                    b.Property<double>("Lat")
+                        .HasColumnType("float");
+
+                    b.Property<double>("Lng")
+                        .HasColumnType("float");
 
                     b.HasKey("CustomerInfoAddressId");
 
@@ -617,6 +633,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("DailyCountdown")
+                        .HasColumnType("int");
+
                     b.Property<double>("Discount")
                         .HasColumnType("float");
 
@@ -631,6 +650,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.Property<double>("Price")
                         .HasColumnType("float");
+
+                    b.Property<int?>("QuantityLeft")
+                        .HasColumnType("int");
 
                     b.HasKey("DishSizeDetailId");
 
@@ -647,6 +669,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("ComboId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid?>("DishId")
                         .HasColumnType("uniqueidentifier");
 
@@ -654,6 +679,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("DishTagId");
+
+                    b.HasIndex("ComboId");
 
                     b.HasIndex("DishId");
 
@@ -718,97 +745,97 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasData(
                         new
                         {
-                            Id = 0,
+                            Id = 1,
                             Name = "APPETIZER",
                             VietnameseName = "Khai Vị"
                         },
                         new
                         {
-                            Id = 1,
+                            Id = 2,
                             Name = "SOUP",
                             VietnameseName = "Súp"
                         },
                         new
                         {
-                            Id = 2,
+                            Id = 3,
                             Name = "HOTPOT",
                             VietnameseName = "Lẩu"
                         },
                         new
                         {
-                            Id = 3,
+                            Id = 4,
                             Name = "BBQ",
                             VietnameseName = "Nướng"
                         },
                         new
                         {
-                            Id = 4,
+                            Id = 5,
                             Name = "HOTPOT_BROTH",
                             VietnameseName = "Nước Lẩu"
                         },
                         new
                         {
-                            Id = 5,
+                            Id = 6,
                             Name = "HOTPOT_MEAT",
                             VietnameseName = "Thịt Lẩu"
                         },
                         new
                         {
-                            Id = 6,
+                            Id = 7,
                             Name = "HOTPOT_SEAFOOD",
                             VietnameseName = "Hải Sản Lẩu"
                         },
                         new
                         {
-                            Id = 7,
+                            Id = 8,
                             Name = "HOTPOT_VEGGIE",
                             VietnameseName = "Rau Lẩu"
                         },
                         new
                         {
-                            Id = 8,
+                            Id = 9,
                             Name = "BBQ_MEAT",
                             VietnameseName = "Thịt Nướng"
                         },
                         new
                         {
-                            Id = 9,
+                            Id = 10,
                             Name = "BBQ_SEAFOOD",
                             VietnameseName = "Hải Sản Nướng"
                         },
                         new
                         {
-                            Id = 10,
+                            Id = 11,
                             Name = "HOTPOT_TOPPING",
                             VietnameseName = "Topping Thả Lẩu"
                         },
                         new
                         {
-                            Id = 11,
+                            Id = 12,
                             Name = "BBQ_TOPPING",
                             VietnameseName = "Topping Nướng"
                         },
                         new
                         {
-                            Id = 12,
+                            Id = 13,
                             Name = "SIDEDISH",
                             VietnameseName = "Món Phụ"
                         },
                         new
                         {
-                            Id = 13,
+                            Id = 14,
                             Name = "DRINK",
                             VietnameseName = "Đồ Uống"
                         },
                         new
                         {
-                            Id = 14,
+                            Id = 15,
                             Name = "DESSERT",
                             VietnameseName = "Tráng Miệng"
                         },
                         new
                         {
-                            Id = 15,
+                            Id = 16,
                             Name = "SAUCE",
                             VietnameseName = "Sốt"
                         });
@@ -937,12 +964,18 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         new
                         {
                             Id = 3,
+                            Name = "LateWarning",
+                            VietnameseName = "Đang trễ"
+                        },
+                        new
+                        {
+                            Id = 4,
                             Name = "Completed",
                             VietnameseName = "Thành Công"
                         },
                         new
                         {
-                            Id = 4,
+                            Id = 5,
                             Name = "Cancelled",
                             VietnameseName = "Đã Huỷ"
                         });
@@ -998,18 +1031,24 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         new
                         {
                             Id = 6,
+                            Name = "ReadyForDelivery",
+                            VietnameseName = "Sẳn sàng để giao"
+                        },
+                        new
+                        {
+                            Id = 7,
                             Name = "Delivering",
                             VietnameseName = "Đang Giao"
                         },
                         new
                         {
-                            Id = 7,
+                            Id = 8,
                             Name = "Completed",
                             VietnameseName = "Thành Công"
                         },
                         new
                         {
-                            Id = 8,
+                            Id = 9,
                             Name = "Cancelled",
                             VietnameseName = "Đã Huỷ"
                         });
@@ -1353,7 +1392,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         new
                         {
                             Id = 3,
-                            Name = "APPLIED"
+                            Name = "APPLIED",
+                            VietnameseName = "Đã áp dụng"
                         });
                 });
 
@@ -2023,6 +2063,10 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.DishTag", b =>
                 {
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Combo", "Combo")
+                        .WithMany()
+                        .HasForeignKey("ComboId");
+
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Dish", "Dish")
                         .WithMany()
                         .HasForeignKey("DishId");
@@ -2030,6 +2074,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Tag", "Tag")
                         .WithMany()
                         .HasForeignKey("TagId");
+
+                    b.Navigation("Combo");
 
                     b.Navigation("Dish");
 

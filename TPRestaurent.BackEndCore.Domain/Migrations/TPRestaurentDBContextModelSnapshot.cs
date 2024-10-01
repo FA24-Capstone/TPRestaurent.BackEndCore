@@ -355,6 +355,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<string>("Image")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -743,97 +746,97 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasData(
                         new
                         {
-                            Id = 0,
+                            Id = 1,
                             Name = "APPETIZER",
                             VietnameseName = "Khai Vị"
                         },
                         new
                         {
-                            Id = 1,
+                            Id = 2,
                             Name = "SOUP",
                             VietnameseName = "Súp"
                         },
                         new
                         {
-                            Id = 2,
+                            Id = 3,
                             Name = "HOTPOT",
                             VietnameseName = "Lẩu"
                         },
                         new
                         {
-                            Id = 3,
+                            Id = 4,
                             Name = "BBQ",
                             VietnameseName = "Nướng"
                         },
                         new
                         {
-                            Id = 4,
+                            Id = 5,
                             Name = "HOTPOT_BROTH",
                             VietnameseName = "Nước Lẩu"
                         },
                         new
                         {
-                            Id = 5,
+                            Id = 6,
                             Name = "HOTPOT_MEAT",
                             VietnameseName = "Thịt Lẩu"
                         },
                         new
                         {
-                            Id = 6,
+                            Id = 7,
                             Name = "HOTPOT_SEAFOOD",
                             VietnameseName = "Hải Sản Lẩu"
                         },
                         new
                         {
-                            Id = 7,
+                            Id = 8,
                             Name = "HOTPOT_VEGGIE",
                             VietnameseName = "Rau Lẩu"
                         },
                         new
                         {
-                            Id = 8,
+                            Id = 9,
                             Name = "BBQ_MEAT",
                             VietnameseName = "Thịt Nướng"
                         },
                         new
                         {
-                            Id = 9,
+                            Id = 10,
                             Name = "BBQ_SEAFOOD",
                             VietnameseName = "Hải Sản Nướng"
                         },
                         new
                         {
-                            Id = 10,
+                            Id = 11,
                             Name = "HOTPOT_TOPPING",
                             VietnameseName = "Topping Thả Lẩu"
                         },
                         new
                         {
-                            Id = 11,
+                            Id = 12,
                             Name = "BBQ_TOPPING",
                             VietnameseName = "Topping Nướng"
                         },
                         new
                         {
-                            Id = 12,
+                            Id = 13,
                             Name = "SIDEDISH",
                             VietnameseName = "Món Phụ"
                         },
                         new
                         {
-                            Id = 13,
+                            Id = 14,
                             Name = "DRINK",
                             VietnameseName = "Đồ Uống"
                         },
                         new
                         {
-                            Id = 14,
+                            Id = 15,
                             Name = "DESSERT",
                             VietnameseName = "Tráng Miệng"
                         },
                         new
                         {
-                            Id = 15,
+                            Id = 16,
                             Name = "SAUCE",
                             VietnameseName = "Sốt"
                         });
@@ -908,8 +911,8 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         new
                         {
                             Id = 3,
-                            Name = "Read",
-                            VietnameseName = "Đã Xem"
+                            Name = "Processing",
+                            VietnameseName = "Đang Xử Lý"
                         },
                         new
                         {
