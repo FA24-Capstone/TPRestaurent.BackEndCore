@@ -1,11 +1,9 @@
 name: CI/CD Pipeline
-
 on:
   push:
     branches: ["main", "dev"]
   pull_request:
     branches: ["main", "dev"]
-
 env:
   AZURE_WEBAPP_NAME: tprestaurant
   AZURE_WEBAPP_PACKAGE_PATH: '.'
@@ -13,7 +11,7 @@ env:
   DOCKER_IMAGE_NAME: hongquan0312/restaurant
   AZURE_CONTAINER_APP_NAME: thienphurestaurant
   AZURE_RESOURCE_GROUP: TPRestaurentResourceGroup
-
+  AZURE_CONTAINER_APP_ENVIRONMENT: thienphurestaurant-env
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -30,7 +28,6 @@ jobs:
       - name: Test
         run: dotnet test --no-build --verbosity normal
      
-
   docker:
     needs: build
     runs-on: ubuntu-latest
@@ -51,7 +48,6 @@ jobs:
           docker push ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
           docker tag ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} ${{ env.DOCKER_IMAGE_NAME }}:latest
           docker push ${{ env.DOCKER_IMAGE_NAME }}:latest
-
   deploy-to-container-apps:
     needs: docker
     runs-on: ubuntu-latest
@@ -62,17 +58,27 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - name: Create or update Container Apps Environment
+        run: |
+          az containerapp env show --name ${{ env.AZURE_CONTAINER_APP_ENVIRONMENT }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} || \
+          az containerapp env create --name ${{ env.AZURE_CONTAINER_APP_ENVIRONMENT }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --location eastasia
+      
       - name: Deploy to Azure Container Apps
         uses: azure/container-apps-deploy-action@v1
         with:
           containerAppName: ${{ env.AZURE_CONTAINER_APP_NAME }}
           resourceGroup: ${{ env.AZURE_RESOURCE_GROUP }}
           imageToDeploy: ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
+          targetPort: 80
+          ingress: 'external'
+          environmentVariables: |
+            ASPNETCORE_ENVIRONMENT=Production
           registryUrl: docker.io
           registryUsername: ${{ secrets.DOCKER_HUB_USERNAME }}
-          registryPassword: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  
-          location: 'eastasia'  # Specify the East Asia region
-
+          registryPassword: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          location: 'eastasia'
+          containerAppEnvironment: ${{ env.AZURE_CONTAINER_APP_ENVIRONMENT }}
       
       - name: Azure logout
         run: az logout
