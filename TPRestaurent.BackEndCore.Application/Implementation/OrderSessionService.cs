@@ -265,6 +265,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult(); 
             try
             {
+                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                 var orderSessionDb = await _orderSessionRepository.GetById(orderSessionId);
                 if (orderSessionId == null)
                 {
@@ -272,6 +273,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 orderSessionDb.OrderSessionStatusId = orderSessionStatus;
                 await _orderSessionRepository.Update(orderSessionDb);
+
+                if(orderSessionStatus == OrderSessionStatus.Completed)
+                {
+                    var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderSessionId == orderSessionId, 0, 0, null, false, o => o.Order);
+                    if (orderDetailDb.Items.Count > 0)
+                    {
+                        var orderDb = orderDetailDb.Items.FirstOrDefault().Order;
+                        if (orderDb.StatusId == OrderStatus.Processing)
+                        {
+                            var orderService = Resolve<IOrderService>();
+                            await orderService.ChangeOrderStatus(orderDb.OrderId, true);
+                        }
+                    }
+                }
+
                 await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
