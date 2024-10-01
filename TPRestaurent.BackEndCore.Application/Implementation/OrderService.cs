@@ -2137,20 +2137,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return BuildAppActionResultError(new AppActionResult(), $"Không tìm thấy thông tin đặt bàn với id {reservationId}");
                 }
                 var transactionRepository = Resolve<IGenericRepository<Transaction>>();
-                var orderTransactionDb = await transactionRepository.GetAllDataByExpression(o => o.OrderId.HasValue && o.OrderId == reservationId, 0, 0, null, false, o => o.TransactionType);
                 var orderResponse = _mapper.Map<OrderResponse>(order);
-                orderResponse.Transaction = orderTransactionDb.Items.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).First();
-                var successfulDepositTransaction = orderTransactionDb.Items.Where(o => o.TransationStatusId == TransationStatus.SUCCESSFUL && o.TransactionTypeId == TransactionType.Deposit).ToList();
-                if (successfulDepositTransaction.Count() == 1)
+                var orderTransactionDb = await transactionRepository.GetAllDataByExpression(o => o.OrderId.HasValue && o.OrderId == reservationId, 0, 0, null, false, o => o.TransactionType);
+                if(orderTransactionDb.Items.Count() > 0)
                 {
-                    orderResponse.DepositPaidDate = successfulDepositTransaction.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).First().PaidDate;
+                    orderResponse.Transaction = orderTransactionDb.Items.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).FirstOrDefault();
+                    var successfulDepositTransaction = orderTransactionDb.Items.Where(o => o.TransationStatusId == TransationStatus.SUCCESSFUL && o.TransactionTypeId == TransactionType.Deposit).ToList();
+                    if (successfulDepositTransaction.Count() == 1)
+                    {
+                        orderResponse.DepositPaidDate = successfulDepositTransaction.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).First().PaidDate;
+                    }
+
+                    var successfulOrderTransaction = orderTransactionDb.Items.Where(o => o.TransationStatusId == TransationStatus.SUCCESSFUL && o.TransactionTypeId == TransactionType.Order).ToList();
+                    if (successfulOrderTransaction.Count() == 1)
+                    {
+                        orderResponse.OrderPaidDate = successfulOrderTransaction.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).First().PaidDate;
+                    }
                 }
 
-                var successfulOrderTransaction = orderTransactionDb.Items.Where(o => o.TransationStatusId == TransationStatus.SUCCESSFUL && o.TransactionTypeId == TransactionType.Order).ToList();
-                if (successfulOrderTransaction.Count() == 1)
-                {
-                    orderResponse.OrderPaidDate = successfulOrderTransaction.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).First().PaidDate;
-                }
                 var reservationTableDetails = await GetReservationTableDetails(reservationId);
                 var reservationDishes = await GetReservationDishes2(reservationId);
 
