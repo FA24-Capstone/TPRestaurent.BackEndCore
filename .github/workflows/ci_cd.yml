@@ -75,3 +75,19 @@ jobs:
       - name: Azure logout
         run: az logout
         if: always()
+
+      # Discord notification on successful deployment
+      - name: Notify Discord on success
+        if: success()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Deployment to Azure Container Apps was successful!"}' \
+          https://discord.com/api/webhooks/1290961564211347466/TYe7ldnQh8R6NJ5VXoyjEbsZ-0s49vjIs_1T6W3kmBGR-oyvMN-MdY8kAi0sjNWMJTZI
+
+      # Discord notification on deployment failure
+      - name: Notify Discord on failure
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Deployment to Azure Container Apps failed."}' \
+          https://discord.com/api/webhooks/1290961564211347466/TYe7ldnQh8R6NJ5VXoyjEbsZ-0s49vjIs_1T6W3kmBGR-oyvMN-MdY8kAi0sjNWMJTZI
