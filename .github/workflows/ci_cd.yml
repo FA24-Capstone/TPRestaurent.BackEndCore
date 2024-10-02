@@ -62,6 +62,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'  # Only run for the main branch
     steps:
+      - uses: actions/checkout@v4
+
       - name: Checkout Code
         run: echo "Checking out the code for Docker..."
 
