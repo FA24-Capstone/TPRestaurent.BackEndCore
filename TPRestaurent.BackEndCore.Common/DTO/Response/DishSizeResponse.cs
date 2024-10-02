@@ -24,6 +24,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         [ForeignKey(nameof(DishItemTypeId))]
         public Domain.Models.EnumModels.DishItemType? DishItemType { get; set; }
         public bool IsAvailable { get; set; }
+        public bool IsDeleted { get; set; }
         public double AverageRating { get; set; } = 0;
         public int NumberOfRating { get; set; } = 0;
 
