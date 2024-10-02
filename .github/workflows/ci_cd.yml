@@ -134,29 +134,27 @@ jobs:
         run: |
           END_TIME=$(TZ="Asia/Ho_Chi_Minh" date)
           curl -H "Content-Type: application/json" \
-          -d '{
-                "content": "@everyone \n\n\
+          -d "{
+                \"content\": \"@everyone \n\n\
                 =============================== \n\n\
                 🎉 **Deployment Successful** \n\
-                **End Time:** '"$END_TIME"' (Vietnam Time) \n\
+                **End Time:** $END_TIME (Vietnam Time) \n\
                 =============================== \n\n\
-                The deployment to Azure Container Apps was successful!"
-              }' \
+                The deployment to Azure Container Apps was successful!\"
+              }" \
           ${{ secrets.DISCORD_WEBHOOK }}
-
+      
       - name: Notify Discord - Deployment Failed
         if: failure()
         run: |
           END_TIME=$(TZ="Asia/Ho_Chi_Minh" date)
           curl -H "Content-Type: application/json" \
-          -d '{
-                "content": "@everyone \n\n\
+          -d "{
+                \"content\": \"@everyone \n\n\
                 =============================== \n\n\
                 ❌ **Deployment Failed** \n\
-                **End Time:** '"$END_TIME"' (Vietnam Time) \n\
+                **End Time:** $END_TIME (Vietnam Time) \n\
                 =============================== \n\n\
-                Please check the logs for more details."
-              }' \
+                Please check the logs for more details.\"
+              }" \
           ${{ secrets.DISCORD_WEBHOOK }}
-
-
