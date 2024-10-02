@@ -15,6 +15,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> GetDishById(Guid dishId);
         public Task<AppActionResult> CreateDish(DishDto dto);
         public Task<AppActionResult> UpdateDish(UpdateDishRequestDto dto);
+        public Task<AppActionResult> UpdateDishImage(UpdateDishImageRequest dto);
         public Task<AppActionResult> DeleteDish(Guid dishId);
         public Task<AppActionResult> GetAllDishType(int pageNumber, int pagesize);
         public Task<AppActionResult> GetAllDishTag(int pageNumber, int pagesize);
