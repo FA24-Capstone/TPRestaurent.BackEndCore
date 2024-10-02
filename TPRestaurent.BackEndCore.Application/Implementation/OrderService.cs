@@ -520,7 +520,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                         else
                         {
-                            result = BuildAppActionResultError(result, "Bàn không thực hiện gọi món.");
+                            return BuildAppActionResultError(result, "Bàn không thực hiện gọi món.");
                         }
 
                         orderWithPayment.Order = order;
@@ -555,7 +555,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                         else
                         {
-                            result = BuildAppActionResultError(result, "Không có thông tin bàn");
+                            return BuildAppActionResultError(result, "Không có thông tin bàn");
                         }
                     }
                     else
@@ -572,6 +572,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (string.IsNullOrEmpty(orderRequestDto.DeliveryOrder.AddressId.ToString()))
                         {
                             return BuildAppActionResultError(result, $"Địa chỉ của bạn không tồn tại. Vui lòng cập nhập địa chỉ");
+                        }
+
+                        if (orderDetails.Count == 0)
+                        {
+                            return BuildAppActionResultError(result, "Đơn hàng không thực hiện đặt món.");
                         }
 
                         order.AccountId = accountDb.Id;
@@ -601,13 +606,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         };
 
                         var distanceResponse = await mapService!.GetEstimateDeliveryResponse(restaurantAddress, customerAddress);
-                        var eletement = distanceResponse.Result as EstimatedDeliveryTimeDto.Response;
-                        var distance = eletement!.TotalDistance;
+                        var element = distanceResponse.Result as EstimatedDeliveryTimeDto.Response;
+                        var distance = element!.TotalDistance;
                         if (distance > maxDistanceToOrder)
                         {
                             return BuildAppActionResultError(result, $"Nhà hàng chỉ hỗ trợ cho đơn giao hàng trong bán kính 10km");
                         }
 
+                        var shippingCost = await CalculateDeliveryOrder(orderRequestDto.CustomerId.Value);
+
+                        money += double.Parse(shippingCost.Result.ToString());
 
                         var currentTime = utility.GetCurrentDateTimeInTimeZone();
                         var couponDb = await couponProgramRepository!.GetAllDataByExpression(c => currentTime > c.StartDate && currentTime < c.ExpiryDate && c.MinimumAmount <= money && c.Quantity > 0, 0, 0, null, false, null);
@@ -2241,7 +2249,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var distanceStepFeeConfig = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DISTANCE_STEP_FEE);
 
                 double total = 0;
-                var customerInfoAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.CustomerInfoAddressId == customerInfoAddressId);
+                var customerInfoAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.CustomerInfoAddressId == customerInfoAddressId && p.IsCurrentUsed);
                 if (customerInfoAddressDb == null)
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {customerInfoAddressId}");
@@ -2274,7 +2282,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 else
                 {
                     int step = (int)Math.Ceiling(distance / distanceStep);
-                    total = Math.Ceiling(distanceStepFee * step);
+                    total = Math.Ceiling(distanceStepFee * step / 1000) * 1000;
                 }
                 result.Result = total;
             }
