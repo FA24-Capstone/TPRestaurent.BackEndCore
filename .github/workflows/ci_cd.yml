@@ -23,12 +23,7 @@ jobs:
           START_TIME=$(TZ="Asia/Ho_Chi_Minh" date)
           curl -H "Content-Type: application/json" \
           -d '{
-                "content": "@everyone \n\n\
-                =============================== \n\n\
-                🚀 **CI/CD Pipeline Started** \n\
-                **Start Time:** '"$START_TIME"' (Vietnam Time) \n\
-                =============================== \n\n\
-                Starting the build process..."
+                "content": "@everyone \n\n=============================== \n\n🚀 **CI/CD Pipeline Started** \n**Start Time:** '"$START_TIME"' (Vietnam Time) \n=============================== \n\nStarting the build process..."
               }' \
           ${{ secrets.DISCORD_WEBHOOK }}
 
@@ -134,7 +129,7 @@ jobs:
         if: always()
 
     # Notify about deployment success/failure
-      - name: Notify Discord - Deployment Success
+      - name: Notify Discord - Deployment Successful
         if: success()
         run: |
           END_TIME=$(TZ="Asia/Ho_Chi_Minh" date)
@@ -148,7 +143,6 @@ jobs:
                 The deployment to Azure Container Apps was successful!"
               }' \
           ${{ secrets.DISCORD_WEBHOOK }}
-
 
       - name: Notify Discord - Deployment Failed
         if: failure()
@@ -164,4 +158,5 @@ jobs:
                 Please check the logs for more details."
               }' \
           ${{ secrets.DISCORD_WEBHOOK }}
+
 
