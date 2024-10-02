@@ -18,17 +18,54 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Notify Discord - Checkout Code
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Step: Checking out the code."}' \
+          ${{ secrets.DISCORD_WEBHOOK}}
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Notify Discord - Setup .NET
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Step: Setting up .NET."}' \
+          ${{ secrets.DISCORD_WEBHOOK}}
       - name: Restore dependencies
         run: dotnet restore
+      - name: Notify Discord - Restore Dependencies
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Step: Restoring dependencies."}' \
+          ${{ secrets.DISCORD_WEBHOOK}}
       - name: Build
         run: dotnet build --no-restore
+      - name: Notify Discord - Build Application
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Step: Building the application."}' \
+          ${{ secrets.DISCORD_WEBHOOK}}
       - name: Test
         run: dotnet test --no-build --verbosity normal
-     
+      - name: Notify Discord - Run Tests
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Step: Running tests."}' \
+          ${{ secrets.DISCORD_WEBHOOK}}
+    # Always notify Discord about build success/failure
+      - name: Notify Discord - Build Success
+        if: success()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Build succeeded!"}' \
+          ${{ secrets.DISCORD_WEBHOOK}}
+      - name: Notify Discord - Build Failed
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Build failed!"}' \
+          ${{ secrets.DISCORD_WEBHOOK}}
 
   docker:
     needs: build
@@ -36,20 +73,52 @@ jobs:
     if: github.ref == 'refs/heads/main'  # Only run for the main branch
     steps:
       - uses: actions/checkout@v4
+      - name: Notify Discord - Docker: Checkout Code
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Step: Docker - Checking out the code."}' \
+          ${{ secrets.DISCORD_WEBHOOK}}
       - name: Build Docker image
         run: |
-          ls -R  # List all files and directories for debugging
           docker build -t ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} -f TPRestaurent.BackEndCore.API/Dockerfile .
+      - name: Notify Discord - Build Docker Image
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Step: Building Docker image."}' \
+          ${{ secrets.DISCORD_WEBHOOK}}
       - name: Log in to Docker Hub
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Notify Discord - Docker: Login to Docker Hub
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Step: Logging in to Docker Hub."}' \
+          ${{ secrets.DISCORD_WEBHOOK}}
       - name: Push Docker image to Docker Hub
         run: |
           docker push ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
           docker tag ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} ${{ env.DOCKER_IMAGE_NAME }}:latest
           docker push ${{ env.DOCKER_IMAGE_NAME }}:latest
+      - name: Notify Discord - Push Docker Image
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Step: Pushing Docker image to Docker Hub."}' \
+          ${{ secrets.DISCORD_WEBHOOK}}
+    # Always notify Discord about Docker success/failure
+      - name: Notify Discord - Docker Success
+        if: success()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Docker build and push succeeded!"}' \
+          ${{ secrets.DISCORD_WEBHOOK}}
+      - name: Notify Discord - Docker Failed
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Docker build or push failed!"}' \
+          ${{ secrets.DISCORD_WEBHOOK}}
 
   deploy-to-container-apps:
     needs: docker
@@ -57,10 +126,20 @@ jobs:
     if: github.ref == 'refs/heads/main'  # Only run for the main branch
     steps:
       - uses: actions/checkout@v4
+      - name: Notify Discord - Deploy: Checkout Code
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Step: Deployment - Checking out the code."}' \
+          ${{ secrets.DISCORD_WEBHOOK}}
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Notify Discord - Login to Azure
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Step: Logging in to Azure."}' \
+          ${{ secrets.DISCORD_WEBHOOK}}
       - name: Deploy to Azure Container Apps
         uses: azure/container-apps-deploy-action@v1
         with:
@@ -71,23 +150,29 @@ jobs:
           registryUsername: ${{ secrets.DOCKER_HUB_USERNAME }}
           registryPassword: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           location: 'eastasia'
-      
+      - name: Notify Discord - Deploying to Azure
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Step: Deploying to Azure Container Apps."}' \
+          ${{ secrets.DISCORD_WEBHOOK}}
       - name: Azure logout
         run: az logout
         if: always()
-
-      # Discord notification on successful deployment
-      - name: Notify Discord on success
+      - name: Notify Discord - Azure Logout
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Step: Logging out from Azure."}' \
+          ${{ secrets.DISCORD_WEBHOOK}}
+    # Always notify Discord about deployment success/failure
+      - name: Notify Discord - Deployment Success
         if: success()
         run: |
           curl -H "Content-Type: application/json" \
           -d '{"content": "Deployment to Azure Container Apps was successful!"}' \
-          https://discord.com/api/webhooks/1290961564211347466/TYe7ldnQh8R6NJ5VXoyjEbsZ-0s49vjIs_1T6W3kmBGR-oyvMN-MdY8kAi0sjNWMJTZI
-
-      # Discord notification on deployment failure
-      - name: Notify Discord on failure
+          ${{ secrets.DISCORD_WEBHOOK}}
+      - name: Notify Discord - Deployment Failed
         if: failure()
         run: |
           curl -H "Content-Type: application/json" \
-          -d '{"content": "Deployment to Azure Container Apps failed."}' \
-          https://discord.com/api/webhooks/1290961564211347466/TYe7ldnQh8R6NJ5VXoyjEbsZ-0s49vjIs_1T6W3kmBGR-oyvMN-MdY8kAi0sjNWMJTZI
+          -d '{"content": "Deployment to Azure Container Apps failed!"}' \
+          ${{ secrets.DISCORD_WEBHOOK}}
