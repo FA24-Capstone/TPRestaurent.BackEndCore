@@ -91,7 +91,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-      - name: Notify Discord - Docker: Login to Docker Hub
+      - name: Notify Discord - Docker:Login to Docker Hub
         run: |
           curl -H "Content-Type: application/json" \
           -d '{"content": "Step: Logging in to Docker Hub."}' \
@@ -126,7 +126,7 @@ jobs:
     if: github.ref == 'refs/heads/main'  # Only run for the main branch
     steps:
       - uses: actions/checkout@v4
-      - name: Notify Discord - Deploy: Checkout Code
+      - name: Notify Discord - Deploy:Checkout Code
         run: |
           curl -H "Content-Type: application/json" \
           -d '{"content": "Step: Deployment - Checking out the code."}' \
