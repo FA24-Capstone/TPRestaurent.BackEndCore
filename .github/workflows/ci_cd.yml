@@ -73,7 +73,7 @@ jobs:
     if: github.ref == 'refs/heads/main'  # Only run for the main branch
     steps:
       - uses: actions/checkout@v4
-      - name: Notify Discord - Docker: Checkout Code
+      - name: Notify Discord - Docker:Checkout Code
         run: |
           curl -H "Content-Type: application/json" \
           -d '{"content": "Step: Docker - Checking out the code."}' \
