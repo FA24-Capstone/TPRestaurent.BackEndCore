@@ -110,10 +110,41 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                     }
 
+                    var mainFile = comboDto.MainImg;
+                    if (mainFile == null)
+                    {
+                        result = BuildAppActionResultError(result, $"The main picture of the dish is empty");
+                    }
+
+                    var mainPathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDb.ComboId}_main.jpg";
+                    var uploadMainPicture = await firebaseService!.UploadFileToFirebase(mainFile, mainPathName);
+
+                    comboDb.Image = uploadMainPicture!.Result!.ToString()!;
+
+                    List<Image> staticList = new List<Image>();
+
+                    foreach (var file in comboDto!.Imgs!)
+                    {
+                        var pathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDb.ComboId}{Guid.NewGuid()}.jpg";
+                        var upload = await firebaseService!.UploadFileToFirebase(file, pathName);
+                        var staticImg = new Image
+                        {
+                            StaticFileId = Guid.NewGuid(),
+                            ComboId = comboDb.ComboId,
+                            Path = upload!.Result!.ToString()!
+                        };
+                        staticList.Add(staticImg);
+                        if (!upload.IsSuccess)
+                        {
+                            return BuildAppActionResultError(result, "Upload ảnh không thành công");
+                        }
+                    }
+
                     if (!BuildAppActionResultIsError(result))
                     {
                         await _comboRepository.Insert(comboDb);
                         await dishTagRepository.InsertRange(dishTags);
+                        await staticFileRepository.InsertRange(staticList);
                         await comboOptionSetRepository!.InsertRange(comboOptionSetList);
                         await dishComboRepository!.InsertRange(dishComboList);
                         await _unitOfWork.SaveChangesAsync();
@@ -447,7 +478,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-
 
         public async Task<AppActionResult> UpdateCombo(UpdateComboDto comboDto)
         {
