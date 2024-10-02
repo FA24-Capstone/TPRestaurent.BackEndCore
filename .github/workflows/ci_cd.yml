@@ -68,7 +68,7 @@ jobs:
         run: |
           curl -H "Content-Type: application/json" \
           -d '{
-                "content": "✅ **Build completed successfully!**\n\n🎉 All tests passed. \n**Time Taken:** '"$(TZ="Asia/Ho_Chi_Minh" date)"' \n\n🔄 Proceeding to Docker image build..."
+                "content": "✅ **Build completed successfully!**\n\n🎉 All tests passed. \n**Time Taken:** '"$(TZ="Asia/Ho_Chi_Minh" date)"' \n\n"
               }' \
           ${{ secrets.DISCORD_WEBHOOK }}
 
@@ -92,7 +92,7 @@ jobs:
         run: |
           curl -H "Content-Type: application/json" \
           -d '{
-                "content": "🔄 **Starting Docker image build...**\n\n🔍 Building the image from the Dockerfile. Please wait...\n**Branch:** '"${{ github.ref }}"' \n**Commit:** '"${{ github.sha }}"' \n"
+                "content": "🔄 Proceeding to Docker image build...🔄\n\n **Starting Docker image build...**\n\n🔍 Building the image from the Dockerfile. Please wait...\n**Branch:** '"${{ github.ref }}"' \n**Commit:** '"${{ github.sha }}"' \n"
               }' \
           ${{ secrets.DISCORD_WEBHOOK }}
 
@@ -131,7 +131,7 @@ jobs:
         run: |
           curl -H "Content-Type: application/json" \
           -d '{
-                "content": "✅ **Docker image built and pushed successfully!**\n\n🔗 Available on Docker Hub as: **'"${{ env.DOCKER_IMAGE_NAME }}"'**.\n**Commit:** '"${{ github.sha }}"' \n\n📦 Proceeding to deployment..."
+                "content": "✅ **Docker image built and pushed successfully!**\n\n🔗 Available on Docker Hub as: **'"${{ env.DOCKER_IMAGE_NAME }}"'**.\n**Commit:** '"${{ github.sha }}"' \n\n"
               }' \
           ${{ secrets.DISCORD_WEBHOOK }}
 
@@ -153,7 +153,7 @@ jobs:
         run: |
           curl -H "Content-Type: application/json" \
           -d '{
-                "content": "🚀 **Starting deployment to Azure Container Apps...**\n\n🔄 Deploying the latest Docker image.\n**Image:** '"${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}"' \n"
+                "content": "📦 Proceeding to deployment...\n\n 🚀 **Starting deployment to Azure Container Apps...**\n\n🔄 Deploying the latest Docker image.\n**Image:** '"${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}"' \n"
               }' \
           ${{ secrets.DISCORD_WEBHOOK }}
 
