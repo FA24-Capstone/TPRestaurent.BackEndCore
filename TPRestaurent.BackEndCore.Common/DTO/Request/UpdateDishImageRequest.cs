@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Common.DTO.Request
 {
-    public class ComboImageDto
+    public class UpdateDishImageRequest
     {
-        public Guid ComboId { get; set; }
-        public IFormFile Img { get; set; } = null!;
-        public string OldImageLink = null!;
+        public Guid DishId { get; set; }    
+        public IFormFile Image { get; set; } = null!;
+        public string OldImageLink { get; set; } = null!;
     }
 }

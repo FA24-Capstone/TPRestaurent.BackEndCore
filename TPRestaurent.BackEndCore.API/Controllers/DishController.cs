@@ -45,7 +45,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPut("update-dish")]
-        public async Task<AppActionResult> UpdateDish([FromForm] UpdateDishRequestDto dto)
+        public async Task<AppActionResult> UpdateDish([FromBody] UpdateDishRequestDto dto)
         {
             return await _dishService.UpdateDish(dto);
         }
@@ -73,6 +73,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _dishService.UpdateInactiveADish(dishId);
         }
 
+        [HttpPut("update-dish-image")]
+        public async Task<AppActionResult> UpdateDishImage([FromForm] UpdateDishImageRequest imageRequest)
+        {
+            return await _dishService.UpdateDishImage(imageRequest);
+        }
         //[HttpPost("upload-dish-tag")]
         //public async Task<AppActionResult> InsertDishTag()
         //{

@@ -16,6 +16,7 @@ using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
 using Twilio.Http;
+using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -64,7 +65,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     };
 
                     List<DishTag> dishTags = new List<DishTag>();
-                    foreach(var tagId in dto.TagIds)
+                    foreach (var tagId in dto.TagIds)
                     {
                         var tagDb = await tagRepository.GetById(tagId);
                         if (tagDb != null)
@@ -347,73 +348,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         result = BuildAppActionResultError(result, $"Món ăn với id {dto.DishId} không tồn tại");
                     }
-                    var oldFiles = await staticFileRepository!.GetAllDataByExpression(p => p.DishId == dto.DishId, 0, 0, null, false, null);
-                    if (oldFiles.Items == null || !oldFiles.Items.Any())
-                    {
-                        return BuildAppActionResultError(result, $"Các file hình ảnh của món ăn với id {dishDb.DishId} không tồn tại");
-                    }
-                    var oldFileList = new List<Image>();
-                    foreach (var oldImg in oldFiles.Items!)
-                    {
-                        oldFileList.Add(oldImg);
-                        var pathName = SD.FirebasePathName.DISH_PREFIX + $"{dishDb!.DishId}.jpg";
-                        var imageResult = firebaseService!.DeleteFileFromFirebase(pathName);
-                        if (imageResult != null)
-                        {
-                            result.Messages.Add("Xóa các file hình ảnh thành công");
-                        }
-                    }
-
-                    if (!oldFileList.Any())
-                    {
-                        return BuildAppActionResultError(result, "No old files found to delete.");
-                    }
-
-                    // Attempt to delete old files
-                    await staticFileRepository.DeleteRange(oldFileList);
-                    await _unitOfWork.SaveChangesAsync();
-
-                    List<Image> staticList = new List<Image>();
-                    var mainFile = dto.MainImageFile;
-                    if (mainFile == null)
-                    {
-                        result = BuildAppActionResultError(result, $"The main picture of the dish is empty");
-                    }
-                    var mainPathName = SD.FirebasePathName.DISH_PREFIX + $"{dishDb.DishId}_main.jpg";
-                    var uploadMainPicture = await firebaseService!.UploadFileToFirebase(mainFile, mainPathName);
-                    var staticMainFile = new Image
-                    {
-                        StaticFileId = Guid.NewGuid(),
-                        DishId = dishDb.DishId,
-                        Path = uploadMainPicture!.Result!.ToString()!
-                    };
-                    staticList.Add(staticMainFile);
-                    dishDb.Image = staticMainFile.Path;
-
-
-                    foreach (var file in dto!.ImageFiles!)
-                    {
-                        var pathName = SD.FirebasePathName.DISH_PREFIX + $"{dishDb.DishId}{Guid.NewGuid()}.jpg";
-                        var upload = await firebaseService!.UploadFileToFirebase(file, pathName);
-                        var staticImg = new Image
-                        {
-                            StaticFileId = Guid.NewGuid(),
-                            DishId = dishDb.DishId,
-                            Path = upload!.Result!.ToString()!,
-                        };
-                        staticList.Add(staticImg);
-
-                        if (!upload.IsSuccess)
-                        {
-                            return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
-                        }
-                    }
 
                     dishDb.Name = dto.Name;
                     dishDb.Description = dto.Description;
-                    //dishDb.Price = dto.Price;
                     dishDb.DishItemTypeId = dto.DishItemType;
-                    //dishDb.Discount = dto.Discount;
                     dishDb.isAvailable = dto.IsAvailable;
 
                     List<DishSizeDetail> updateDishSizeDetails = new List<DishSizeDetail>();
@@ -467,7 +405,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             await dishSizeDetailRepository!.InsertRange(addDishSizeDetails);
                         }
-                        await staticFileRepository.InsertRange(staticList);
                         await _unitOfWork.SaveChangesAsync();
                         result.Messages.Add("Update dish successfully");
                         scope.Complete();
@@ -493,7 +430,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 dishDb!.isAvailable = false;
                 await _dishRepository.Update(dishDb);
-                await _unitOfWork.SaveChangesAsync();       
+                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -546,7 +483,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 List<DishTag> dishTags = new List<DishTag>();
                 Random random = new Random();
                 int tagCount = tagDb.Items.Count();
-                foreach(var dish in dishDb.Items)
+                foreach (var dish in dishDb.Items)
                 {
                     dishTags.Add(new DishTag
                     {
@@ -641,6 +578,60 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> UpdateDishImage(UpdateDishImageRequest dto)
+        {
+            var result = new AppActionResult();
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            {
+                try
+                {
+                    var firebaseService = Resolve<IFirebaseService>();
+                    var staticFileRepository = Resolve<IGenericRepository<Image>>();
+
+                    var staticFileDb = await staticFileRepository!.GetByExpression(p => p.DishId == dto.DishId && p.Path == dto.OldImageLink);
+                    if (staticFileDb == null)
+                    {
+                        return BuildAppActionResultError(result, $"Các file hình ảnh của món ăn với id {dto.DishId} không tồn tại");
+                    }
+                    var resultOfDeleteImage = await firebaseService!.DeleteFileFromFirebase(dto.OldImageLink);
+
+                    var pathName = SD.FirebasePathName.DISH_PREFIX + $"{dto.DishId}{Guid.NewGuid()}.jpg";
+                    var upload = await firebaseService!.UploadFileToFirebase(dto.Image!, pathName);
+
+                    if (!upload.IsSuccess)
+                    {
+                        return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
+                    }
+                    staticFileDb.Path = upload.Result!.ToString()!;
+
+                    if (dto.OldImageLink.Contains("_main"))
+                    {
+                        var dishDb = await _dishRepository.GetByExpression(p => p.DishId == dto.DishId);
+                        if (dishDb == null)
+                        {
+                            return BuildAppActionResultError(result, $"Không tìm thấy món ăn với id {dto.DishId}");
+                        }
+                        dishDb.Image = upload.Result!.ToString()!;
+                        await _dishRepository.Update(dishDb);
+
+                    }
+
+                    if (!BuildAppActionResultIsError(result))
+                    {
+                        await staticFileRepository.Update(staticFileDb);
+                        await _unitOfWork.SaveChangesAsync();
+                        scope.Complete();
+                        result.Messages.Add("Cập nhập hình ảnh thành công");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result = BuildAppActionResultError(result, ex.Message);
+                }
             }
             return result;
         }
