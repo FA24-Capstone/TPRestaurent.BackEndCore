@@ -22,9 +22,16 @@ jobs:
         run: |
           START_TIME=$(TZ="Asia/Ho_Chi_Minh" date)
           curl -H "Content-Type: application/json" \
-          -d '{"content": "@everyone 🚀 **CI/CD Pipeline Started** at '"$START_TIME"' (Vietnam Time). Starting build process..."}' \
+          -d '{
+                "content": "@everyone \n\n\
+                =============================== \n\n\
+                🚀 **CI/CD Pipeline Started** \n\
+                **Start Time:** '"$START_TIME"' (Vietnam Time) \n\
+                =============================== \n\n\
+                Starting the build process..."
+              }' \
           ${{ secrets.DISCORD_WEBHOOK }}
-      
+
       - name: Checkout Code
         run: echo "Checking out the code..."
 
@@ -132,13 +139,29 @@ jobs:
         run: |
           END_TIME=$(TZ="Asia/Ho_Chi_Minh" date)
           curl -H "Content-Type: application/json" \
-          -d '{"content": "@everyone 🎉 **Deployment completed successfully** at '"$END_TIME"' (Vietnam Time)."}' \
+          -d '{
+                "content": "@everyone \n\n\
+                =============================== \n\n\
+                🎉 **Deployment Successful** \n\
+                **End Time:** '"$END_TIME"' (Vietnam Time) \n\
+                =============================== \n\n\
+                The deployment to Azure Container Apps was successful!"
+              }' \
           ${{ secrets.DISCORD_WEBHOOK }}
+
 
       - name: Notify Discord - Deployment Failed
         if: failure()
         run: |
           END_TIME=$(TZ="Asia/Ho_Chi_Minh" date)
           curl -H "Content-Type: application/json" \
-          -d '{"content": "@everyone ❌ **Deployment failed** at '"$END_TIME"' (Vietnam Time). Please check the logs for more details."}' \
+          -d '{
+                "content": "@everyone \n\n\
+                =============================== \n\n\
+                ❌ **Deployment Failed** \n\
+                **End Time:** '"$END_TIME"' (Vietnam Time) \n\
+                =============================== \n\n\
+                Please check the logs for more details."
+              }' \
           ${{ secrets.DISCORD_WEBHOOK }}
+
