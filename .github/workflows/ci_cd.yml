@@ -23,40 +23,62 @@ jobs:
           START_TIME=$(TZ="Asia/Ho_Chi_Minh" date)
           curl -H "Content-Type: application/json" \
           -d '{
-                "content": "@everyone \n\n=============================== \n\n🚀 **CI/CD Pipeline Started** \n**Start Time:** '"$START_TIME"' (Vietnam Time) \n=============================== \n\nStarting the build process..."
+                "content": "@everyone \n\n=============================== \n\n🚀 **CI/CD Pipeline Started** \n**Start Time:** '"$START_TIME"' (Vietnam Time) \n**Branch:** '"${{ github.ref }}"' \n=============================== \n\n🔧 **Initializing the build process...**"
               }' \
           ${{ secrets.DISCORD_WEBHOOK }}
 
       - name: Checkout Code
-        run: echo "Checking out the code..."
+        run: echo "Checking out the code..."  # You can leave this for context or remove it if not needed
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-      
+
       - name: Restore dependencies
-        run: dotnet restore
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{
+                "content": "📦 **Restoring dependencies...**"
+              }' \
+          ${{ secrets.DISCORD_WEBHOOK }}
+          dotnet restore
 
       - name: Build
-        run: dotnet build --no-restore
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{
+                "content": "🔨 **Building the project...**"
+              }' \
+          ${{ secrets.DISCORD_WEBHOOK }}
+          dotnet build --no-restore
 
       - name: Run Tests
-        run: dotnet test --no-build --verbosity normal
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{
+                "content": "🧪 **Running tests...**"
+              }' \
+          ${{ secrets.DISCORD_WEBHOOK }}
+          dotnet test --no-build --verbosity normal
 
-    # Notify about build success/failure
+      # Notify about build success/failure
       - name: Notify Discord - Build Success
         if: success()
         run: |
           curl -H "Content-Type: application/json" \
-          -d '{"content": "✅ **Build completed successfully**!"}' \
+          -d '{
+                "content": "✅ **Build completed successfully!**\n\n🎉 All tests passed. \n**Time Taken:** '"$(TZ="Asia/Ho_Chi_Minh" date)"' \n\n🔄 Proceeding to Docker image build..."
+              }' \
           ${{ secrets.DISCORD_WEBHOOK }}
 
       - name: Notify Discord - Build Failed
         if: failure()
         run: |
           curl -H "Content-Type: application/json" \
-          -d '{"content": "❌ **Build failed**. Please check the logs for more details."}' \
+          -d '{
+                "content": "❌ **Build failed!**\n\n⚠️ Please check the logs for details.\n\n**Time Taken:** '"$(TZ="Asia/Ho_Chi_Minh" date)"'"
+              }' \
           ${{ secrets.DISCORD_WEBHOOK }}
 
   docker:
@@ -66,11 +88,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Notify Discord - Start Docker Build
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{
+                "content": "🔄 **Starting Docker image build...**\n\n🔍 Building the image from the Dockerfile. Please wait...\n**Branch:** '"${{ github.ref }}"' \n**Commit:** '"${{ github.sha }}"' \n"
+              }' \
+          ${{ secrets.DISCORD_WEBHOOK }}
+
       - name: Checkout Code
-        run: echo "Checking out the code for Docker..."
+        run: echo "Checking out the code for Docker..."  # You can leave this for context or remove it if not needed
 
       - name: Build Docker image
         run: |
+          curl -H "Content-Type: application/json" \
+          -d '{
+                "content": "🐳 **Building Docker image...**"
+              }' \
+          ${{ secrets.DISCORD_WEBHOOK }}
           docker build -t ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} -f TPRestaurent.BackEndCore.API/Dockerfile .
 
       - name: Log in to Docker Hub
@@ -81,23 +116,32 @@ jobs:
 
       - name: Push Docker image to Docker Hub
         run: |
+          curl -H "Content-Type: application/json" \
+          -d '{
+                "content": "📤 **Pushing Docker image to Docker Hub...**"
+              }' \
+          ${{ secrets.DISCORD_WEBHOOK }}
           docker push ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
           docker tag ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} ${{ env.DOCKER_IMAGE_NAME }}:latest
           docker push ${{ env.DOCKER_IMAGE_NAME }}:latest
 
-    # Notify about Docker success/failure
+      # Notify about Docker success/failure
       - name: Notify Discord - Docker Success
         if: success()
         run: |
           curl -H "Content-Type: application/json" \
-          -d '{"content": "✅ **Docker image built and pushed successfully**!"}' \
+          -d '{
+                "content": "✅ **Docker image built and pushed successfully!**\n\n🔗 Available on Docker Hub as: **'"${{ env.DOCKER_IMAGE_NAME }}"'**.\n**Commit:** '"${{ github.sha }}"' \n\n📦 Proceeding to deployment..."
+              }' \
           ${{ secrets.DISCORD_WEBHOOK }}
 
       - name: Notify Discord - Docker Failed
         if: failure()
         run: |
           curl -H "Content-Type: application/json" \
-          -d '{"content": "❌ **Docker build or push failed**."}' \
+          -d '{
+                "content": "❌ **Docker build or push failed!**\n\n⚠️ Check the logs for details.\n\n**Time Taken:** '"$(TZ="Asia/Ho_Chi_Minh" date)"'"
+              }' \
           ${{ secrets.DISCORD_WEBHOOK }}
 
   deploy-to-container-apps:
@@ -105,8 +149,16 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'  # Only run for the main branch
     steps:
+      - name: Notify Discord - Start Deployment
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{
+                "content": "🚀 **Starting deployment to Azure Container Apps...**\n\n🔄 Deploying the latest Docker image.\n**Image:** '"${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}"' \n"
+              }' \
+          ${{ secrets.DISCORD_WEBHOOK }}
+
       - name: Checkout Code
-        run: echo "Checking out the code for deployment..."
+        run: echo "Checking out the code for deployment..."  # You can leave this for context or remove it if not needed
 
       - name: Azure Login
         uses: azure/login@v1
@@ -128,33 +180,23 @@ jobs:
         run: az logout
         if: always()
 
-    # Notify about deployment success/failure
+      # Notify about deployment success/failure
       - name: Notify Discord - Deployment Successful
         if: success()
         run: |
           END_TIME=$(TZ="Asia/Ho_Chi_Minh" date)
           curl -H "Content-Type: application/json" \
-          -d "{
-                \"content\": \"@everyone \n\n\
-                =============================== \n\n\
-                🎉 **Deployment Successful** \n\
-                **End Time:** $END_TIME (Vietnam Time) \n\
-                =============================== \n\n\
-                The deployment to Azure Container Apps was successful!\"
-              }" \
+          -d '{
+                "content": "@everyone \n\n=============================== \n\n🎉 **Deployment Successful!** \n**End Time:** '"$END_TIME"' (Vietnam Time) \n**Branch:** '"${{ github.ref }}"' \n**Image Deployed:** '"${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}"' \n=============================== \n\n🚀 The deployment to Azure Container Apps was successful!"
+              }' \
           ${{ secrets.DISCORD_WEBHOOK }}
-      
+
       - name: Notify Discord - Deployment Failed
         if: failure()
         run: |
           END_TIME=$(TZ="Asia/Ho_Chi_Minh" date)
           curl -H "Content-Type: application/json" \
-          -d "{
-                \"content\": \"@everyone \n\n\
-                =============================== \n\n\
-                ❌ **Deployment Failed** \n\
-                **End Time:** $END_TIME (Vietnam Time) \n\
-                =============================== \n\n\
-                Please check the logs for more details.\"
-              }" \
+          -d '{
+                "content": "@everyone \n\n=============================== \n\n❌ **Deployment Failed!** \n**End Time:** '"$END_TIME"' (Vietnam Time) \n**Branch:** '"${{ github.ref }}"' \n=============================== \n\n⚠️ Please check the logs for more details."
+              }' \
           ${{ secrets.DISCORD_WEBHOOK }}
