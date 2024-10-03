@@ -569,7 +569,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng. Đặt hàng thất bại");
                         }
 
-                        if (string.IsNullOrEmpty(orderRequestDto.DeliveryOrder.AddressId.ToString()))
+                        if (string.IsNullOrEmpty(accountDb.Address.ToString()))
                         {
                             return BuildAppActionResultError(result, $"Địa chỉ của bạn không tồn tại. Vui lòng cập nhập địa chỉ");
                         }
@@ -585,11 +585,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var restaurantLngConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LNG);
                         var restaurantMaxDistanceToOrderConfig = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DISTANCE_ORDER);
 
-                        var customerInfoAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.CustomerInfoAddressId == orderRequestDto.DeliveryOrder.AddressId);
-                        if (customerInfoAddressDb == null)
+                        var customerInfoAddressListDb = await customerInfoAddressRepository!.GetAllDataByExpression(p => p.CustomerInfoAddressName == accountDb.Address, 0, 0, null, false, null);
+                        if (customerInfoAddressListDb.Items.Count == 0)
                         {
-                            return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {orderRequestDto.DeliveryOrder.AddressId}");
+                            return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ {accountDb.Address}");
                         }
+
+                        var customerAddressDb = customerInfoAddressListDb.Items.FirstOrDefault();
 
                         var restaurantLat = Double.Parse(restaurantLatConfig.CurrentValue);
                         var restaurantLng = Double.Parse(restaurantLngConfig.CurrentValue);
@@ -602,7 +604,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         double[] customerAddress = new double[]
                         {
-                            customerInfoAddressDb.Lat, customerInfoAddressDb.Lng
+                            customerAddressDb.Lat, customerAddressDb.Lng
                         };
 
                         var distanceResponse = await mapService!.GetEstimateDeliveryResponse(restaurantAddress, customerAddress);
@@ -613,7 +615,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, $"Nhà hàng chỉ hỗ trợ cho đơn giao hàng trong bán kính 10km");
                         }
 
-                        var shippingCost = await CalculateDeliveryOrder(orderRequestDto.CustomerId.Value);
+                        var shippingCost = await CalculateDeliveryOrder(customerAddressDb.CustomerInfoAddressId);
 
                         money += double.Parse(shippingCost.Result.ToString());
 

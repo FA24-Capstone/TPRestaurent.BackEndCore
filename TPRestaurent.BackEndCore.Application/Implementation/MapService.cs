@@ -11,6 +11,7 @@ using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Models;
 using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
 
@@ -127,6 +128,42 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 result.Result = BuildAppActionResultError(result, e.Message);
 
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetGoogleMapLink(Guid? orderId)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                string baseUrl = "https://www.google.com/maps?q=";
+                if (orderId == null)
+                {
+                    var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                    var restaurantLatConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LATITUDE);
+                    var restaurantLngConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LNG);
+                    if(restaurantLatConfig != null && restaurantLngConfig != null)
+                    {
+                        var restaurantLat = restaurantLatConfig.CurrentValue.ToString();
+                        var restaurantLng = restaurantLngConfig.CurrentValue.ToString();
+                        result.Result = $"{baseUrl}{restaurantLat},{restaurantLng}";
+                    }
+                } else
+                {
+                    var addressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+                    var orderRepository = Resolve<IGenericRepository<Order>>();
+                    var orderDb = await orderRepository.GetByExpression(o => o.OrderId == orderId, o => o.Account);
+                    if(orderDb == null)
+                    {
+                        return BuildAppActionResultError(result, $"Không tìm thấy đơn hàn với id {orderId}");
+                    }
+                    var addressDb = await addressRepository.GetByExpression(a => a.CustomerInfoAddressName.Equals(orderDb.Account.Address));
+                    result.Result = $"{baseUrl}{addressDb.Lat},{addressDb.Lng}";
+                }
+            } catch(Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
