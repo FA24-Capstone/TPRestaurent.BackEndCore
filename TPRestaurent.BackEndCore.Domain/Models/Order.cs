@@ -35,5 +35,9 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public int? NumOfPeople { get; set; }   
         public double? Deposit { get; set; }
         public bool? IsPrivate { get; set; }
+        public string? ValidatingImg { get; set; }
+        public string? ShipperId { get; set; }
+        [ForeignKey(nameof(ShipperId))]
+        public Account? Shipper { get; set; }
     }
 }

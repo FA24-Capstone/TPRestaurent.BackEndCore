@@ -34,5 +34,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.GetEstimateDeliveryResponse(dto.desc, dto.start);
         }
 
+        [HttpPost("get-estimate-delivery-response")]
+        public async Task<AppActionResult> GetGoogleMapLink(Guid addressId)
+        {
+            return await _service.GetGoogleMapLink(addressId);
+        }
+
     }
 }
