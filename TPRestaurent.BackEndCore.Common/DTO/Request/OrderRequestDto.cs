@@ -35,7 +35,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
     public class DeliveryOrderDto
     {
         public int? LoyalPointToUse { get; set; }
-        public Guid AddressId { get; set; } 
         public List<Guid>? CouponIds { get; set; }
         public PaymentMethod PaymentMethod { get; set; }    
     }

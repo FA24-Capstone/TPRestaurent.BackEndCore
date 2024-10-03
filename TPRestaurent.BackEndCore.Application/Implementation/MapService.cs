@@ -137,7 +137,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                string baseUrl = "https://www.google.com/maps/place/@";
+                string baseUrl = "https://www.google.com/maps?q=";
                 if (orderId == null)
                 {
                     var configurationRepository = Resolve<IGenericRepository<Configuration>>();
@@ -154,12 +154,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var addressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
                     var orderRepository = Resolve<IGenericRepository<Order>>();
-                    var orderDb = await orderRepository.GetById(orderId);
-                    if (orderDb == null)
+                    var orderDb = await orderRepository.GetByExpression(o => o.OrderId == orderId, o => o.Account);
+                    if(orderDb == null)
                     {
                         return BuildAppActionResultError(result, $"Không tìm thấy đơn hàn với id {orderId}");
                     }
-                    //var addressDb = await addressRepository.GetByExpression(a => a.CustomerInfoAddressName.Equals(orderDb.))
+                    var addressDb = await addressRepository.GetByExpression(a => a.CustomerInfoAddressName.Equals(orderDb.Account.Address));
+                    result.Result = $"{baseUrl}{addressDb.Lat},{addressDb.Lng}";
                 }
             }
             catch (Exception ex)
