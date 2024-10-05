@@ -205,6 +205,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                         else if (orderDb.StatusId == OrderStatus.ReadyForDelivery)
                         {
+                            orderDb.StatusId = IsSuccessful ? OrderStatus.AssignedToShipper : OrderStatus.Cancelled;
+                        }
+                        else if (orderDb.StatusId == OrderStatus.AssignedToShipper)
+                        {
                             orderDb.StatusId = IsSuccessful ? OrderStatus.Delivering : OrderStatus.Cancelled;
                         }
                         else if (orderDb.StatusId == OrderStatus.Delivering)
@@ -2368,6 +2372,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {orderId}");
                         }
                         orderDb.ShipperId = shipperId;
+                        orderDb.StatusId = OrderStatus.AssignedToShipper;
                         orderList.Add(orderDb);
                     }
                     if (!BuildAppActionResultIsError(result))

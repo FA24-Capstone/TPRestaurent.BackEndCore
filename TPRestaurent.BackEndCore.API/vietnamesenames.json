@@ -33,6 +33,7 @@
     "Pending": "Chờ Xử Lý",
     "Processing": "Đang Xử Lý",
     "ReadyForDelivery": "Sẳn sàng để giao",
+    "AssignedToShipper": "Đã tiếp nhận đơn",
     "Delivering": "Đang Giao",
     "Completed": "Thành Công",
     "Cancelled": "Đã Huỷ",
