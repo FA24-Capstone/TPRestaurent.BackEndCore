@@ -1911,7 +1911,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = OrderDetailStatus.Processing);
                     foreach (var item in orderDetailDb.Items)
                     {
-                        if(item.OrderSession != null && item.OrderSession.OrderSessionStatusId == OrderSessionStatus.Confirmed)
+                        if (item.OrderSession != null && item.OrderSession.OrderSessionStatusId == OrderSessionStatus.Confirmed)
                         {
                             await orderSessionService.UpdateOrderSessionStatus(item.OrderSession.OrderSessionId, OrderSessionStatus.Processing);
                         }
@@ -2154,7 +2154,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var transactionRepository = Resolve<IGenericRepository<Transaction>>();
                 var orderResponse = _mapper.Map<OrderResponse>(order);
                 var orderTransactionDb = await transactionRepository.GetAllDataByExpression(o => o.OrderId.HasValue && o.OrderId == reservationId, 0, 0, null, false, o => o.TransactionType);
-                if(orderTransactionDb.Items.Count() > 0)
+                if (orderTransactionDb.Items.Count() > 0)
                 {
                     orderResponse.Transaction = orderTransactionDb.Items.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).FirstOrDefault();
                     var successfulDepositTransaction = orderTransactionDb.Items.Where(o => o.TransationStatusId == TransationStatus.SUCCESSFUL && o.TransactionTypeId == TransactionType.Deposit).ToList();
@@ -2342,6 +2342,81 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 return BuildAppActionResultError(new AppActionResult(), ex.Message);
             }
             return result;
+        }
+
+        public async Task<AppActionResult> AssignOrderForShipper(string shipperId, List<Guid> orderListId)
+        {
+            var result = new AppActionResult();
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            {
+                var accountRepository = Resolve<IGenericRepository<Account>>();
+                try
+                {
+                    var orderList = new List<Order>();
+                    var shipperAccountDb = await accountRepository!.GetByExpression(p => p.Id == shipperId);
+                    if (shipperAccountDb == null)
+                    {
+                        return BuildAppActionResultError(result, $"Không tìm thấy tài khoản của shipper với id {shipperId}");
+                    }
+                    foreach (var orderId in orderListId)
+                    {
+                        var orderDb = await _repository.GetByExpression(p => p.OrderId == orderId && p.OrderTypeId == OrderType.Delivery && p.StatusId == OrderStatus.ReadyForDelivery);
+                        if (orderDb == null)
+                        {
+                            return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {orderId}");
+                        }
+                        orderDb.ShipperId = shipperId;
+                        orderList.Add(orderDb);
+                    }
+                    if (!BuildAppActionResultIsError(result))
+                    {
+                        await _repository.UpdateRange(orderList);
+                        await _unitOfWork.SaveChangesAsync();
+                        scope.Complete();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return BuildAppActionResultError(new AppActionResult(), ex.Message);
+                }
+                return result;
+            }
+        }
+
+        public async Task<AppActionResult> UploadConfirmedOrderImage(ConfirmedOrderRequest confirmedOrderRequest)
+        {
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            {
+                var result = new AppActionResult();
+                try
+                {
+                    var firebaseService = Resolve<IFirebaseService>();
+                    var orderDb = await _repository.GetByExpression(p => p.OrderId == confirmedOrderRequest.OrderId);
+                    if (orderDb == null)
+                    {
+                        return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {confirmedOrderRequest.OrderId}");
+                    }
+                    var pathName = SD.FirebasePathName.ORDER_PREFIX + $"{confirmedOrderRequest.OrderId}{Guid.NewGuid()}.jpg";
+                    var upload = await firebaseService!.UploadFileToFirebase(confirmedOrderRequest.Image, pathName);
+
+                    if (!upload.IsSuccess)
+                    {
+                        return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
+                    }
+                    orderDb.ValidatingImg = upload.Result!.ToString();
+                    if (!BuildAppActionResultIsError(result))
+                    {
+                        await _repository.Update(orderDb);
+                        await _unitOfWork.SaveChangesAsync();
+                        scope.Complete();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return BuildAppActionResultError(new AppActionResult(), ex.Message);
+                }
+                return result;
+            }
         }
     }
 }
