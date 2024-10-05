@@ -189,5 +189,6 @@ public class SD
         public static string DISH_PREFIX = "dish/";
         public static string COMBO_PREFIX = "combo/";
         public static string COUPON_PREFIX = "coupon/";
+        public static string ORDER_PREFIX = "order/";
     }
 }

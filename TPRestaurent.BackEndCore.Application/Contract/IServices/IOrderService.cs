@@ -37,5 +37,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> GetCurrentTableSession();
         public Task<AppActionResult> GetAllReservationDetail(Guid orderId);
         public Task<AppActionResult> GetAllTableDetails(OrderStatus orderStatus, int pageNumber, int pageSize);
+        public Task<AppActionResult> AssignOrderForShipper(string shipperId,  List<Guid> orderListId);
+        public Task<AppActionResult> UploadConfirmedOrderImage(ConfirmedOrderRequest confirmedOrderRequest);
     }
 }

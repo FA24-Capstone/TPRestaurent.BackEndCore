@@ -40,5 +40,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.GetGoogleMapLink(orderId);
         }
 
+        [HttpPost("get-optimal-path")]
+        public async Task<AppActionResult> GetOptimalPath(List<Guid> orderIdList)
+        {
+            return await _service.GetOptimalPath(orderIdList);
+        }
+
     }
 }
