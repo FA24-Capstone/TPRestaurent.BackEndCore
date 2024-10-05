@@ -37,7 +37,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPost("get-google-map-link")]
         public async Task<AppActionResult> GetGoogleMapLink(Guid addressId)
         {
-            return await _service.GetGoogleMapLink(orderId);
+            return await _service.GetGoogleMapLink(addressId);
         }
 
         [HttpPost("get-optimal-path")]
