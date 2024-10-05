@@ -14,8 +14,9 @@ namespace TPRestaurent.BackEndCore.Domain.Enums
         Pending = 4,
         Processing = 5,
         ReadyForDelivery = 6,
-        Delivering = 7,
-        Completed = 8,
-        Cancelled = 9,
+        AssignedToShipper = 7,
+        Delivering = 8,
+        Completed = 9,
+        Cancelled = 10,
     }
 }

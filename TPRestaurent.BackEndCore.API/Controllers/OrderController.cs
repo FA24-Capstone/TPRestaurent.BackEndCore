@@ -89,7 +89,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.GetUpdateCartDishDto(cartItem);
         }
 
-        [HttpPost("update-order-detail-Status")]
+        [HttpPut("update-order-detail-status")]
         public async Task<AppActionResult> UpdatePrelistOrderStatus(List<Guid> list, bool? isSuccessful = true)
         {
             return await _service.UpdateOrderDetailStatus(list, !isSuccessful.HasValue || isSuccessful.HasValue && isSuccessful.Value);
@@ -113,7 +113,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.GetTableReservationWithTime(tableId, time);
         }
 
-        [HttpPut("change-order-status/{orderId}")]
+        [HttpPut("update-order-status/{orderId}")]
         public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool isSuccessful)
         {
             return await _service.ChangeOrderStatus(orderId, isSuccessful);
