@@ -124,6 +124,18 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _service.GetAllTableDetails(orderStatus, pageNumber, pageSize);
         }
+
+        [HttpPost("assign-order-for-shipper")]
+        public async Task<AppActionResult> AssignOrderForShipper(string shipperId, List<Guid> orderListId)
+        {
+            return await _service.AssignOrderForShipper(shipperId, orderListId);      
+        }
+
+        [HttpPost("upload-confirmed-order-image")]
+        public async Task<AppActionResult> UploadConfirmedOrderImage([FromForm] ConfirmedOrderRequest confirmedOrderRequest)
+        {
+            return await _service.UploadConfirmedOrderImage(confirmedOrderRequest);
+        }
         //[HttpPost("calculate-order-total")]
         //public async Task<AppActionResult> GetOrderTotal([FromBody]CalculateOrderRequest dto)
         //{
