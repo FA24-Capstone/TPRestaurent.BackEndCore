@@ -65,7 +65,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     };
 
                     List<DishTag> dishTags = new List<DishTag>();
-                    foreach (var tagId in dto.TagIds)
+                    foreach (var tagId in dto.TagIds.Distinct())
                     {
                         var tagDb = await tagRepository.GetById(tagId);
                         if (tagDb != null)
