@@ -438,7 +438,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var staticFileDb = await staticFileRepository!.GetByExpression(p => p.ComboId == comboDto.ComboId && p.Path == comboDto.OldImageLink);
                     if (staticFileDb == null)
                     {
-                        return BuildAppActionResultError(result, $"Các file hình ảnh của combo với id {comboDto.ComboId}");
+                        return BuildAppActionResultError(result, $"Không có file hình ảnh của combo với id {comboDto.ComboId}");
                     }
 
                     var resultOfDeleteImage = await firebaseService!.DeleteFileFromFirebase(comboDto.OldImageLink);
