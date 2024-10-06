@@ -153,7 +153,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     }
                                 }
                                 break;
-
                             case Domain.Enums.PaymentMethod.MOMO:
                                 if (paymentRequest.OrderId.HasValue)
                                 {
@@ -367,11 +366,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
                                 break;
                             default:
-                                
+                                if(paymentRequest.PaymentMethod == PaymentMethod.ZALOPAY)
+                                {
+                                    return BuildAppActionResultError(result, $"Hệ thống chưa hỗ trợ thanh toán với ZALOPAY");
+                                }
+
                                 if (paymentRequest.OrderId.HasValue)
                                 {
                                     var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
-                                    if (orderDb.StatusId == OrderStatus.Dining || orderDb.StatusId == OrderStatus.Delivering )
+                                    if (orderDb.StatusId == OrderStatus.Dining || orderDb.StatusId == OrderStatus.Pending || orderDb.StatusId == OrderStatus.TableAssigned )
                                     {
                                         amount = orderDb.TotalAmount;
                                     } 
@@ -603,6 +606,30 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             catch (Exception ex)
             {
                 result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetStoreCreditTransactionHistory(Guid customerId)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var transactionDb = await _repository.GetAllDataByExpression(t => (t.PaymentMethodId == PaymentMethod.STORE_CREDIT || t.TransactionTypeId == TransactionType.CreditStore || t.TransactionTypeId == TransactionType.Refund) &&
+                                                                                        (t.OrderId.HasValue && t.Order.AccountId.Equals(customerId.ToString())
+                                                                                        || (t.StoreCreditId.HasValue && t.StoreCredit.AccountId.Equals(customerId.ToString()))
+                                                                                        )
+                                                                                        , 0, 0, null, false,
+                                                                                    t => t.StoreCredit,
+                                                                                    t => t.Order,
+                                                                                    t => t.TransactionType,
+                                                                                    t => t.TransationStatus,
+                                                                                    t => t.PaymentMethod);
+                result.Result = transactionDb;
+            }
+            catch (Exception ex)
+            {
+
             }
             return result;
         }

@@ -21,6 +21,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public EnumModels.DishItemType? DishItemType { get; set; }
         public bool isAvailable { get; set; }
         public bool IsDeleted { get; set; }
+        public bool IsMainItem { get; set; }
         public int?  PreparationTime { get; set; }       
     }
 }
