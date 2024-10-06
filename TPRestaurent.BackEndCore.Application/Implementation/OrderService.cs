@@ -1106,7 +1106,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
                     foreach (var order in mappedData)
                     {
-                        var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo);
+                        var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo, o => o.OrderDetailStatus);
                         if (orderDetailDb.Items.Count > 0)
                         {
                             order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
@@ -1127,7 +1127,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
                     foreach (var order in mappedData)
                     {
-                        var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo);
+                        var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo, o => o.OrderDetailStatus);
                         if (orderDetailDb.Items.Count > 0)
                         {
                             order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
@@ -1149,7 +1149,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
                     foreach (var order in mappedData)
                     {
-                        var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo);
+                        var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo, o => o.OrderDetailStatus);
                         if (orderDetailDb.Items.Count > 0)
                         {
                             order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
@@ -1173,7 +1173,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
                     foreach (var order in mappedData)
                     {
-                        var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo);
+                        var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo, o => o.OrderDetailStatus);
                         if (orderDetailDb.Items.Count > 0)
                         {
                             order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
@@ -1238,7 +1238,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(data.Items);
                 foreach (var order in mappedData)
                 {
-                    var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo);
+                    var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo, o => o.OrderDetailStatus);
                     if (orderDetailDb.Items.Count > 0)
                     {
                         order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
