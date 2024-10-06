@@ -491,6 +491,31 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> GetTransactionHistory(Guid customerId, TransactionType? type)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var transactionDb = await _repository.GetAllDataByExpression(t => (!type.HasValue || type.Value == 0 || (type.HasValue && type.Value == t.TransactionTypeId)) &&
+                                                                                        (t.OrderId.HasValue && t.Order.AccountId.Equals(customerId.ToString())
+                                                                                        || (t.StoreCreditId.HasValue && t.StoreCredit.AccountId.Equals(customerId.ToString()))
+                                                                                        )
+                                                                                        , 0, 0, null, false,
+                                                                                    t => t.StoreCredit,
+                                                                                    t => t.Order,
+                                                                                    t => t.TransactionType,
+                                                                                    t => t.TransationStatus);
+
+                result.Result = transactionDb;
+            }
+            catch (Exception ex)
+            {
+                result.Result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+
         public async Task<AppActionResult> GetTransactionById(Guid paymentId)
         {
             AppActionResult result = new AppActionResult();
@@ -539,7 +564,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var transactionDb = await _repository.GetById(transactionId);
-                if(transactionDb.TransationStatusId == TransationStatus.PENDING && transactionStatus != TransationStatus.PENDING && transactionStatus != TransationStatus.APPLIED)
+                if(transactionDb.TransationStatusId == TransationStatus.PENDING && transactionStatus != TransationStatus.APPLIED)
                 {
                     transactionDb.TransationStatusId = transactionStatus;
                     if(transactionStatus == TransationStatus.SUCCESSFUL)
@@ -548,16 +573,32 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         transactionDb.PaidDate = utility.GetCurrentDateTimeInTimeZone();
                     }
                     await _repository.Update(transactionDb);
+                    await _unitOfWork.SaveChangesAsync();
                     if (transactionDb.OrderId.HasValue)
                     {
                         var orderService = Resolve<IOrderService>();
                         await orderService.ChangeOrderStatus(transactionDb.OrderId.Value, transactionStatus == TransationStatus.SUCCESSFUL);
                     }
-                    await _unitOfWork.SaveChangesAsync();
                 } else
                 {
                     result = BuildAppActionResultError(result, $"Để cập nhật, Trạn thanh toán phải chờ xử lí và trạng thái mong muốn phải khác chờ xử lí");
                 }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetLoyaltyPointHistory(Guid customerId)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var loyaltyPointHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
+                var loyaltyPointHistory = await loyaltyPointHistoryRepository.GetAllDataByExpression(l => l.Order.AccountId.Equals(customerId), 0, 0, l => l.TransactionDate, false, l => l.Order);
+                result.Result = loyaltyPointHistory;
             }
             catch (Exception ex)
             {

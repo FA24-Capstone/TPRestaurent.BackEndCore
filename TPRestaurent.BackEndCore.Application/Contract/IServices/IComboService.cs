@@ -18,5 +18,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GetComboById(Guid comboId);
         Task<AppActionResult> GetComboById2(Guid comboId);
         public Task<AppActionResult> GetAllCombo(string? keyword, int pageNumber, int pageSize);
+        public Task<AppActionResult> ActivateCombo(Guid comboId);
     }
 }

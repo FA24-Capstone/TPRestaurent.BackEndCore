@@ -70,7 +70,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPut("update-inactive-dish")]
         public async Task<AppActionResult> UpdateInactiveADish(Guid dishId)
         {
-            return await _dishService.UpdateInactiveADish(dishId);
+            return await _dishService.UpdateInactiveDish(dishId);
         }
 
         [HttpPut("update-dish-image")]

@@ -169,7 +169,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, $"Combo với id {comboId} không tồn tại");
                 }
-                await _comboRepository.DeleteById(comboId);
+                comboDb.IsDeleted = true;
+                await _comboRepository.Update(comboDb);
                 await _unitOfWork.SaveChangesAsync();
                 result.Messages.Add("Xóa combo thành công");
                 result.IsSuccess = true;
@@ -597,6 +598,33 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 return result;
             }
+        }
+
+        public async Task<AppActionResult> ActivateCombo(Guid comboId)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var comboDb = await _comboRepository.GetById(comboId);
+                if (comboDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Combo với id {comboId} không tồn tại");
+                }
+                comboDb!.IsDeleted = false;
+                var utility = Resolve<Utility>();
+                if(comboDb.EndDate < utility.GetCurrentDateTimeInTimeZone())
+                {
+                    comboDb.StartDate = utility.GetCurrentDateTimeInTimeZone();
+                    comboDb.EndDate = comboDb.StartDate.AddDays(100);
+                }
+                await _comboRepository.Update(comboDb);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         }
     }
 }

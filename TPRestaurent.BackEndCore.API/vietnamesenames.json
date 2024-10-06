@@ -76,6 +76,7 @@
     "Reservation": "Đặt bàn",
     "Delivery": "Giao hàng tận nơi",
     "MealWithoutReservation": "Dùng bữa tại quán khôn có đặt bàn",
-    "APPLIED": "Đã áp dụng"
+    "APPLIED": "Đã áp dụng",
+    "Refund": "Hoàn tiền"
   }
 }

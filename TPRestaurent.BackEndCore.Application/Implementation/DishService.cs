@@ -165,7 +165,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, $"This dish with id {dishId} doesn't existed");
                 }
-                dishDb!.isAvailable = false;
+                dishDb!.IsDeleted = true;
                 result.IsSuccess = true;
                 result.Messages.Add("This dish has been delete successfully");
                 await _unitOfWork.SaveChangesAsync();
@@ -418,7 +418,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> UpdateInactiveADish(Guid dishId)
+        public async Task<AppActionResult> UpdateInactiveDish(Guid dishId)
         {
             var result = new AppActionResult();
             try
@@ -428,7 +428,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, $"Món ăn với id {dishId} không tồn tại");
                 }
-                dishDb!.isAvailable = false;
+                dishDb!.IsDeleted = false;
                 await _dishRepository.Update(dishDb);
                 await _unitOfWork.SaveChangesAsync();
             }
