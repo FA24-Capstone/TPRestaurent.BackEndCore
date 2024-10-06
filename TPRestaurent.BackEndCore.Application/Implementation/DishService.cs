@@ -259,7 +259,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var dishTagDb = await dishTagRepository!.GetAllDataByExpression(d => d.DishId == dishId, 0, 0, null, false, d => d.Tag);
-                dishResponse.DishTags = dishTagDb.Items;
+                dishResponse.DishTags = dishTagDb.Items.DistinctBy(t => t.TagId).ToList();
                 var dishSizeDetailsDb = await dishSizeRepository.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.Dish!, p => p.DishSize!);
                 if (dishSizeDetailsDb!.Items!.Count < 0 && dishSizeDetailsDb.Items == null)
                 {

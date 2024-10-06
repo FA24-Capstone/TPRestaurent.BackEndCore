@@ -356,7 +356,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var dishTagDb = await dishTagRepository!.GetAllDataByExpression(d => d.ComboId == comboId, 0, 0, null, false, d => d.Tag);
-                comboResponse.DishTags = dishTagDb.Items;
+                comboResponse.DishTags = dishTagDb.Items.DistinctBy(t => t.TagId).ToList();
 
                 var dishComboDb = await dishComboRepository!.GetAllDataByExpression(p => p.ComboOptionSet.ComboId == comboId, 0, 0, null, false, p => p.DishSizeDetail.Dish!, p => p.DishSizeDetail.DishSize, p => p.ComboOptionSet.DishItemType);
                 var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.ComboId == comboId, 0, 0, null, false, null);
