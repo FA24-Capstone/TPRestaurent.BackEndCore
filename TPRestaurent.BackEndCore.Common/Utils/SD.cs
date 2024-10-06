@@ -98,6 +98,9 @@ public class SD
         public static string DISTANCE_ORDER = "DISTANCE_ORDER";
         public static string FLAT_COST_DISTANCE = "FLAT_COST_DISTANCE";
         public static string DISTANCE_STEP_FEE = "DISTANCE_STEP_FEE";
+        public static string TIME_TO_RESERVATION_WITH_DISHES_LAST = "TIME_TO_RESERVATION_WITH_DISHES_LAST";
+        public static string TIME_TO_RESERVATION_LAST = "TIME_TO_RESERVATION_LAST";
+
     }
 
     public class SubjectMail
