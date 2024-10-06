@@ -9,6 +9,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Payment.PaymentRespone;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
+using TPRestaurent.BackEndCore.Domain.Enums;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
@@ -40,6 +41,17 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.GetTransactionById(paymentId);
         }
 
+        [HttpGet("get-loyalty-point-history-by-customer-id/{customerId}")]
+        public async Task<AppActionResult> GetLoyaltyPointHistory(Guid customerId)
+        {
+            return await _service.GetLoyaltyPointHistory(customerId);
+        }
+
+        [HttpGet("get-transaction-history-by-customer-id/{customerId}")]
+        public async Task<AppActionResult> GetTransactionHistory(Guid customerId, TransactionType type)
+        {
+            return await _service.GetTransactionHistory(customerId, type);
+        }
 
         [HttpPut("update-transaction-Status/{transactionId}/{transactionStatus}")]
         public async Task<AppActionResult> UpdateTransactionStatus(Guid transactionId, Domain.Enums.TransationStatus transactionStatus)

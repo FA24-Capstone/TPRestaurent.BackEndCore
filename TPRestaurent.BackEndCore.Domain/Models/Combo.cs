@@ -23,6 +23,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public bool IsAvailable { get; set; }
+        public bool IsDeleted { get; set; }
         public int? QuantityLeft { get; set; }
         public int DailyCountdown { get; set; }
     }

@@ -21,6 +21,8 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public Domain.Models.EnumModels.ComboCategory? Category { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
+        public bool IsAvailable { get; set; }
+        public bool IsDeleted { get; set; }
         public double AverageRating { get; set; } = 0;
         public int NumberOfRating { get; set; } = 0;
         public int? QuantityLeft { get; set; }
