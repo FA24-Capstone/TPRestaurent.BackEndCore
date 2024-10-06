@@ -11,6 +11,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
     {
         public Guid ComboId { get; set; }
         public IFormFile Img { get; set; } = null!;
-        public string OldImageLink = null!;
+        public string OldImageLink { get; set; } = null!;
     }
 }
