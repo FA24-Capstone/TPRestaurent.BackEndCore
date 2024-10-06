@@ -19,6 +19,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GetAllTransaction(Domain.Enums.TransationStatus? transactionStatus, int pageNumber, int pageSize);
         Task<AppActionResult> UpdateTransactionStatus(Guid transactionId, Domain.Enums.TransationStatus transactionStatus);
         Task<AppActionResult> GetTransactionHistory(Guid customerId, TransactionType? type);
+        Task<AppActionResult> GetStoreCreditTransactionHistory(Guid customerId);
         Task<AppActionResult> GetLoyaltyPointHistory(Guid customerId);
     }
 }
