@@ -54,7 +54,10 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public DishSizeDetail? DishSizeDetail { get; set; }
         public ComboDishDto? ComboDish { get; set; }
         public string Note { get; set; }    
-        public DateTime OrderTime { get; set; }     
+        public DateTime OrderTime { get; set; }   
+        public Domain.Enums.OrderDetailStatus StatusId { get; set; }
+        public Domain.Models.EnumModels.OrderDetailStatus Status { get; set; }
+
     }
 
     public class ComboDishDto
