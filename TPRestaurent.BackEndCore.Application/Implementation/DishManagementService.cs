@@ -71,6 +71,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             dishSizeDetailDb.DailyCountdown = item.DailyCountdown.Value;
                         }
+
+                        if (dishSizeDetailDb.QuantityLeft == 0)
+                        {
+                            dishSizeDetailDb.IsAvailable = false;
+                        }
+
                         await _dishRepository.Update(dishSizeDetailDb);
                     }
                     else if (item.ComboId.HasValue)
@@ -85,6 +91,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             comboDb.DailyCountdown = item.DailyCountdown.Value;
                         }
+
+                        if(comboDb.QuantityLeft == 0)
+                        {
+                            comboDb.IsAvailable = false;
+                        }
+
                         await _comboRepository.Update(comboDb);
                     }
                 }
@@ -108,31 +120,47 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var comboDb = await _comboRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
                 foreach (var dish in dishSizeDetailDb.Items)
                 {
-                    if(dish.DailyCountdown == -1)
+                    if(dish.DailyCountdown < 0)
                     {
                         dish.QuantityLeft = null;
                     }else if(dish.DailyCountdown == 0)
                     {
-                        dish.QuantityLeft = -1;
+                        dish.QuantityLeft = 0;
+                        if (dish.IsAvailable)
+                        {
+                            dish.IsAvailable = false;
+                        }
                     } else
                     {
                         dish.QuantityLeft = dish.DailyCountdown;
+                        if (!dish.IsAvailable)
+                        {
+                            dish.IsAvailable = true;
+                        }
                     }
                 }
 
                 foreach (var combo in comboDb.Items)
                 {
-                    if (combo.DailyCountdown == -1)
+                    if (combo.DailyCountdown < 0)
                     {
                         combo.QuantityLeft = null;
                     }
                     else if (combo.DailyCountdown == 0)
                     {
-                        combo.QuantityLeft = -1;
+                        combo.QuantityLeft = 0;
+                        if (combo.IsAvailable)
+                        {
+                            combo.IsAvailable = false;
+                        }
                     }
                     else
                     {
                         combo.QuantityLeft = combo.DailyCountdown;
+                        if (!combo.IsAvailable)
+                        {
+                            combo.IsAvailable = true;
+                        }
                     }
                 }
 

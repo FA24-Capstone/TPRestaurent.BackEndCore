@@ -76,6 +76,8 @@ public class MappingConfig
             .ForMember(dest => dest.Category, act => act.MapFrom(src => src.Category))
             .ForMember(dest => dest.StartDate, act => act.MapFrom(src => src.StartDate))
             .ForMember(dest => dest.EndDate, act => act.MapFrom(src => src.EndDate))
+            .ForMember(dest => dest.IsAvailable, act => act.MapFrom(src => src.IsAvailable))
+            .ForMember(dest => dest.IsDeleted, act => act.MapFrom(src => src.IsDeleted))
             .ForMember(dest => dest.QuantityLeft, act => act.MapFrom(src => src.QuantityLeft))
             .ForMember(dest => dest.DailyCountdown, act => act.MapFrom(src => src.DailyCountdown));
 
