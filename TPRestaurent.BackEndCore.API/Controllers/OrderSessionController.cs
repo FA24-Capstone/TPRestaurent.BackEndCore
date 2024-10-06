@@ -28,7 +28,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.GetOrderSessionById(id);
         }
 
-        [HttpPost("update-order-session-status")]
+        [HttpPut("update-order-session-status")]
         public async Task<AppActionResult> UpdateOrderSessionStatus(Guid id, OrderSessionStatus status)
         {
             return await _service.UpdateOrderSessionStatus(id, status);
