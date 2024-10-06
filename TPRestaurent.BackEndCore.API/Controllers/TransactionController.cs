@@ -53,6 +53,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.GetTransactionHistory(customerId, type);
         }
 
+        [HttpGet("get-stored-credit-transaction-history-by-customer-id/{customerId}")]
+        public async Task<AppActionResult> GetStoreCreditTransactionHistory(Guid customerId)
+        {
+            return await _service.GetStoreCreditTransactionHistory(customerId);
+        }
+
         [HttpPut("update-transaction-Status/{transactionId}/{transactionStatus}")]
         public async Task<AppActionResult> UpdateTransactionStatus(Guid transactionId, Domain.Enums.TransationStatus transactionStatus)
         {

@@ -89,7 +89,8 @@ public class MappingConfig
             .ForMember(dest => dest.DishItemTypeId, act => act.MapFrom(src => src.DishItemTypeId))
             .ForMember(dest => dest.DishItemType, act => act.MapFrom(src => src.DishItemType))
             .ForMember(dest => dest.IsAvailable, act => act.MapFrom(src => src.isAvailable))
-            .ForMember(dest => dest.IsDeleted, act => act.MapFrom(src => src.IsDeleted));
+            .ForMember(dest => dest.IsDeleted, act => act.MapFrom(src => src.IsDeleted))
+            .ForMember(dest => dest.IsMainItem, act => act.MapFrom(src => src.IsMainItem));
 
             config.CreateMap<Order, OrderResponse>()
     .ForMember(dest => dest.OrderId, act => act.MapFrom(src => src.OrderId))

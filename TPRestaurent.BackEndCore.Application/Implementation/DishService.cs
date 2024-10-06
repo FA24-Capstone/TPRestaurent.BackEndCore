@@ -59,7 +59,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         DishId = Guid.NewGuid(),
                         Name = dto.Name,
                         Description = dto.Description,
-                        //Discount = dto.Discount,
+                        IsMainItem = SD.EnumType.MainItemType.Contains(dto.DishItemType),
                         DishItemTypeId = dto.DishItemType,
                         isAvailable = true,
                     };
@@ -186,7 +186,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var dishDetailsRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                 var dishList = await _dishRepository
                    .GetAllDataByExpression(p => (p.Name.Contains(keyword) && !string.IsNullOrEmpty(keyword) || string.IsNullOrEmpty(keyword))
-                                             && (type > 0 && p.DishItemTypeId == type || type == 0), pageNumber, pageSize, null, false, p => p.DishItemType!);
+                                             && (type > 0 && p.DishItemTypeId == type || type == 0 && p.IsMainItem), pageNumber, pageSize, null, false, p => p.DishItemType!);
                 foreach (var item in dishList.Items!)
                 {
                     var dishDetailsListDb = await dishDetailsRepository!.GetAllDataByExpression(p => p.DishId == item.DishId, 0, 0, null, false, p => p.DishSize!);
@@ -352,6 +352,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     dishDb.Name = dto.Name;
                     dishDb.Description = dto.Description;
                     dishDb.DishItemTypeId = dto.DishItemType;
+                    if(SD.EnumType.MainItemType.Contains(dto.DishItemType) != dishDb.IsMainItem)
+                    {
+                        dishDb.IsMainItem = !dishDb.IsMainItem;
+                    }
                     dishDb.isAvailable = dto.IsAvailable;
 
                     List<DishSizeDetail> updateDishSizeDetails = new List<DishSizeDetail>();

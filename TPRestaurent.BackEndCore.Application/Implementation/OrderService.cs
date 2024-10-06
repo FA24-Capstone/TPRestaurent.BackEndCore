@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Castle.Core.Internal;
 using Castle.Core.Logging;
 using Humanizer;
 using MailKit;
@@ -722,8 +723,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await orderSessionRepository.Insert(orderSession);
                         await _repository.Insert(order);
                         await _unitOfWork.SaveChangesAsync();
-                        if (orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.PaymentMethod != PaymentMethod.Cash ||
-                                orderRequestDto.ReservationOrder != null && orderRequestDto.ReservationOrder.PaymentMethod != PaymentMethod.Cash)
+                        if (orderRequestDto.DeliveryOrder != null ||  orderRequestDto.ReservationOrder != null)
                         {
                             var paymentRequest = new PaymentRequestDto
                             {
@@ -735,7 +735,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 return BuildAppActionResultError(result, "Tạo thanh toán thất bại");
                             }
-                            orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
+                            if (linkPaymentDb.Result != null && !string.IsNullOrEmpty(linkPaymentDb.Result.ToString()))
+                            {
+                                orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
+                            }
                         }
                         scope.Complete();
                     }
