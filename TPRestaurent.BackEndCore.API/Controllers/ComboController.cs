@@ -22,11 +22,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _comboService.GetAllCombo(keyword, pageNumber, pageSize);
         }
 
-        [HttpGet("get-combo-by-id/{comboId}")]
-        public async Task<AppActionResult> GetComboById(Guid comboId)
-        {
-            return await _comboService.GetComboById(comboId);   
-        }
+        //[HttpGet("get-combo-by-id/{comboId}")]
+        //public async Task<AppActionResult> GetComboById(Guid comboId)
+        //{
+        //    return await _comboService.GetComboById(comboId);   
+        //}
         [HttpGet("get-combo-by-id-ver-2/{comboId}")]
         public async Task<AppActionResult> GetComboById2(Guid comboId)
         {
