@@ -46,6 +46,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             RecurringJob.AddOrUpdate(() => _orderService.UpdateOrderDetailStatusBeforeDining(), Cron.HourInterval(1), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _storeCreditService.ChangeOverdueStoreCredit(), Cron.DayInterval(1), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _accountService.DeleteOverdueOTP(), Cron.DayInterval(1), vietnamTimeZone);
+            RecurringJob.AddOrUpdate(() => _orderService.CancelReservation(), Cron.HourInterval(2), vietnamTimeZone);
         }
     }
 }

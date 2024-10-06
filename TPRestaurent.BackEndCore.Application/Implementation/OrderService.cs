@@ -2426,12 +2426,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             var utility = Resolve<Utility>();
             var configurationRepository = Resolve<IGenericRepository<Configuration>>();
-            var timeLastForReservationWithDishes = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_RESERVATION_WITH_DISHES_LAST);
-            var timeLastForReservation = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_RESERVATION_LAST);
+            var timeLastForReservationWithDishesConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_RESERVATION_WITH_DISHES_LAST).Result;
+            var timeLastForReservationConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_RESERVATION_LAST).Result;
             var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
             try
             {
                 var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+
                 var orderReservationDb = await _repository.GetAllDataByExpression(p => p.OrderTypeId == OrderType.Reservation && p.StatusId == OrderStatus.TableAssigned, 0, 0, p => p.OrderDate, false, null);
                 if (orderReservationDb.Items != null)
                 {
@@ -2440,22 +2441,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var orderReservationDetailDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderId == orderReservation.OrderId, 0, 0, null, false, null);
                         if (orderReservationDb!.Items!.Count > 0 && orderReservationDb.Items != null)
                         {
-                            var orderReservationDetailList = new List<OrderDetail>();
-                            foreach (var orderReservationDetail in orderReservationDetailDb.Items!)
+                            if (orderReservation.ReservationDate!.Value.AddHours(int.Parse(timeLastForReservationWithDishesConfig!.CurrentValue)) <= currentTime)
                             {
-                                orderReservationDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
-                                orderReservationDetailList.Add(orderReservationDetail);
+                                var orderReservationDetailList = new List<OrderDetail>();
+                                foreach (var orderReservationDetail in orderReservationDetailDb.Items!)
+                                {
+                                    orderReservationDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
+                                    orderReservationDetailList.Add(orderReservationDetail);
+                                }
+                                orderReservation.StatusId = OrderStatus.Cancelled;
+
+                                await _repository.Update(orderReservation);
+                                await orderDetailRepository.UpdateRange(orderReservationDetailList);
                             }
-                            orderReservation.StatusId = OrderStatus.Cancelled;
-
-                            await _repository.Update(orderReservation);
-                            await orderDetailRepository.UpdateRange(orderReservationDetailList);
-
                         }
                         else
                         {
-                            orderReservation.StatusId = OrderStatus.Cancelled;
-                            await _repository.Update(orderReservation);
+                            if (orderReservation.ReservationDate.Value.AddHours(int.Parse(timeLastForReservationConfig!.CurrentValue)) <= currentTime)
+                            {
+                                orderReservation.StatusId = OrderStatus.Cancelled;
+                                await _repository.Update(orderReservation);
+                            }
                         }
                     }
                 }
