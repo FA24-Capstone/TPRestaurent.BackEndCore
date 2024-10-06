@@ -48,7 +48,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-transaction-history-by-customer-id/{customerId}")]
-        public async Task<AppActionResult> GetTransactionHistory(Guid customerId, TransactionType type)
+        public async Task<AppActionResult> GetTransactionHistory(Guid customerId, TransactionType? type)
         {
             return await _service.GetTransactionHistory(customerId, type);
         }

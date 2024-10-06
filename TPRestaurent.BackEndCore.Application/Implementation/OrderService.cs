@@ -1107,7 +1107,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
                     foreach (var order in mappedData)
                     {
-                        var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo);
+                        var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo, o => o.OrderDetailStatus);
                         if (orderDetailDb.Items.Count > 0)
                         {
                             order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
@@ -1128,7 +1128,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
                     foreach (var order in mappedData)
                     {
-                        var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo);
+                        var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo, o => o.OrderDetailStatus);
                         if (orderDetailDb.Items.Count > 0)
                         {
                             order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
@@ -1150,7 +1150,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
                     foreach (var order in mappedData)
                     {
-                        var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo);
+                        var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo, o => o.OrderDetailStatus);
                         if (orderDetailDb.Items.Count > 0)
                         {
                             order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
@@ -1174,7 +1174,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
                     foreach (var order in mappedData)
                     {
-                        var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo);
+                        var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo, o => o.OrderDetailStatus);
                         if (orderDetailDb.Items.Count > 0)
                         {
                             order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
@@ -1239,7 +1239,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(data.Items);
                 foreach (var order in mappedData)
                 {
-                    var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo);
+                    var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo, o => o.OrderDetailStatus);
                     if (orderDetailDb.Items.Count > 0)
                     {
                         order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
@@ -2022,7 +2022,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 var nearReservationDb = await reservationTableRepository.GetAllDataByExpression(r => r.TableId == tableId
                                                                 && r.Order!.MealTime <= time.Value.AddHours(double.Parse(configDb.CurrentValue))
-                                                                && r.Order.MealTime.Value.AddHours(double.Parse(configDb.CurrentValue)) >= time, 0, 0, r => r.Order!.ReservationDate, true, null);
+                                                                && r.Order.MealTime.Value.AddHours(double.Parse(configDb.CurrentValue)) >= time
+                                                                && r.Order.OrderTypeId == OrderType.Reservation, 0, 0, r => r.Order!.ReservationDate, true, null);
                 if (nearReservationDb.Items.Count > 0)
                 {
                     result = await GetAllReservationDetail(nearReservationDb.Items[0].OrderId);
@@ -2097,7 +2098,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 0, 0, null, false,
                 o => o.Combo!,
                 o => o.DishSizeDetail!.Dish!,
-                o => o.DishSizeDetail!.DishSize!
+                o => o.DishSizeDetail!.DishSize!,
+                o => o.OrderDetailStatus
             );
 
             var reservationDishes = new List<Common.DTO.Response.OrderDishDto>();
@@ -2200,7 +2202,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 0, 0, null, false,
                 o => o.DishSizeDetail.Dish,
                 o => o.DishSizeDetail.DishSize,
-                o => o.Combo
+                o => o.Combo,
+                o => o.OrderDetailStatus
             );
 
             var reservationDishes = new List<Common.DTO.Response.OrderDishDto>();
@@ -2216,6 +2219,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         OrderDetailsId = r.OrderDetailId,
                         ComboDish = comboDishDto,
                         Quantity = r.Quantity,
+                        StatusId = r.OrderDetailStatusId,
+                        Status = r.OrderDetailStatus,
                         OrderTime = r.OrderTime,
                         Note = r.Note
                     });
@@ -2228,6 +2233,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         DishSizeDetailId = r.DishSizeDetailId,
                         DishSizeDetail = r.DishSizeDetail,
                         Quantity = r.Quantity,
+                        StatusId = r.OrderDetailStatusId,
+                        Status = r.OrderDetailStatus,
                         OrderTime = r.OrderTime,
                         Note = r.Note
                     });
