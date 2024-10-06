@@ -2022,7 +2022,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 var nearReservationDb = await reservationTableRepository.GetAllDataByExpression(r => r.TableId == tableId
                                                                 && r.Order!.MealTime <= time.Value.AddHours(double.Parse(configDb.CurrentValue))
-                                                                && r.Order.MealTime.Value.AddHours(double.Parse(configDb.CurrentValue)) >= time, 0, 0, r => r.Order!.ReservationDate, true, null);
+                                                                && r.Order.MealTime.Value.AddHours(double.Parse(configDb.CurrentValue)) >= time
+                                                                && r.Order.OrderTypeId == OrderType.Reservation, 0, 0, r => r.Order!.ReservationDate, true, null);
                 if (nearReservationDb.Items.Count > 0)
                 {
                     result = await GetAllReservationDetail(nearReservationDb.Items[0].OrderId);

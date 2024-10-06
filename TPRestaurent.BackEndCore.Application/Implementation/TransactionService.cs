@@ -597,7 +597,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var loyaltyPointHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
-                var loyaltyPointHistory = await loyaltyPointHistoryRepository.GetAllDataByExpression(l => l.Order.AccountId.Equals(customerId), 0, 0, l => l.TransactionDate, false, l => l.Order);
+                var loyaltyPointHistory = await loyaltyPointHistoryRepository.GetAllDataByExpression(l => l.Order.AccountId.Equals(customerId.ToString()), 0, 0, l => l.TransactionDate, false, l => l.Order);
                 result.Result = loyaltyPointHistory;
             }
             catch (Exception ex)
