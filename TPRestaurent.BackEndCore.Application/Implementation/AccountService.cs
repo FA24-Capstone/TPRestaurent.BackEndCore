@@ -942,6 +942,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     _tokenDto.Account.StoreCredit = creditStoreDb.Items[0].Amount;
                     _tokenDto.Account.StoreCreditExpireDay = creditStoreDb.Items[0].ExpiredDate;
+                    _tokenDto.Account.StoreCreditId = creditStoreDb.Items[0].StoreCreditId;
                 }
 
                 var roleList = new List<string>();
