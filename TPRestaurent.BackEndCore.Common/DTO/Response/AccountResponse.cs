@@ -22,6 +22,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public List<CustomerInfoAddress> Addresses { get; set; } = new List<CustomerInfoAddress>();
         public double LoyalPoint { get; set; }
         public double StoreCredit { get; set; }
+        public Guid? StoreCreditId { get; set; }
         public DateTime StoreCreditExpireDay { get; set; }
         public bool? IsManuallyUpdate { get; set; }  
         public List<IdentityRole> Roles { get; set; }
