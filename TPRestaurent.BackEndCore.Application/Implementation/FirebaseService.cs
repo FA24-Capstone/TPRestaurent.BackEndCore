@@ -12,9 +12,14 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using FirebaseAdmin.Messaging;
+using Google.Apis.Auth.OAuth2;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.ConfigurationModel;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
@@ -24,13 +29,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly IConverter _pdfConverter;
         private AppActionResult _result;
         private FirebaseConfiguration _firebaseConfiguration;
+        private FirebaseAdminSDK _firebaseAdminSdk;
         private readonly IConfiguration _configuration;
+        private  FirebaseMessaging _messaging;
+
         public FirebaseService(IConverter pdfConverter, IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider)
         {
             _pdfConverter = pdfConverter;
             _result = new();
             _firebaseConfiguration = Resolve<FirebaseConfiguration>();
+            _firebaseAdminSdk = Resolve<FirebaseAdminSDK>();
             _configuration = configuration;
+            if (FirebaseApp.DefaultInstance == null)
+            {
+                var credentials = GoogleCredential.FromFile("thienphu-app-firebase-adminsdk-7o08t-63842a0fee.json");
+                FirebaseApp.Create(new AppOptions
+                {
+                    Credential = credentials
+                });
+            }
+            _messaging = FirebaseMessaging.DefaultInstance;
         }
 
         public async Task<AppActionResult> DeleteFileFromFirebase(string pathFileName)
@@ -58,7 +76,56 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return _result;
         }
-       public async Task<string> GetUrlImageFromFirebase(string pathFileName)
+
+        public async Task<string> SendNotificationAsync(string deviceToken, string title, string body, AppActionResult data = null)
+        {
+            var message = new Message
+            {
+                Token = deviceToken,
+                Notification = new Notification
+                {
+                    Title = title,
+                    Body = body
+                },
+                 Data =  Utility.ToDictionary( data)
+            };
+
+            try
+            {
+                string response = await _messaging.SendAsync(message);
+                return response; // Successfully sent message
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error sending FCM notification: {ex.Message}");
+            }
+        }
+
+        public async Task<List<string>> SendMulticastAsync(List<string> deviceTokens, string title, string body,AppActionResult data = null)
+        {
+            var message = new MulticastMessage
+            {
+                Tokens = deviceTokens,
+                Notification = new Notification
+                {
+                    Title = title,
+                    Body = body
+                },
+                Data = Utility.ToDictionary( data)
+            };
+
+            try
+            {
+                var response = await _messaging.SendMulticastAsync(message);
+                return response.SuccessCount > 0 ? deviceTokens : new List<string>();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error sending multicast FCM notification: {ex.Message}");
+            }
+        }
+
+        public async Task<string> GetUrlImageFromFirebase(string pathFileName)
         {
             var a = pathFileName.Split("/");
             pathFileName = $"{a[0]}%2F{a[1]}";

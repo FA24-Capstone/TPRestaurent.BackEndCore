@@ -12,6 +12,7 @@
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'TP.Restaurent.BackEndCore.API' " />
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.20.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.17" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
 	  <PackageReference Include="Google.Cloud.Storage.V1" Version="4.7.0" />
 
