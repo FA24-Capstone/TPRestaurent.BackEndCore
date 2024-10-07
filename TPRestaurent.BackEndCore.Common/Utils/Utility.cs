@@ -7,11 +7,26 @@ using System.Text;
 using Formatting = System.Xml.Formatting;
 
 namespace TPRestaurent.BackEndCore.Common.Utils;
-
+using System.Collections.Generic;
+using System.Reflection;
 public class Utility
 {
     private static readonly HashSet<int> generatedNumbers = new();
+    public static Dictionary<string, string> ToDictionary( object obj)
+    {
+        if (obj == null) throw new ArgumentNullException(nameof(obj));
 
+        var dictionary = new Dictionary<string, string>();
+        var properties = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        foreach (var property in properties)
+        {
+            var value = property.GetValue(obj)?.ToString();
+            dictionary[property.Name] = value; // Store property name and value
+        }
+
+        return dictionary;
+    }
     public DateTime GetCurrentDateTimeInTimeZone()
     {
         var vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
