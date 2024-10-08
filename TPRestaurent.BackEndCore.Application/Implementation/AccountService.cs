@@ -1675,7 +1675,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await accountRepository.Update(accountDb);
                         }
                     }
-                  
+
                     if (!BuildAppActionResultIsError(result))
                     {
                         await customerInfoAddressRepository!.Update(customerInfoDb);
@@ -1707,8 +1707,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     return BuildAppActionResultError(result, $"Không thể xóa địa chỉ đang sử dụng, hãy sử dụng địa chỉ khác");
                 }
-                await customerInfoAddressRepository.DeleteById(customerInfoAddressId);
-                await _unitOfWork.SaveChangesAsync();
+                else
+                {
+                    await customerInfoAddressRepository.DeleteById(customerInfoAddressId);
+                    await _unitOfWork.SaveChangesAsync();
+                }
             }
             catch (Exception ex)
             {
