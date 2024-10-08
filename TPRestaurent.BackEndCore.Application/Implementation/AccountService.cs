@@ -1530,10 +1530,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return BuildAppActionResultError(result, $"Không tìm thấy thông tin người dùng với số điện thoại {phoneNumber}");
                 }
 
-                var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>(); 
+                var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
                 var customerInfoAddressDb = await customerInfoAddressRepository!.GetAllDataByExpression(c => c.AccountId == customerInfoDb.Id, 0, 0, null, false, null);
                 listMap.Addresses = customerInfoAddressDb.Items;
-                
+
                 var userRole = new List<IdentityRole>();
                 var role = await userRoleRepository!.GetAllDataByExpression(a => a.UserId == customerInfoDb.Id, 1, 100, null, false, null);
                 foreach (var itemRole in role.Items!)
@@ -1674,13 +1674,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await customerInfoAddressRepository.Update(mainAddressDb);
                             await accountRepository.Update(accountDb);
                         }
-                        if (!BuildAppActionResultIsError(result))
-                        {
-                            await customerInfoAddressRepository!.Update(customerInfoDb);
-                            await _unitOfWork.SaveChangesAsync();
-                        }
-                        scope.Complete();
                     }
+                  
+                    if (!BuildAppActionResultIsError(result))
+                    {
+                        await customerInfoAddressRepository!.Update(customerInfoDb);
+                        await _unitOfWork.SaveChangesAsync();
+                    }
+                    scope.Complete();
                 }
                 catch (Exception ex)
                 {
