@@ -41,6 +41,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.GetOrderByTime(minute, pageNumber, pageSize);
         }
 
+        [HttpGet("get-all-order-by-shipper-id/{shipperId}/{pageNumber}/{pageSize}")]
+        public async Task<AppActionResult> GetAllOrderByShipperId(string shipperId, OrderStatus? status, int pageNumber = 1, int pageSize = 10)
+        {
+            return await _service.GetAllOrderByShipperId(shipperId, status, pageNumber, pageSize);
+        }
+
         [HttpGet("get-order-detail/{orderId}")]
         public async Task<AppActionResult> GetOrderDetail(Guid orderId)
         {
