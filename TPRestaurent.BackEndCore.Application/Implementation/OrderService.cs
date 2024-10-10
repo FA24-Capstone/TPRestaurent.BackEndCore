@@ -723,7 +723,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await orderSessionRepository.Insert(orderSession);
                         await _repository.Insert(order);
                         await _unitOfWork.SaveChangesAsync();
-                        if (orderRequestDto.DeliveryOrder != null ||  orderRequestDto.ReservationOrder != null)
+                        if (orderRequestDto.DeliveryOrder != null || orderRequestDto.ReservationOrder != null)
                         {
                             var paymentRequest = new PaymentRequestDto
                             {
@@ -2434,6 +2434,62 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
         }
 
+        public async Task<AppActionResult> GetAllOrderByShipperId(string shipperId, OrderStatus? orderStatus, int pageNumber, int pageSize)
+        {
+            var result = new AppActionResult();
+            var accountRepository = Resolve<IGenericRepository<Account>>();
+            try
+            {
+                var shipperDb = await accountRepository!.GetByExpression(p => p.Id == shipperId);
+                if (shipperDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy shipper với id {shipperId}");
+                }
+
+                PagedResult<Order> data = new PagedResult<Order>();
+                if (orderStatus.HasValue && orderStatus > 0)
+                {
+                    data = await _repository.GetAllDataByExpression(o => o.StatusId == orderStatus && o.OrderTypeId == OrderType.Delivery, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                       p => p.Status!,
+                       p => p.Account!,
+                       p => p.LoyalPointsHistory!,
+                       p => p.OrderType!
+                       );
+                }
+                else
+                {
+                    data = await _repository.GetAllDataByExpression(o => o.OrderTypeId == OrderType.Delivery, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                      p => p.Status!,
+                      p => p.Account!,
+                      p => p.LoyalPointsHistory!,
+                      p => p.OrderType!
+                      );
+                }
+
+                data.Items = data.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
+                var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(data.Items);
+                foreach (var order in mappedData)
+                {
+                    var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail.Dish, o => o.Combo, o => o.OrderDetailStatus);
+                    if (orderDetailDb.Items.Count > 0)
+                    {
+                        order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
+                        order.ItemLeft = orderDetailDb.Items.Count() - 1;
+                    }
+                }
+                result.Result = new PagedResult<OrderWithFirstDetailResponse>
+                {
+                    Items = mappedData,
+                    TotalPages = data.TotalPages,
+                };
+            }
+            catch (Exception ex)
+            {
+                return BuildAppActionResultError(new AppActionResult(), ex.Message);
+            }
+            return result;
+        }
+
         public async Task CancelReservation()
         {
             var utility = Resolve<Utility>();
@@ -2485,6 +2541,29 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             }
             Task.CompletedTask.Wait();
+        }
+
+        public async Task<AppActionResult> UpdateOrderStatus(Guid orderId, OrderStatus status)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var orderDb = await _repository.GetByExpression(p => p.OrderId == orderId);
+                if (orderDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {orderId}");
+                }
+
+                orderDb.StatusId = status;
+                await _repository.Update(orderDb);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return BuildAppActionResultError(new AppActionResult(), ex.Message);
+            }
+            return result;
+
         }
     }
 }
