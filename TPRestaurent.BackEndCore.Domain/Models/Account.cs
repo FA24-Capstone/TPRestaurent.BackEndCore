@@ -22,5 +22,6 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public int LoyaltyPoint { get; set; }
         public string? Avatar { get; set; }
         public bool IsManuallyCreated { get; set; }
+        public bool IsDelivering { get; set; }
     }
 }

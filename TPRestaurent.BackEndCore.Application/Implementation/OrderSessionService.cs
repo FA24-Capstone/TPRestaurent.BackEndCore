@@ -1,4 +1,6 @@
-﻿using System;
+﻿using NPOI.POIFS.Crypt.Agile;
+using NPOI.SS.Formula.Functions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
@@ -123,96 +125,217 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderSession.OrderSessionStatusId != OrderSessionStatus.Completed 
                                                                                             && o.OrderSession.OrderSessionStatusId != OrderSessionStatus.Cancelled, 
                                                                                             0, 0, null, false, 
-                                                                                            o => o.OrderSession, 
+                                                                                            o => o.OrderDetailStatus,
+                                                                                            o => o.Order.Shipper, 
+                                                                                            o => o.Order.Status,
+                                                                                            o => o.OrderSession.OrderSessionStatus,
                                                                                             o => o.OrderDetailStatus, 
                                                                                             o => o.DishSizeDetail.Dish, 
+                                                                                            o => o.DishSizeDetail.DishSize,
                                                                                             o => o.Combo);
                 if(orderDetailDb.Items.Count > 0)
                 {
-                    var data = new KitchenGroupedDishResponse();
-                    var groupedOrder = orderDetailDb.Items.GroupBy(o => {
-                        if (o.DishSizeDetailId.HasValue)
-                        {
-                            return o.DishSizeDetail.DishId!;
-                        }
-                        return o.ComboId!;
-                    }).ToDictionary(o => o.Key, o => o.ToList());
-                    foreach (var item in groupedOrder)
+                    var data = new List<KitchenGroupedDishItemResponse>();
+                    var dishQuantity = await GetDishQuantity(orderDetailDb.Items.Where(o => o.DishSizeDetailId.HasValue));
+                    var extractComboQuantity = await GetExtractComboQuantity(orderDetailDb.Items.Where(o => o.ComboId.HasValue));
+
+                    data.AddRange(dishQuantity);
+                    data.AddRange(extractComboQuantity);
+                    data = await RefineGroupDishData(data);
+
+                    var groupedDish = new KitchenGroupedDishResponse();
+                    foreach (var dish in data)
                     {
-                        if (item.Value[0].DishSizeDetailId.HasValue)
+                        if(dish.Total.Count() == 1 && dish.Total.FirstOrDefault().Quantity == 1)
                         {
-                            var total = item.Value.Count;
-                            var orderDetailResponse = new List<OrderDetailResponse>();
-                            foreach (var orderDetail in item.Value)
-                            {
-                                orderDetailResponse.Add(new OrderDetailResponse
-                                {
-                                    OrderDetail = orderDetail
-                                });
-                            }
-
-                            if (total > 1)
-                            {
-                                data.MutualOrderDishes.Add(new KitchenGroupedDishItemResponse
-                                {
-                                    Total = total,
-                                    orderDetailResponses = orderDetailResponse
-                                });
-
-                            }
-                            else
-                            {
-                                data.SingleOrderDishes.Add(new KitchenGroupedDishItemResponse
-                                {
-                                    Total = total,
-                                    orderDetailResponses = orderDetailResponse
-                                });
-                            }
-                        }
-                        else if (item.Value[0].ComboId.HasValue)
+                            groupedDish.SingleOrderDishes.Add(dish);
+                        } else
                         {
-                            var total = item.Value.Count;
-                            var orderDetailResponse = new List<OrderDetailResponse>();
-                            foreach (var orderDetail in item!.Value)
-                            {
-                                var comboOrderDetailsDb = await comboOrderDetailRepository!.GetAllDataByExpression(
-                                    c => c.OrderDetailId == orderDetail.OrderDetailId,
-                                    0,
-                                    0,
-                                    null,
-                                    false,
-                                    c => c.DishCombo!.DishSizeDetail!.Dish!
-                                );
-                                orderDetailResponse.Add(new OrderDetailResponse
-                                {
-                                    OrderDetail = orderDetail,
-                                    ComboOrderDetails = comboOrderDetailsDb.Items
-                                });
-                            }
-                            if (total > 1)
-                            {
-                                data.MutualOrderDishes.Add(new KitchenGroupedDishItemResponse
-                                {
-                                    Total = total,
-                                    orderDetailResponses = orderDetailResponse
-                                });
-                            }
-                            else
-                            {
-                                data.SingleOrderDishes.Add(new KitchenGroupedDishItemResponse
-                                {
-                                    Total = total,
-                                    orderDetailResponses = orderDetailResponse
-                                });
-                            }
+                            groupedDish.MutualOrderDishes.Add(dish);
                         }
                     }
-                    result.Result = data;
+
+                    result.Result = groupedDish;
                 }
             }
             catch (Exception ex)
             {
                 result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        private async Task<List<KitchenGroupedDishItemResponse>> RefineGroupDishData(List<KitchenGroupedDishItemResponse> data)
+        {
+            try
+            {
+                Dictionary<string, Domain.Models.EnumModels.DishSize> sizes = new Dictionary<string, Domain.Models.EnumModels.DishSize>();
+                Dictionary<Guid, Dish> dishes = new Dictionary<Guid, Dish>();
+
+                data.ForEach(d =>
+                {
+                    if (!dishes.ContainsKey(d.Dish.DishId))
+                    {
+                        dishes.Add(d.Dish.DishId, d.Dish);
+                    }
+                });
+
+                data.ForEach(d => d.Total.ForEach(t =>
+                {
+                    if (!sizes.ContainsKey(t.DishSize.Name))
+                    {
+                        sizes.Add(t.DishSize.Name, t.DishSize);
+                    }
+                }));
+                return data
+            .GroupBy(d => d.Dish.DishId) // Group by Dish
+            .Select(group => new KitchenGroupedDishItemResponse
+            {
+                Dish = dishes[group.Key],
+                Total = group
+                    .SelectMany(d => d.Total)
+                    .GroupBy(q => q.DishSize.Name) // Group by DishSize
+                    .Select(g => new QuantityBySize
+                    {
+                        DishSize = sizes[g.Key],
+                        Quantity = g.Sum(q => q.Quantity) // Sum quantities for each size
+                    })
+                    .ToList(),
+                DishFromTableOrders = group
+                    .SelectMany(d => d.DishFromTableOrders)
+                    .ToList() // Append all DishFromTableOrders
+            })
+            .ToList();
+            }
+            catch (Exception ex)
+            {
+                data = new List<KitchenGroupedDishItemResponse>();
+            }
+            return data;
+        }
+
+        private async Task<List<KitchenGroupedDishItemResponse>> GetExtractComboQuantity(IEnumerable<OrderDetail> orderDetails)
+        {
+            List<KitchenGroupedDishItemResponse> result = new List<KitchenGroupedDishItemResponse>();
+            try
+            {
+                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+                foreach(var orderDetail in orderDetails)
+                {
+                    var dishDetails = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId, 0, 0, null, false, 
+                                                                                              c => c.DishCombo.DishSizeDetail.Dish,
+                                                                                              c => c.DishCombo.DishSizeDetail.DishSize,
+                                                                                              c => c.OrderDetail.Order,
+                                                                                              c => c.OrderDetail.OrderSession);
+                    var dishDictionary = dishDetails.Items.GroupBy(d => d.DishCombo.DishSizeDetail.DishId).ToDictionary(d => d.Key, d => d.ToList());
+                    foreach(var dish in dishDictionary)
+                    {
+                        var groupedDishItem = new KitchenGroupedDishItemResponse();
+                        groupedDishItem.Dish = dish.Value.FirstOrDefault().DishCombo.DishSizeDetail.Dish;
+                        var totalDictionary = dish.Value.GroupBy(d => d.DishCombo.DishSizeDetail.DishSize).ToDictionary(t => t.Key, t => t.Count()).ToList();
+                        foreach (var sizeTotal in totalDictionary)
+                        {
+                            groupedDishItem.Total.Add(new QuantityBySize
+                            {
+                                DishSize = sizeTotal.Key,
+                                Quantity = sizeTotal.Value
+                            });
+                        }
+                        groupedDishItem.DishFromTableOrders.AddRange(await GetListDishFromTableOrder(dish.Value));
+                        result.Add(groupedDishItem);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                result = new List<KitchenGroupedDishItemResponse>();
+            }
+            return result;
+        }
+        private async Task<List<KitchenGroupedDishItemResponse>> GetDishQuantity(IEnumerable<OrderDetail> orderDetails)
+        {
+            List<KitchenGroupedDishItemResponse> result = new List<KitchenGroupedDishItemResponse>();
+            try
+            {
+                var dishDictionary = orderDetails.GroupBy(d => d.DishSizeDetail.DishId).ToDictionary(d => d.Key, d => d.ToList());
+                foreach (var dish in dishDictionary)
+                {
+                    var groupedDishItem = new KitchenGroupedDishItemResponse();
+
+                    groupedDishItem.Dish = dish.Value.FirstOrDefault().DishSizeDetail.Dish;
+                    var totalDictionary = dish.Value.GroupBy(d => d.DishSizeDetail.DishSize).ToDictionary(t => t.Key, t => t.Count()).ToList();
+                    foreach(var sizeTotal in totalDictionary)
+                    {
+                        groupedDishItem.Total.Add(new QuantityBySize
+                        {
+                            DishSize = sizeTotal.Key,
+                            Quantity = sizeTotal.Value
+                        });
+                    }
+
+                    groupedDishItem.DishFromTableOrders = await GetListDishFromTableOrder(dish.Value);
+
+                    result.Add(groupedDishItem);
+                }
+            }
+            catch (Exception ex)
+            {
+                result = new List<KitchenGroupedDishItemResponse>();
+            }
+            return result;
+        }
+
+        private async Task<List<DishFromTableOrder>> GetListDishFromTableOrder(List<OrderDetail> orderDetails)
+        {
+            List<DishFromTableOrder> result = new List<DishFromTableOrder>();
+            try
+            {
+                var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
+                foreach (var orderDetail in orderDetails)
+                {
+                    var dishFromTableOrder = new DishFromTableOrder();
+                    dishFromTableOrder.Order = orderDetail.Order;
+                    dishFromTableOrder.OrderSession = orderDetail.OrderSession;
+                    dishFromTableOrder.Table = (await tableDetailRepository.GetAllDataByExpression(t => t.OrderId == orderDetail.OrderDetailId, 0, 0, t => t.TableId, false, t => t.Table)).Items
+                                               .FirstOrDefault()?.Table;
+                    dishFromTableOrder.Quantity = new QuantityBySize
+                    {
+                        Quantity = orderDetail.Quantity,
+                        DishSize = orderDetail.DishSizeDetail.DishSize
+                    };
+                    result.Add(dishFromTableOrder);
+                }
+            }
+            catch (Exception ex)
+            {
+                result = new List<DishFromTableOrder>();
+            }
+            return result;
+        }
+        private async Task<List<DishFromTableOrder>> GetListDishFromTableOrder(List<ComboOrderDetail> comboOrderDetails)
+        {
+            List<DishFromTableOrder> result = new List<DishFromTableOrder>();
+            try
+            {
+                var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
+                foreach (var comboOrderDetail in comboOrderDetails)
+                {
+                    var dishFromTableOrder = new DishFromTableOrder();
+                    dishFromTableOrder.Order = comboOrderDetail.OrderDetail.Order;
+                    dishFromTableOrder.OrderSession = comboOrderDetail.OrderDetail.OrderSession;
+                    dishFromTableOrder.Table = (await tableDetailRepository.GetAllDataByExpression(t => t.OrderId == comboOrderDetail.OrderDetailId, 0, 0, t => t.TableId, false, t => t.Table)).Items
+                                               .FirstOrDefault()?.Table;
+                    dishFromTableOrder.Quantity = new QuantityBySize
+                    {
+                        Quantity = comboOrderDetail.DishCombo.Quantity,
+                        DishSize = comboOrderDetail.DishCombo.DishSizeDetail.DishSize
+                    };
+                    result.Add(dishFromTableOrder);
+                }
+            }
+            catch (Exception ex)
+            {
+                result = new List<DishFromTableOrder>();
             }
             return result;
         }
