@@ -17,6 +17,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> GetAllOrderByStatus(Domain.Enums.OrderStatus? status, OrderType? orderType, int pageNumber, int pageSize);
         public Task<AppActionResult> GetAllOrderByPhoneNumber(string phoneNumber, OrderStatus? status, OrderType? orderType, int pageNumber, int pageSize);
         public Task<AppActionResult> GetOrderDetail(Guid orderId);
+        public Task<AppActionResult> GetAllOrderByShipperId(string shipperId, Domain.Enums.OrderStatus? orderStatus,int pageNumber, int pageSize);
         public Task<AppActionResult> GetOrderByTime(double? minute, int pageNumber, int pageSize);
         public Task<AppActionResult> CalculateReservation(ReservationDto request);
         public Task<AppActionResult> CalculateDeliveryOrder(Guid customerInfoAddressId);
