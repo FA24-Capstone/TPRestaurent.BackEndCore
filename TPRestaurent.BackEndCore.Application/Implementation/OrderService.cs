@@ -2543,5 +2543,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             Task.CompletedTask.Wait();
         }
 
+        public async Task<AppActionResult> UpdateOrderStatus(Guid orderId, OrderStatus status)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var orderDb = await _repository.GetByExpression(p => p.OrderId == orderId);
+                if (orderDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {orderId}");
+                }
+
+                orderDb.StatusId = status;
+                await _repository.Update(orderDb);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return BuildAppActionResultError(new AppActionResult(), ex.Message);
+            }
+            return result;
+
+        }
     }
 }
