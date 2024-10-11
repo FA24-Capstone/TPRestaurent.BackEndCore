@@ -323,7 +323,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var dishFromTableOrder = new DishFromTableOrder();
                     dishFromTableOrder.Order = comboOrderDetail.OrderDetail.Order;
                     dishFromTableOrder.OrderSession = comboOrderDetail.OrderDetail.OrderSession;
-                    dishFromTableOrder.Table = (await tableDetailRepository.GetAllDataByExpression(t => t.OrderId == comboOrderDetail.OrderDetailId, 0, 0, t => t.TableId, false, t => t.Table)).Items
+                    dishFromTableOrder.Table = (await tableDetailRepository.GetAllDataByExpression(t => t.OrderId == comboOrderDetail.OrderDetail.OrderId, 0, 0, t => t.TableId, false, t => t.Table)).Items
                                                .FirstOrDefault()?.Table;
                     dishFromTableOrder.Quantity = new QuantityBySize
                     {
