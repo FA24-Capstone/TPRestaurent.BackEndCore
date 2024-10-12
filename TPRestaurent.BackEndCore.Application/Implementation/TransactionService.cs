@@ -112,8 +112,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         TransactionID  = transaction.Id.ToString(),
                                         PaymentMethod = paymentRequest.PaymentMethod,
                                         Amount = amount,
-                                        CustomerName = orderDb!.Account!.LastName,
-                                        AccountID = orderDb.AccountId,
+                                        CustomerName = orderDb!?.Account!?.LastName,
+                                        AccountID = orderDb?.AccountId,
                                     };
 
                                     await _repository.Insert(transaction);
