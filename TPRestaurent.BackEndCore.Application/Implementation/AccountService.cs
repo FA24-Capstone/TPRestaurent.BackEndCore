@@ -252,6 +252,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var jwtService = Resolve<IJwtService>();
             var tokenRepository = Resolve<IGenericRepository<Token>>();
             var otpRepository = Resolve<IGenericRepository<OTP>>();
+            var storeCreditRepository = Resolve<IGenericRepository<StoreCredit>>();
             try
             {
                 if (await _accountRepository.GetByExpression(r => r!.PhoneNumber == signUpRequest.PhoneNumber) != null)
@@ -359,17 +360,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         result = BuildAppActionResultError(result, $"Tạo ví không thành công");
                     }
-                    //var expireTimeInDay = double.Parse(configurationDb.PreValue);
-                    //var storeCreditRepository = Resolve<IGenericRepository<StoreCredit>>();
-                    //var utility = Resolve<Utility>();
-                    //var newStoreCreditDb = new StoreCredit
-                    //{
-                    //    StoreCreditId = Guid.NewGuid(),
-                    //    Amount = 0,
-                    //    ExpiredDate = utility.GetCurrentDateInTimeZone().AddDays(expireTimeInDay),
-                    //    AccountId = user.Id
-                    //};
-                    //await storeCreditRepository.Insert(newStoreCreditDb);
+                    var expireTimeInDay = double.Parse(configurationDb.CurrentValue);
+                    var newStoreCreditDb = new StoreCredit
+                    {
+                        StoreCreditId = Guid.NewGuid(),
+                        Amount = 0,
+                        ExpiredDate = utility.GetCurrentDateInTimeZone().AddDays(expireTimeInDay),
+                        AccountId = user.Id
+                    };
+                    await storeCreditRepository.Insert(newStoreCreditDb);
+                   
                     await _unitOfWork.SaveChangesAsync();
                 }
             }
@@ -499,6 +499,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             result = BuildAppActionResultError(result, $"Đăng tài khoản cho số điện thoại {phoneNumber} thất bại. Vui lòng thử lại");
                             return result;
                         }
+                        code = await GenerateVerifyCodeSms(phoneNumber, true);
                         //var response = await smsService!.SendMessage($"Mã xác thực của bạn là là: {code}", phoneNumber);
                     }
                     else
@@ -533,6 +534,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var storeCreditRepository = Resolve<IGenericRepository<StoreCredit>>();
+                var utility = Resolve<Utility>();
+
                 var random = new Random();
                 var verifyCode = string.Empty;
                 verifyCode = random.Next(100000, 999999).ToString();
@@ -563,8 +568,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 bool customerAdded = await AddAccountInfomation(user);
                 if (!customerAdded)
                 {
-                    result = BuildAppActionResultError(result, $"Tạo thông tin khách hàng không thành công");
+                    result = BuildAppActionResultError(result, $"Tạo thông tin khách hàng không thành công!");
                 }
+
+                var configurationDb = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.EXPIRE_TIME_FOR_STORE_CREDIT), null);
+                if (configurationDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Tạo ví không thành công");
+                }
+                var expireTimeInDay = double.Parse(configurationDb.CurrentValue);
+                var newStoreCreditDb = new StoreCredit
+                {
+                    StoreCreditId = Guid.NewGuid(),
+                    Amount = 0,
+                    ExpiredDate = utility.GetCurrentDateInTimeZone().AddDays(expireTimeInDay),
+                    AccountId = user.Id
+                };
+                await storeCreditRepository.Insert(newStoreCreditDb);
 
                 await _unitOfWork.SaveChangesAsync();
             }
