@@ -1939,7 +1939,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 await orderDetailRepository.UpdateRange(orderDetailDb.Items);
-                var orderSessionDb = orderDetailDb.Items.DistinctBy(o => o.OrderSessionId).Select(o => o.OrderSession);
+                var orderSessionDb = orderDetailDb.Items.DistinctBy(o => o.OrderSessionId).Select(o => o.OrderSession).Where(o => o != null).ToList();
                 var orderSessionSet = new HashSet<Guid>();
                 foreach (var session in orderSessionDb)
                 {
