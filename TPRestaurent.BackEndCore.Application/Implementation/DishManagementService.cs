@@ -35,14 +35,25 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var utility = Resolve<Utility>();
+                var dishRepository = Resolve<IGenericRepository<Dish>>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
-                var dishDb = await _dishRepository.GetAllDataByExpression(d => d.IsAvailable && d.QuantityLeft.HasValue && d.QuantityLeft.Value == -1, 0, 0, null, false, null); 
-                var comboDb = await _comboRepository.GetAllDataByExpression(d => d.StartDate <= currentTime && d.EndDate >= currentTime && d.IsAvailable
-                                                                                 && d.QuantityLeft.HasValue && d.QuantityLeft.Value == -1, 0, 0, null, false, null);
+                var dishDb = await _dishRepository.GetAllDataByExpression(d => !d.Dish.IsDeleted, 0, 0, null, false, null); 
+                var comboDb = await _comboRepository.GetAllDataByExpression(d => !d.IsDeleted && d.StartDate <= currentTime && d.EndDate >= currentTime
+                                                                                 , 0, 0, null, false, null);
+
+                var dishReponse = new List<DishDetailRequireManualInputResponse>();
+                var dishData = dishDb.Items.GroupBy(d => d.DishId).ToDictionary(d => d.Key, d => d.ToList());
+                foreach (var dish in dishData)
+                {
+                    var dishDetail = new DishDetailRequireManualInputResponse();
+                    dishDetail.Dish = await dishRepository.GetById(dish.Key);
+                    dishDetail.DishSizeDetails = dish.Value;
+                    dishReponse.Add(dishDetail);
+                }
                 result.Result = new DishRequireManualInputResponse
                 {
                     Combos = comboDb.Items,
-                    DishSizeDetails = dishDb.Items
+                    DishSizeDetails = dishReponse
                 };
             }
             catch (Exception ex)

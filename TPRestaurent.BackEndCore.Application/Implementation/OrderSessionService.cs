@@ -199,7 +199,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         DishSize = sizes[g.Key],
                         Quantity = g.Sum(q => q.Quantity) // Sum quantities for each size
-                    })
+                    }).OrderBy(g => g.DishSize.Id)
                     .ToList(),
                 DishFromTableOrders = group
                     .SelectMany(d => d.DishFromTableOrders)
