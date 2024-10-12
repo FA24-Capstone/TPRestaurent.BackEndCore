@@ -112,6 +112,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             orderDetail.OrderDetailStatusId = OrderDetailStatus.Unchecked;
                             orderDetail.OrderTime = utility!.GetCurrentDateTimeInTimeZone();
                             orderDetail.Quantity = o.Quantity;
+                            orderDetail.Note = o.Note;
                         }
                         else
                         {
@@ -121,6 +122,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             orderDetail.Quantity = o.Quantity;
                             orderDetail.OrderDetailStatusId = OrderDetailStatus.Unchecked;
                             orderDetail.OrderTime = utility!.GetCurrentDateTimeInTimeZone();
+                            orderDetail.Note = o.Note;      
                         }
 
                         orderDb.TotalAmount += orderDetail.Price * orderDetail.Quantity;
