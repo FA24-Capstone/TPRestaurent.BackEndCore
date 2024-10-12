@@ -23,6 +23,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
 
     public class DishFromTableOrder
     {
+        public OrderDetail OrderDetail { get; set; }
         public Table? Table { get; set; }
         public Order Order { get; set; }
         public OrderSession OrderSession { get; set; }
