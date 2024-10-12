@@ -127,6 +127,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                             0, 0, null, false, 
                                                                                             o => o.OrderDetailStatus,
                                                                                             o => o.Order.Shipper, 
+                                                                                            o => o.Order.OrderType,
                                                                                             o => o.Order.Status,
                                                                                             o => o.OrderSession.OrderSessionStatus,
                                                                                             o => o.OrderDetailStatus, 
