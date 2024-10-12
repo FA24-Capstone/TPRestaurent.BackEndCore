@@ -24,5 +24,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public double Price { get; set; }
         public double Discount { get; set; }
         public DishSize DishSize { get; set; }
+        public int? QuantityLeft { get; set; }
+        public int DailyCountdown { get; set; }
     }
 }

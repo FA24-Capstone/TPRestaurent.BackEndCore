@@ -95,6 +95,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 DishId = dish.DishId,
                                 Discount = d.Discount,
                                 DishSizeId = d.DishSize,
+                                DailyCountdown = d.DailyCountdown,
+                                QuantityLeft = d.QuantityLeft.HasValue ? d.QuantityLeft.Value : d.DailyCountdown,
                                 IsAvailable = true,
                                 Price = d.Price
                             }));
@@ -379,6 +381,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     DishSizeId = d.DishSize,
                                     Discount = d.Discount,
                                     IsAvailable = d.IsAvailable,
+                                    DailyCountdown = d.DailyCountdown,
+                                    QuantityLeft = d.QuantityLeft.HasValue ? d.QuantityLeft.Value : d.DailyCountdown,
                                     Price = d.Price
                                 });
                             }
