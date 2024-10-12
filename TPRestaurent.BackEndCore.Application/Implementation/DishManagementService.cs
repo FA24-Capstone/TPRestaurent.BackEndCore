@@ -37,7 +37,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var utility = Resolve<Utility>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
                 var dishDb = await _dishRepository.GetAllDataByExpression(d => d.IsAvailable && d.QuantityLeft.HasValue && d.QuantityLeft.Value == -1, 0, 0, null, false, null); 
-                var comboDb = await _comboRepository.GetAllDataByExpression(d => d.StartDate <= currentTime && d.EndDate >= currentTime 
+                var comboDb = await _comboRepository.GetAllDataByExpression(d => d.StartDate <= currentTime && d.EndDate >= currentTime && d.IsAvailable
                                                                                  && d.QuantityLeft.HasValue && d.QuantityLeft.Value == -1, 0, 0, null, false, null);
                 result.Result = new DishRequireManualInputResponse
                 {

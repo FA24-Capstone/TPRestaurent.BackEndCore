@@ -12,4 +12,10 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public List<DishSizeDetail> DishSizeDetails { get; set; } = new List<DishSizeDetail>();
         public List<Combo> Combos { get; set; } = new List<Combo>();
     }
+
+    public class DishResponse
+    {
+        public Dish Dish { get; set; }
+        public List<DishSizeDetail> DishSizeDetails { get; set; } = new List<DishSizeDetail>();
+    }
 }

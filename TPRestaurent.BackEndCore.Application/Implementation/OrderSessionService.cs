@@ -294,6 +294,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 foreach (var orderDetail in orderDetails)
                 {
                     var dishFromTableOrder = new DishFromTableOrder();
+                    dishFromTableOrder.OrderDetail = orderDetail;
                     dishFromTableOrder.Order = orderDetail.Order;
                     dishFromTableOrder.OrderSession = orderDetail.OrderSession;
                     dishFromTableOrder.Table = (await tableDetailRepository.GetAllDataByExpression(t => t.OrderId == orderDetail.OrderDetailId, 0, 0, t => t.TableId, false, t => t.Table)).Items
@@ -321,6 +322,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 foreach (var comboOrderDetail in comboOrderDetails)
                 {
                     var dishFromTableOrder = new DishFromTableOrder();
+                    dishFromTableOrder.OrderDetail = comboOrderDetail.OrderDetail;
                     dishFromTableOrder.Order = comboOrderDetail.OrderDetail.Order;
                     dishFromTableOrder.OrderSession = comboOrderDetail.OrderDetail.OrderSession;
                     dishFromTableOrder.Table = (await tableDetailRepository.GetAllDataByExpression(t => t.OrderId == comboOrderDetail.OrderDetailId, 0, 0, t => t.TableId, false, t => t.Table)).Items
