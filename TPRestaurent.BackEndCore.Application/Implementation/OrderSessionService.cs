@@ -226,8 +226,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var dishDetails = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId, 0, 0, null, false, 
                                                                                               c => c.DishCombo.DishSizeDetail.Dish,
                                                                                               c => c.DishCombo.DishSizeDetail.DishSize,
-                                                                                              c => c.OrderDetail.Order,
-                                                                                              c => c.OrderDetail.OrderSession);
+                                                                                              c => c.OrderDetail.Order.OrderType,
+                                                                                              c => c.OrderDetail.Order.Shipper,
+                                                                                              c => c.OrderDetail.Order.Status,
+                                                                                              c => c.OrderDetail.OrderDetailStatus,
+                                                                                              c => c.OrderDetail.OrderSession.OrderSessionStatus);
+
                     var dishDictionary = dishDetails.Items.GroupBy(d => d.DishCombo.DishSizeDetail.DishId).ToDictionary(d => d.Key, d => d.ToList());
                     foreach(var dish in dishDictionary)
                     {
