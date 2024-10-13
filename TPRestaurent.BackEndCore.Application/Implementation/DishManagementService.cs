@@ -17,13 +17,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     public class DishManagementService : GenericBackendService, IDishManagementService
     {
         private IGenericRepository<DishSizeDetail> _dishRepository;
+        private IGenericRepository<DishCombo> _dishComboRepository;
         private IGenericRepository<Combo> _comboRepository;
         private IMapper _mapper;
         private IUnitOfWork _unitOfWork;
 
-        public DishManagementService(IServiceProvider serviceProvider, IGenericRepository<DishSizeDetail> dishRepository, IGenericRepository<Combo> comboRepository, IMapper mapper, IUnitOfWork unitOfWork) : base(serviceProvider)
+        public DishManagementService(IServiceProvider serviceProvider, 
+                                     IGenericRepository<DishSizeDetail> dishRepository, 
+                                     IGenericRepository<DishCombo> dishComboRepository, 
+                                     IGenericRepository<Combo> comboRepository,
+                                     IMapper mapper, IUnitOfWork unitOfWork) : base(serviceProvider)
         {
             _dishRepository = dishRepository;
+            _dishComboRepository = dishComboRepository;
             _comboRepository = comboRepository;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
@@ -94,9 +100,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         await _dishRepository.Update(dishSizeDetailDb);
                     }
-                    else if (item.ComboId.HasValue)
+                    else if (item.DishComboId.HasValue)
                     {
-                        var comboDb = await _comboRepository.GetById(item.ComboId.Value);
+                        var comboDb = await _dishComboRepository.GetById(item.DishComboId.Value);
                         if (item.QuantityLeft.HasValue)
                         {
                             comboDb.QuantityLeft = item.QuantityLeft.Value;
@@ -116,7 +122,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             comboDb.IsAvailable = false;
                         }
 
-                        await _comboRepository.Update(comboDb);
+                        await _dishComboRepository.Update(comboDb);
                     }
                 }
                 if(!BuildAppActionResultIsError(result))
@@ -136,7 +142,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var dishSizeDetailDb = await _dishRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
-                var comboDb = await _comboRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
+                var comboDb = await _dishComboRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
                 foreach (var dish in dishSizeDetailDb.Items)
                 {
                     if(dish.DailyCountdown < 0)
@@ -184,12 +190,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 await _dishRepository.UpdateRange(dishSizeDetailDb.Items);
-                await _comboRepository.UpdateRange(comboDb.Items);
+                await _dishComboRepository.UpdateRange(comboDb.Items);
                 await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
             }
+        }
+
+        public Task<AppActionResult> UpdateDishQuantity(List<Guid> orderSessionIds)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         }
     }
 }
