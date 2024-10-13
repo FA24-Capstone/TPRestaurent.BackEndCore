@@ -36,5 +36,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public bool? IsPrivate { get; set; }
         public OrderDetail? OrderDetail { get; set; }
         public int ItemLeft { get; set; }
+        public string? ValidatingImg { get; set; }
     }
 }

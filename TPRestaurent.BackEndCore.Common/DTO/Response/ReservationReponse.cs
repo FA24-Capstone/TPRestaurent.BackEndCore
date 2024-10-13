@@ -44,6 +44,8 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public double? Deposit { get; set; }
         public bool? IsPrivate { get; set; }
         public Transaction? Transaction { get; set; }
+        public string? ValidatingImg { get; set; }
+
     }
 
     public class OrderDishDto

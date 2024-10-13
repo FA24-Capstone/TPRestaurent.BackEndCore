@@ -104,7 +104,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 DishComboId = Guid.NewGuid(),
                                 ComboOptionSetId = comboOptionSet.ComboOptionSetId,
                                 DishSizeDetailId = dishId.DishSizeDetailId,
-                                Quantity = dishId.Quantity
+                                Quantity = dishId.Quantity,
+                                IsActive = true
                             };
                             dishComboList.Add(dishCombo);
                         }
@@ -532,62 +533,92 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
 
                     List<ComboOptionSet> comboOptionSetList = new List<ComboOptionSet>();
+                    List<ComboOptionSet> updateComboOptionSetList = new List<ComboOptionSet>();
                     List<DishCombo> dishComboList = new List<DishCombo>();
+                    List<DishCombo> upateDishComboList = new List<DishCombo>();
                     if (comboDto.DishComboDtos.Count > 0)
-                    {
-                        if (orderDetailDb.Items.Count > 0)
-                        {
-                            result = BuildAppActionResultError(result, $"Combo với id {comboDto.ComboId} đã có đặt món, không thể thực hiện cập nhật chi tiết món");
-                        }
-                        var existedComboOptionSetList = await comboOptionSetRepository.GetAllDataByExpression(c => c.ComboId == comboDto.ComboId, 0, 0, null, false, null);
-                        if (existedComboOptionSetList.Items.Count() > 0)
-                        {
-                            var existedComboOptionSetListIds = existedComboOptionSetList.Items.Select(c => c.ComboOptionSetId).ToList();
-                            var existedDishComboList = await dishComboRepository.GetAllDataByExpression(d => existedComboOptionSetListIds.Contains((Guid)d.ComboOptionSetId), 0, 0, null, false, null);
-                            if (existedDishComboList.Items.Count() > 0)
-                            {
-                                await dishComboRepository.DeleteRange(existedDishComboList.Items);
-                            }
-                            await comboOptionSetRepository.DeleteRange(existedComboOptionSetList.Items);
-                        }
-
+                    {                       
                         foreach (var dishComboDto in comboDto.DishComboDtos)
                         {
-                            var comboOptionSet = new ComboOptionSet
+                            if (dishComboDto.OptionSetId.HasValue)
                             {
-                                ComboOptionSetId = Guid.NewGuid(),
-                                DishItemTypeId = dishComboDto.DishItemType,
-                                NumOfChoice = dishComboDto.NumOfChoice,
-                                OptionSetNumber = dishComboDto.OptionSetNumber,
-                                ComboId = comboDb.ComboId
-                            };
-                            comboOptionSetList.Add(comboOptionSet);
-
-                            foreach (var dishId in dishComboDto.ListDishId)
-                            {
-                                var dishExisted = await dishSizeDetailRepository!.GetById(dishId.DishSizeDetailId);
-                                if (dishExisted == null)
+                                var optionSetDb = await comboOptionSetRepository!.GetById(dishComboDto.OptionSetId.Value);
+                                if (optionSetDb != null)
                                 {
-                                    result = BuildAppActionResultError(result, $"size món ăn với id {dishId.DishSizeDetailId} không tồn tại");
+                                    return BuildAppActionResultError(result, $"Không tìm thấy Set với id {dishComboDto.OptionSetId.Value}");
                                 }
-                                var dishCombo = new DishCombo
+                                optionSetDb.OptionSetNumber = dishComboDto.OptionSetNumber;
+                                optionSetDb.NumOfChoice = dishComboDto.NumOfChoice;
+                                optionSetDb.DishItemTypeId = dishComboDto.DishItemType;
+                                updateComboOptionSetList.Add(optionSetDb);
+
+                                foreach (var dishId in dishComboDto.ListDishId)
                                 {
-                                    DishComboId = Guid.NewGuid(),
-                                    ComboOptionSetId = comboOptionSet.ComboOptionSetId,
-                                    DishSizeDetailId = dishId.DishSizeDetailId,
-                                    Quantity = dishId.Quantity
+                                    var dishExisted = await dishSizeDetailRepository!.GetById(dishId.DishSizeDetailId);
+                                    if (dishExisted == null)
+                                    {
+                                        result = BuildAppActionResultError(result, $"size món ăn với id {dishId.DishSizeDetailId} không tồn tại");
+                                    }
+
+                                    var existedComboDishDb = await dishComboRepository.GetByExpression(o => o.DishSizeDetailId == dishId.DishSizeDetailId && o.ComboOptionSetId == optionSetDb.ComboOptionSetId, null);
+                                    if (existedComboDishDb != null)
+                                    {
+                                        existedComboDishDb.Quantity = dishId.Quantity;
+                                        upateDishComboList.Add(existedComboDishDb);
+                                    }
+                                    else
+                                    {
+                                        var dishCombo = new DishCombo
+                                        {
+                                            DishComboId = Guid.NewGuid(),
+                                            ComboOptionSetId = optionSetDb.ComboOptionSetId,
+                                            DishSizeDetailId = dishId.DishSizeDetailId,
+                                            Quantity = dishId.Quantity
+                                        };
+                                        dishComboList.Add(dishCombo);
+                                    }
+                                }
+
+                            }
+                            else 
+                            {
+                                var comboOptionSet = new ComboOptionSet
+                                {
+                                    ComboOptionSetId = Guid.NewGuid(),
+                                    DishItemTypeId = dishComboDto.DishItemType,
+                                    NumOfChoice = dishComboDto.NumOfChoice,
+                                    OptionSetNumber = dishComboDto.OptionSetNumber,
+                                    ComboId = comboDb.ComboId
                                 };
-                                dishComboList.Add(dishCombo);
+                                comboOptionSetList.Add(comboOptionSet);
+
+                                foreach (var dishId in dishComboDto.ListDishId)
+                                {
+                                    var dishExisted = await dishSizeDetailRepository!.GetById(dishId.DishSizeDetailId);
+                                    if (dishExisted == null)
+                                    {
+                                        result = BuildAppActionResultError(result, $"size món ăn với id {dishId.DishSizeDetailId} không tồn tại");
+                                    }
+                                    var dishCombo = new DishCombo
+                                    {
+                                        DishComboId = Guid.NewGuid(),
+                                        ComboOptionSetId = comboOptionSet.ComboOptionSetId,
+                                        DishSizeDetailId = dishId.DishSizeDetailId,
+                                        Quantity = dishId.Quantity
+                                    };
+                                    dishComboList.Add(dishCombo);
+                                }
                             }
                         }
                     }
-
                     if (!BuildAppActionResultIsError(result))
                     {
                         await _comboRepository.Update(comboDb);
                         await dishTagRepository.InsertRange(dishTags);
                         await comboOptionSetRepository!.InsertRange(comboOptionSetList);
+                        await comboOptionSetRepository!.UpdateRange(updateComboOptionSetList);
                         await dishComboRepository!.InsertRange(dishComboList);
+                        await dishComboRepository!.UpdateRange(upateDishComboList);
                         await _unitOfWork.SaveChangesAsync();
                         scope.Complete();
                     }
