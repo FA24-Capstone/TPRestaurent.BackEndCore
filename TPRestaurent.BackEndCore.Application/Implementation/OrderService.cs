@@ -506,7 +506,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         if (orderDetails.Count > 0)
                         {
-                            orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Pending);
+                            orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Reserved);
                         }
                         orderWithPayment.Order = order;
                     }
@@ -707,7 +707,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         if (orderDetails.Count > 0)
                         {
-                            orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Pending);
+                            orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Reserved);
                         }
                         order.TotalAmount = money;
 
@@ -1711,7 +1711,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (orderListDb!.Items!.Count > 0 && orderListDb.Items != null)
                 {
                     var orderIds = orderListDb.Items.Select(o => o.OrderId).ToList();
-                    var orderDetailsDb = await orderDetailRepository!.GetAllDataByExpression(p => orderIds.Contains(p.OrderId) && p.OrderDetailStatusId == OrderDetailStatus.Pending, 0, 0, null, false, null);
+                    var orderDetailsDb = await orderDetailRepository!.GetAllDataByExpression(p => orderIds.Contains(p.OrderId) && p.OrderDetailStatusId == OrderDetailStatus.Unchecked, 0, 0, null, false, null);
                     if (orderDetailsDb!.Items!.Count > 0 && orderListDb.Items != null)
                     {
                         foreach (var orderDetail in orderDetailsDb.Items)

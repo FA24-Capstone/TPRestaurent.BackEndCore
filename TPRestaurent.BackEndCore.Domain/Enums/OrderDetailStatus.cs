@@ -8,7 +8,7 @@ namespace TPRestaurent.BackEndCore.Domain.Enums
 {
     public enum OrderDetailStatus
     {
-        Pending = 1,
+        Reserved = 1,
         Unchecked = 2,
         Processing = 3,
         ReadyToServe = 4,
