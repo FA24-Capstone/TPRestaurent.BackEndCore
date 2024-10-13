@@ -29,9 +29,4 @@
     <Folder Include="Data\" />
     <Folder Include="Migrations\" />
   </ItemGroup>
-  <ItemGroup>
-    <None Update="vietnamesenames.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
 </Project>
