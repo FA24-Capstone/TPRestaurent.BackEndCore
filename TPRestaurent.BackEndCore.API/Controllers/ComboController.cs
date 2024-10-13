@@ -39,7 +39,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _comboService.CreateCombo(comboDto);     
         }
 
-        [HttpDelete("delete-combo-by-id")]
+        [HttpPost("delete-combo-by-id")]
         public async Task<AppActionResult> DeleteComboById(Guid comboId)
         {
             return await _comboService.DeleteComboById(comboId);        

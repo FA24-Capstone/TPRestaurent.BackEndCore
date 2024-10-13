@@ -24,6 +24,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
 
     public class DishComboDto
     {
+        public Guid? OptionSetId { get; set; }
         public int OptionSetNumber { get; set; }
         public Domain.Enums.DishItemType DishItemType { get; set; }
         public int NumOfChoice { get; set; }
