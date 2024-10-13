@@ -38,7 +38,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _dishService.CreateDish(dishDto);  
         }
 
-        [HttpDelete("delete-dish")]
+        [HttpPost("delete-dish")]
         public async Task<AppActionResult> DeleteDish(Guid dishId)
         {
             return await _dishService.DeleteDish(dishId);

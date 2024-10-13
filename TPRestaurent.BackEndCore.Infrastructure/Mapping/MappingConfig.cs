@@ -111,6 +111,7 @@ public class MappingConfig
     .ForMember(dest => dest.OrderType, act => act.MapFrom(src => src.OrderType))
     .ForMember(dest => dest.NumOfPeople, act => act.MapFrom(src => src.NumOfPeople))
     .ForMember(dest => dest.Deposit, act => act.MapFrom(src => src.Deposit))
+    .ForMember(dest => dest.ValidatingImg, act => act.MapFrom(src => src.ValidatingImg))
     .ForMember(dest => dest.IsPrivate, act => act.MapFrom(src => src.IsPrivate));
 
             config.CreateMap<Order, OrderWithFirstDetailResponse>()
@@ -133,6 +134,7 @@ public class MappingConfig
             .ForMember(dest => dest.NumOfPeople, act => act.MapFrom(src => src.NumOfPeople))
             .ForMember(dest => dest.Deposit, act => act.MapFrom(src => src.Deposit))
             .ForMember(dest => dest.IsPrivate, act => act.MapFrom(src => src.IsPrivate))
+            .ForMember(dest => dest.ValidatingImg, act => act.MapFrom(src => src.ValidatingImg))
             .ReverseMap();
         });
 
