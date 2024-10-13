@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Humanizer;
+using NPOI.OpenXmlFormats.Wordprocessing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -169,7 +170,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 dishDb!.IsDeleted = true;
                 result.IsSuccess = true;
-                result.Messages.Add("This dish has been delete successfully");
+                result.Messages.Add("Đã xoá món thành công");
                 await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
@@ -364,7 +365,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     List<DishSizeDetail> addDishSizeDetails = new List<DishSizeDetail>();
                     if (dto.UpdateDishSizeDetailDtos.Count > 0)
                     {
-                        dto.UpdateDishSizeDetailDtos.ForEach(d =>
+                        dto.UpdateDishSizeDetailDtos.ForEach(async d =>
                         {
                             if (dto.UpdateDishSizeDetailDtos.Count(d => d.DishSize == DishSize.SMALL) > 1
                        || dto.UpdateDishSizeDetailDtos.Count(d => d.DishSize == DishSize.MEDIUM) > 1
@@ -374,6 +375,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                             if (d.DishSizeDetailId.HasValue)
                             {
+                                var dishSizeDetailDb = await dishSizeDetailRepository.GetById(d.DishSizeDetailId.Value);
                                 updateDishSizeDetails.Add(new DishSizeDetail
                                 {
                                     DishSizeDetailId = (Guid)d.DishSizeDetailId,
@@ -381,8 +383,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     DishSizeId = d.DishSize,
                                     Discount = d.Discount,
                                     IsAvailable = d.IsAvailable,
-                                    DailyCountdown = d.DailyCountdown,
-                                    QuantityLeft = d.QuantityLeft.HasValue ? d.QuantityLeft.Value : d.DailyCountdown,
+                                    DailyCountdown = (int)(d.DailyCountdown.HasValue ? d.DailyCountdown : dishSizeDetailDb.DailyCountdown),
+                                    QuantityLeft = !d.QuantityLeft.HasValue ? dishSizeDetailDb.QuantityLeft.HasValue ? dishSizeDetailDb.QuantityLeft.Value : d.DailyCountdown : d.DailyCountdown,
                                     Price = d.Price
                                 });
                             }
