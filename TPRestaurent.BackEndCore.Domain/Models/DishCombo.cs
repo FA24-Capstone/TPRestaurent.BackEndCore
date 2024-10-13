@@ -15,6 +15,8 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid DishComboId { get; set; }
         public int Quantity { get; set; }
         public bool IsActive { get; set; }
+        public int? QuantityLeft { get; set; }
+        public int DailyCountdown { get; set; }
         public Guid? DishSizeDetailId { get; set; }
         [ForeignKey(nameof(DishSizeDetailId))]
         public DishSizeDetail? DishSizeDetail { get; set; }

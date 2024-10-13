@@ -81,6 +81,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (item.DailyCountdown.HasValue)
                         {
                             dishSizeDetailDb.DailyCountdown = item.DailyCountdown.Value;
+                            if (!item.QuantityLeft.HasValue)
+                            {
+                                dishSizeDetailDb.QuantityLeft = item.DailyCountdown.Value;
+                            }
                         }
 
                         if (dishSizeDetailDb.QuantityLeft == 0)
@@ -101,6 +105,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (item.DailyCountdown.HasValue)
                         {
                             comboDb.DailyCountdown = item.DailyCountdown.Value;
+                            if (!item.QuantityLeft.HasValue)
+                            {
+                                comboDb.QuantityLeft = item.DailyCountdown.Value;
+                            }
                         }
 
                         if(comboDb.QuantityLeft == 0)
