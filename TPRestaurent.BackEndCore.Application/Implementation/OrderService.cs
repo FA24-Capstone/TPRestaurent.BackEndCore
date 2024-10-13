@@ -19,6 +19,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.AspNetCore.Identity;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
@@ -41,8 +42,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private BackEndLogger _logger;
+        private IHubServices.IHubServices _hubServices;
 
-        public OrderService(IGenericRepository<Order> repository, IGenericRepository<OrderDetail> detailRepository, IGenericRepository<OrderSession> sessionRepository, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service, BackEndLogger logger) : base(service)
+        public OrderService(IGenericRepository<Order> repository, IGenericRepository<OrderDetail> detailRepository, IGenericRepository<OrderSession> sessionRepository, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service, BackEndLogger logger, IHubServices.IHubServices hubServices
+        ) : base(service)
         {
             _repository = repository;
             _detailRepository = detailRepository;
@@ -50,6 +53,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _logger = logger;
+            _hubServices = hubServices;
         }
 
         public async Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto)
@@ -295,6 +299,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                     var comboRepository = Resolve<IGenericRepository<Combo>>();
                     var couponProgramRepository = Resolve<IGenericRepository<CouponProgram>>();
+                    var fireBaseService = Resolve<IFirebaseService>();
                     var orderAppliedCouponRepository = Resolve<IGenericRepository<OrderAppliedCoupon>>();
                     var tableRepository = Resolve<IGenericRepository<Table>>();
                     var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
@@ -302,6 +307,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
                     var configurationRepository = Resolve<IGenericRepository<Configuration>>();
                     var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+                    var notificationMessageRepository = Resolve<IGenericRepository<NotificationMessage>>();
+                    var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
+                    var roleRepository = Resolve<IGenericRepository<IdentityRole<string>>>();
+                    var tokenRepostiory = Resolve<IGenericRepository<Token>>();
+                    var hubService = Resolve<IHubServices.IHubServices>(); 
                     var mapService = Resolve<IMapService>();
                     var createdOrderId = new Guid();
                     var dishSizeDetail = new DishSizeDetail();
@@ -724,7 +734,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         await orderSessionRepository.Insert(orderSession);
                         await _repository.Insert(order);
-                        await _unitOfWork.SaveChangesAsync();
                         if (orderRequestDto.DeliveryOrder != null || orderRequestDto.ReservationOrder != null)
                         {
                             var paymentRequest = new PaymentRequestDto
@@ -741,6 +750,39 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
                             }
+
+                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+
+                            var chefRole = await roleRepository.GetByExpression(p => p.Name == SD.RoleName.ROLE_CHEF);
+                            var userRole = await userRoleRepository.GetAllDataByExpression(p => p.RoleId == chefRole.ToString(), 0, 0, null, false, null);
+                            var tokenList = new List<string>();
+                            foreach (var user in userRole.Items)
+                            {
+                                var token = await tokenRepostiory.GetByExpression(p => p.AccountId == user.UserId);
+                                tokenList.Add(token.DeviceToken);
+                            }
+
+                            var messageBody =
+                                $"{orderDetails.Select(p => p.DishSizeDetail.Dish.Name)}: {orderDetails.Select(p => p.DishSizeDetail.DishSize.VietnameseName)} x{orderDetails.Select(p => p.Quantity)}";
+
+                            var notificationList = new List<NotificationMessage>();
+                            foreach (var user in userRole.Items)
+                            {
+                                var notification = new NotificationMessage
+                                {
+                                    NotificationId = Guid.NewGuid(),
+                                    NotificationName = "Nha hang co mot thong bao moi",
+                                    Messages = messageBody,
+                                    AccountId = user.UserId,
+                                };
+                                notificationList.Add(notification);
+                            }
+
+                            await notificationMessageRepository.InsertRange(notificationList);
+                            await fireBaseService.SendMulticastAsync(tokenList, "Nha hang co mot thong bao moi", messageBody);
+                            
+                            
+                            await _unitOfWork.SaveChangesAsync();
                         }
                         scope.Complete();
                     }
@@ -751,6 +793,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result = BuildAppActionResultError(result, ex.Message);
                 }
             }
+            
             return result;
         }
 
@@ -1006,6 +1049,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result = BuildAppActionResultError(result, ex.Message);
                 }
                 return result;
+                
+                
             }
         }
 
