@@ -4,6 +4,7 @@ using TPRestaurent.BackEndCore.API.Installers;
 using TPRestaurent.BackEndCore.API.Middlewares;
 using TPRestaurent.BackEndCore.Application.Implementation;
 using TPRestaurent.BackEndCore.Domain.Data;
+using TPRestaurent.BackEndCore.Infrastructure.ServerHub;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +42,7 @@ app.UseAuthorization();
 //app.UseMiddleware<TokenValidationMiddleware>();
 
 app.MapControllers();
+app.MapHub<NotificationHub>("/notifications");
 //ApplyMigration();
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
