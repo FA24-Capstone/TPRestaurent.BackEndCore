@@ -15,8 +15,8 @@ builder.Services.AddCors(options =>
         builder => builder.WithOrigins("*")
                           .AllowAnyMethod() // Allows GET, POST, PUT, DELETE, etc.
                           .AllowAnyHeader() // Allows all headers
-                          .AllowCredentials()
-                          .SetIsOriginAllowed(_ => true)
+                          //.AllowCredentials()
+                          //.SetIsOriginAllowed(_ => true)
         );
 });
 
