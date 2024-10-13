@@ -1,4 +1,4 @@
-﻿using Castle.Core.Configuration;
+﻿            using Castle.Core.Configuration;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -46,6 +46,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.ComboOrderDetail> DishComboComboDetails { get; set; } = null!;
         public DbSet<Models.ComboOptionSet> ComboOptionSets { get; set; } = null!;
         public DbSet<Models.ConfigurationVersion> ConfigurationVersions { get; set; } = null!;
+        public DbSet<Models.NotificationMessage> NotificationMessages { get; set; } = null!;
         public DbSet<Models.EnumModels.OrderStatus> OrderStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.OTPType> OTPTypes { get; set; } = null!;
         public DbSet<Models.EnumModels.PaymentMethod> PaymentMethods { get; set; } = null!;
@@ -57,6 +58,8 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.EnumModels.OrderDetailStatus> OrderDetailStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.TransactionType> TransactionTypes { get; set; } = null!;
         public DbSet<Models.EnumModels.OrderSessionStatus> OrderSessionStatuses { get; set; } = null!;
+        
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
