@@ -54,7 +54,7 @@ public class MappingConfig
             config.CreateMap<OrderDetailsDto, OrderDetail>()
             .ForMember(dest => dest.ComboId, opt => opt.MapFrom(src => src.Combo != null ? src.Combo.ComboId : (Guid?)null))
             .ForMember(dest => dest.OrderTime, opt => opt.MapFrom(src => DateTime.Now))
-            .ForMember(dest => dest.OrderDetailStatusId, opt => opt.MapFrom(src => OrderDetailStatus.Pending)) // Assuming a default status
+            .ForMember(dest => dest.OrderDetailStatusId, opt => opt.MapFrom(src => OrderDetailStatus.Unchecked)) // Assuming a default status
            .ReverseMap();
             ;
 
