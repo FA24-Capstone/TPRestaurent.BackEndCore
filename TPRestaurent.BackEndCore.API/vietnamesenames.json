@@ -52,7 +52,6 @@
     "MOMO": "MOMO",
     "ZALOPAY": "ZALOPAY",
     "STORE_CREDIT": "Số dư tài khoản",
-    "UNCHECKED": "Chưa Xem",
     "READ": "Đã Xem",
     "READY_TO_SERVE": "Sẵn Sàng Phục Vụ",
     "One": "1",
@@ -75,8 +74,11 @@
     "LateWarning": "Đang trễ",
     "Reservation": "Đặt bàn",
     "Delivery": "Giao hàng tận nơi",
-    "MealWithoutReservation": "Dùng bữa tại quán khôn có đặt bàn",
+    "MealWithoutReservation": "Dùng bữa tại quán",
     "APPLIED": "Đã áp dụng",
-    "Refund": "Hoàn tiền"
+    "Refund": "Hoàn tiền",
+    "Reserved": "Đặt trước",
+    "Unchecked": "Chờ xử lý",
+    "ReadyToServe":  "Đã hoàn thành"
   }
 }
