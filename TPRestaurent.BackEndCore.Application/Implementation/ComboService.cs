@@ -105,7 +105,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 ComboOptionSetId = comboOptionSet.ComboOptionSetId,
                                 DishSizeDetailId = dishId.DishSizeDetailId,
                                 Quantity = dishId.Quantity,
-                                IsActive = true
+                                IsAvailable = true
                             };
                             dishComboList.Add(dishCombo);
                         }
@@ -190,7 +190,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var currentDateTime = Resolve<Utility>().GetCurrentDateTimeInTimeZone();
                 var comboDb = await _comboRepository.GetAllDataByExpression(
-                    p => (string.IsNullOrEmpty(keyword) || p.Name.Contains(keyword)) && p.EndDate > currentDateTime,
+                    p => (string.IsNullOrEmpty(keyword) || p.Name.Contains(keyword)) && p.EndDate > currentDateTime && !p.IsDeleted,
                     pageNumber, pageSize, null, false, c => c.Category
                 );
 

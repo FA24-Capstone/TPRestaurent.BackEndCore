@@ -189,7 +189,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var dishDetailsRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                 var dishList = await _dishRepository
                    .GetAllDataByExpression(p => (p.Name.Contains(keyword) && !string.IsNullOrEmpty(keyword) || string.IsNullOrEmpty(keyword))
-                                             && (type > 0 && p.DishItemTypeId == type || type == 0 && p.IsMainItem), pageNumber, pageSize, null, false, p => p.DishItemType!);
+                                             && (type > 0 && p.DishItemTypeId == type || type == 0 && p.IsMainItem) && !p.IsDeleted, pageNumber, pageSize, null, false, p => p.DishItemType!);
                 foreach (var item in dishList.Items!)
                 {
                     var dishDetailsListDb = await dishDetailsRepository!.GetAllDataByExpression(p => p.DishId == item.DishId, 0, 0, null, false, p => p.DishSize!);

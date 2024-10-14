@@ -198,7 +198,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
         }
 
-        public Task<AppActionResult> UpdateDishQuantity(List<Guid> orderSessionIds)
+        public async Task<AppActionResult> UpdateDishQuantity(List<Guid> orderSessionIds)
         {
             AppActionResult result = new AppActionResult();
             try
