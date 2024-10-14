@@ -14,6 +14,5 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public DateTime DOB { get; set; }
         public string? Address { get; set; } = null!;
         public Guid? AddressId { get; set; }
-        public string? Avatar { get; set; }
     }
 }

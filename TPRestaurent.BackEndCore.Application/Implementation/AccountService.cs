@@ -4,6 +4,7 @@ using Firebase.Auth;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Hangfire.Common;
+using Humanizer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -371,7 +372,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         AccountId = user.Id
                     };
                     await storeCreditRepository.Insert(newStoreCreditDb);
-                   
+
                     await _unitOfWork.SaveChangesAsync();
                 }
             }
@@ -1407,10 +1408,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 accountDb.DOB = updateAccountRequest.DOB;
                 accountDb.FirstName = updateAccountRequest.FirstName;
                 accountDb.LastName = updateAccountRequest.LastName;
-                if (!string.IsNullOrEmpty(updateAccountRequest.Avatar))
-                {
-                    updateAccountRequest.Avatar = updateAccountRequest.Avatar;
-                }
+
 
                 await _accountRepository.Update(accountDb);
                 await _unitOfWork.SaveChangesAsync();
@@ -1422,6 +1420,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+
 
         public async Task<AppActionResult> DeleteAccount(Guid customerId)
         {
@@ -1738,6 +1738,50 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             catch (Exception ex)
             {
                 result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> UpdateAccountImage(UpdateAccountImageRequest updateAccountImageRequest)
+        {
+            var result = new AppActionResult();
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            {
+                try
+                {
+                    var firebaseService = Resolve<IFirebaseService>();
+                    var accountDb = await _accountRepository.GetByExpression(p => p.Id == updateAccountImageRequest.AccountId);
+                    if (accountDb == null)
+                    {
+                        result = BuildAppActionResultError(result, $"Tài khoản với số điện thoại {updateAccountImageRequest.AccountId} không tồn tại!");
+                    }
+
+                    var pathName = SD.FirebasePathName.DISH_PREFIX + $"{updateAccountImageRequest.AccountId}{Guid.NewGuid()}.jpg";
+                    var upload = await firebaseService!.UploadFileToFirebase(updateAccountImageRequest.Image!, pathName);
+
+                    if (!upload.IsSuccess)
+                    {
+                        return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
+                    }
+                    accountDb!.Avatar = upload.Result!.ToString()!;
+
+                    if (!upload.IsSuccess)
+                    {
+                        return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
+                    }
+
+                    if (!BuildAppActionResultIsError(result))
+                    {
+                        await _accountRepository.Update(accountDb);
+                        await _unitOfWork.SaveChangesAsync();
+                        scope.Complete();
+                        result.Messages.Add("Cập nhập hình ảnh thành công");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result = BuildAppActionResultError(result, ex.Message);
+                }
             }
             return result;
         }
