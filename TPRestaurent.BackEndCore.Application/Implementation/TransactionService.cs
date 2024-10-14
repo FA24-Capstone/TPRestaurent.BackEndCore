@@ -253,6 +253,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                 TransationStatusId = TransationStatus.PENDING,
                                                 TransactionTypeId = TransactionType.CreditStore
                                             };
+                                            amount = (double)paymentRequest.StoreCreditAmount;
                                             string endpoint = _momoConfiguration.Api;
                                             string partnerCode = _momoConfiguration.PartnerCode;
                                             string accessKey = _momoConfiguration.AccessKey;
@@ -281,7 +282,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                             JObject message = new JObject
                                 {
-                                    { "partnerCode", partnerCode },
+                                     { "partnerCode", partnerCode },
                                     { "partnerName", "Test" },
                                     { "storeId", "MomoTestStore" },
                                     { "requestId", requestId },
@@ -308,6 +309,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             }
                                         }
                                     }
+
+                                    ////
                                 }
                                 break;
                             case Domain.Enums.PaymentMethod.STORE_CREDIT:
@@ -525,7 +528,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var data = new TransactionReponse();
-                var transactionDb = await _repository.GetByExpression(t => t.Id == paymentId, t => t.StoreCredit);
+                var transactionDb = await _repository.GetByExpression(t => t.Id == paymentId, t => t.StoreCredit, t => t.TransactionType, t => t.TransationStatus);
                 data.Transaction = transactionDb;
                 if (transactionDb.OrderId.HasValue)
                 {
