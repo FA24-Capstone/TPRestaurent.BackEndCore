@@ -37,5 +37,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public OrderDetail? OrderDetail { get; set; }
         public int ItemLeft { get; set; }
         public string? ValidatingImg { get; set; }
+        public string TotalDistance { get; set; }
+        public string TotalDuration { get; set; }
     }
 }

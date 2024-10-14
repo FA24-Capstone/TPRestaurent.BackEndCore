@@ -126,7 +126,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             orderDetail.Quantity = o.Quantity;
                             orderDetail.OrderDetailStatusId = OrderDetailStatus.Unchecked;
                             orderDetail.OrderTime = utility!.GetCurrentDateTimeInTimeZone();
-                            orderDetail.Note = o.Note;      
+                            orderDetail.Note = o.Note;
                         }
 
                         orderDb.TotalAmount += orderDetail.Price * orderDetail.Quantity;
@@ -2485,6 +2485,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             var result = new AppActionResult();
             var accountRepository = Resolve<IGenericRepository<Account>>();
+            var customerInfoRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+            var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+            var mapService = Resolve<IMapService>();
             try
             {
                 var shipperDb = await accountRepository!.GetByExpression(p => p.Id == shipperId);
@@ -2492,6 +2495,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy shipper với id {shipperId}");
                 }
+
+                var startLatConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LATITUDE);
+                var startLngConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LNG);
+
+                var startLat = Double.Parse(startLatConfig.CurrentValue);
+                var startLng = Double.Parse(startLngConfig.CurrentValue);
+
 
                 PagedResult<Order> data = new PagedResult<Order>();
                 if (orderStatus.HasValue && orderStatus > 0)
@@ -2513,6 +2523,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                       );
                 }
 
+                double[] startDestination = new double[2];
+                startDestination[0] = startLat;
+                startDestination[1] = startLng;
+
+
                 data.Items = data.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                 var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(data.Items);
                 foreach (var order in mappedData)
@@ -2522,6 +2537,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
                         order.ItemLeft = orderDetailDb.Items.Count() - 1;
+
+                        var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.CustomerInfoAddressName == order.Account.Address);
+                        if (customerAddressDb == null)
+                        {
+                            return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {order.AccountId}");
+                        }
+
+                        double[] endDestination = new double[2];
+                        endDestination[0] = customerAddressDb.Lat;
+                        endDestination[1] = customerAddressDb.Lng;
+
+                        var estimateDelivery = await mapService!.GetEstimateDeliveryResponse(startDestination, endDestination);
+                        if (estimateDelivery.IsSuccess && estimateDelivery.Result is EstimatedDeliveryTimeDto.Response response)
+                        {
+                            order.TotalDistance = response.Elements.FirstOrDefault().Distance.Text;
+                            order.TotalDuration = response.Elements.FirstOrDefault().Duration.Text;   
+                        }
                     }
                 }
                 result.Result = new PagedResult<OrderWithFirstDetailResponse>

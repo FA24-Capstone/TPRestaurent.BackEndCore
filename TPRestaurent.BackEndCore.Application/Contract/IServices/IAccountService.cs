@@ -32,6 +32,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GetAccountsByRoleId(Guid Id, int pageNumber, int pageSize);
         Task<AppActionResult> GenerateOTP(string phoneNumber);
         Task<AppActionResult> UpdateAccount(UpdateAccountInfoRequest updateAccountRequest);
+        Task<AppActionResult> UpdateAccountImage(UpdateAccountImageRequest updateAccountImageRequest);
         Task<AppActionResult> DeleteAccount(Guid customerId);
         Task<AppActionResult> SendEmailForActiveCode(string email);
         Task<AppActionResult> GenerateCustomerInfoOTP(Account customerInfo, OTPType otpType);
