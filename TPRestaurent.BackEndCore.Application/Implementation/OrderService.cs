@@ -787,8 +787,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 await fireBaseService!.SendMulticastAsync(tokenList, "Nha hang co mot thong bao moi", messageBody);
                             }
-                            
-                            
+
+                            await _unitOfWork.SaveChangesAsync();
                         }
                         scope.Complete();
                     }
