@@ -201,6 +201,8 @@ public class SD
     {
         public static string LOAD_ORDER_SESIONS = "LOAD_ORDER_SESIONS";
         public static string LOAD_GROUPED_DISHES = "LOAD_GROUPED_DISHES";
+        public static string LOAD_ORDER_DETAIL_STATUS = "LOAD_ORDER_DETAIL_STATUS";
+
     }
 
     public class NotificationHeader

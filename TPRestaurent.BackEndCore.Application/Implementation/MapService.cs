@@ -12,6 +12,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
+using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
 using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
 
@@ -182,10 +183,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var startLat = await configuraitonRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LATITUDE);
                 var startLng = await configuraitonRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LNG);
 
-                var orderToDeliver = await orderRepository!.GetAllDataByExpression(o => orderIds.Contains(o.OrderId), 0, 0, null, false,
+                var orderToDeliver = await orderRepository!.GetAllDataByExpression(o => orderIds.Contains(o.OrderId) && o.OrderTypeId == OrderType.Delivery, 0, 0, null, false,
                     p => p.Account!,
                     p => p.Shipper!,
-                    p => p.Status!
+                    p => p.Status!,
+                    p => p.OrderType!
                     );
                 if (orderToDeliver.Items.Count() != orderIds.Count())
                 {
@@ -193,11 +195,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return result;
                 }
 
-                if (orderToDeliver.Items.Where(o => o.OrderTypeId != Domain.Enums.OrderType.Delivery || o.StatusId != Domain.Enums.OrderStatus.ReadyForDelivery || o.StatusId != Domain.Enums.OrderStatus.AssignedToShipper).Count() > 0)
-                {
-                    result = BuildAppActionResultError(result, $"Tồn tại ít nhất 1 id đơn hàng không tồn tại");
-                    return result;
-                }
+
 
                 List<(double Lat, double Lng)> coordinates = new List<(double Lat, double Lng)>();
                 foreach (var order in orderToDeliver.Items)
@@ -254,8 +252,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 optimalTripResponseDTO.OptimalTrip!.Add(new RouteNode
                                 {
                                     Index = currentWaypoint.WaypointIndex,
+                                    Order = delivery,
                                     AccountId = delivery.Account.Id,
-                                    Account = delivery.Account, 
                                     DistanceToNextDestination = currentTrip.Distance,
                                     Duration = currentTrip.Duration,
                                 });
