@@ -2003,6 +2003,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     orderSessionSet.Add(session.OrderSessionId);
                 }
+
+                await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
+
                 await _unitOfWork.SaveChangesAsync();
                 result.Result = orderDetailDb;
             }
@@ -2465,6 +2468,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
                     }
+
                     orderDb.ValidatingImg = upload.Result!.ToString();
                     if (!BuildAppActionResultIsError(result))
                     {

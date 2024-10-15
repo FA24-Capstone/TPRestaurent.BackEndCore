@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Transactions;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
@@ -13,26 +14,46 @@ using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
-    public class TokenService : GenericBackendService ,ITokenService
+    public class TokenService : GenericBackendService, ITokenService
     {
-        private readonly IGenericRepository<Token> _tokenRepository;  
+        private readonly IGenericRepository<Token> _tokenRepository;
         private IUnitOfWork _unitOfWork;
         public TokenService(IServiceProvider serviceProvider, IGenericRepository<Token> tokenRepository, IUnitOfWork unitOfWork) : base(serviceProvider)
         {
-            _tokenRepository = tokenRepository; 
-            _unitOfWork = unitOfWork;   
+            _tokenRepository = tokenRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<AppActionResult> EnableNotification(string deviceName, string token, string deviceToken, HttpContext httpContext)
         {
             var result = new AppActionResult();
-            try
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
+                try
+                {
+                    var tokenDb = await _tokenRepository.GetByExpression(p => p.AccessTokenValue == token, p => p.Account!);
+                    if (tokenDb == null)
+                    {
+                        return BuildAppActionResultError(result, $"Không tìm thấy token với {token}");
+                    }
 
-            }
-            catch (Exception ex) 
-            {
-                result = BuildAppActionResultError(result, ex.Message);
+                    var userIP = GetClientIpAddress(httpContext);
+
+                    tokenDb.DeviceName = deviceName;
+                    tokenDb.DeviceToken = deviceToken;
+                    tokenDb.DeviceIP = userIP;
+
+                    if (!BuildAppActionResultIsError(result))
+                    {
+                        await _tokenRepository.Update(tokenDb);
+                        await _unitOfWork.SaveChangesAsync();   
+                        scope.Complete();       
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result = BuildAppActionResultError(result, ex.Message);
+                }
             }
             return result;
         }
@@ -42,7 +63,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                result.Result = await _tokenRepository.GetAllDataByExpression(p => p.AccountId == accountId, pageNumber, pageSize, null, false , p => p.Account!);
+                result.Result = await _tokenRepository.GetAllDataByExpression(p => p.AccountId == accountId, pageNumber, pageSize, null, false, p => p.Account!);
             }
             catch (Exception ex)
             {
@@ -62,7 +83,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, $"Token này không tồn tại");
                 }
-                result.Result = tokenDb;    
+                result.Result = tokenDb;
             }
             catch (Exception ex)
             {
@@ -86,9 +107,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     foreach (var token in accountTokenList.Items)
                     {
-                        token.IsActive = false;     
+                        token.IsActive = false;
                         token.ExpiryTimeAccessToken = utility!.GetCurrentDateTimeInTimeZone();
-                        token.ExpiryTimeRefreshToken = utility.GetCurrentDateTimeInTimeZone();      
+                        token.ExpiryTimeRefreshToken = utility.GetCurrentDateTimeInTimeZone();
                     }
                 }
             }
@@ -111,7 +132,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 await _tokenRepository.DeleteRange(tokenDb!.Items!);
-                await _unitOfWork.SaveChangesAsync();   
+                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
