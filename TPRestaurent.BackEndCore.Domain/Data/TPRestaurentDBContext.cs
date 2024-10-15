@@ -1,4 +1,4 @@
-﻿using Castle.Core.Configuration;
+﻿            using Castle.Core.Configuration;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -46,6 +46,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.ComboOrderDetail> DishComboComboDetails { get; set; } = null!;
         public DbSet<Models.ComboOptionSet> ComboOptionSets { get; set; } = null!;
         public DbSet<Models.ConfigurationVersion> ConfigurationVersions { get; set; } = null!;
+        public DbSet<Models.NotificationMessage> NotificationMessages { get; set; } = null!;
         public DbSet<Models.EnumModels.OrderStatus> OrderStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.OTPType> OTPTypes { get; set; } = null!;
         public DbSet<Models.EnumModels.PaymentMethod> PaymentMethods { get; set; } = null!;
@@ -57,6 +58,8 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.EnumModels.OrderDetailStatus> OrderDetailStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.TransactionType> TransactionTypes { get; set; } = null!;
         public DbSet<Models.EnumModels.OrderSessionStatus> OrderSessionStatuses { get; set; } = null!;
+        
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -148,19 +151,19 @@ namespace TPRestaurent.BackEndCore.Domain.Data
                      .Build();
             return configuration.GetSection("VietnameseNames");
         }
-        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        //{
-        //    IConfiguration config = new ConfigurationBuilder()
-        //                   .SetBasePath(Directory.GetCurrentDirectory())
-        //                   .AddJsonFile("appsettings.json", true, true)
-        //                   .Build();
-        //    //string cs = config["ConnectionStrings:DB"];
-        //    //if (!optionsBuilder.IsConfigured)
-        //    //{
-        //    //    optionsBuilder.UseSqlServer(cs);
-        //    //}
-        //    optionsBuilder.UseSqlServer(
-        //    "server=.;database=TPRestaurent;uid=sa;pwd=12345;TrustServerCertificate=True;MultipleActiveResultSets=True;");
-        //}
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            IConfiguration config = new ConfigurationBuilder()
+                           .SetBasePath(Directory.GetCurrentDirectory())
+                           .AddJsonFile("appsettings.json", true, true)
+                           .Build();
+            //string cs = config["ConnectionStrings:DB"];
+            //if (!optionsBuilder.IsConfigured)
+            //{
+            //    optionsBuilder.UseSqlServer(cs);
+            //}
+            optionsBuilder.UseSqlServer(
+            "Server=tcp:tprestaurent.database.windows.net,1433;Initial Catalog=TPRestaurent;Persist Security Info=False;User ID=tprestaurentsa;Password=Tp06042003@;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+        }
     }
 }

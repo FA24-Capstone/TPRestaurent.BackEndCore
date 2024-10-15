@@ -196,4 +196,20 @@ public class SD
         public static string COUPON_PREFIX = "coupon/";
         public static string ORDER_PREFIX = "order/";
     }
+    
+    public class SignalMessages
+    {
+        public static string LOAD_ORDER_SESIONS = "LOAD_ORDER_SESIONS";
+        public static string LOAD_GROUPED_DISHES = "LOAD_GROUPED_DISHES";
+    }
+
+    public class NotificationHeader
+    {
+        public static string CREATE_ORDER_SESSION = "Thông báo cho nhà bếp";
+    }
+
+    public class RoleName
+    {
+        public static string ROLE_CHEF = "CHEF";
+    }
 }

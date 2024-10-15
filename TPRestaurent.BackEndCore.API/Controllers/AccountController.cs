@@ -119,6 +119,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.UpdateAccount(updateAccountRequest);  
         }
 
+        [HttpPut("update-account-image")]
+        public async Task<AppActionResult> UpdateAccountImage([FromForm]UpdateAccountImageRequest updateAccountImageRequest)
+        {
+            return await _accountService.UpdateAccountImage(updateAccountImageRequest); 
+        }
+
 
         [HttpDelete("delete-account")]
         public async Task<AppActionResult> DeleteAccount(Guid customerId)

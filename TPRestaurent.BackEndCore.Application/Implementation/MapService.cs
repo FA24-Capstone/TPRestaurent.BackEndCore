@@ -193,7 +193,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return result;
                 }
 
-                if (orderToDeliver.Items.Where(o => o.OrderTypeId != Domain.Enums.OrderType.Delivery || o.StatusId != Domain.Enums.OrderStatus.ReadyForDelivery).Count() > 0)
+                if (orderToDeliver.Items.Where(o => o.OrderTypeId != Domain.Enums.OrderType.Delivery || o.StatusId != Domain.Enums.OrderStatus.ReadyForDelivery || o.StatusId != Domain.Enums.OrderStatus.AssignedToShipper).Count() > 0)
                 {
                     result = BuildAppActionResultError(result, $"Tồn tại ít nhất 1 id đơn hàng không tồn tại");
                     return result;
