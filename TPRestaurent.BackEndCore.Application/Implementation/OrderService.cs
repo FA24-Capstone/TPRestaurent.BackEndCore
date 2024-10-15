@@ -2510,7 +2510,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 PagedResult<Order> data = new PagedResult<Order>();
                 if (orderStatus.HasValue && orderStatus > 0)
                 {
-                    data = await _repository.GetAllDataByExpression(o => o.StatusId == orderStatus && o.OrderTypeId == OrderType.Delivery, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                    data = await _repository.GetAllDataByExpression(o => o.StatusId == orderStatus && o.OrderTypeId == OrderType.Delivery && o.ShipperId == shipperId , pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
                        p => p.Status!,
                        p => p.Account!,
                        p => p.LoyalPointsHistory!,
@@ -2519,7 +2519,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else
                 {
-                    data = await _repository.GetAllDataByExpression(o => o.OrderTypeId == OrderType.Delivery, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                    data = await _repository.GetAllDataByExpression(o => o.OrderTypeId == OrderType.Delivery && o.ShipperId == shipperId, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
                       p => p.Status!,
                       p => p.Account!,
                       p => p.LoyalPointsHistory!,
@@ -2542,7 +2542,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
                         order.ItemLeft = orderDetailDb.Items.Count() - 1;
 
-                        var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.CustomerInfoAddressName == order.Account.Address);
+                        var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.AccountId == order.AccountId && p.IsCurrentUsed == true);
                         if (customerAddressDb == null)
                         {
                             return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {order.AccountId}");
