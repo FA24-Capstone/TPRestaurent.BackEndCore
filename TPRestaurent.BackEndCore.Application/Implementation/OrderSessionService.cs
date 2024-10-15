@@ -128,7 +128,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                             && o.OrderSession.OrderSessionStatusId != OrderSessionStatus.Cancelled
                                                                                             && o.OrderSession.OrderSessionStatusId != OrderSessionStatus.PreOrder
                                                                                             && (o.OrderDetailStatusId == OrderDetailStatus.Unchecked
-                                                                                            || o.OrderDetailStatusId == OrderDetailStatus.Processing),
+                                                                                                || o.OrderDetailStatusId == OrderDetailStatus.Processing)
+                                                                                            && (o.Order.OrderTypeId != OrderType.Delivery   
+                                                                                                || o.Order.OrderTypeId == OrderType.Delivery && o.Order.StatusId == OrderStatus.Processing),
                                                                                             0, 0, null, false, 
                                                                                             o => o.OrderDetailStatus,
                                                                                             o => o.Order.Shipper, 
