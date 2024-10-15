@@ -309,7 +309,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
                     var notificationMessageRepository = Resolve<IGenericRepository<NotificationMessage>>();
                     var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
-                    var roleRepository = Resolve<IGenericRepository<IdentityRole<string>>>();
+                    var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
                     var tokenRepostiory = Resolve<IGenericRepository<Token>>();
                     var hubService = Resolve<IHubServices.IHubServices>(); 
                     var mapService = Resolve<IMapService>();
@@ -734,6 +734,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         await orderSessionRepository.Insert(orderSession);
                         await _repository.Insert(order);
+                        await _unitOfWork.SaveChangesAsync();
+
                         if (orderRequestDto.DeliveryOrder != null || orderRequestDto.ReservationOrder != null)
                         {
                             var paymentRequest = new PaymentRequestDto
@@ -748,22 +750,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                             if (linkPaymentDb.Result != null && !string.IsNullOrEmpty(linkPaymentDb.Result.ToString()))
                             {
-                                orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
+                                orderWithPayment.PaymentLink = linkPaymentDb!.Result!.ToString();
                             }
 
                             await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
 
-                            var chefRole = await roleRepository.GetByExpression(p => p.Name == SD.RoleName.ROLE_CHEF);
-                            var userRole = await userRoleRepository.GetAllDataByExpression(p => p.RoleId == chefRole.ToString(), 0, 0, null, false, null);
+                            var chefRole = await roleRepository!.GetByExpression(p => p.Name == SD.RoleName.ROLE_CHEF);
+                            var userRole = await userRoleRepository!.GetAllDataByExpression(p => p.RoleId == chefRole.ToString(), 0, 0, null, false, null);
                             var tokenList = new List<string>();
                             foreach (var user in userRole.Items)
                             {
-                                var token = await tokenRepostiory.GetByExpression(p => p.AccountId == user.UserId);
-                                tokenList.Add(token.DeviceToken);
+                                var token = await tokenRepostiory!.GetByExpression(p => p.AccountId == user.UserId);
+                                tokenList.Add(token!.DeviceToken);
                             }
 
+
+
                             var messageBody =
-                                $"{orderDetails.Select(p => p.DishSizeDetail.Dish.Name)}: {orderDetails.Select(p => p.DishSizeDetail.DishSize.VietnameseName)} x{orderDetails.Select(p => p.Quantity)}";
+                                $"{orderDetails.Select(p => p.DishSizeDetail.Dish!.Name)}: {orderDetails.Select(p => p.DishSizeDetail.DishSize.VietnameseName)} x{orderDetails.Select(p => p.Quantity)}";
 
                             var notificationList = new List<NotificationMessage>();
                             foreach (var user in userRole.Items)
@@ -778,11 +782,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 notificationList.Add(notification);
                             }
 
-                            await notificationMessageRepository.InsertRange(notificationList);
-                            await fireBaseService.SendMulticastAsync(tokenList, "Nha hang co mot thong bao moi", messageBody);
+                            await notificationMessageRepository!.InsertRange(notificationList);
+                            if(tokenList.Count() > 0)
+                            {
+                                await fireBaseService!.SendMulticastAsync(tokenList, "Nha hang co mot thong bao moi", messageBody);
+                            }
                             
                             
-                            await _unitOfWork.SaveChangesAsync();
                         }
                         scope.Complete();
                     }
