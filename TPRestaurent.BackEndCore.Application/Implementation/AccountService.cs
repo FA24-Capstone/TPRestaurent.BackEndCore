@@ -147,6 +147,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         AccessTokenValue = tokenDto.Token!,
                         RefreshTokenValue = tokenDto.RefreshToken!,
                         IsActive = true,
+                        LastLogin = utility.GetCurrentDateTimeInTimeZone()
                     };
 
                     otpCodeDb!.IsUsed = true;

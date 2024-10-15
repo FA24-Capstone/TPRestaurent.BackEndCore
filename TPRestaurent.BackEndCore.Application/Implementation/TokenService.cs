@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
@@ -14,9 +16,39 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     public class TokenService : GenericBackendService ,ITokenService
     {
         private readonly IGenericRepository<Token> _tokenRepository;  
-        public TokenService(IServiceProvider serviceProvider, IGenericRepository<Token> tokenRepository) : base(serviceProvider)
+        private IUnitOfWork _unitOfWork;
+        public TokenService(IServiceProvider serviceProvider, IGenericRepository<Token> tokenRepository, IUnitOfWork unitOfWork) : base(serviceProvider)
         {
             _tokenRepository = tokenRepository; 
+            _unitOfWork = unitOfWork;   
+        }
+
+        public async Task<AppActionResult> EnableNotification(string deviceName, string token, string deviceToken, HttpContext httpContext)
+        {
+            var result = new AppActionResult();
+            try
+            {
+
+            }
+            catch (Exception ex) 
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetAllTokenByUser(string accountId, int pageNumber, int pageSize)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                result.Result = await _tokenRepository.GetAllDataByExpression(p => p.AccountId == accountId, pageNumber, pageSize, null, false , p => p.Account!);
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         }
 
         public async Task<AppActionResult> GetUserToken(string token)
@@ -65,6 +97,84 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
+        }
+
+        public async Task<AppActionResult> LogOutAllDevice(string accountId)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var tokenDb = await _tokenRepository.GetAllDataByExpression(p => p.AccountId == accountId, 0, 0, null, false, p => p.Account!);
+                if (tokenDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Danh sách token của tài khoản {accountId} không tồn tại");
+                }
+
+                await _tokenRepository.DeleteRange(tokenDb!.Items!);
+                await _unitOfWork.SaveChangesAsync();   
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public string GetClientIpAddress(HttpContext context)
+        {
+            string ip = null;
+
+            // Try to get IP from X-Forwarded-For header
+            var forwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(forwardedFor))
+            {
+                ip = forwardedFor.Split(',')[0].Trim();
+            }
+
+            // If not found, try X-Real-IP header
+            if (string.IsNullOrEmpty(ip) && context.Request.Headers.ContainsKey("X-Real-IP"))
+            {
+                ip = context.Request.Headers["X-Real-IP"].FirstOrDefault();
+            }
+
+            // If not found, try CF-Connecting-IP header (Cloudflare)
+            if (string.IsNullOrEmpty(ip) && context.Request.Headers.ContainsKey("CF-Connecting-IP"))
+            {
+                ip = context.Request.Headers["CF-Connecting-IP"].FirstOrDefault();
+            }
+
+            // If still not found, use RemoteIpAddress
+            if (string.IsNullOrEmpty(ip) && context.Connection.RemoteIpAddress != null)
+            {
+                ip = context.Connection.RemoteIpAddress.ToString();
+            }
+
+            // If IP is a loopback address, try to get the local IP
+            if (string.IsNullOrEmpty(ip) || ip == "::1")
+            {
+                ip = GetLocalIpAddress();
+            }
+
+            // If still empty, return UNKNOWN
+            if (string.IsNullOrEmpty(ip))
+            {
+                ip = "UNKNOWN";
+            }
+
+            return ip;
+        }
+
+        private string GetLocalIpAddress()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ipAddress in host.AddressList)
+            {
+                if (ipAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                {
+                    return ipAddress.ToString();
+                }
+            }
+            return string.Empty;
         }
     }
 }
