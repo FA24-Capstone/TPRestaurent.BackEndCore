@@ -2004,7 +2004,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     orderSessionSet.Add(session.OrderSessionId);
                 }
 
-                await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+                await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
 
                 await _unitOfWork.SaveChangesAsync();
                 result.Result = orderDetailDb;
