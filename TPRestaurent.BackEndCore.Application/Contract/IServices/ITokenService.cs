@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,5 +12,8 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
     {
         Task<AppActionResult> GetUserToken(string token);
         Task<AppActionResult> InvalidateTokensForUser(string accountId);
+        Task<AppActionResult> GetAllTokenByUser(string accountId, int pageNumber, int pageSize);
+        Task<AppActionResult> LogOutAllDevice(string accountId);
+        Task<AppActionResult> EnableNotification(string deviceName, string token, string deviceToken ,HttpContext httpContext);
     }
 }
