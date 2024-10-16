@@ -14,6 +14,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> InvalidateTokensForUser(string accountId);
         Task<AppActionResult> GetAllTokenByUser(string accountId, int pageNumber, int pageSize);
         Task<AppActionResult> LogOutAllDevice(string accountId);
-        Task<AppActionResult> EnableNotification(string deviceName, string token, string deviceToken ,HttpContext httpContext);
+        Task<AppActionResult> EnableNotification(string deviceToken ,HttpContext httpContext);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,13 +25,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<AppActionResult> EnableNotification(string deviceName, string token, string deviceToken, HttpContext httpContext)
+        public async Task<AppActionResult> EnableNotification(string deviceToken, HttpContext httpContext)
         {
             var result = new AppActionResult();
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
                 try
                 {
+                    var headers = httpContext.Request.Headers;
+
+                    string userAgent = headers["User-Agent"].ToString();
+                    string deviceName = ParseDeviceNameFromUserAgent(userAgent);
+                    string token = ExtractJwtToken(headers["Authorization"]);
+
                     var tokenDb = await _tokenRepository.GetByExpression(p => p.AccessTokenValue == token, p => p.Account!);
                     if (tokenDb == null)
                     {
@@ -57,6 +64,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
 
         public async Task<AppActionResult> GetAllTokenByUser(string accountId, int pageNumber, int pageSize)
         {
@@ -185,6 +193,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return ip;
         }
 
+        private string ParseDeviceNameFromUserAgent(string userAgent)
+        {
+            if (userAgent.Contains("Windows"))
+                return "Windows PC";
+            else if (userAgent.Contains("Macintosh"))
+                return "Mac";
+            else if (userAgent.Contains("iPhone"))
+                return "iPhone";
+            else if (userAgent.Contains("Android"))
+                return "Android Device";
+            else
+                return "Unknown Device";
+        }
+
         private string GetLocalIpAddress()
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
@@ -196,6 +218,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
             }
             return string.Empty;
+        }
+
+        private string ExtractJwtToken(string authorizationHeader)
+        {
+            if (string.IsNullOrEmpty(authorizationHeader))
+            {
+                return null;
+            }
+
+            string[] parts = authorizationHeader.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 2 && parts[0].Equals("Bearer", StringComparison.OrdinalIgnoreCase))
+            {
+                return parts[1];
+            }
+
+            return null;
         }
     }
 }
