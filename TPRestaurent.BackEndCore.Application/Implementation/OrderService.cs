@@ -234,6 +234,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         else if (orderDb.StatusId == OrderStatus.ReadyForDelivery)
                         {
                             orderDb.StatusId = IsSuccessful ? OrderStatus.AssignedToShipper : OrderStatus.Cancelled;
+                            if (IsSuccessful)
+                            {
+                                orderDb.AssignedTime = utility.GetCurrentDateTimeInTimeZone();
+                            }
                         }
                         else if (orderDb.StatusId == OrderStatus.AssignedToShipper)
                         {
