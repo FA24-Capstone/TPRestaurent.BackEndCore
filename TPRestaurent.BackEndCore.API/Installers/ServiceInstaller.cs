@@ -39,5 +39,6 @@ public class ServiceInstaller : IInstaller
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IDishManagementService, DishManagementService>();
         services.AddScoped<IOrderSessionService, OrderSessionService>();
+        services.AddScoped<INotificationMessageService, NotificationMessageService>();
     }
 }

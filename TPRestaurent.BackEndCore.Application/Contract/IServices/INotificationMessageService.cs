@@ -5,4 +5,5 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices;
 public interface INotificationMessageService
 {
     Task<AppActionResult> GetNotificationMessageById(Guid notifiId);
+    Task<AppActionResult> GetNotificationMessageByAccountId(string accountId);
 }
