@@ -32,5 +32,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _tokenService.EnableNotification(deviceToken, HttpContext);
         }
+
+        [HttpDelete("delete-token")]
+        public async Task<AppActionResult> DeleteTokenById(Guid tokenId)
+        {
+            return await _tokenService.DeleteTokenById(tokenId);
+        }
     }
 }
