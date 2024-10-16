@@ -14,6 +14,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         [Key]
         public Guid OrderId { get; set; }
         public DateTime OrderDate { get; set; }
+        public DateTime? AssignedTime { get; set; }
         public DateTime? StartDeliveringTime { get; set; }
         public DateTime? DeliveredTime { get; set; }
         public DateTime? ReservationDate { get; set; }   
