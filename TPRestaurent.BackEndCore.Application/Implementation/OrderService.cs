@@ -207,6 +207,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     else if (orderDb.OrderTypeId == OrderType.Delivery)
                     {
+                        var utility = Resolve<Utility>();
                         if (orderDb.StatusId == OrderStatus.Pending)
                         {
                             if (IsSuccessful)
@@ -237,10 +238,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         else if (orderDb.StatusId == OrderStatus.AssignedToShipper)
                         {
                             orderDb.StatusId = IsSuccessful ? OrderStatus.Delivering : OrderStatus.Cancelled;
+                            if (IsSuccessful)
+                            {
+                                orderDb.StartDeliveringTime = utility.GetCurrentDateTimeInTimeZone();
+                            }
                         }
                         else if (orderDb.StatusId == OrderStatus.Delivering)
                         {
                             orderDb.StatusId = IsSuccessful ? OrderStatus.Completed : OrderStatus.Cancelled;
+                            if (IsSuccessful)
+                            {
+                                orderDb.DeliveredTime = utility.GetCurrentDateTimeInTimeZone();
+                            }
                         }
                         else
                         {
@@ -770,6 +779,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 $"{orderDetails.Select(p => p.DishSizeDetail.Dish!.Name)}: {orderDetails.Select(p => p.DishSizeDetail.DishSize.VietnameseName)} x{orderDetails.Select(p => p.Quantity)}";
 
                             var notificationList = new List<NotificationMessage>();
+                            var currentTime = utility.GetCurrentDateTimeInTimeZone();
                             foreach (var user in userRole.Items)
                             {
                                 var notification = new NotificationMessage
@@ -777,6 +787,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     NotificationId = Guid.NewGuid(),
                                     NotificationName = "Nha hang co mot thong bao moi",
                                     Messages = messageBody,
+                                    NotifyTime = currentTime,
                                     AccountId = user.UserId,
                                 };
                                 notificationList.Add(notification);
@@ -827,7 +838,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         p => p.Status!,
                         p => p.Account!,
                         p => p.LoyalPointsHistory!,
-                        p => p.OrderType!
+                        p => p.OrderType!,
+                        p => p.Shipper
                         );
                 }
                 data.Items = data.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
@@ -1157,7 +1169,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                      p => p.Status!,
                                                                      p => p.Account!,
                                                                      p => p.LoyalPointsHistory!,
-                                                                     p => p.OrderType!
+                                                                     p => p.OrderType!,
+                                                                     p => p.Shipper
                      );
                     orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
@@ -1178,7 +1191,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                      p => p.Status!,
                                                                      p => p.Account!,
                                                                      p => p.LoyalPointsHistory!,
-                                                                     p => p.OrderType!
+                                                                     p => p.OrderType!,
+                                                                     p => p.Shipper
                      );
                     orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
@@ -1200,7 +1214,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                      p => p.Status!,
                                                                      p => p.Account!,
                                                                      p => p.LoyalPointsHistory!,
-                                                                     p => p.OrderType!
+                                                                     p => p.OrderType!,
+                                                                     p => p.Shipper
                      );
                     orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
@@ -1224,8 +1239,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             p => p.Account!,
                             p => p.LoyalPointsHistory!,
                             p => p.OrderType!,
-                            p => p.OrderType!
-                        );
+                            p => p.Shipper);
+
                     orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
                     foreach (var order in mappedData)
@@ -1287,7 +1302,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                       p => p.Status!,
                       p => p.Account!,
                       p => p.LoyalPointsHistory!,
-                      p => p.OrderType!
+                      p => p.OrderType!,
+                      p => p.Shipper
                       );
                 }
 
@@ -2085,7 +2101,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                 && r.Order.OrderTypeId == OrderType.Reservation, 0, 0, r => r.Order!.ReservationDate, true, null);
                 if (nearReservationDb.Items.Count > 0)
                 {
-                    result = await GetAllReservationDetail(nearReservationDb.Items[0].OrderId);
+                    result = await GetAllOrderDetail(nearReservationDb.Items[0].OrderId);
                 }
             }
             catch (Exception ex)
@@ -2099,7 +2115,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             try
             {
-                var order = await _repository.GetByExpression(r => r.OrderId == orderId, r => r.Account!);
+                var order = await _repository.GetByExpression(r => r.OrderId == orderId, r => r.Account!, r => r.Shipper);
                 if (order == null)
                 {
                     return BuildAppActionResultError(new AppActionResult(), $"Không tìm thấy thông tin đặt bàn với id {orderId}");
@@ -2207,11 +2223,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             };
         }
 
-        public async Task<AppActionResult> GetAllReservationDetail(Guid reservationId)
+        public async Task<AppActionResult> GetAllOrderDetail(Guid reservationId)
         {
             try
             {
-                var order = await _repository.GetByExpression(r => r.OrderId == reservationId, r => r.Account);
+                var order = await _repository.GetByExpression(r => r.OrderId == reservationId, r => r.Account, r => r.Shipper);
                 if (order == null)
                 {
                     return BuildAppActionResultError(new AppActionResult(), $"Không tìm thấy thông tin đặt bàn với id {reservationId}");
@@ -2240,7 +2256,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var data = new ReservationReponse
                 {
-                    Order = orderResponse,
+                    Order = await AssignEstimatedTimeToOrder(orderResponse),
                     OrderTables = reservationTableDetails,
                     OrderDishes = reservationDishes
                 };
@@ -2529,7 +2545,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                       p => p.Status!,
                       p => p.Account!,
                       p => p.LoyalPointsHistory!,
-                      p => p.OrderType!
+                      p => p.OrderType!,
+                      p => p.Shipper
                       );
                 }
 
@@ -2653,6 +2670,46 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
 
+        }
+
+        private async Task<OrderResponse> AssignEstimatedTimeToOrder(OrderResponse order)
+        {
+            try
+            {
+                var customerInfoRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var mapService = Resolve<IMapService>();
+                var startLatConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LATITUDE);
+                var startLngConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LNG);
+
+                var startLat = Double.Parse(startLatConfig.CurrentValue);
+                var startLng = Double.Parse(startLngConfig.CurrentValue);
+
+                double[] startDestination = new double[2];
+                startDestination[0] = startLat;
+                startDestination[1] = startLng;
+
+                var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.AccountId == order.AccountId && p.IsCurrentUsed == true);
+                if (customerAddressDb == null)
+                {
+                    return null;
+                }
+
+                double[] endDestination = new double[2];
+                endDestination[0] = customerAddressDb.Lat;
+                endDestination[1] = customerAddressDb.Lng;
+
+                var estimateDelivery = await mapService!.GetEstimateDeliveryResponse(startDestination, endDestination);
+                if (estimateDelivery.IsSuccess && estimateDelivery.Result is EstimatedDeliveryTimeDto.Response response)
+                {
+                    order.TotalDistance = response.Elements.FirstOrDefault().Distance.Text;
+                    order.TotalDuration = response.Elements.FirstOrDefault().Duration.Text;
+                }
+            } catch(Exception ex)
+            {
+
+            }
+            return order;
         }
     }
 }

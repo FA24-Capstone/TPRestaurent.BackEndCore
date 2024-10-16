@@ -533,7 +533,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (transactionDb.OrderId.HasValue)
                 {
                     var orderService = Resolve<IOrderService>();
-                    var order = await orderService.GetAllReservationDetail(transactionDb.OrderId.Value);
+                    var order = await orderService.GetAllOrderDetail(transactionDb.OrderId.Value);
                     data.Order = order.Result as ReservationReponse;
                 }
                 result.Result = data;

@@ -22,7 +22,8 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public DateTime OrderDate { get; set; }
         public DateTime? DepositPaidDate   { get; set; }
         public DateTime? OrderPaidDate   { get; set; }
-        public DateTime? DeliveryTime { get; set; }
+        public DateTime? StartDeliveringTime { get; set; }
+        public DateTime? DeliveredTime { get; set; }
         public DateTime? ReservationDate { get; set; }
         public DateTime? MealTime { get; set; }
         public DateTime? EndTime { get; set; }
@@ -45,6 +46,9 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public bool? IsPrivate { get; set; }
         public Transaction? Transaction { get; set; }
         public string? ValidatingImg { get; set; }
+        public Account? Shipper { get; set; }
+        public string? TotalDistance { get; set; }
+        public string? TotalDuration { get; set; }
 
     }
 

@@ -218,7 +218,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 waypoints.Remove(waypoints.Length - 1, 1);
-                string endpoint = $"https://rsapi.goong.io/trip?origin={start}&waypoints={waypoints.ToString()}&api_key={APIKEY}";
+                string endpoint = $"https://rsapi.goong.io/trip?origin={start}&waypoints={waypoints.ToString()}&vehicle=bike&api_key={APIKEY}";
 
                 var client = new RestClient();
                 var request = new RestRequest(endpoint);
@@ -253,8 +253,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     Index = currentWaypoint.WaypointIndex,
                                     Order = delivery,
                                     AccountId = delivery.Account.Id,
-                                    DistanceToNextDestination = currentTrip.Distance,
-                                    Duration = currentTrip.Duration,
+                                    DistanceToNextDestination = $"{Math.Round(currentTrip.Distance / 100) / 10} km",
+                                    Duration = $"{Math.Round(currentTrip.Duration / 60)} phút",
                                 });
                             }
                         }
