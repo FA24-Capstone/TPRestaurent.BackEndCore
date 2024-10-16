@@ -130,6 +130,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var tokenDto = result.Result as TokenDto;
 
+                var headers = httpContext.Request.Headers;
+                string userAgent = headers["User-Agent"].ToString();
+                string deviceName = ParseDeviceNameFromUserAgent(userAgent);
+
                 if (tokenDto != null)
                 {
                     // Create Token object
@@ -142,12 +146,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         CreateRefreshToken = utility.GetCurrentDateTimeInTimeZone(),
                         ExpiryTimeAccessToken = utility.GetCurrentDateTimeInTimeZone().AddDays(30),
                         ExpiryTimeRefreshToken = utility.GetCurrentDateTimeInTimeZone().AddDays(30),
-                        DeviceName = string.Empty,
+                        DeviceName = deviceName,
                         DeviceToken = string.Empty,
                         AccessTokenValue = tokenDto.Token!,
                         RefreshTokenValue = tokenDto.RefreshToken!,
                         IsActive = true,
-                        LastLogin = utility.GetCurrentDateTimeInTimeZone()
+                        LastLogin = utility.GetCurrentDateTimeInTimeZone(),
+                        
                     };
 
                     otpCodeDb!.IsUsed = true;
@@ -1786,5 +1791,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+        private string ParseDeviceNameFromUserAgent(string userAgent)
+        {
+            if (userAgent.Contains("Windows"))
+                return "Windows PC";
+            else if (userAgent.Contains("Macintosh"))
+                return "Mac";
+            else if (userAgent.Contains("iPhone"))
+                return "iPhone";
+            else if (userAgent.Contains("Android"))
+                return "Android Device";
+            else
+                return "Unknown Device";
+        }
+
     }
 }
