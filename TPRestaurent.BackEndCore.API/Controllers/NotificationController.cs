@@ -15,12 +15,19 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class NotificationController : ControllerBase
     {
         private IFirebaseService _firebase;
+        private INotificationMessageService _notificationMessageService;
 
-        public NotificationController(IFirebaseService firebase)
+        public NotificationController(IFirebaseService firebase, INotificationMessageService notificationMessageService)
         {
             _firebase = firebase;
+            _notificationMessageService = notificationMessageService;
         }
 
+        [HttpGet("get-all-notification-by-account-id/{accountId}")]
+        public async Task<AppActionResult> GetNotificationByAccountId(string accountId)
+        {
+            return await _notificationMessageService.GetNotificationMessageByAccountId(accountId);
+        }
       
         [HttpPost("send")]
         public async Task<IActionResult> SendNotification([FromBody] NotificationRequest request)

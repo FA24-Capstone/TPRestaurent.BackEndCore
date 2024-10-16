@@ -14,6 +14,21 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
         _repository = repository;
     }
 
+    public async Task<AppActionResult> GetNotificationMessageByAccountId(string accountId)
+    {
+        AppActionResult result = new AppActionResult();
+        try
+        {
+            var notificationDb = await _repository.GetAllDataByExpression(n => n.AccountId.Equals(accountId), 0, 0, n => n.NotifyTime, false, null);
+            result.Result = notificationDb;
+        }
+        catch (Exception ex)
+        {
+            result = BuildAppActionResultError(result, ex.Message);
+        }
+        return result;
+    }
+
     public async Task<AppActionResult> GetNotificationMessageById(Guid notifiId)
     {
         var result = new AppActionResult();
