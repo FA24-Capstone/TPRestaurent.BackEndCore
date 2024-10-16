@@ -236,6 +236,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     TripInfo.Leg currentTrip = null;
                     TripInfo.Waypoint currentWaypoint = null;
                     obj.Waypoints = obj.Waypoints.OrderBy(o => o.WaypointIndex).ToList();
+
+                    HashSet<Guid> includedOrderIds = new HashSet<Guid>();
+
                     for (int i = 0; i < obj.Trips[0].Legs.Count; i++)
                     {
                         currentTrip = obj.Trips[0].Legs[i];
@@ -245,17 +248,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                   && Math.Abs((double)(currentWaypoint.Location[1] - p.Lng)) <= 0.001))!;
                         if (customerInfoAddress != null)
                         {
-                            var delivery = orderToDeliver.Items.FirstOrDefault(p => customerInfoAddress.CustomerInfoAddressName.Contains(p.Account!.Address!) || p.Account!.Address.Contains(customerInfoAddress.CustomerInfoAddressName));
-                            if (delivery != null)
+                            var delivery = orderToDeliver.Items.Where(p => customerInfoAddress.CustomerInfoAddressName.Contains(p.Account!.Address!) || p.Account!.Address.Contains(customerInfoAddress.CustomerInfoAddressName)
+                                                                        && !includedOrderIds.Contains(p.OrderId)).ToList();
+                            if (delivery != null && delivery.Count() > 0)
                             {
                                 optimalTripResponseDTO.OptimalTrip!.Add(new RouteNode
                                 {
                                     Index = currentWaypoint.WaypointIndex,
-                                    Order = delivery,
-                                    AccountId = delivery.Account.Id,
+                                    Orders = delivery,
+                                    AccountId = delivery.FirstOrDefault().Account.Id,
                                     DistanceToNextDestination = $"{Math.Round(currentTrip.Distance / 100) / 10} km",
                                     Duration = $"{Math.Round(currentTrip.Duration / 60)} phút",
                                 });
+
+                                foreach (var item in delivery)
+                                {
+                                    includedOrderIds.Add(item.OrderId);
+                                }
                             }
                         }
                     }

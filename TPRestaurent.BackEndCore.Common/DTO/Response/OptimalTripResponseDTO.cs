@@ -18,7 +18,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
     {
         public int Index { get; set; }
         public string AccountId { get; set; } = null!;
-        public Order Order { get; set; } = null!;
+        public List<Order> Orders { get; set; } = null!;
         public string Duration { get; set; }
         public string DistanceToNextDestination { get; set; }
     }
