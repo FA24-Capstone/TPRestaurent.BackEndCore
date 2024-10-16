@@ -53,8 +53,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (!BuildAppActionResultIsError(result))
                     {
                         await _tokenRepository.Update(tokenDb);
-                        await _unitOfWork.SaveChangesAsync();   
-                        scope.Complete();       
+                        await _unitOfWork.SaveChangesAsync();
+                        scope.Complete();
                     }
                 }
                 catch (Exception ex)
@@ -149,6 +149,29 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> DeleteTokenById(Guid tokenId)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var tokenDb = await _tokenRepository.GetByExpression(p => p.TokenId == tokenId);
+                if (tokenDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Token với id {tokenId} không tồn tại");
+                }
+                else
+                {
+                    await _tokenRepository.DeleteById(tokenId);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
         public string GetClientIpAddress(HttpContext context)
         {
             string ip = null;
@@ -235,5 +258,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             return null;
         }
+
+
     }
 }
