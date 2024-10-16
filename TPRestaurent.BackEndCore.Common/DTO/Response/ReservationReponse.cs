@@ -22,6 +22,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public DateTime OrderDate { get; set; }
         public DateTime? DepositPaidDate   { get; set; }
         public DateTime? OrderPaidDate   { get; set; }
+        public DateTime? AssignedTime { get; set; }
         public DateTime? StartDeliveringTime { get; set; }
         public DateTime? DeliveredTime { get; set; }
         public DateTime? ReservationDate { get; set; }
