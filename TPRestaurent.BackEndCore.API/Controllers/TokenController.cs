@@ -27,6 +27,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _tokenService.LogOutAllDevice(accountId);  
         }
 
+        [HttpPost("get-user-token-by-ip-and-account-id")]
+        public async Task<AppActionResult> GetUserTokenByIpAndAccountId(string ipAddress, string accountId)
+        {
+            return await _tokenService.GetUserTokenByIpAndAccountId(ipAddress, accountId);
+        }
+
         [HttpPost("enable-notification")]
         public async Task<AppActionResult> EnableNotification(string deviceToken)
         {

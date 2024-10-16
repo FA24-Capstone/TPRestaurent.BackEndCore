@@ -16,5 +16,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> LogOutAllDevice(string accountId);
         Task<AppActionResult> EnableNotification(string deviceToken ,HttpContext httpContext);
         Task<AppActionResult> DeleteTokenById(Guid tokenId);
+        Task<AppActionResult> GetUserTokenByIpAndAccountId(string ipAddress, string accountId);
     }
 }
