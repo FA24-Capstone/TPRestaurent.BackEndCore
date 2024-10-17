@@ -812,7 +812,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await notificationMessageRepository!.InsertRange(notificationList);
                             if(tokenList.Count() > 0)
                             {
-                                await fireBaseService!.SendMulticastAsync(tokenList, "Nha hang co mot thong bao moi", messageBody);
+                                await fireBaseService!.SendMulticastAsync(tokenList, "Nhà hàng có một thông báo mới", messageBody);
                             }
 
                             await _unitOfWork.SaveChangesAsync();
@@ -2492,8 +2492,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         await _repository.UpdateRange(orderList);
                         await _unitOfWork.SaveChangesAsync();
-                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
                         scope.Complete();
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
                     }
                 }
                 catch (Exception ex)
