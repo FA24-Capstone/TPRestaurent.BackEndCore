@@ -781,7 +781,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }                            
 
                             var chefRole = await roleRepository!.GetByExpression(p => p.Name == SD.RoleName.ROLE_CHEF);
-                            var userRole = await userRoleRepository!.GetAllDataByExpression(p => p.RoleId == chefRole.ToString(), 0, 0, null, false, null);
+                            var userRole = await userRoleRepository!.GetAllDataByExpression(p => p.RoleId == chefRole.Id.ToString(), 0, 0, null, false, null);
                             var tokenList = new List<string>();
                             foreach (var user in userRole.Items)
                             {
@@ -1721,6 +1721,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return collidedTables;
         }
+
+        [Hangfire.Queue("cancel-over-reservation")]
         public async Task CancelOverReservation()
         {
             var utility = Resolve<Utility>();
@@ -1759,6 +1761,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             Task.CompletedTask.Wait();
         }
 
+        [Hangfire.Queue("update-order-status-before-meal-time")]
         public async Task UpdateOrderStatusBeforeMealTime()
         {
             var utility = Resolve<Utility>();
@@ -1783,6 +1786,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             Task.CompletedTask.Wait();
         }
 
+        [Hangfire.Queue("update-order-detail-status-before-dining")]
         public async Task UpdateOrderDetailStatusBeforeDining()
         {
             var utility = Resolve<Utility>();
@@ -2630,6 +2634,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        [Hangfire.Queue("cancel-reservation")]
         public async Task CancelReservation()
         {
             var utility = Resolve<Utility>();
