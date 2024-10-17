@@ -758,10 +758,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await orderSessionRepository.Insert(orderSession);
                         await _repository.Insert(order);
                         await _unitOfWork.SaveChangesAsync();
+                        
+                        if(order.OrderTypeId != OrderType.Reservation)
+                        {
 
-                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
-                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
-                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
+                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
+                        }
 
                         if (orderRequestDto.DeliveryOrder != null || orderRequestDto.ReservationOrder != null)
                         {
@@ -788,8 +792,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 var token = await tokenRepostiory!.GetByExpression(p => p.AccountId == user.UserId);
                                 tokenList.Add(token!.DeviceToken);
                             }
-
-
 
                             var messageBody =
                                 $"{orderDetails.Select(p => p.DishSizeDetail.Dish!.Name)}: {orderDetails.Select(p => p.DishSizeDetail.DishSize.VietnameseName)} x{orderDetails.Select(p => p.Quantity)}";
@@ -2749,6 +2751,34 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
             }
             return order;
+        }
+
+        public async Task<AppActionResult> UpdateOrderDetailStatusForce(List<Guid> orderDetailIds, OrderDetailStatus status)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => orderDetailIds.Contains(p.OrderDetailId), 0, 0, null, false, null);
+                if (orderDetailDb.Items.Count != orderDetailIds.Count)
+                {
+                    return BuildAppActionResultError(result, $"Tồn tại id gọi món hông nằm trong hệ thống");
+                }
+
+                if (orderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.Reserved || o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
+                {
+                    return BuildAppActionResultError(result, $"Các chi tiết đơn hàng không thể cập nhật trạng thái v2i đều không ở trạn thái chờ hay đang xừ lí");
+                }
+
+                orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = OrderDetailStatus.ReadyToServe);
+                await orderDetailRepository.UpdateRange(orderDetailDb.Items);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         }
     }
 }
