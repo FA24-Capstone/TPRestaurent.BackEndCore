@@ -172,24 +172,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetUserTokenByIpAndAccountId(string ipAddress, string accountId)
+        public async Task<AppActionResult> GetUserTokenByIp(HttpContext httpContext)
         {
             var result = new AppActionResult();
             try
             {
-                var accountRepositroy = Resolve<IGenericRepository<Account>>();
-                var accountDb = await accountRepositroy!.GetByExpression(p => p.Id == accountId);
-                if (accountDb == null)
+                var headers = httpContext.Request.Headers;
+
+                string userAgent = headers["User-Agent"].ToString();
+                string deviceName = ParseDeviceNameFromUserAgent(userAgent);
+                string accessToken = ExtractJwtToken(headers["Authorization"]);
+
+                var userIP = GetClientIpAddress(httpContext);
+
+                var tokenDb = await _tokenRepository.GetByExpression(p => p.AccessTokenValue == accessToken && p.DeviceIP == userIP, p => p.Account!);
+                if (tokenDb == null)
                 {
-                    return BuildAppActionResultError(result, $"Tài khoản với id {accountId} không tồn tại");
+                    return BuildAppActionResultError(result, $"Không tìm thấy token ");
                 }
 
-                var tokenDb = await _tokenRepository.GetAllDataByExpression(p => p.DeviceIP == ipAddress && p.AccountId == accountId, 0, 0, null, false, p => p.Account!);
-                if (tokenDb == null) 
-                { 
-                    return BuildAppActionResultError(result, $"Token này không tồn tại");
-                }
-                result.Result = tokenDb;    
+                result.Result = tokenDb;
             }
             catch (Exception ex)
             {

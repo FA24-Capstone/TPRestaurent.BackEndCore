@@ -27,6 +27,55 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.InstallerServicesInAssembly(builder.Configuration);
 
+builder.Services.AddHangfireServer(options =>
+{
+    options.ServerName = string.Format("{0}:order", Environment.MachineName);
+    options.Queues = new[] { "update-order-status-before-meal-time" };
+    options.WorkerCount = 5;
+});
+
+builder.Services.AddHangfireServer(options =>
+{
+    options.ServerName = $"{Environment.MachineName}:order";
+    options.Queues = new[] { "update-order-status-before-meal-time" };
+    options.WorkerCount = 5;
+});
+
+builder.Services.AddHangfireServer(options =>
+{
+    options.ServerName = $"{Environment.MachineName}:order";
+    options.Queues = new[] { "update-order-status-before-meal-time" };
+    options.WorkerCount = 5;
+});
+
+builder.Services.AddHangfireServer(options =>
+{
+    options.ServerName = $"{Environment.MachineName}:order";
+    options.Queues = new[] { "update-order-detail-status-before-dining" };
+    options.WorkerCount = 5;
+});
+
+builder.Services.AddHangfireServer(options =>
+{
+    options.ServerName = $"{Environment.MachineName}:store-credit";
+    options.Queues = new[] { "change-over-due-store-credit" };
+    options.WorkerCount = 5;
+});
+
+builder.Services.AddHangfireServer(options =>
+{
+    options.ServerName = $"{Environment.MachineName}:account";
+    options.Queues = new[] { "cdelete-overdue-otp" };
+    options.WorkerCount = 5;
+});
+
+builder.Services.AddHangfireServer(options =>
+{
+    options.ServerName = $"{Environment.MachineName}:order";
+    options.Queues = new[] { "cancel-reservation" };
+    options.WorkerCount = 5;
+});
+
 var app = builder.Build();
 
 app.UseSwagger(op => op.SerializeAsV2 = false);
@@ -50,6 +99,8 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
     Authorization = new[] { new DashboardNoAuthorizationFilter() }
 }); ;
+
+
 
 using (var scope = app.Services.CreateScope())
 {
