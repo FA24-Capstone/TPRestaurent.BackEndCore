@@ -101,7 +101,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
         }
 
-        public async Task<List<string>> SendMulticastAsync(List<string> deviceTokens, string title, string body,AppActionResult data = null)
+        public async Task<List<string>> SendMulticastAsync(List<string> deviceTokens, string title, string body, AppActionResult data = null)
         {
             var message = new MulticastMessage
             {
