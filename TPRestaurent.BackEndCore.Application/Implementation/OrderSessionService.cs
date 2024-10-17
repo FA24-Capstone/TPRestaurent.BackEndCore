@@ -60,12 +60,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                 var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
-                var orderSessionDb = await _orderSessionRepository.GetAllDataByExpression(s => (orderSessionStatus.HasValue && s.OrderSessionStatusId == orderSessionStatus)
+                var existOrderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderSessionId.HasValue, 0, 0, null, false, null);
+                var existOrderSessionId = existOrderDetailDb.Items.Select(o => o.OrderSessionId.Value);
+                var orderSessionDb = await _orderSessionRepository.GetAllDataByExpression(s => ((orderSessionStatus.HasValue && s.OrderSessionStatusId == orderSessionStatus)
                                                                                       || (!orderSessionStatus.HasValue
                                                                                           && (s.OrderSessionStatusId != OrderSessionStatus.Completed
                                                                                               || s.OrderSessionStatusId != OrderSessionStatus.Cancelled
                                                                                               || s.OrderSessionStatusId != OrderSessionStatus.PreOrder)
-                                                                                         ),
+                                                                                         )) && existOrderSessionId.Contains(s.OrderSessionId),
                                                                                     pageNumber, pageSize, s => s.OrderSessionTime, false, s => s.OrderSessionStatus!);
                 var orderSessionResponseList = new List<OrderSessionResponse>();
                 if (orderSessionDb!.Items!.Count == 0 && orderSessionDb.Items != null)
@@ -112,7 +114,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                    
                 }
-                result.Result = orderSessionResponseList;
+                result.Result = new PagedResult<OrderSessionResponse>
+                {
+                    Items = orderSessionResponseList,
+                    TotalPages = orderSessionDb.TotalPages
+                };
             }
             catch (Exception ex)
             {
