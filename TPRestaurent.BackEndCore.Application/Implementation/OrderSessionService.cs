@@ -62,7 +62,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
                 var existOrderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderSessionId.HasValue, 0, 0, null, false, null);
                 var existOrderSessionId = existOrderDetailDb.Items.Select(o => o.OrderSessionId.Value);
-                var orderSessionDb = await _orderSessionRepository.GetAllDataByExpression(s => ((orderSessionStatus.HasValue && s.OrderSessionStatusId == orderSessionStatus)
+                var orderSessionDb = await _orderSessionRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
+                var displayOrderSessionDb = await _orderSessionRepository.GetAllDataByExpression(s => ((orderSessionStatus.HasValue && s.OrderSessionStatusId == orderSessionStatus)
                                                                                       || (!orderSessionStatus.HasValue
                                                                                           && (s.OrderSessionStatusId != OrderSessionStatus.Completed
                                                                                               || s.OrderSessionStatusId != OrderSessionStatus.Cancelled
@@ -70,14 +71,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                          )) && existOrderSessionId.Contains(s.OrderSessionId),
                                                                                     pageNumber, pageSize, s => s.OrderSessionTime, false, s => s.OrderSessionStatus!);
                 var orderSessionResponseList = new List<OrderSessionResponse>();
-                if (orderSessionDb!.Items!.Count == 0 && orderSessionDb.Items != null)
+                if (displayOrderSessionDb!.Items!.Count == 0 && displayOrderSessionDb.Items != null)
                 {
                     return BuildAppActionResultError(result, $"Hiện tại không có phiên đặt bàn");
                 }
 
                 Dictionary<Guid, Order> orders = new Dictionary<Guid, Order>();
 
-                foreach (var orderSession in orderSessionDb.Items!)
+                foreach (var orderSession in displayOrderSessionDb.Items!)
                 {
                     var orderSessionResponse = new OrderSessionResponse();
                     var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderSessionId == orderSession.OrderSessionId, 0, 0, null, false, 
@@ -114,11 +115,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                    
                 }
-                result.Result = new PagedResult<OrderSessionResponse>
+                var data = new OrderSessionListReponseWithStatus
                 {
                     Items = orderSessionResponseList,
-                    TotalPages = orderSessionDb.TotalPages
+                    TotalPages = displayOrderSessionDb.TotalPages,
+                    PreOrderQuantity = orderSessionDb.Items.Count(o => o.OrderSessionStatusId == OrderSessionStatus.PreOrder),
+                    ConfirmedQuantity = orderSessionDb.Items.Count(o => o.OrderSessionStatusId == OrderSessionStatus.Confirmed),
+                    ProcessingQuantity = orderSessionDb.Items.Count(o => o.OrderSessionStatusId == OrderSessionStatus.Processing),
+                    LateWarningQuantity = orderSessionDb.Items.Count(o => o.OrderSessionStatusId == OrderSessionStatus.LateWarning),
+                    CompletedQuantity = orderSessionDb.Items.Count(o => o.OrderSessionStatusId == OrderSessionStatus.Completed),
+                    CancelledQuantity = orderSessionDb.Items.Count(o => o.OrderSessionStatusId == OrderSessionStatus.Cancelled),
                 };
+
+                result.Result = data;
             }
             catch (Exception ex)
             {
@@ -468,19 +477,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderSessionId == orderSessionId, 0, 0, null, false, o => o.Order);
                     if (orderDetailDb.Items.Count > 0)
                     {
+                        var orderService = Resolve<IOrderService>();
                         var orderDb = orderDetailDb.Items.FirstOrDefault().Order;
                         if (orderDb.StatusId == OrderStatus.Processing)
                         {
-                            var orderService = Resolve<IOrderService>();
                             await orderService.ChangeOrderStatus(orderDb.OrderId, true);
                             if (sendSignalR)
                             {
                                 await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
                             }
                         }
+
+                        var orderDetailToCompleteId = orderDetailDb.Items.Where(o => o.OrderDetailStatusId != OrderDetailStatus.Reserved && o.OrderDetailStatusId == OrderDetailStatus.Cancelled).Select(o => o.OrderDetailId).ToList();
+                        await orderService.UpdateOrderDetailStatusForce(orderDetailToCompleteId, OrderDetailStatus.ReadyToServe);
                     }
                 }
-
             }
             catch (Exception ex)
             {
