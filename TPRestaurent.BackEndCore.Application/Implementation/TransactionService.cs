@@ -572,6 +572,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
+                var storeCreditService = Resolve<IStoreCreditService>();
                 var transactionDb = await _repository.GetById(transactionId);
                 if(transactionDb.TransationStatusId == TransationStatus.PENDING && transactionStatus != TransationStatus.APPLIED)
                 {
@@ -583,17 +584,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     await _repository.Update(transactionDb);
                     await _unitOfWork.SaveChangesAsync();
-                    if (transactionDb.OrderId.HasValue)
-                    {
-                        var orderRepository = Resolve<IGenericRepository<Order>>();
-                        var orderService = Resolve<IOrderService>();
-                        await orderService.ChangeOrderStatus(transactionDb.OrderId.Value, transactionStatus == TransationStatus.SUCCESSFUL);
 
-                        var orderDb = await orderRepository.GetById(transactionDb.OrderId);
-                        if (orderDb != null && (orderDb.OrderTypeId == OrderType.Reservation || orderDb.OrderTypeId == OrderType.Delivery))
+                    if (transactionStatus == TransationStatus.SUCCESSFUL)
+                    {
+                        if (transactionDb.OrderId.HasValue)
                         {
-                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
-                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+                            var orderRepository = Resolve<IGenericRepository<Order>>();
+                            var orderService = Resolve<IOrderService>();
+                            await orderService.ChangeOrderStatus(transactionDb.OrderId.Value, transactionStatus == TransationStatus.SUCCESSFUL);
+
+                            var orderDb = await orderRepository.GetById(transactionDb.OrderId);
+                            if (orderDb != null && (orderDb.OrderTypeId == OrderType.Reservation || orderDb.OrderTypeId == OrderType.Delivery))
+                            {
+                                await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+                                await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+                            }
+                        } else
+                        {
+                            await storeCreditService.AddStoreCredit(transactionId);
                         }
                     }
                 } else
