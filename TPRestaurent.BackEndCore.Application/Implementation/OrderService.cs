@@ -785,8 +785,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             var tokenList = new List<string>();
                             foreach (var user in userRole.Items)
                             {
-                                var token = await tokenRepostiory!.GetByExpression(p => p.AccountId == user.UserId);
-                                tokenList.Add(token!.DeviceToken);
+                                var token = await tokenRepostiory!.GetAllDataByExpression(p => p.AccountId == user.UserId, 0, 0, null, false, p => p.Account);
+                                tokenList.AddRange(token!.Items.Select(p => p.AccessTokenValue));
                             }
 
 
@@ -812,7 +812,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await notificationMessageRepository!.InsertRange(notificationList);
                             if(tokenList.Count() > 0)
                             {
-                                await fireBaseService!.SendMulticastAsync(tokenList, "Nhà hàng có một thông báo mới", messageBody);
+                                await fireBaseService!.SendMulticastAsync(tokenList, "Nhà hàng có một thông báo mới", messageBody, result);
                             }
 
                             await _unitOfWork.SaveChangesAsync();
