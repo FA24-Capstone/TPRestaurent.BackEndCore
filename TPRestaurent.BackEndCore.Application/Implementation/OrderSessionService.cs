@@ -435,7 +435,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         }
 
 
-        public async Task<AppActionResult> UpdateOrderSessionStatus(Guid orderSessionId, OrderSessionStatus orderSessionStatus)
+        public async Task<AppActionResult> UpdateOrderSessionStatus(Guid orderSessionId, OrderSessionStatus orderSessionStatus, bool sendSignalR)
         {
             var result = new AppActionResult(); 
             try
@@ -451,8 +451,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 await _unitOfWork.SaveChangesAsync();
 
-                await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
-                await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+                if (sendSignalR)
+                {
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+                }
 
                 if (orderSessionStatus == OrderSessionStatus.Completed)
                 {
@@ -464,6 +467,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             var orderService = Resolve<IOrderService>();
                             await orderService.ChangeOrderStatus(orderDb.OrderId, true);
+                            if (sendSignalR)
+                            {
+                                await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
+                            }
                         }
                     }
                 }

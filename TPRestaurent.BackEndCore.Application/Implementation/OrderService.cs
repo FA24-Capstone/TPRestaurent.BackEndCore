@@ -139,6 +139,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await comboOrderDetailRepository!.InsertRange(comboOrderDetails);
                     await _unitOfWork.SaveChangesAsync();
                     scope.Complete();
+
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
                     //AddOrderMessageToChef
                 }
                 catch (Exception ex)
@@ -1993,8 +1996,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return BuildAppActionResultError(result, $"Tồn tại id gọi món hông nằm trong hệ thống");
                 }
 
+                if(orderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.Reserved || o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe || o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
+                {
+                    return BuildAppActionResultError(result, $"Các chi tiết đơn hàng không thể cập nhật trạng thái v2i đều không ở trạn thái chờ hay đang xừ lí");
+                }
+
                 var utility = Resolve<Utility>();
                 var time = utility.GetCurrentDateTimeInTimeZone();
+                bool orderSessionUpdated = false;
                 if (orderDetailDb.Items[0].OrderDetailStatusId == OrderDetailStatus.Unchecked)
                 {
                     orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = OrderDetailStatus.Processing);
@@ -2002,7 +2011,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         if (item.OrderSession != null && item.OrderSession.OrderSessionStatusId == OrderSessionStatus.Confirmed)
                         {
-                            await orderSessionService.UpdateOrderSessionStatus(item.OrderSession.OrderSessionId, OrderSessionStatus.Processing);
+                            await orderSessionService.UpdateOrderSessionStatus(item.OrderSession.OrderSessionId, OrderSessionStatus.Processing, false);
+                            orderSessionUpdated = true;
                         }
                     }
                 }
@@ -2029,11 +2039,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     if (orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
                     {
-                        await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Cancelled);
+                        await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Cancelled, false);
+                        orderSessionUpdated = true;
                     }
                     else if (orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe))
                     {
-                        await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Completed);
+                        await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Completed, false);
+                        orderSessionUpdated = true;
                     }
 
                     orderSessionSet.Add(session.OrderSessionId);
@@ -2043,6 +2055,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 await _unitOfWork.SaveChangesAsync();
 
                 await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
+                if (orderSessionUpdated)
+                {
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+                }
+
                 result.Result = orderDetailDb;
             }
             catch (Exception ex)
@@ -2473,6 +2492,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         await _repository.UpdateRange(orderList);
                         await _unitOfWork.SaveChangesAsync();
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
                         scope.Complete();
                     }
                 }

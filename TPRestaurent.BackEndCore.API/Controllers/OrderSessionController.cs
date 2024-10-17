@@ -31,7 +31,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPut("update-order-session-status")]
         public async Task<AppActionResult> UpdateOrderSessionStatus(Guid id, OrderSessionStatus status)
         {
-            return await _service.UpdateOrderSessionStatus(id, status);
+            return await _service.UpdateOrderSessionStatus(id, status, true);
         }
 
         [HttpGet("get-grouped-dish")]
