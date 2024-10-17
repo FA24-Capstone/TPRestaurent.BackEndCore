@@ -2578,7 +2578,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         double[] endDestination = new double[2];
                         endDestination[0] = customerAddressDb.Lat;
                         endDestination[1] = customerAddressDb.Lng;
-                        Task.Delay(290);
+                        Task.Delay(350);
                         var estimateDelivery = await mapService!.GetEstimateDeliveryResponse(startDestination, endDestination);
                         if (estimateDelivery.IsSuccess && estimateDelivery.Result is EstimatedDeliveryTimeDto.Response response)
                         {
