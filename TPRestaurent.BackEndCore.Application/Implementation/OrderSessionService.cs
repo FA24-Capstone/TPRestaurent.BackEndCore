@@ -417,7 +417,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (orderSessionResponse.Order != null)
                 {
                     var tableDb = (await tableDetailRepository.GetAllDataByExpression(t => t.OrderId == orderSessionResponse.Order.OrderId, 0, 0, t => t.TableId, false, t => t.Table.Room, t => t.Table.TableSize));
-                    orderSessionResponse.Table = tableDb.Items[0]?.Table;
+                    if (tableDb.Items.Count > 0)
+                    {
+                        orderSessionResponse.Table = tableDb.Items[0]?.Table;
+                    }
                 }
 
                 orderSessionResponse.OrderSession = orderSessionDb;
