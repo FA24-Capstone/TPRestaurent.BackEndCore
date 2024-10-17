@@ -756,6 +756,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await _repository.Insert(order);
                         await _unitOfWork.SaveChangesAsync();
 
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
+
                         if (orderRequestDto.DeliveryOrder != null || orderRequestDto.ReservationOrder != null)
                         {
                             var paymentRequest = new PaymentRequestDto
@@ -771,11 +775,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             if (linkPaymentDb.Result != null && !string.IsNullOrEmpty(linkPaymentDb.Result.ToString()))
                             {
                                 orderWithPayment.PaymentLink = linkPaymentDb!.Result!.ToString();
-                            }
-
-                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
-                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
-                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
+                            }                            
 
                             var chefRole = await roleRepository!.GetByExpression(p => p.Name == SD.RoleName.ROLE_CHEF);
                             var userRole = await userRoleRepository!.GetAllDataByExpression(p => p.RoleId == chefRole.ToString(), 0, 0, null, false, null);
@@ -2039,9 +2039,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     orderSessionSet.Add(session.OrderSessionId);
                 }
 
-                await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
 
                 await _unitOfWork.SaveChangesAsync();
+
+                await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
                 result.Result = orderDetailDb;
             }
             catch (Exception ex)
