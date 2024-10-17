@@ -13,7 +13,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
     {
         Task<AppActionResult> GetAllOrderSession(OrderSessionStatus? orderSessionStatus, int pageNumber, int pageSize);
         Task<AppActionResult> GetOrderSessionById(Guid orderSessionId);
-        Task<AppActionResult> UpdateOrderSessionStatus(Guid orderSessionId, OrderSessionStatus orderSessionStatus);
+        Task<AppActionResult> UpdateOrderSessionStatus(Guid orderSessionId, OrderSessionStatus orderSessionStatus, bool sendSignalR);
         Task<AppActionResult> GetGroupedDish();
         Task DeleteOrderSession();
     }
