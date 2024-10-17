@@ -7,9 +7,11 @@ using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
+using TPRestaurent.BackEndCore.Application.IHubServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
 using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
@@ -21,12 +23,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly IGenericRepository<OrderSession> _orderSessionRepository;
         private readonly IGenericRepository<Order> _orderRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private IHubServices.IHubServices _hubServices;
 
-        public OrderSessionService(IGenericRepository<OrderSession> orderSessionRepository, IGenericRepository<Order> orderRepository, IUnitOfWork unitOfWork, IServiceProvider serviceProvider) : base(serviceProvider)
+        public OrderSessionService(IGenericRepository<OrderSession> orderSessionRepository, IGenericRepository<Order> orderRepository, IUnitOfWork unitOfWork, IHubServices.IHubServices hubService, IServiceProvider serviceProvider) : base(serviceProvider)
         {
             _orderSessionRepository = orderSessionRepository;
             _orderRepository = orderRepository;
             _unitOfWork = unitOfWork;
+            _hubServices = hubService;
         }
 
         
@@ -442,7 +446,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 orderSessionDb.OrderSessionStatusId = orderSessionStatus;
                 await _orderSessionRepository.Update(orderSessionDb);
 
-                if(orderSessionStatus == OrderSessionStatus.Completed)
+                await _unitOfWork.SaveChangesAsync();
+
+                await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+                await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+
+                if (orderSessionStatus == OrderSessionStatus.Completed)
                 {
                     var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderSessionId == orderSessionId, 0, 0, null, false, o => o.Order);
                     if (orderDetailDb.Items.Count > 0)
@@ -456,7 +465,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                 }
 
-                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {

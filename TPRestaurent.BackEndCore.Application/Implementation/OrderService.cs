@@ -193,6 +193,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch thành công cho đơn hàng với id {orderId}");
                                     return result;
                                 }
+
                                 orderDb.StatusId = OrderStatus.Completed;
                             }
                             else
@@ -230,6 +231,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         else if (orderDb.StatusId == OrderStatus.Processing)
                         {
                             orderDb.StatusId = IsSuccessful ? OrderStatus.ReadyForDelivery : OrderStatus.Cancelled;
+
                         }
                         else if (orderDb.StatusId == OrderStatus.ReadyForDelivery)
                         {
@@ -288,6 +290,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     await _repository.Update(orderDb);
                     await _unitOfWork.SaveChangesAsync();
+                    if(orderDb.StatusId == OrderStatus.Processing || orderDb.StatusId == OrderStatus.ReadyForDelivery)
+                    {
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+                    }
                 }
             }
             catch (Exception ex)
@@ -595,11 +602,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng. Đặt hàng thất bại");
                         }
 
-                        if (string.IsNullOrEmpty(accountDb.Address.ToString()))
-                        {
-                            return BuildAppActionResultError(result, $"Địa chỉ của bạn không tồn tại. Vui lòng cập nhập địa chỉ");
-                        }
-
                         if (orderDetails.Count == 0)
                         {
                             return BuildAppActionResultError(result, "Đơn hàng không thực hiện đặt món.");
@@ -767,6 +769,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
 
                             await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
 
                             var chefRole = await roleRepository!.GetByExpression(p => p.Name == SD.RoleName.ROLE_CHEF);
                             var userRole = await userRoleRepository!.GetAllDataByExpression(p => p.RoleId == chefRole.ToString(), 0, 0, null, false, null);
