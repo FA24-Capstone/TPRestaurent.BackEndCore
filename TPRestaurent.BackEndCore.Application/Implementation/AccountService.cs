@@ -133,32 +133,45 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var headers = httpContext.Request.Headers;
                 string userAgent = headers["User-Agent"].ToString();
                 string deviceName = ParseDeviceNameFromUserAgent(userAgent);
+                var deviceIp = GetClientIpAddress(httpContext);
+
 
                 if (tokenDto != null)
                 {
                     // Create Token object
-                    var token = new Token
+                    var tokenDb = await tokenRepository!.GetByExpression(p => p.DeviceName == deviceName && p.DeviceIP == deviceIp && p.ExpiryTimeAccessToken > currentTime);
+                    if (tokenDb != null)
                     {
-                        TokenId = Guid.NewGuid(),
-                        DeviceIP = GetClientIpAddress(httpContext),
-                        AccountId = user.Id,
-                        CreateDateAccessToken = utility.GetCurrentDateTimeInTimeZone(),
-                        CreateRefreshToken = utility.GetCurrentDateTimeInTimeZone(),
-                        ExpiryTimeAccessToken = utility.GetCurrentDateTimeInTimeZone().AddDays(30),
-                        ExpiryTimeRefreshToken = utility.GetCurrentDateTimeInTimeZone().AddDays(30),
-                        DeviceName = deviceName,
-                        DeviceToken = string.Empty,
-                        AccessTokenValue = tokenDto.Token!,
-                        RefreshTokenValue = tokenDto.RefreshToken!,
-                        IsActive = true,
-                        LastLogin = utility.GetCurrentDateTimeInTimeZone(),
-                        
-                    };
+                        _tokenDto.Token = tokenDb.AccessTokenValue;
+                        _tokenDto.RefreshToken = tokenDb.RefreshTokenValue; 
+                    }
+                    else
+                    {
+                        var token = new Token
+                        {
+                            TokenId = Guid.NewGuid(),
+                            DeviceIP = GetClientIpAddress(httpContext),
+                            AccountId = user.Id,
+                            CreateDateAccessToken = utility.GetCurrentDateTimeInTimeZone(),
+                            CreateRefreshToken = utility.GetCurrentDateTimeInTimeZone(),
+                            ExpiryTimeAccessToken = utility.GetCurrentDateTimeInTimeZone().AddDays(30),
+                            ExpiryTimeRefreshToken = utility.GetCurrentDateTimeInTimeZone().AddDays(30),
+                            DeviceName = deviceName,
+                            DeviceToken = string.Empty,
+                            AccessTokenValue = tokenDto.Token!,
+                            RefreshTokenValue = tokenDto.RefreshToken!,
+                            IsActive = true,
+                            LastLogin = utility.GetCurrentDateTimeInTimeZone(),
+
+                        };
+
+                        await tokenRepository!.Insert(token);
+
+                    }
 
                     otpCodeDb!.IsUsed = true;
                     await _accountRepository.Update(user);
                     await _otpRepository.Update(otpCodeDb);
-                    await tokenRepository!.Insert(token);
 
                 }
                 await _unitOfWork.SaveChangesAsync();
