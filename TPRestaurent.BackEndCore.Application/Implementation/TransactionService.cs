@@ -14,6 +14,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
+using TPRestaurent.BackEndCore.Application.IHubServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.ConfigurationModel;
 using TPRestaurent.BackEndCore.Common.DTO.Payment.PaymentLibrary;
@@ -34,14 +35,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly IUnitOfWork _unitOfWork;
         private readonly IConfiguration _configuration;
         private MomoConfiguration _momoConfiguration;
+        private IHubServices.IHubServices _hubServices;
 
         public TransactionService(IConfiguration configuration,
-            IGenericRepository<Transaction> repository, IUnitOfWork unitOfWork, IServiceProvider service)
+            IGenericRepository<Transaction> repository, IUnitOfWork unitOfWork, IHubServices.IHubServices hubServices, IServiceProvider service)
             : base(service)
         {
             _configuration = configuration;
             _repository = repository;
             _unitOfWork = unitOfWork;
+            _hubServices = hubServices;
             _momoConfiguration = Resolve<MomoConfiguration>();
         }
 
@@ -582,8 +585,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await _unitOfWork.SaveChangesAsync();
                     if (transactionDb.OrderId.HasValue)
                     {
+                        var orderRepository = Resolve<IGenericRepository<Order>>();
                         var orderService = Resolve<IOrderService>();
                         await orderService.ChangeOrderStatus(transactionDb.OrderId.Value, transactionStatus == TransationStatus.SUCCESSFUL);
+
+                        var orderDb = await orderRepository.GetById(transactionDb.OrderId);
+                        if (orderDb != null && (orderDb.OrderTypeId == OrderType.Reservation || orderDb.OrderTypeId == OrderType.Delivery))
+                        {
+                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+                        }
                     }
                 } else
                 {
