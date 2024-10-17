@@ -1723,6 +1723,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return collidedTables;
         }
+
+        [Hangfire.Queue("cancel-over-reservation")]
         public async Task CancelOverReservation()
         {
             var utility = Resolve<Utility>();
@@ -1761,6 +1763,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             Task.CompletedTask.Wait();
         }
 
+        [Hangfire.Queue("update-order-status-before-meal-time")]
         public async Task UpdateOrderStatusBeforeMealTime()
         {
             var utility = Resolve<Utility>();
@@ -1785,6 +1788,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             Task.CompletedTask.Wait();
         }
 
+        [Hangfire.Queue("update-order-detail-status-before-dining")]
         public async Task UpdateOrderDetailStatusBeforeDining()
         {
             var utility = Resolve<Utility>();
@@ -2632,6 +2636,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        [Hangfire.Queue("cancel-reservation")]
         public async Task CancelReservation()
         {
             var utility = Resolve<Utility>();
