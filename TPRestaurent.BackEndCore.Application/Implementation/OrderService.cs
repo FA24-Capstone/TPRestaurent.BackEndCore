@@ -609,6 +609,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         order.AccountId = accountDb.Id;
 
+                        if (string.IsNullOrEmpty(accountDb.Address))
+                        {
+                            return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ của bạn. Vui lòng cập nhật địa chỉ");
+                        }
+
                         var restaurantLatConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LATITUDE);
                         var restaurantLngConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LNG);
                         var restaurantMaxDistanceToOrderConfig = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DISTANCE_ORDER);
