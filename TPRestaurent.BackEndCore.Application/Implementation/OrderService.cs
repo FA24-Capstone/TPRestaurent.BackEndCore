@@ -2260,7 +2260,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             try
             {
-                var order = await _repository.GetByExpression(r => r.OrderId == reservationId, r => r.Account, r => r.Shipper);
+                var order = await _repository.GetByExpression(r => r.OrderId == reservationId, r => r.Account, r => r.Shipper, r => r.Status, r => r.OrderType, r => r.LoyalPointsHistory);
                 if (order == null)
                 {
                     return BuildAppActionResultError(new AppActionResult(), $"Không tìm thấy thông tin đặt bàn với id {reservationId}");
@@ -2711,6 +2711,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var customerInfoRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+                var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.AccountId == order.AccountId && p.IsCurrentUsed == true);
+                if (customerAddressDb == null)
+                {
+                    return order;
+                }
+
                 var configurationRepository = Resolve<IGenericRepository<Configuration>>();
                 var mapService = Resolve<IMapService>();
                 var startLatConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LATITUDE);
@@ -2723,11 +2729,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 startDestination[0] = startLat;
                 startDestination[1] = startLng;
 
-                var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.AccountId == order.AccountId && p.IsCurrentUsed == true);
-                if (customerAddressDb == null)
-                {
-                    return null;
-                }
 
                 double[] endDestination = new double[2];
                 endDestination[0] = customerAddressDb.Lat;
@@ -2741,7 +2742,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
             } catch(Exception ex)
             {
-
             }
             return order;
         }
