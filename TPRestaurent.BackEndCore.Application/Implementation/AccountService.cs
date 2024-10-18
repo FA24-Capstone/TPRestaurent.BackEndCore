@@ -1672,12 +1672,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (mainAddressDb != null)
                         {
                             mainAddressDb.IsCurrentUsed = false;
-
-                            var accountDb = await accountRepository.GetByExpression(p => p.Id == customerInfoAddressRequest.AccountId);
-                            accountDb.Address = newCustomerInfoAddress.CustomerInfoAddressName;
                             await customerInfoAddressRepository.Update(mainAddressDb);
-                            await accountRepository.Update(accountDb);
                         }
+                        var accountDb = await accountRepository.GetByExpression(p => p.Id == customerInfoAddressRequest.AccountId);
+                        accountDb.Address = newCustomerInfoAddress.CustomerInfoAddressName;
+                        await accountRepository.Update(accountDb);
                     }
                     if (!BuildAppActionResultIsError(result))
                     {
