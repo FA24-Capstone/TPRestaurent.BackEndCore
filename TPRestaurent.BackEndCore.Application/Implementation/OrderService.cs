@@ -599,7 +599,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.OrderTypeId = OrderType.Delivery;
                         order.StatusId = OrderStatus.Pending;
                         order.TotalAmount = money;
-                        order.OrderDate = utility.GetCurrentDateInTimeZone();
+                        order.OrderDate = utility.GetCurrentDateTimeInTimeZone();
                         if (accountDb == null)
                         {
                             return BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng. Đặt hàng thất bại");
