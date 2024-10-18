@@ -43,6 +43,8 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> DeleteCustomerInfoAddress(Guid customerInfoAddresId);  
         Task<AppActionResult> LoadAvailableShipper();
         Task<AppActionResult> UpdateDeliveringStatus(string accountId);
+        Task<AppActionResult> ChangeEmailRequest(string accountId, string newEmail);
+        Task<AppActionResult> VerifyChangeEmail(string email, string accountId, string otpCode);
         Task DeleteOverdueOTP();
     }
 }

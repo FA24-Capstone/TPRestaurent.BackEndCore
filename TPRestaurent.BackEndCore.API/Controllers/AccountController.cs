@@ -172,5 +172,17 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _accountService.UpdateDeliveringStatus(shipperId);
         }
+
+        [HttpPost("change-email-request")]
+        public async Task<AppActionResult> ChangeEmailRequest(string accountId, string newEmail)
+        {
+            return await _accountService.ChangeEmailRequest(accountId, newEmail);
+        }
+
+        [HttpPost("verify-change-email")]
+        public async Task<AppActionResult> VerifyChangeEmail(string email, string accountId, string otpCode)
+        {
+            return await _accountService.VerifyChangeEmail(email, accountId, otpCode);
+        }
     }
 }
