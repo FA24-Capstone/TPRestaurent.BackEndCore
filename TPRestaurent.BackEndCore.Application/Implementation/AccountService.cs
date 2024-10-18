@@ -1820,5 +1820,67 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+        public async Task<AppActionResult> ChangeEmailRequest(string accountId, string newEmail)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var accountDb = await _accountRepository.GetById(accountId);
+                if (accountDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Tài khoản với id {accountId} không tồn tại");
+                }
+
+                var verifyCode = await GenerateCustomerOTP(accountDb, OTPType.ConfirmEmail);
+                _emailService!.SendEmail(newEmail, SD.SubjectMail.VERIFY_ACCOUNT,
+                                 TemplateMappingHelper.GetTemplateOTPEmail(
+                                     TemplateMappingHelper.ContentEmailType.VERIFICATION_CODE, verifyCode.Result.ToString(),
+                                     accountDb.LastName));
+
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> VerifyChangeEmail(string email, string accountId, string otpCode)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var otpRepository = Resolve<IGenericRepository<OTP>>();
+                var utility = Resolve<Utility>();
+                var accountDb = await _accountRepository.GetById(accountId);
+                if (accountDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Tài khoản với id {accountId} không tồn tại");
+                }
+
+                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+                var otpDb = await otpRepository!.GetAllDataByExpression(p => p.Code == otpCode && p.AccountId == accountId && p.Type == OTPType.ConfirmEmail && p.ExpiredTime > currentTime, 0, 0, p => p.ExpiredTime, false, null);
+                if (otpDb.Items!.FirstOrDefault() == null)
+                {
+                    return BuildAppActionResultError(result, $"Mã OTP không tồn tại");
+                }
+                else
+                {
+                    accountDb.Email = email;
+                    accountDb.UserName = email;
+                    accountDb.NormalizedEmail = email.ToUpper();
+                    accountDb.NormalizedUserName = email.ToUpper();
+                }
+
+                await _accountRepository.Update(accountDb);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
     }
 }
