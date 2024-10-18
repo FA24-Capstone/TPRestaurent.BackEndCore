@@ -162,7 +162,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         return BuildAppActionResultError(result, $"Không tìm thấy đơn hàn với id {orderId}");
                     }
                     var addressDb = await addressRepository.GetAllDataByExpression(a => a.CustomerInfoAddressName.Equals(orderDb.Account.Address), 0, 0, null, false, null);
-                    result.Result = $"{baseUrl}{addressDb.Items[0].Lat},{addressDb.Items[0].Lng}";
+                    if(addressDb.Items.Count() > 0)
+                    {
+                        result.Result = $"{baseUrl}{addressDb.Items[0].Lat},{addressDb.Items[0].Lng}";
+                    } else
+                    {
+                        return BuildAppActionResultError(result, "Không tìm thấy địa chỉ trong hệ thống");
+                    }
                 }
             }
             catch (Exception ex)
