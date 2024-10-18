@@ -34,7 +34,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> UpdateAccount(UpdateAccountInfoRequest updateAccountRequest);
         Task<AppActionResult> DeleteAccount(string customerId);
         Task<AppActionResult> SendEmailForActiveCode(string email);
-        Task<AppActionResult> GenerateCustomerInfoOTP(Account customerInfo, OTPType otpType);
+        Task<AppActionResult> GenerateCustomerOTP(Account customerInfo, OTPType otpType);
         Task<AppActionResult> VerifyAccountOTP(string phoneNumber, string code, OTPType type);
         //Task<AppActionResult> SendAccountOTP(string phoneNumber, OTPType otpType);
         Task<AppActionResult> GetAccountByPhoneNumber(string phoneNumber);
@@ -43,6 +43,8 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> DeleteCustomerInfoAddress(Guid customerInfoAddresId);  
         Task<AppActionResult> LoadAvailableShipper();
         Task<AppActionResult> UpdateDeliveringStatus(string accountId);
+        Task<AppActionResult> ChangeEmailRequest(string accountId, string newEmail);
+        Task<AppActionResult> VerifyChangeEmail(string email, string accountId, string otpCode);
         Task DeleteOverdueOTP();
     }
 }
