@@ -159,7 +159,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var orderDb = await orderRepository.GetByExpression(o => o.OrderId == orderId, o => o.Account);
                     if(orderDb == null)
                     {
-                        return BuildAppActionResultError(result, $"Không tìm thấy đơn hàn với id {orderId}");
+                        return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {orderId}");
                     }
                     var addressDb = await addressRepository.GetAllDataByExpression(a => a.CustomerInfoAddressName.Equals(orderDb.Account.Address), 0, 0, null, false, null);
                     if(addressDb.Items.Count() > 0)
