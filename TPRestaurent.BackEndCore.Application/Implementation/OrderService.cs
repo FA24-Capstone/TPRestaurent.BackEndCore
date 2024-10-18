@@ -2509,7 +2509,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {orderId}");
                         }
                         orderDb.ShipperId = shipperId;
-                        orderDb.StatusId = OrderStatus.AssignedToShipper;
+                        await ChangeOrderStatus(orderDb.OrderId, true);
                         orderList.Add(orderDb);
                     }
                     if (!BuildAppActionResultIsError(result))
