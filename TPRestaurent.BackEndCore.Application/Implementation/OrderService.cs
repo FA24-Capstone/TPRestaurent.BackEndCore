@@ -652,7 +652,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
 
                         var shippingCost = await CalculateDeliveryOrder(customerAddressDb.CustomerInfoAddressId);
-
+                        if(shippingCost.Result == null)
+                        {
+                            return BuildAppActionResultError(result, $"Xảy ra lỗi khi tính phí giao hàng. Vui lòng kiểm tra lại thông tin địa chỉ");
+                        }
                         money += double.Parse(shippingCost.Result.ToString());
 
                         var currentTime = utility.GetCurrentDateTimeInTimeZone();
