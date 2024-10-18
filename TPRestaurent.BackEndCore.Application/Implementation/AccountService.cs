@@ -605,11 +605,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var resultCreateRole = await _userManager.AddToRoleAsync(user, "CUSTOMER");
                 if (!resultCreateRole.Succeeded) result = BuildAppActionResultError(result, $"Cấp quyền khách hàng không thành công");
-                bool customerAdded = await AddAccountInfomation(user);
-                if (!customerAdded)
-                {
-                    result = BuildAppActionResultError(result, $"Tạo thông tin khách hàng không thành công!");
-                }
 
                 var configurationDb = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.EXPIRE_TIME_FOR_STORE_CREDIT), null);
                 if (configurationDb == null)
@@ -1632,42 +1627,41 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
 
-                var newCustomerInfoAddress = new CustomerInfoAddress
-                {
-                    CustomerInfoAddressId = Guid.NewGuid(),
-                    CustomerInfoAddressName = customerInfoAddressRequest.CustomerInfoAddressName,
-                    IsCurrentUsed = customerInfoAddressRequest.IsCurrentUsed,
-                    AccountId = customerInfoAddressRequest!.AccountId!,
-                    Lat = customerInfoAddressRequest.Lat,
-                    Lng = customerInfoAddressRequest.Lng,
-                };
-                if (customerInfoAddressRequest.IsCurrentUsed == true)
-                {
-                    var mainAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.AccountId == customerInfoAddressRequest.AccountId && p.IsCurrentUsed == true);
-                    if (mainAddressDb != null)
+                    var newCustomerInfoAddress = new CustomerInfoAddress
                     {
-                        mainAddressDb.IsCurrentUsed = false;
-
+                        CustomerInfoAddressId = Guid.NewGuid(),
+                        CustomerInfoAddressName = customerInfoAddressRequest.CustomerInfoAddressName,
+                        IsCurrentUsed = customerInfoAddressRequest.IsCurrentUsed,
+                        AccountId = customerInfoAddressRequest!.AccountId!,
+                        Lat = customerInfoAddressRequest.Lat,
+                        Lng = customerInfoAddressRequest.Lng,
+                    };
+                    if (customerInfoAddressRequest.IsCurrentUsed == true)
+                    {
+                        var mainAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.AccountId == customerInfoAddressRequest.AccountId && p.IsCurrentUsed == true);
+                        if (mainAddressDb != null)
+                        {
+                            mainAddressDb.IsCurrentUsed = false;
+                            await customerInfoAddressRepository.Update(mainAddressDb);
+                        }
                         var accountDb = await accountRepository.GetByExpression(p => p.Id == customerInfoAddressRequest.AccountId);
                         accountDb.Address = newCustomerInfoAddress.CustomerInfoAddressName;
-                        await customerInfoAddressRepository.Update(mainAddressDb);
                         await accountRepository.Update(accountDb);
                     }
+                    if (!BuildAppActionResultIsError(result))
+                    {
+                        await customerInfoAddressRepository!.Insert(newCustomerInfoAddress);
+                        await _unitOfWork.SaveChangesAsync();
+                    }
+                    scope.Complete();
                 }
-                if (!BuildAppActionResultIsError(result))
+                catch (Exception ex)
                 {
-                    await customerInfoAddressRepository!.Insert(newCustomerInfoAddress);
-                    await _unitOfWork.SaveChangesAsync();
+                    result = BuildAppActionResultError(result, ex.Message);
                 }
-                scope.Complete();
             }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
+            return result;
         }
-        return result;
-    }
 
     public async Task<AppActionResult> UpdateCustomerInfoAddress(UpdateCustomerInforAddressRequest updateCustomerInforAddress)
     {
