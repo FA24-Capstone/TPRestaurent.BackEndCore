@@ -793,8 +793,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 tokenList.AddRange(token!.Items.Select(p => p.AccessTokenValue));
                             }
 
-                            var messageBody =
-                                $"{orderDetails.Select(p => p.DishSizeDetail.Dish!.Name)}: {orderDetails.Select(p => p.DishSizeDetail.DishSize.VietnameseName)} x{orderDetails.Select(p => p.Quantity)}";
+                            StringBuilder messageBody = new StringBuilder();
+                            foreach(var orderDetail in orderDetails)
+                            {
+                                if (orderDetail.DishSizeDetailId.HasValue)
+                                {
+                                    var dishSizeDb = await dishSizeDetailRepository.GetByExpression(d => d.DishSizeDetailId == orderDetail.DishSizeDetailId.Value, d => d.Dish, d => d.DishSize);
+                                    messageBody.Append($"{dishSizeDetail.Dish.Name}: {dishSizeDetail.DishSize.VietnameseName} x {orderDetail.Quantity}, ");
+                                } else
+                                {
+                                    var comboDishDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId, 0, 0, null, false, c => c.DishCombo.DishSizeDetail.Dish, c => c.DishCombo.DishSizeDetail.DishSize);
+                                    messageBody.Append($"{orderDetail.Combo.Name} x {orderDetail.Quantity}: [");
+                                    comboDishDetailDb.Items.ForEach(c =>
+                                        messageBody.Append($"{c.DishCombo.DishSizeDetail.Dish.Name}: {c.DishCombo.DishSizeDetail.DishSize.VietnameseName} x {c.DishCombo.Quantity}, ")
+                                    );
+                                    messageBody.Length -= 2;
+                                    messageBody.Append("], ");
+                                }
+                            }
+
+                            messageBody.Length -= 2;
 
                             var notificationList = new List<NotificationMessage>();
                             var currentTime = utility.GetCurrentDateTimeInTimeZone();
@@ -804,7 +822,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 {
                                     NotificationId = Guid.NewGuid(),
                                     NotificationName = "Nha hang co mot thong bao moi",
-                                    Messages = messageBody,
+                                    Messages = messageBody.ToString(),
                                     NotifyTime = currentTime,
                                     AccountId = user.UserId,
                                 };
@@ -814,7 +832,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await notificationMessageRepository!.InsertRange(notificationList);
                             if(tokenList.Count() > 0)
                             {
-                                await fireBaseService!.SendMulticastAsync(tokenList, "Nhà hàng có một thông báo mới", messageBody, result);
+                                await fireBaseService!.SendMulticastAsync(tokenList, "Nhà hàng có một thông báo mới", messageBody.ToString(), result);
                             }
 
                             await _unitOfWork.SaveChangesAsync();
