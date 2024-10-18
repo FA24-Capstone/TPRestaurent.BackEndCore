@@ -161,8 +161,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         return BuildAppActionResultError(result, $"Không tìm thấy đơn hàn với id {orderId}");
                     }
-                    var addressDb = await addressRepository.GetByExpression(a => a.CustomerInfoAddressName.Equals(orderDb.Account.Address));
-                    result.Result = $"{baseUrl}{addressDb.Lat},{addressDb.Lng}";
+                    var addressDb = await addressRepository.GetAllDataByExpression(a => a.CustomerInfoAddressName.Equals(orderDb.Account.Address), 0, 0, null, false, null);
+                    result.Result = $"{baseUrl}{addressDb.Items[0].Lat},{addressDb.Items[0].Lng}";
                 }
             }
             catch (Exception ex)
