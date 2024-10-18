@@ -603,11 +603,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var resultCreateRole = await _userManager.AddToRoleAsync(user, "CUSTOMER");
                 if (!resultCreateRole.Succeeded) result = BuildAppActionResultError(result, $"Cấp quyền khách hàng không thành công");
-                bool customerAdded = await AddAccountInfomation(user);
-                if (!customerAdded)
-                {
-                    result = BuildAppActionResultError(result, $"Tạo thông tin khách hàng không thành công!");
-                }
 
                 var configurationDb = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.EXPIRE_TIME_FOR_STORE_CREDIT), null);
                 if (configurationDb == null)
