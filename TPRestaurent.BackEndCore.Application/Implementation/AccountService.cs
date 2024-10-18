@@ -1389,6 +1389,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     accountDb.FirstName = updateAccountRequest.FirstName;
                     accountDb.LastName = updateAccountRequest.LastName;
                     accountDb.DOB = updateAccountRequest.DOB;
+                    accountDb.IsManuallyCreated = false;
+                    accountDb.Gender = updateAccountRequest.Gender;     
 
                     var pathName = SD.FirebasePathName.DISH_PREFIX + $"{updateAccountRequest.AccountId}{Guid.NewGuid()}.jpg";
                     var upload = await firebaseService!.UploadFileToFirebase(updateAccountRequest.Image!, pathName);
