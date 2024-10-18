@@ -241,6 +241,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     HashSet<Guid> includedOrderIds = new HashSet<Guid>();
                     HashSet<Guid> customerInfoAddressIds = new HashSet<Guid>();
 
+                    int index = 1;
+
                     for (int i = 1; i < obj.Trips[0].Legs.Count; i++)
                     {
                         currentTrip = obj.Trips[0].Legs[i - 1];
@@ -264,7 +266,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 optimalTripResponseDTO.OptimalTrip!.Add(new RouteNode
                                 {
-                                    Index = currentWaypoint.WaypointIndex,
+                                    Index = index++,
                                     Orders = delivery,
                                     AccountId = delivery.FirstOrDefault().Account.Id,
                                     DistanceFromPreviousDestination = $"{Math.Round(currentTrip.Distance / 100) / 10} km",

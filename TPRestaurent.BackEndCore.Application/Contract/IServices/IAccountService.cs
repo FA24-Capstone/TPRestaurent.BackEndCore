@@ -42,6 +42,8 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> CreateCustomerInfoAddress(CustomerInfoAddressRequest customerInfoAddressRequest);
         Task<AppActionResult> UpdateCustomerInfoAddress(UpdateCustomerInforAddressRequest updateCustomerInforAddress);
         Task<AppActionResult> DeleteCustomerInfoAddress(Guid customerInfoAddresId);  
+        Task<AppActionResult> LoadAvailableShipper();
+        Task<AppActionResult> UpdateDeliveringStatus(string accountId);
         Task DeleteOverdueOTP();
     }
 }

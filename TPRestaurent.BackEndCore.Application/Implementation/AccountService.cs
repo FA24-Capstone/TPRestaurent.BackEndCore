@@ -1829,5 +1829,67 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 return "Unknown Device";
         }
 
+        public async Task<AppActionResult> LoadAvailableShipper()
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
+                var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
+
+                var shipperRoleDb = await roleRepository.GetByExpression(r => r.Name.Equals("CHEF"));
+                if(shipperRoleDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không có thông tin về vai trò shipper");
+                }
+                var userRoleDb = await userRoleRepository.GetAllDataByExpression(u => u.RoleId == shipperRoleDb.Id, 0, 0, null, false, null);
+                var shipperIds = userRoleDb.Items.DistinctBy(u => u.UserId).Select(u => u.UserId).ToList();
+
+                var availableShipperDb = await _accountRepository.GetAllDataByExpression(a => a.IsVerified && !a.IsDeleted
+                                                                                              && !a.IsDelivering && shipperIds.Contains(a.Id), 0, 0, null, false, null);
+                result.Result = availableShipperDb;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> UpdateDeliveringStatus(string accountId)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
+                var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
+
+                var shipperRoleDb = await roleRepository.GetByExpression(r => r.Name.Equals("CHEF"));
+                if (shipperRoleDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không có thông tin về vai trò shipper");
+                }
+                var userRoleDb = await userRoleRepository.GetByExpression(u => u.RoleId == shipperRoleDb.Id && u.UserId.Equals(accountId));
+                if(userRoleDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tồn tại shipper với id {accountId}");
+                }
+                var shipperDb = await _accountRepository.GetByExpression(a => a.IsVerified && !a.IsDeleted && userRoleDb.UserId.Equals(a.Id));
+                if(shipperDb != null)
+                {
+                    shipperDb.IsDelivering = !shipperDb.IsDelivering;
+                    await _accountRepository.Update(shipperDb);
+                    await _unitOfWork.SaveChangesAsync();
+                } else
+                {
+                    return BuildAppActionResultError(result, $"Không tồn tại shipper với id {accountId}");
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
     }
 }
