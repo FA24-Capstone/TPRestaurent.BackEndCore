@@ -799,11 +799,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 if (orderDetail.DishSizeDetailId.HasValue)
                                 {
                                     var dishSizeDb = await dishSizeDetailRepository.GetByExpression(d => d.DishSizeDetailId == orderDetail.DishSizeDetailId.Value, d => d.Dish, d => d.DishSize);
-                                    messageBody.Append($"{dishSizeDetail.Dish.Name}: {dishSizeDetail.DishSize.VietnameseName} x {orderDetail.Quantity}, ");
+                                    messageBody.Append($"{dishSizeDb.Dish.Name}: {dishSizeDb.DishSize.VietnameseName} x {orderDetail.Quantity}, ");
                                 } else
                                 {
                                     var comboDishDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId, 0, 0, null, false, c => c.DishCombo.DishSizeDetail.Dish, c => c.DishCombo.DishSizeDetail.DishSize);
-                                    messageBody.Append($"{orderDetail.Combo.Name} x {orderDetail.Quantity}: [");
+                                    messageBody.Append($"{orderDetail.Combo.Name}: {orderDetail.Quantity} x [");
                                     comboDishDetailDb.Items.ForEach(c =>
                                         messageBody.Append($"{c.DishCombo.DishSizeDetail.Dish.Name}: {c.DishCombo.DishSizeDetail.DishSize.VietnameseName} x {c.DishCombo.Quantity}, ")
                                     );
