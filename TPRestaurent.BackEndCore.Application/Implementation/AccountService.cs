@@ -1258,7 +1258,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
 
 
-        public async Task<AppActionResult> GenerateCustomerInfoOTP(Account customerDb, OTPType otpType)
+        public async Task<AppActionResult> GenerateCustomerOTP(Account customerDb, OTPType otpType)
         {
             AppActionResult result = new AppActionResult();
             try
@@ -1391,21 +1391,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     accountDb.IsManuallyCreated = false;
                     accountDb.Gender = updateAccountRequest.Gender;
 
-                    var pathName = SD.FirebasePathName.DISH_PREFIX + $"{updateAccountRequest.AccountId}{Guid.NewGuid()}.jpg";
-                    var upload = await firebaseService!.UploadFileToFirebase(updateAccountRequest.Image!, pathName);
-
-                    if (!upload.IsSuccess)
+                    if (updateAccountRequest.Image != null)
                     {
-                        return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
+
+                        var pathName = SD.FirebasePathName.DISH_PREFIX + $"{updateAccountRequest.AccountId}{Guid.NewGuid()}.jpg";
+                        var upload = await firebaseService!.UploadFileToFirebase(updateAccountRequest.Image!, pathName);
+
+                        if (!upload.IsSuccess)
+                        {
+                            return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
+                        }
+                        accountDb!.Avatar = upload.Result!.ToString()!;
+
+                        if (!upload.IsSuccess)
+                        {
+                            return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
+                        }
                     }
-                    accountDb!.Avatar = upload.Result!.ToString()!;
-
-                    if (!upload.IsSuccess)
-                    {
-                        return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
-                    }
-
-
 
                     if (!BuildAppActionResultIsError(result))
                     {
