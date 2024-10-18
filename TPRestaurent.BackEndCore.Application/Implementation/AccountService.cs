@@ -87,7 +87,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var utility = Resolve<Utility>();
                 var tokenRepository = Resolve<IGenericRepository<Token>>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
-               
+
                 var otpCodeListDb = await _otpRepository.GetAllDataByExpression(p => p.Code == loginRequest.OTPCode && (p.Type == OTPType.Login || p.Type == OTPType.ConfirmPhone) && p.ExpiredTime > currentTime && !p.IsUsed, 0, 0, null, false, null);
 
                 if (otpCodeListDb.Items.Count > 1)
@@ -143,7 +143,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (tokenDb != null)
                     {
                         _tokenDto.Token = tokenDb.AccessTokenValue;
-                        _tokenDto.RefreshToken = tokenDb.RefreshTokenValue; 
+                        _tokenDto.RefreshToken = tokenDb.RefreshTokenValue;
                     }
                     else
                     {
@@ -494,18 +494,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var user = await _accountRepository.GetAllDataByExpression(a =>
-                  a!.PhoneNumber == phoneNumber && !a.IsDeleted,0 ,0, null, false, null);
-               if(user.Items.Count() == 0)
+                  a!.PhoneNumber == phoneNumber && !a.IsDeleted, 0, 0, null, false, null);
+                if (user.Items.Count() == 0)
                 {
-                    if(!(otp == OTPType.Login || otp == OTPType.Register))
+                    if (!(otp == OTPType.Login || otp == OTPType.Register))
                     {
                         return BuildAppActionResultError(result, $"Tài khoản với sđt {phoneNumber} không tồn tại. Vui lòng thử lại");
                     }
-                } else
+                }
+                else
                 {
-                    if(user.Items.Count() == 1)
+                    if (user.Items.Count() == 1)
                     {
-                        if(!(otp == OTPType.Login || otp == OTPType.Register) && !user.Items.FirstOrDefault().IsVerified)
+                        if (!(otp == OTPType.Login || otp == OTPType.Register) && !user.Items.FirstOrDefault().IsVerified)
                         {
                             return BuildAppActionResultError(result, $"Tài khoản với sđt {phoneNumber} chưa đuọc xác thực. Vui lòng thử lại");
                         }
@@ -514,7 +515,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             return BuildAppActionResultError(result, $"Tài khoản với sđt {phoneNumber} đã tồn tại. Vui lòng dùng số điện thoại khác");
                         }
-                    } else
+                    }
+                    else
                     {
                         return BuildAppActionResultError(result, $"Nhiều hơn 1 tài khoản với sđt {phoneNumber} đã tồn tại. Vui lòng dùng số điện thoại khác");
                     }
@@ -542,7 +544,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                         //var response = await smsService!.SendMessage($"Mã xác thực của bạn là là: {code}", phoneNumber);
                     }
-                    
+
                     code = await GenerateVerifyCodeSms(phoneNumber, true);
                     var otpsDb = new OTP
                     {
@@ -1372,290 +1374,258 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> UpdateAccount(UpdateAccountInfoRequest updateAccountRequest)
         {
             var result = new AppActionResult();
-            try
-            {
-                var accountDb = await _accountRepository.GetByExpression(p => p.Id == updateAccountRequest.AccountId);
-                if (accountDb == null)
-                {
-                    result = BuildAppActionResultError(result, $"Tài khoản với số điện thoại {updateAccountRequest.AccountId} không tồn tại!");
-                }
-
-                var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
-                if (updateAccountRequest.AddressId.HasValue)
-                {
-                    var customerInfoAddressDb = await customerInfoAddressRepository!.GetById(updateAccountRequest.AddressId.Value);
-                    if (customerInfoAddressDb == null)
-                    {
-                        return BuildAppActionResultError(result, $"Thông tin địa chỉ khách hàng với id {updateAccountRequest.AddressId.Value} không tồn tại!");
-                    }
-                    if (!customerInfoAddressDb.IsCurrentUsed)
-                    {
-                        accountDb.Address = customerInfoAddressDb.CustomerInfoAddressName;
-                        customerInfoAddressDb.IsCurrentUsed = true;
-                        var currentCustomerInfoAddressListDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.AccountId == accountDb.Id
-                                                                                                                && c.IsCurrentUsed, 0, 0, null, false, null);
-                        if (currentCustomerInfoAddressListDb.Items.Count > 1)
-                        {
-                            return BuildAppActionResultError(result, "Xảy ra lỗi khi cập nhật thông tin khách hàng!");
-                        }
-
-                        if (currentCustomerInfoAddressListDb.Items.Count == 0)
-                        {
-                            return BuildAppActionResultError(result, "Xảy ra lỗi khi cập nhật thông tin khách hàng vì không tìm được địa chỉ đang sử dụng!");
-                        }
-
-                        var currentCustomerInfoAddressDb = currentCustomerInfoAddressListDb.Items[0];
-                        currentCustomerInfoAddressDb.IsCurrentUsed = false;
-                        await customerInfoAddressRepository.Update(customerInfoAddressDb);
-                        await customerInfoAddressRepository.Update(currentCustomerInfoAddressDb);
-                    }
-                }
-                else
-                {
-                    await customerInfoAddressRepository!.Insert(new CustomerInfoAddress
-                    {
-                        CustomerInfoAddressId = Guid.NewGuid(),
-                        CustomerInfoAddressName = updateAccountRequest.Address!,
-                        AccountId = accountDb.Id,
-                        IsCurrentUsed = true
-                    });
-
-                    var currentCustomerInfoAddressListDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.AccountId == accountDb.Id
-                                                                                                                && c.IsCurrentUsed, 0, 0, null, false, null);
-                    if (currentCustomerInfoAddressListDb.Items.Count > 1)
-                    {
-                        return BuildAppActionResultError(result, "Xảy ra lỗi khi cập nhật thông tin khách hàng!");
-                    }
-
-                    if (currentCustomerInfoAddressListDb.Items.Count == 1)
-                    {
-                        var currentCustomerInfoAddressDb = currentCustomerInfoAddressListDb.Items[0];
-                        currentCustomerInfoAddressDb.IsCurrentUsed = false;
-                        await customerInfoAddressRepository.Update(currentCustomerInfoAddressDb);
-                    }
-                    accountDb.Address = updateAccountRequest.Address;
-                }
-                accountDb.DOB = updateAccountRequest.DOB;
-                accountDb.FirstName = updateAccountRequest.FirstName;
-                accountDb.LastName = updateAccountRequest.LastName;
-
-
-                await _accountRepository.Update(accountDb);
-                await _unitOfWork.SaveChangesAsync();
-                result.Result = accountDb;
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
-        }
-
-
-
-        public async Task<AppActionResult> DeleteAccount(Guid customerId)
-        {
-            var result = new AppActionResult();
-            try
-            {
-                var customerInfoDb = await _accountRepository.GetByExpression(p => p.Id == customerId.ToString());
-                if (customerInfoDb == null)
-                {
-                    result = BuildAppActionResultError(result, $"Thông tin và địa chỉ của khách với id {customerId} không tồn tại");
-                }
-                await _accountRepository.DeleteById(customerId);
-                await _unitOfWork.SaveChangesAsync();
-                result.IsSuccess = true;
-                result.Messages.Add("Xóa thông tin địa chỉ khách hàng thành công");
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
-        }
-
-        public async Task<AppActionResult> VerifyForReservation(string phoneNumber, string code)
-        {
-            var result = new AppActionResult();
-            try
-            {
-                var user = await _accountRepository.GetByExpression(p => p.PhoneNumber == phoneNumber && p.IsDeleted == false);
-                if (user == null)
-                {
-                    result = BuildAppActionResultError(result, $"Số điện thoại này không tồn tại!");
-                }
-
-                var optUser = await _otpRepository.GetByExpression(p => p!.Code == code && p.Type == OTPType.VerifyForReservation, p => p.Account!);
-                if (optUser == null)
-                {
-                    result = BuildAppActionResultError(result, $"Mã Otp không tồn tại!");
-                }
-                else if (optUser.IsUsed == true)
-                {
-                    result = BuildAppActionResultError(result, $"Mã Otp này đã được sử dụng!");
-                }
-                else if (optUser.Code != code)
-                {
-                    result = BuildAppActionResultError(result, $"Mã Otp không đúng!");
-                }
-
-                if (!BuildAppActionResultIsError(result))
-                {
-                    optUser.IsUsed = true;
-                    await _otpRepository.Update(optUser);
-                    await _accountRepository.Update(user);
-                    await _unitOfWork.SaveChangesAsync();
-                }
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
-        }
-
-        public async Task<AppActionResult> VerifyAccountOTP(string phoneNumber, string code, OTPType otpType)
-        {
-            var result = new AppActionResult();
-            try
-            {
-                var user = await _accountRepository.GetByExpression(p => p.PhoneNumber == phoneNumber, null);
-                if (user == null)
-                {
-                    result = BuildAppActionResultError(result, $"Số điện thoại này không tồn tại!");
-                }
-
-                var utility = Resolve<Utility>();
-
-                var optUser = await _otpRepository.GetByExpression(p => p!.Code == code && p.Type == otpType && !p.IsUsed && p.ExpiredTime > utility.GetCurrentDateTimeInTimeZone(), p => p.Account!);
-                if (optUser == null)
-                {
-                    result = BuildAppActionResultError(result, $"Mã Otp không tồn tại!");
-                }
-                else if (optUser.IsUsed == true)
-                {
-                    result = BuildAppActionResultError(result, $"Mã Otp này đã được sử dụng!");
-                }
-                else if (optUser.Type != OTPType.Register && !user.IsVerified)
-                {
-                    result = BuildAppActionResultError(result, $"Thông tin người dùng chưa được xác thực");
-                }
-                else if (optUser.Code != code)
-                {
-                    result = BuildAppActionResultError(result, $"Mã Otp không đúng!");
-                }
-
-                if (!BuildAppActionResultIsError(result))
-                {
-                    if (otpType == OTPType.Register)
-                    {
-                        user.IsVerified = true;
-                    }
-                    await _accountRepository.Update(user);
-
-                    optUser.IsUsed = true;
-                    await _otpRepository.Update(optUser);
-                    await _unitOfWork.SaveChangesAsync();
-                }
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
-        }
-
-        public async Task<AppActionResult> GetAccountByPhoneNumber(string phoneNumber)
-        {
-            AppActionResult result = new AppActionResult();
-            try
-            {
-                var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
-                var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
-                var listRole = await roleRepository!.GetAllDataByExpression(null, 1, 100, null, false, null);
-                var customerInfoDb = await _accountRepository.GetByExpression(c => c.PhoneNumber.Equals(phoneNumber));
-                var listMap = _mapper.Map<AccountResponse>(customerInfoDb);
-
-                if (customerInfoDb == null)
-                {
-                    return BuildAppActionResultError(result, $"Không tìm thấy thông tin người dùng với số điện thoại {phoneNumber}");
-                }
-
-                var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
-                var customerInfoAddressDb = await customerInfoAddressRepository!.GetAllDataByExpression(c => c.AccountId == customerInfoDb.Id, 0, 0, null, false, null);
-                listMap.Addresses = customerInfoAddressDb.Items;
-
-                var userRole = new List<IdentityRole>();
-                var role = await userRoleRepository!.GetAllDataByExpression(a => a.UserId == customerInfoDb.Id, 1, 100, null, false, null);
-                foreach (var itemRole in role.Items!)
-                {
-                    var roleUser = listRole.Items!.ToList().FirstOrDefault(a => a.Id == itemRole.RoleId);
-                    if (roleUser != null) userRole.Add(roleUser);
-                }
-                listMap.Roles = userRole;
-                var roleNameList = userRole.DistinctBy(i => i.Id).Select(i => i.Name).ToList();
-
-                if (roleNameList.Contains("ADMIN"))
-                {
-                    listMap.MainRole = "ADMIN";
-                }
-                else if (roleNameList.Contains("SHIPPER"))
-                {
-                    listMap.MainRole = "SHIPPER";
-                }
-                else if (roleNameList.Contains("CHEF") && !roleNameList.Contains("ADMIN"))
-                {
-                    listMap.MainRole = "CHEF";
-                }
-                else if (roleNameList.Count > 1)
-                {
-                    listMap.MainRole = roleNameList.FirstOrDefault(n => !n.Equals("CUSTOMER"));
-                }
-                else
-                {
-                    listMap.MainRole = "CUSTOMER";
-                }
-
-                result.Result = listMap;
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
-        }
-
-        public async Task DeleteOverdueOTP()
-        {
-            AppActionResult result = new AppActionResult();
-            try
-            {
-                var utility = Resolve<Utility>();
-                var otpRepository = Resolve<IGenericRepository<OTP>>();
-                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-                var otpDb = await otpRepository!.GetAllDataByExpression(p => p.ExpiredTime < currentTime, 0, 0, null, false, null);
-                if (otpDb!.Items!.Count > 0 && otpDb.Items != null)
-                {
-                    await otpRepository.DeleteRange(otpDb.Items);
-                }
-                await _unitOfWork.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-            }
-            Task.CompletedTask.Wait();
-        }
-
-        public async Task<AppActionResult> CreateCustomerInfoAddress(CustomerInfoAddressRequest customerInfoAddressRequest)
-        {
-            var result = new AppActionResult();
-            var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
-            var accountRepository = Resolve<IGenericRepository<Account>>();
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
                 try
                 {
+                    var mapService = Resolve<IMapService>();
+                    var firebaseService = Resolve<IFirebaseService>();
+                    var accountDb = await _accountRepository.GetByExpression(p => p.Id == updateAccountRequest.AccountId);
+                    if (accountDb == null)
+                    {
+                        result = BuildAppActionResultError(result, $"Tài khoản với số điện thoại {updateAccountRequest.AccountId} không tồn tại!");
+                    }
+
+                    accountDb.FirstName = updateAccountRequest.FirstName;
+                    accountDb.LastName = updateAccountRequest.LastName;
+                    accountDb.DOB = updateAccountRequest.DOB;
+
+                    var pathName = SD.FirebasePathName.DISH_PREFIX + $"{updateAccountRequest.AccountId}{Guid.NewGuid()}.jpg";
+                    var upload = await firebaseService!.UploadFileToFirebase(updateAccountRequest.Image!, pathName);
+
+                    if (!upload.IsSuccess)
+                    {
+                        return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
+                    }
+                    accountDb!.Avatar = upload.Result!.ToString()!;
+
+                    if (!upload.IsSuccess)
+                    {
+                        return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
+                    }
+
+
+
+                    if (!BuildAppActionResultIsError(result))
+                    {
+                        await _accountRepository.Update(accountDb);
+                        await _unitOfWork.SaveChangesAsync();
+                        scope.Complete();
+                    }
+                }
+                catch (Exception ex)
+                {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+        }
+            return result;
+        }
+
+
+
+    public async Task<AppActionResult> DeleteAccount(string customerId)
+    {
+        var result = new AppActionResult();
+        try
+        {
+            var customerInfoDb = await _accountRepository.GetByExpression(p => p.Id == customerId.ToString());
+            if (customerInfoDb == null)
+            {
+                result = BuildAppActionResultError(result, $"Thông tin và địa chỉ của khách với id {customerId} không tồn tại");
+            }
+            await _accountRepository.DeleteById(customerId);
+            await _unitOfWork.SaveChangesAsync();
+            result.IsSuccess = true;
+            result.Messages.Add("Xóa thông tin địa chỉ khách hàng thành công");
+        }
+        catch (Exception ex)
+        {
+            result = BuildAppActionResultError(result, ex.Message);
+        }
+        return result;
+    }
+
+    public async Task<AppActionResult> VerifyForReservation(string phoneNumber, string code)
+    {
+        var result = new AppActionResult();
+        try
+        {
+            var user = await _accountRepository.GetByExpression(p => p.PhoneNumber == phoneNumber && p.IsDeleted == false);
+            if (user == null)
+            {
+                result = BuildAppActionResultError(result, $"Số điện thoại này không tồn tại!");
+            }
+
+            var optUser = await _otpRepository.GetByExpression(p => p!.Code == code && p.Type == OTPType.VerifyForReservation, p => p.Account!);
+            if (optUser == null)
+            {
+                result = BuildAppActionResultError(result, $"Mã Otp không tồn tại!");
+            }
+            else if (optUser.IsUsed == true)
+            {
+                result = BuildAppActionResultError(result, $"Mã Otp này đã được sử dụng!");
+            }
+            else if (optUser.Code != code)
+            {
+                result = BuildAppActionResultError(result, $"Mã Otp không đúng!");
+            }
+
+            if (!BuildAppActionResultIsError(result))
+            {
+                optUser.IsUsed = true;
+                await _otpRepository.Update(optUser);
+                await _accountRepository.Update(user);
+                await _unitOfWork.SaveChangesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            result = BuildAppActionResultError(result, ex.Message);
+        }
+        return result;
+    }
+
+    public async Task<AppActionResult> VerifyAccountOTP(string phoneNumber, string code, OTPType otpType)
+    {
+        var result = new AppActionResult();
+        try
+        {
+            var user = await _accountRepository.GetByExpression(p => p.PhoneNumber == phoneNumber, null);
+            if (user == null)
+            {
+                result = BuildAppActionResultError(result, $"Số điện thoại này không tồn tại!");
+            }
+
+            var utility = Resolve<Utility>();
+
+            var optUser = await _otpRepository.GetByExpression(p => p!.Code == code && p.Type == otpType && !p.IsUsed && p.ExpiredTime > utility.GetCurrentDateTimeInTimeZone(), p => p.Account!);
+            if (optUser == null)
+            {
+                result = BuildAppActionResultError(result, $"Mã Otp không tồn tại!");
+            }
+            else if (optUser.IsUsed == true)
+            {
+                result = BuildAppActionResultError(result, $"Mã Otp này đã được sử dụng!");
+            }
+            else if (optUser.Type != OTPType.Register && !user.IsVerified)
+            {
+                result = BuildAppActionResultError(result, $"Thông tin người dùng chưa được xác thực");
+            }
+            else if (optUser.Code != code)
+            {
+                result = BuildAppActionResultError(result, $"Mã Otp không đúng!");
+            }
+
+            if (!BuildAppActionResultIsError(result))
+            {
+                if (otpType == OTPType.Register)
+                {
+                    user.IsVerified = true;
+                }
+                await _accountRepository.Update(user);
+
+                optUser.IsUsed = true;
+                await _otpRepository.Update(optUser);
+                await _unitOfWork.SaveChangesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            result = BuildAppActionResultError(result, ex.Message);
+        }
+        return result;
+    }
+
+    public async Task<AppActionResult> GetAccountByPhoneNumber(string phoneNumber)
+    {
+        AppActionResult result = new AppActionResult();
+        try
+        {
+            var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
+            var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
+            var listRole = await roleRepository!.GetAllDataByExpression(null, 1, 100, null, false, null);
+            var customerInfoDb = await _accountRepository.GetByExpression(c => c.PhoneNumber.Equals(phoneNumber));
+            var listMap = _mapper.Map<AccountResponse>(customerInfoDb);
+
+            if (customerInfoDb == null)
+            {
+                return BuildAppActionResultError(result, $"Không tìm thấy thông tin người dùng với số điện thoại {phoneNumber}");
+            }
+
+            var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+            var customerInfoAddressDb = await customerInfoAddressRepository!.GetAllDataByExpression(c => c.AccountId == customerInfoDb.Id, 0, 0, null, false, null);
+            listMap.Addresses = customerInfoAddressDb.Items;
+
+            var userRole = new List<IdentityRole>();
+            var role = await userRoleRepository!.GetAllDataByExpression(a => a.UserId == customerInfoDb.Id, 1, 100, null, false, null);
+            foreach (var itemRole in role.Items!)
+            {
+                var roleUser = listRole.Items!.ToList().FirstOrDefault(a => a.Id == itemRole.RoleId);
+                if (roleUser != null) userRole.Add(roleUser);
+            }
+            listMap.Roles = userRole;
+            var roleNameList = userRole.DistinctBy(i => i.Id).Select(i => i.Name).ToList();
+
+            if (roleNameList.Contains("ADMIN"))
+            {
+                listMap.MainRole = "ADMIN";
+            }
+            else if (roleNameList.Contains("SHIPPER"))
+            {
+                listMap.MainRole = "SHIPPER";
+            }
+            else if (roleNameList.Contains("CHEF") && !roleNameList.Contains("ADMIN"))
+            {
+                listMap.MainRole = "CHEF";
+            }
+            else if (roleNameList.Count > 1)
+            {
+                listMap.MainRole = roleNameList.FirstOrDefault(n => !n.Equals("CUSTOMER"));
+            }
+            else
+            {
+                listMap.MainRole = "CUSTOMER";
+            }
+
+            result.Result = listMap;
+        }
+        catch (Exception ex)
+        {
+            result = BuildAppActionResultError(result, ex.Message);
+        }
+        return result;
+    }
+
+    public async Task DeleteOverdueOTP()
+    {
+        AppActionResult result = new AppActionResult();
+        try
+        {
+            var utility = Resolve<Utility>();
+            var otpRepository = Resolve<IGenericRepository<OTP>>();
+            var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+            var otpDb = await otpRepository!.GetAllDataByExpression(p => p.ExpiredTime < currentTime, 0, 0, null, false, null);
+            if (otpDb!.Items!.Count > 0 && otpDb.Items != null)
+            {
+                await otpRepository.DeleteRange(otpDb.Items);
+            }
+            await _unitOfWork.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+        }
+        Task.CompletedTask.Wait();
+    }
+
+    public async Task<AppActionResult> CreateCustomerInfoAddress(CustomerInfoAddressRequest customerInfoAddressRequest)
+    {
+        var result = new AppActionResult();
+        var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+        var accountRepository = Resolve<IGenericRepository<Account>>();
+        using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+        {
+            try
+            {
 
                     var newCustomerInfoAddress = new CustomerInfoAddress
                     {
@@ -1693,76 +1663,46 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> UpdateCustomerInfoAddress(UpdateCustomerInforAddressRequest updateCustomerInforAddress)
+    public async Task<AppActionResult> UpdateCustomerInfoAddress(UpdateCustomerInforAddressRequest updateCustomerInforAddress)
+    {
+        var result = new AppActionResult();
+        var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+        var accountRepository = Resolve<IGenericRepository<Account>>();
+        using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
         {
-            var result = new AppActionResult();
-            var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
-            var accountRepository = Resolve<IGenericRepository<Account>>();
-            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-            {
-                try
-                {
-                    var customerInfoDb = await customerInfoAddressRepository!.GetByExpression(p => p.CustomerInfoAddressId == updateCustomerInforAddress.CustomerInfoAddressId);
-                    if (customerInfoDb == null)
-                    {
-                        return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {updateCustomerInforAddress.AccountId}");
-                    }
-
-                    customerInfoDb.CustomerInfoAddressName = updateCustomerInforAddress.CustomerInfoAddressName;
-                    customerInfoDb.IsCurrentUsed = updateCustomerInforAddress.IsCurrentUsed;
-                    customerInfoDb.AccountId = updateCustomerInforAddress.AccountId;
-                    customerInfoDb.Lat = updateCustomerInforAddress.Lat;
-                    customerInfoDb.Lng = updateCustomerInforAddress.Lng;
-
-                    if (updateCustomerInforAddress.IsCurrentUsed == true)
-                    {
-                        var mainAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.AccountId == updateCustomerInforAddress.AccountId && p.IsCurrentUsed == true);
-                        if (mainAddressDb != null)
-                        {
-                            var accountDb = await accountRepository.GetByExpression(p => p.Id == updateCustomerInforAddress.AccountId);
-                            accountDb.Address = updateCustomerInforAddress.CustomerInfoAddressName;
-                            mainAddressDb.IsCurrentUsed = false;
-                            await customerInfoAddressRepository.Update(mainAddressDb);
-                            await accountRepository.Update(accountDb);
-                        }
-                    }
-
-                    if (!BuildAppActionResultIsError(result))
-                    {
-                        await customerInfoAddressRepository!.Update(customerInfoDb);
-                        await _unitOfWork.SaveChangesAsync();
-                    }
-                    scope.Complete();
-                }
-                catch (Exception ex)
-                {
-                    result = BuildAppActionResultError(result, ex.Message);
-                }
-                return result;
-            }
-        }
-
-
-        public async Task<AppActionResult> DeleteCustomerInfoAddress(Guid customerInfoAddressId)
-        {
-            var result = new AppActionResult();
-            var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
             try
             {
-                var customerInfoAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.CustomerInfoAddressId == customerInfoAddressId);
-                if (customerInfoAddressDb == null)
+                var customerInfoDb = await customerInfoAddressRepository!.GetByExpression(p => p.CustomerInfoAddressId == updateCustomerInforAddress.CustomerInfoAddressId);
+                if (customerInfoDb == null)
                 {
-                    return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ khách hàng với id {customerInfoAddressId}");
+                    return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {updateCustomerInforAddress.AccountId}");
                 }
-                if (customerInfoAddressDb.IsCurrentUsed == true)
+
+                customerInfoDb.CustomerInfoAddressName = updateCustomerInforAddress.CustomerInfoAddressName;
+                customerInfoDb.IsCurrentUsed = updateCustomerInforAddress.IsCurrentUsed;
+                customerInfoDb.AccountId = updateCustomerInforAddress.AccountId;
+                customerInfoDb.Lat = updateCustomerInforAddress.Lat;
+                customerInfoDb.Lng = updateCustomerInforAddress.Lng;
+
+                if (updateCustomerInforAddress.IsCurrentUsed == true)
                 {
-                    return BuildAppActionResultError(result, $"Không thể xóa địa chỉ đang sử dụng, hãy sử dụng địa chỉ khác");
+                    var mainAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.AccountId == updateCustomerInforAddress.AccountId && p.IsCurrentUsed == true);
+                    if (mainAddressDb != null)
+                    {
+                        var accountDb = await accountRepository.GetByExpression(p => p.Id == updateCustomerInforAddress.AccountId);
+                        accountDb.Address = updateCustomerInforAddress.CustomerInfoAddressName;
+                        mainAddressDb.IsCurrentUsed = false;
+                        await customerInfoAddressRepository.Update(mainAddressDb);
+                        await accountRepository.Update(accountDb);
+                    }
                 }
-                else
+
+                if (!BuildAppActionResultIsError(result))
                 {
-                    await customerInfoAddressRepository.DeleteById(customerInfoAddressId);
+                    await customerInfoAddressRepository!.Update(customerInfoDb);
                     await _unitOfWork.SaveChangesAsync();
                 }
+                scope.Complete();
             }
             catch (Exception ex)
             {
@@ -1770,64 +1710,50 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-
-        public async Task<AppActionResult> UpdateAccountImage(UpdateAccountImageRequest updateAccountImageRequest)
-        {
-            var result = new AppActionResult();
-            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-            {
-                try
-                {
-                    var firebaseService = Resolve<IFirebaseService>();
-                    var accountDb = await _accountRepository.GetByExpression(p => p.Id == updateAccountImageRequest.AccountId);
-                    if (accountDb == null)
-                    {
-                        result = BuildAppActionResultError(result, $"Tài khoản với số điện thoại {updateAccountImageRequest.AccountId} không tồn tại!");
-                    }
-
-                    var pathName = SD.FirebasePathName.DISH_PREFIX + $"{updateAccountImageRequest.AccountId}{Guid.NewGuid()}.jpg";
-                    var upload = await firebaseService!.UploadFileToFirebase(updateAccountImageRequest.Image!, pathName);
-
-                    if (!upload.IsSuccess)
-                    {
-                        return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
-                    }
-                    accountDb!.Avatar = upload.Result!.ToString()!;
-
-                    if (!upload.IsSuccess)
-                    {
-                        return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
-                    }
-
-                    if (!BuildAppActionResultIsError(result))
-                    {
-                        await _accountRepository.Update(accountDb);
-                        await _unitOfWork.SaveChangesAsync();
-                        scope.Complete();
-                        result.Messages.Add("Cập nhập hình ảnh thành công");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    result = BuildAppActionResultError(result, ex.Message);
-                }
-            }
-            return result;
-        }
-
-        private string ParseDeviceNameFromUserAgent(string userAgent)
-        {
-            if (userAgent.Contains("Windows"))
-                return "Windows PC";
-            else if (userAgent.Contains("Macintosh"))
-                return "Mac";
-            else if (userAgent.Contains("iPhone"))
-                return "iPhone";
-            else if (userAgent.Contains("Android"))
-                return "Android Device";
-            else
-                return "Unknown Device";
-        }
-
     }
+
+
+    public async Task<AppActionResult> DeleteCustomerInfoAddress(Guid customerInfoAddressId)
+    {
+        var result = new AppActionResult();
+        var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+        try
+        {
+            var customerInfoAddressDb = await customerInfoAddressRepository!.GetByExpression(p => p.CustomerInfoAddressId == customerInfoAddressId);
+            if (customerInfoAddressDb == null)
+            {
+                return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ khách hàng với id {customerInfoAddressId}");
+            }
+            if (customerInfoAddressDb.IsCurrentUsed == true)
+            {
+                return BuildAppActionResultError(result, $"Không thể xóa địa chỉ đang sử dụng, hãy sử dụng địa chỉ khác");
+            }
+            else
+            {
+                await customerInfoAddressRepository.DeleteById(customerInfoAddressId);
+                await _unitOfWork.SaveChangesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            result = BuildAppActionResultError(result, ex.Message);
+        }
+        return result;
+    }
+
+    private string ParseDeviceNameFromUserAgent(string userAgent)
+    {
+        if (userAgent.Contains("Windows"))
+            return "Windows PC";
+        else if (userAgent.Contains("Mac"))
+            return "Mac";
+        else if (userAgent.Contains("iPhone"))
+            return "iPhone";
+        else if (userAgent.Contains("Android"))
+            return "Android Device";
+        else
+            return "Unknown Device";
+    }
+
+}
 }

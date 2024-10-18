@@ -222,7 +222,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 ip = context.Request.Headers["CF-Connecting-IP"].FirstOrDefault();
             }
-
+                                                                                                                                                                                                                                                                                                                                                
             // If still not found, use RemoteIpAddress
             if (string.IsNullOrEmpty(ip) && context.Connection.RemoteIpAddress != null)
             {
@@ -248,7 +248,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             if (userAgent.Contains("Windows"))
                 return "Windows PC";
-            else if (userAgent.Contains("Macintosh"))
+            else if (userAgent.Contains("Mac"))
                 return "Mac";
             else if (userAgent.Contains("iPhone"))
                 return "iPhone";
