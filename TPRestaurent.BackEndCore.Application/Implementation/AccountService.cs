@@ -1391,10 +1391,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         result = BuildAppActionResultError(result, $"Tài khoản với số điện thoại {updateAccountRequest.AccountId} không tồn tại!");
                     }
 
-                    accountDb.Address = updateAccountRequest.Address;
                     accountDb.FirstName = updateAccountRequest.FirstName;
                     accountDb.LastName = updateAccountRequest.LastName;
-                    accountDb.Address = updateAccountRequest.Address;
                     accountDb.DOB = updateAccountRequest.DOB;
 
                     var pathName = SD.FirebasePathName.DISH_PREFIX + $"{updateAccountRequest.AccountId}{Guid.NewGuid()}.jpg";
