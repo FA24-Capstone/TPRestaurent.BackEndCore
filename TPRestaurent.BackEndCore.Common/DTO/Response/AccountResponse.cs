@@ -24,7 +24,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public double StoreCredit { get; set; }
         public Guid? StoreCreditId { get; set; }
         public DateTime StoreCreditExpireDay { get; set; }
-        public bool? IsManuallyUpdate { get; set; }  
+        public bool? IsManuallyCreated { get; set; }  
         public List<IdentityRole> Roles { get; set; }
         public string MainRole { get; set; }
     }
