@@ -25,7 +25,7 @@ public class MappingConfig
                 .ForMember(desc => desc.UserName, act => act.MapFrom(src => src.UserName))
                 .ForMember(desc => desc.Avatar, act => act.MapFrom(src => src.Avatar))
                 .ForMember(desc => desc.LoyalPoint, act => act.MapFrom(src => src.LoyaltyPoint))
-                .ForMember(desc => desc.IsManuallyUpdate, act => act.MapFrom(src => src.IsManuallyCreated))
+                .ForMember(desc => desc.IsManuallyCreated, act => act.MapFrom(src => src.IsManuallyCreated))
                 ;
 
             config.CreateMap<Device, DeviceResponse>()

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +13,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;
         public DateTime DOB { get; set; }
-        public string? Address { get; set; } = null!;
-        public Guid? AddressId { get; set; }
+        public bool Gender { get; set; }
+        public IFormFile? Image { get; set; } = null!;
     }
 }
