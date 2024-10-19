@@ -148,7 +148,7 @@ public class TemplateMappingHelper
         </p>
 
         <p class=""emailBody"">
-          Vui lòng nhập mã xác nhận vào hệ thốn để đến bước tiếp theo
+          Vui lòng nhập mã xác nhận vào hệ thống để đến bước tiếp theo
           <a href=""https://lovehouse.vercel.app/""
             ><span style=""font-weight: bold; Text-transform: uppercase""
               >Tại đây</span

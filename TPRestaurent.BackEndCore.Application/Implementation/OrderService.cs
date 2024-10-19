@@ -293,7 +293,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     await _repository.Update(orderDb);
                     await _unitOfWork.SaveChangesAsync();
-                    if(orderDb.StatusId == OrderStatus.Processing || orderDb.StatusId == OrderStatus.ReadyForDelivery)
+                    if (orderDb.StatusId == OrderStatus.Processing || orderDb.StatusId == OrderStatus.ReadyForDelivery)
                     {
                         await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
                         await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
@@ -334,7 +334,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
                     var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
                     var tokenRepostiory = Resolve<IGenericRepository<Token>>();
-                    var hubService = Resolve<IHubServices.IHubServices>(); 
+                    var hubService = Resolve<IHubServices.IHubServices>();
                     var mapService = Resolve<IMapService>();
                     var createdOrderId = new Guid();
                     var dishSizeDetail = new DishSizeDetail();
@@ -652,7 +652,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
 
                         var shippingCost = await CalculateDeliveryOrder(customerAddressDb.CustomerInfoAddressId);
-                        if(shippingCost.Result == null)
+                        if (shippingCost.Result == null)
                         {
                             return BuildAppActionResultError(result, $"Xảy ra lỗi khi tính phí giao hàng. Vui lòng kiểm tra lại thông tin địa chỉ");
                         }
@@ -761,8 +761,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await orderSessionRepository.Insert(orderSession);
                         await _repository.Insert(order);
                         await _unitOfWork.SaveChangesAsync();
-                        
-                        if(order.OrderTypeId != OrderType.Reservation)
+
+                        if (order.OrderTypeId != OrderType.Reservation)
                         {
 
                             await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
@@ -785,7 +785,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             if (linkPaymentDb.Result != null && !string.IsNullOrEmpty(linkPaymentDb.Result.ToString()))
                             {
                                 orderWithPayment.PaymentLink = linkPaymentDb!.Result!.ToString();
-                            }                            
+                            }
 
                             var chefRole = await roleRepository!.GetByExpression(p => p.Name == SD.RoleName.ROLE_CHEF);
                             var userRole = await userRoleRepository!.GetAllDataByExpression(p => p.RoleId == chefRole.Id.ToString(), 0, 0, null, false, null);
@@ -797,46 +797,51 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
 
                             StringBuilder messageBody = new StringBuilder();
-                            foreach(var orderDetail in orderDetails)
+                            if (orderDetails != null && orderDetails.Count > 0)
                             {
-                                if (orderDetail.DishSizeDetailId.HasValue)
+                                foreach (var orderDetail in orderDetails)
                                 {
-                                    var dishSizeDb = await dishSizeDetailRepository.GetByExpression(d => d.DishSizeDetailId == orderDetail.DishSizeDetailId.Value, d => d.Dish, d => d.DishSize);
-                                    messageBody.Append($"{dishSizeDb.Dish.Name}: {dishSizeDb.DishSize.VietnameseName} x {orderDetail.Quantity}, ");
-                                } else
+                                    if (orderDetail.DishSizeDetailId.HasValue)
+                                    {
+                                        var dishSizeDb = await dishSizeDetailRepository.GetByExpression(d => d.DishSizeDetailId == orderDetail.DishSizeDetailId.Value, d => d.Dish, d => d.DishSize);
+                                        messageBody.Append($"{dishSizeDb.Dish.Name}: {dishSizeDb.DishSize.VietnameseName} x {orderDetail.Quantity}, ");
+                                    }
+                                    else
+                                    {
+                                        var comboDishDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId, 0, 0, null, false, c => c.DishCombo.DishSizeDetail.Dish, c => c.DishCombo.DishSizeDetail.DishSize);
+                                        messageBody.Append($"{orderDetail.Combo.Name}: {orderDetail.Quantity} x [");
+                                        comboDishDetailDb.Items.ForEach(c =>
+                                            messageBody.Append($"{c.DishCombo.DishSizeDetail.Dish.Name}: {c.DishCombo.DishSizeDetail.DishSize.VietnameseName} x {c.DishCombo.Quantity}, ")
+                                        );
+                                        messageBody.Length -= 2;
+                                        messageBody.Append("], ");
+                                    }
+                                }
+
+                                messageBody.Length -= 2;
+
+                                var notificationList = new List<NotificationMessage>();
+                                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                                foreach (var user in userRole.Items)
                                 {
-                                    var comboDishDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId, 0, 0, null, false, c => c.DishCombo.DishSizeDetail.Dish, c => c.DishCombo.DishSizeDetail.DishSize);
-                                    messageBody.Append($"{orderDetail.Combo.Name}: {orderDetail.Quantity} x [");
-                                    comboDishDetailDb.Items.ForEach(c =>
-                                        messageBody.Append($"{c.DishCombo.DishSizeDetail.Dish.Name}: {c.DishCombo.DishSizeDetail.DishSize.VietnameseName} x {c.DishCombo.Quantity}, ")
-                                    );
-                                    messageBody.Length -= 2;
-                                    messageBody.Append("], ");
+                                    var notification = new NotificationMessage
+                                    {
+                                        NotificationId = Guid.NewGuid(),
+                                        NotificationName = "Nhà hàng có thông báo mới",
+                                        Messages = messageBody.ToString(),
+                                        NotifyTime = currentTime,
+                                        AccountId = user.UserId,
+                                    };
+                                    notificationList.Add(notification);
+                                }
+
+                                await notificationMessageRepository!.InsertRange(notificationList);
+                                if (tokenList.Count() > 0)
+                                {
+                                    await fireBaseService!.SendMulticastAsync(tokenList, "Nhà hàng có một thông báo mới", messageBody.ToString(), result);
                                 }
                             }
-
-                            messageBody.Length -= 2;
-
-                            var notificationList = new List<NotificationMessage>();
-                            var currentTime = utility.GetCurrentDateTimeInTimeZone();
-                            foreach (var user in userRole.Items)
-                            {
-                                var notification = new NotificationMessage
-                                {
-                                    NotificationId = Guid.NewGuid(),
-                                    NotificationName = "Nha hang co mot thong bao moi",
-                                    Messages = messageBody.ToString(),
-                                    NotifyTime = currentTime,
-                                    AccountId = user.UserId,
-                                };
-                                notificationList.Add(notification);
-                            }
-
-                            await notificationMessageRepository!.InsertRange(notificationList);
-                            if(tokenList.Count() > 0)
-                            {
-                                await fireBaseService!.SendMulticastAsync(tokenList, "Nhà hàng có một thông báo mới", messageBody.ToString(), result);
-                            }
+                          
 
                             await _unitOfWork.SaveChangesAsync();
                         }
@@ -849,7 +854,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result = BuildAppActionResultError(result, ex.Message);
                 }
             }
-            
+
             return result;
         }
 
@@ -1106,8 +1111,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result = BuildAppActionResultError(result, ex.Message);
                 }
                 return result;
-                
-                
+
+
             }
         }
 
@@ -2023,7 +2028,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return BuildAppActionResultError(result, $"Tồn tại id gọi món hông nằm trong hệ thống");
                 }
 
-                if(orderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.Reserved || o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe || o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
+                if (orderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.Reserved || o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe || o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
                 {
                     return BuildAppActionResultError(result, $"Các chi tiết đơn hàng không thể cập nhật trạng thái v2i đều không ở trạn thái chờ hay đang xừ lí");
                 }
@@ -2593,7 +2598,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 PagedResult<Order> data = new PagedResult<Order>();
                 if (orderStatus.HasValue && orderStatus > 0)
                 {
-                    data = await _repository.GetAllDataByExpression(o => o.StatusId == orderStatus && o.OrderTypeId == OrderType.Delivery && o.ShipperId == shipperId , pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                    data = await _repository.GetAllDataByExpression(o => o.StatusId == orderStatus && o.OrderTypeId == OrderType.Delivery && o.ShipperId == shipperId, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
                        p => p.Status!,
                        p => p.Account!,
                        p => p.LoyalPointsHistory!,
@@ -2640,7 +2645,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (estimateDelivery.IsSuccess && estimateDelivery.Result is EstimatedDeliveryTimeDto.Response response)
                         {
                             order.TotalDistance = response.Elements.FirstOrDefault().Distance.Text;
-                            order.TotalDuration = response.Elements.FirstOrDefault().Duration.Text;   
+                            order.TotalDuration = response.Elements.FirstOrDefault().Duration.Text;
                         }
                     }
                 }
@@ -2768,7 +2773,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     order.TotalDistance = response.Elements.FirstOrDefault().Distance.Text;
                     order.TotalDuration = response.Elements.FirstOrDefault().Duration.Text;
                 }
-            } catch(Exception ex)
+            }
+            catch (Exception ex)
             {
             }
             return order;
