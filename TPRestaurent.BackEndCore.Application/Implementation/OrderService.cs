@@ -1319,7 +1319,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                        p => p.Status!,
                        p => p.Account!,
                        p => p.LoyalPointsHistory!,
-                       p => p.OrderType!
+                       p => p.OrderType!,
+                       p => p.Shipper!
                        );
                 }
                 else if (status.HasValue && status > 0)
@@ -1328,7 +1329,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                        p => p.Status!,
                        p => p.Account!,
                        p => p.LoyalPointsHistory!,
-                       p => p.OrderType!
+                       p => p.OrderType!,
+                       p => p.Shipper!
                        );
                 }
                 else if (orderType.HasValue && orderType > 0)
@@ -1337,7 +1339,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                        p => p.Status!,
                        p => p.Account!,
                        p => p.LoyalPointsHistory!,
-                       p => p.OrderType!
+                       p => p.OrderType!,
+                       p => p.Shipper!
                        );
                 }
                 else
@@ -1347,7 +1350,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                       p => p.Account!,
                       p => p.LoyalPointsHistory!,
                       p => p.OrderType!,
-                      p => p.Shipper
+                      p => p.Shipper!
                       );
                 }
 
