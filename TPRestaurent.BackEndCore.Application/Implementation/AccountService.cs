@@ -1766,16 +1766,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
                 var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
 
-                var shipperRoleDb = await roleRepository.GetByExpression(r => r.Name.Equals("CHEF"));
+                var adminRoleDb = await roleRepository.GetByExpression(r => r.Name.Equals("ADMIN"));
+
+                var shipperRoleDb = await roleRepository.GetByExpression(r => r.Name.Equals("SHIPPER"));
                 if(shipperRoleDb == null)
                 {
                     return BuildAppActionResultError(result, $"Không có thông tin về vai trò shipper");
                 }
-                var userRoleDb = await userRoleRepository.GetAllDataByExpression(u => u.RoleId == shipperRoleDb.Id, 0, 0, null, false, null);
-                var shipperIds = userRoleDb.Items.DistinctBy(u => u.UserId).Select(u => u.UserId).ToList();
-
+                var userWithShipperRoleDb = await userRoleRepository.GetAllDataByExpression(u => u.RoleId == shipperRoleDb.Id, 0, 0, null, false, null);
+                var shipperIds = userWithShipperRoleDb.Items.DistinctBy(u => u.UserId).Select(u => u.UserId).ToList();
+                var userWithAdminRoleDb = await userRoleRepository.GetAllDataByExpression(u => adminRoleDb != null && u.RoleId == adminRoleDb.Id, 0, 0, null, false, null);
+                var adminIds = userWithAdminRoleDb.Items.DistinctBy(u => u.UserId).Select(u => u.UserId).ToList();
+                shipperIds = shipperIds.Where(s => !adminIds.Contains(s)).ToList();
                 var availableShipperDb = await _accountRepository.GetAllDataByExpression(a => a.IsVerified && !a.IsDeleted
                                                                                               && !a.IsDelivering && shipperIds.Contains(a.Id), 0, 0, null, false, null);
+                
                 result.Result = availableShipperDb;
             }
             catch (Exception ex)
