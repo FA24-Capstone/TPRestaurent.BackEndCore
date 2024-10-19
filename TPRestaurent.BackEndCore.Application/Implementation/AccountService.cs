@@ -583,10 +583,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 int accountRandomNumber = random.Next(1000000, 9999999);
                 var user = new Account
                 {
-                    Email = $"{SD.AccountDefaultInfomation.DEFAULT_EMAIL}{accountRandomNumber}{SD.DEFAULT_EMAIL_DOMAIN}",
-                    UserName = $"{SD.AccountDefaultInfomation.DEFAULT_EMAIL}{accountRandomNumber}{SD.DEFAULT_EMAIL_DOMAIN}",
-                    FirstName = SD.AccountDefaultInfomation.DEFAULT_FIRSTNAME,
-                    LastName = SD.AccountDefaultInfomation.DEFAULT_LASTNAME,
+                    Email = string.Empty,
+                    UserName = phoneNumber,
+                    FirstName = string.Empty,
+                    LastName = string.Empty,
                     PhoneNumber = phoneNumber,
                     Gender = true,
                     IsVerified = false,
@@ -1866,26 +1866,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return BuildAppActionResultError(result, $"Tài khoản với id {accountId} không tồn tại");
                 }
 
-                var existEmail = await _accountRepository.GetAllDataByExpression(p => p.Email == email, 0, 0, null, false, null);
-                if (existEmail.Items != null && existEmail.Items.Count > 0)
+
+                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+                var otpDb = await otpRepository!.GetAllDataByExpression(p => p.Code == otpCode && p.AccountId == accountId && p.Type == OTPType.ConfirmEmail && p.ExpiredTime > currentTime, 0, 0, p => p.ExpiredTime, false, null);
+                if (otpDb.Items!.FirstOrDefault() == null)
                 {
-                    return BuildAppActionResultError(result, $"Email {email} đã được sử dụng trong hệ thống.");
+                    return BuildAppActionResultError(result, $"Mã OTP không tồn tại");
                 }
                 else
                 {
-                    var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-                    var otpDb = await otpRepository!.GetAllDataByExpression(p => p.Code == otpCode && p.AccountId == accountId && p.Type == OTPType.ConfirmEmail && p.ExpiredTime > currentTime, 0, 0, p => p.ExpiredTime, false, null);
-                    if (otpDb.Items!.FirstOrDefault() == null)
-                    {
-                        return BuildAppActionResultError(result, $"Mã OTP không tồn tại");
-                    }
-                    else
-                    {
-                        accountDb.Email = email;
-                        accountDb.UserName = email;
-                        accountDb.NormalizedEmail = email.ToUpper();
-                        accountDb.NormalizedUserName = email.ToUpper();
-                    }
+                    accountDb.Email = email;
+                    accountDb.NormalizedEmail = email.ToUpper();
                 }
 
 
