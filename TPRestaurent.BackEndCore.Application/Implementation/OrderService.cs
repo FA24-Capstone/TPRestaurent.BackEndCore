@@ -157,6 +157,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
+                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                 var orderDb = await _repository.GetById(orderId);
                 if (orderDb == null)
                 {
@@ -225,6 +226,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     return result;
                                 }
                                 orderDb.StatusId = OrderStatus.Processing;
+                                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderId, 0, 0, null, false, null);
+                                if(orderDetailDb.Items.Count() > 0)
+                                {
+                                    await ChangeOrderDetailStatusAfterPayment(orderDetailDb.Items.Where(o => o.OrderDetailStatusId == OrderDetailStatus.Reserved).ToList());
+                                }
                             }
                             else
                             {
@@ -629,6 +635,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         var customerAddressDb = customerInfoAddressListDb.Items.FirstOrDefault();
 
+                        order.AddressId = customerAddressDb.CustomerInfoAddressId;
+
                         var restaurantLat = Double.Parse(restaurantLatConfig.CurrentValue);
                         var restaurantLng = Double.Parse(restaurantLngConfig.CurrentValue);
                         var maxDistanceToOrder = double.Parse(restaurantMaxDistanceToOrderConfig!.CurrentValue);
@@ -740,11 +748,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
 
                         orderWithPayment.Order = order;
-
-                        if (orderDetails.Count > 0)
-                        {
-                            orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Reserved);
-                        }
+                      
+                        orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Reserved);
                         order.TotalAmount = money;
 
                         await orderDetailRepository.InsertRange(orderDetails);
@@ -919,7 +924,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         p => p.Status!,
                         p => p.Account!,
                         p => p.LoyalPointsHistory!,
-                        p => p.OrderType!
+                        p => p.OrderType!,
+                        p => p.CustomerInfoAddress
+
                     );
                 if (orderDb.Items! == null && orderDb.Items.Count == 0)
                 {
@@ -1214,7 +1221,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                      p => p.Account!,
                                                                      p => p.LoyalPointsHistory!,
                                                                      p => p.OrderType!,
-                                                                     p => p.Shipper
+                                                                     p => p.Shipper, 
+                                                                     p => p.CustomerInfoAddress
                      );
                     orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
@@ -1236,7 +1244,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                      p => p.Account!,
                                                                      p => p.LoyalPointsHistory!,
                                                                      p => p.OrderType!,
-                                                                     p => p.Shipper
+                                                                     p => p.Shipper,
+                                                                     p => p.CustomerInfoAddress
                      );
                     orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
@@ -1259,7 +1268,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                      p => p.Account!,
                                                                      p => p.LoyalPointsHistory!,
                                                                      p => p.OrderType!,
-                                                                     p => p.Shipper
+                                                                     p => p.Shipper, 
+                                                                     p => p.CustomerInfoAddress
                      );
                     orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
@@ -1283,7 +1293,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             p => p.Account!,
                             p => p.LoyalPointsHistory!,
                             p => p.OrderType!,
-                            p => p.Shipper);
+                            p => p.Shipper, 
+                            p => p.CustomerInfoAddress
+                        );
 
                     orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
@@ -1320,7 +1332,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                        p => p.Account!,
                        p => p.LoyalPointsHistory!,
                        p => p.OrderType!,
-                       p => p.Shipper!
+                       p => p.Shipper!,
+                       p => p.CustomerInfoAddress
                        );
                 }
                 else if (status.HasValue && status > 0)
@@ -1330,7 +1343,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                        p => p.Account!,
                        p => p.LoyalPointsHistory!,
                        p => p.OrderType!,
-                       p => p.Shipper!
+                       p => p.Shipper!, 
+                       p => p.CustomerInfoAddress
                        );
                 }
                 else if (orderType.HasValue && orderType > 0)
@@ -1340,7 +1354,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                        p => p.Account!,
                        p => p.LoyalPointsHistory!,
                        p => p.OrderType!,
-                       p => p.Shipper!
+                       p => p.Shipper!,
+                       p => p.CustomerInfoAddress
                        );
                 }
                 else
@@ -1350,7 +1365,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                       p => p.Account!,
                       p => p.LoyalPointsHistory!,
                       p => p.OrderType!,
-                      p => p.Shipper!
+                      p => p.Shipper!,
+                      p => p.CustomerInfoAddress
                       );
                 }
 
@@ -1390,7 +1406,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         p => p.Status!,
                         p => p.Account!,
                         p => p.LoyalPointsHistory!,
-                        p => p.OrderType!);
+                        p => p.OrderType!,
+                        p => p.CustomerInfoAddress
+                    );
                 result.Result = orderDb;
             }
             catch (Exception ex)
@@ -2295,7 +2313,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             try
             {
-                var order = await _repository.GetByExpression(r => r.OrderId == reservationId, r => r.Account, r => r.Shipper, r => r.Status, r => r.OrderType, r => r.LoyalPointsHistory);
+                var order = await _repository.GetByExpression(r => r.OrderId == reservationId, r => r.Account, r => r.Shipper, r => r.Status, r => r.OrderType, r => r.LoyalPointsHistory, r => r.CustomerInfoAddress);
                 if (order == null)
                 {
                     return BuildAppActionResultError(new AppActionResult(), $"Không tìm thấy thông tin đặt bàn với id {reservationId}");
@@ -2605,7 +2623,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                        p => p.Status!,
                        p => p.Account!,
                        p => p.LoyalPointsHistory!,
-                       p => p.OrderType!
+                       p => p.OrderType!,
+                       p => p.CustomerInfoAddress
                        );
                 }
                 else
@@ -2615,7 +2634,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                       p => p.Account!,
                       p => p.LoyalPointsHistory!,
                       p => p.OrderType!,
-                      p => p.Shipper
+                      p => p.Shipper,
+                      p => p.CustomerInfoAddress
                       );
                 }
 
@@ -2634,7 +2654,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
                         order.ItemLeft = orderDetailDb.Items.Count() - 1;
 
-                        var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.AccountId == order.AccountId && p.IsCurrentUsed == true);
+                        var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.CustomerInfoAddressId == order.AddressId);
                         if (customerAddressDb == null)
                         {
                             return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {order.AccountId}");
@@ -2747,7 +2767,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var customerInfoRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
-                var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.AccountId == order.AccountId && p.IsCurrentUsed == true);
+                var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.CustomerInfoAddressId == order.AddressId );
                 if (customerAddressDb == null)
                 {
                     return order;
@@ -2809,6 +2829,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
+        }
+
+        private async Task<bool> ChangeOrderDetailStatusAfterPayment(List<OrderDetail> orderDetails)
+        {
+            try
+            {
+                orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
+                await _detailRepository.UpdateRange(orderDetails);
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+            return true;
         }
     }
 }
