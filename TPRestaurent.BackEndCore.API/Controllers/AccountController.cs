@@ -155,7 +155,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.UpdateCustomerInfoAddress(updateCustomerInforAddress);     
         }
 
-        [HttpDelete("delete-customer-info-address")]
+        [HttpPut("delete-customer-info-address")]
         public async Task<AppActionResult> DeleteCustomerInfoAddress(Guid customerInfoAddresId)
         {
             return await _accountService.DeleteCustomerInfoAddress(customerInfoAddresId);       
