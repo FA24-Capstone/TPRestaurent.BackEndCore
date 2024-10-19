@@ -161,7 +161,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.DeleteCustomerInfoAddress(customerInfoAddresId);       
         }
 
-        [HttpGet("load-available")]
+        [HttpGet("load-available-shipper")]
         public async Task<AppActionResult> LoadAvailableShipper()
         {
             return await _accountService.LoadAvailableShipper();
