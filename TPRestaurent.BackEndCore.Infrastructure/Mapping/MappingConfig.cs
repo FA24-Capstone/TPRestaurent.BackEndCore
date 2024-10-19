@@ -18,6 +18,7 @@ public class MappingConfig
                 .ForMember(desc => desc.Id, act => act.MapFrom(src => src.Id))
                 .ForMember(desc => desc.Email, act => act.MapFrom(src => src.Email))
                 .ForMember(desc => desc.Gender, act => act.MapFrom(src => src.Gender))
+                .ForMember(desc => desc.DOB, act => act.MapFrom(src => src.DOB))
                 .ForMember(desc => desc.IsVerified, act => act.MapFrom(src => src.IsVerified))
                 .ForMember(desc => desc.FirstName, act => act.MapFrom(src => src.FirstName))
                 .ForMember(desc => desc.LastName, act => act.MapFrom(src => src.LastName))

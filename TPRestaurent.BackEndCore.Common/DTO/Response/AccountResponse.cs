@@ -15,6 +15,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;
         public bool Gender { get; set; }
+        public DateTime DOB { get; set; }
         public bool IsVerified { get; set; }
         public string UserName { get; set; } = null!;
         public string Email { get; set; } = null!;
