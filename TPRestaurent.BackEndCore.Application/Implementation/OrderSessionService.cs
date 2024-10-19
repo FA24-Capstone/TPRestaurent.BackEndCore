@@ -32,8 +32,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _unitOfWork = unitOfWork;
             _hubServices = hubService;
         }
-
-        
         public async Task DeleteOrderSession()
         {
             try
@@ -50,7 +48,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             Task.CompletedTask.Wait();  
         }
-
         public async Task<AppActionResult> GetAllOrderSession(OrderSessionStatus? orderSessionStatus, int pageNumber, int pageSize)
         {
             AppActionResult result = new AppActionResult();
@@ -135,7 +132,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-
         public async Task<AppActionResult> GetGroupedDish()
         {
             AppActionResult result = new AppActionResult();
@@ -192,7 +188,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-
         private async Task<List<KitchenGroupedDishItemResponse>> RefineGroupDishData(List<KitchenGroupedDishItemResponse> data)
         {
             try
@@ -249,7 +244,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return data;
         }
-
         private async Task<List<KitchenGroupedDishItemResponse>> GetExtractComboQuantity(IEnumerable<OrderDetail> orderDetails)
         {
             List<KitchenGroupedDishItemResponse> result = new List<KitchenGroupedDishItemResponse>();
@@ -330,7 +324,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-
         private async Task<List<DishFromTableOrder>> GetListDishFromTableOrder(List<OrderDetail> orderDetails)
         {
             List<DishFromTableOrder> result = new List<DishFromTableOrder>();
@@ -387,7 +380,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-
         public async Task<AppActionResult> GetOrderSessionById(Guid orderSessionId)
         {
             var result = new AppActionResult(); 
@@ -448,8 +440,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-
-
         public async Task<AppActionResult> UpdateOrderSessionStatus(Guid orderSessionId, OrderSessionStatus orderSessionStatus, bool sendSignalR)
         {
             var result = new AppActionResult(); 

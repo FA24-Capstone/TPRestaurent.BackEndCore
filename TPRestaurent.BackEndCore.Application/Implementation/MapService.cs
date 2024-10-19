@@ -207,10 +207,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 List<(double Lat, double Lng)> coordinates = new List<(double Lat, double Lng)>();
                 foreach (var order in orderToDeliver.Items)
                 {
-                    var customerInfoAddressDb = customerInfoAddressRepository!.GetByExpression(p => p.AccountId == order.AccountId && p.IsCurrentUsed == true).Result;
+                    var customerInfoAddressDb = customerInfoAddressRepository!.GetByExpression(p => p.CustomerInfoAddressId == order.AddressId).Result;
                     if (customerInfoAddressDb == null)
                     {
-                        return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {order.Account!.Address}");
+                        return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {order.AddressId}");
                     }
 
                     coordinates.Add((customerInfoAddressDb.Lat, customerInfoAddressDb.Lng));

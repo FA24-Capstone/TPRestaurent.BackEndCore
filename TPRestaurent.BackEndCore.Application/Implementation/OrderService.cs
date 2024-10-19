@@ -157,6 +157,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
+                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                 var orderDb = await _repository.GetById(orderId);
                 if (orderDb == null)
                 {
@@ -225,6 +226,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     return result;
                                 }
                                 orderDb.StatusId = OrderStatus.Processing;
+                                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderId, 0, 0, null, false, null);
+                                if(orderDetailDb.Items.Count() > 0)
+                                {
+                                    await ChangeOrderDetailStatusAfterPayment(orderDetailDb.Items.Where(o => o.OrderDetailStatusId == OrderDetailStatus.Reserved).ToList());
+                                }
                             }
                             else
                             {
@@ -629,6 +635,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         var customerAddressDb = customerInfoAddressListDb.Items.FirstOrDefault();
 
+                        order.AddressId = customerAddressDb.CustomerInfoAddressId;
+
                         var restaurantLat = Double.Parse(restaurantLatConfig.CurrentValue);
                         var restaurantLng = Double.Parse(restaurantLngConfig.CurrentValue);
                         var maxDistanceToOrder = double.Parse(restaurantMaxDistanceToOrderConfig!.CurrentValue);
@@ -740,11 +748,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
 
                         orderWithPayment.Order = order;
-
-                        if (orderDetails.Count > 0)
-                        {
-                            orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Reserved);
-                        }
+                      
+                        orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Reserved);
                         order.TotalAmount = money;
 
                         await orderDetailRepository.InsertRange(orderDetails);
@@ -2634,7 +2639,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
                         order.ItemLeft = orderDetailDb.Items.Count() - 1;
 
-                        var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.AccountId == order.AccountId && p.IsCurrentUsed == true);
+                        var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.CustomerInfoAddressId == order.AddressId);
                         if (customerAddressDb == null)
                         {
                             return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {order.AccountId}");
@@ -2747,7 +2752,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var customerInfoRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
-                var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.AccountId == order.AccountId && p.IsCurrentUsed == true);
+                var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.CustomerInfoAddressId == order.AddressId && p.IsCurrentUsed == true);
                 if (customerAddressDb == null)
                 {
                     return order;
@@ -2809,6 +2814,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
+        }
+
+        private async Task<bool> ChangeOrderDetailStatusAfterPayment(List<OrderDetail> orderDetails)
+        {
+            try
+            {
+                orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
+                await _detailRepository.UpdateRange(orderDetails);
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+            return true;
         }
     }
 }

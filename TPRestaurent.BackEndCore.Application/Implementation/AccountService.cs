@@ -986,7 +986,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 _tokenDto.Token = token;
                 _tokenDto.RefreshToken = refreshToken;
                 _tokenDto.Account = _mapper.Map<AccountResponse>(user);
-                var customerInfoAddressDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.AccountId.Equals(user.Id), 0, 0, null, false, null);
+                var customerInfoAddressDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.AccountId.Equals(user.Id) && !c.IsDeleted, 0, 0, null, false, null);
                 if (customerInfoAddressDb.Items.Count() > 0)
                 {
                     _tokenDto.Account.Addresses = customerInfoAddressDb.Items;
@@ -1556,7 +1556,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
-                var customerInfoAddressDb = await customerInfoAddressRepository!.GetAllDataByExpression(c => c.AccountId == customerInfoDb.Id, 0, 0, null, false, null);
+                var customerInfoAddressDb = await customerInfoAddressRepository!.GetAllDataByExpression(c => c.AccountId == customerInfoDb.Id && !c.IsDeleted, 0, 0, null, false, null);
                 listMap.Addresses = customerInfoAddressDb.Items;
 
                 var userRole = new List<IdentityRole>();
@@ -1733,7 +1733,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else
                 {
-                    await customerInfoAddressRepository.DeleteById(customerInfoAddressId);
+                    customerInfoAddressDb.IsDeleted = true;
+                    await customerInfoAddressRepository.Update(customerInfoAddressDb);
                     await _unitOfWork.SaveChangesAsync();
                 }
             }
