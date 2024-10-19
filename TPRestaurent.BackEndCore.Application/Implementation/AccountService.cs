@@ -1769,7 +1769,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var adminRoleDb = await roleRepository.GetByExpression(r => r.Name.Equals("ADMIN"));
 
                 var shipperRoleDb = await roleRepository.GetByExpression(r => r.Name.Equals("SHIPPER"));
-                if(shipperRoleDb == null)
+                if (shipperRoleDb == null)
                 {
                     return BuildAppActionResultError(result, $"Không có thông tin về vai trò shipper");
                 }
@@ -1780,7 +1780,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 shipperIds = shipperIds.Where(s => !adminIds.Contains(s)).ToList();
                 var availableShipperDb = await _accountRepository.GetAllDataByExpression(a => a.IsVerified && !a.IsDeleted
                                                                                               && !a.IsDelivering && shipperIds.Contains(a.Id), 0, 0, null, false, null);
-                
+
                 result.Result = availableShipperDb;
             }
             catch (Exception ex)
@@ -1804,17 +1804,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return BuildAppActionResultError(result, $"Không có thông tin về vai trò shipper");
                 }
                 var userRoleDb = await userRoleRepository.GetByExpression(u => u.RoleId == shipperRoleDb.Id && u.UserId.Equals(accountId));
-                if(userRoleDb == null)
+                if (userRoleDb == null)
                 {
                     return BuildAppActionResultError(result, $"Không tồn tại shipper với id {accountId}");
                 }
                 var shipperDb = await _accountRepository.GetByExpression(a => a.IsVerified && !a.IsDeleted && userRoleDb.UserId.Equals(a.Id));
-                if(shipperDb != null)
+                if (shipperDb != null)
                 {
                     shipperDb.IsDelivering = !shipperDb.IsDelivering;
                     await _accountRepository.Update(shipperDb);
                     await _unitOfWork.SaveChangesAsync();
-                } else
+                }
+                else
                 {
                     return BuildAppActionResultError(result, $"Không tồn tại shipper với id {accountId}");
                 }
@@ -1864,19 +1865,28 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return BuildAppActionResultError(result, $"Tài khoản với id {accountId} không tồn tại");
                 }
 
-                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-                var otpDb = await otpRepository!.GetAllDataByExpression(p => p.Code == otpCode && p.AccountId == accountId && p.Type == OTPType.ConfirmEmail && p.ExpiredTime > currentTime, 0, 0, p => p.ExpiredTime, false, null);
-                if (otpDb.Items!.FirstOrDefault() == null)
+                var existEmail = await _accountRepository.GetAllDataByExpression(p => p.Email == email, 0, 0, null, false, null);
+                if (existEmail.Items != null && existEmail.Items.Count > 0)
                 {
-                    return BuildAppActionResultError(result, $"Mã OTP không tồn tại");
+                    return BuildAppActionResultError(result, $"Email {email} đã được sử dụng trong hệ thống.");
                 }
                 else
                 {
-                    accountDb.Email = email;
-                    accountDb.UserName = email;
-                    accountDb.NormalizedEmail = email.ToUpper();
-                    accountDb.NormalizedUserName = email.ToUpper();
+                    var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+                    var otpDb = await otpRepository!.GetAllDataByExpression(p => p.Code == otpCode && p.AccountId == accountId && p.Type == OTPType.ConfirmEmail && p.ExpiredTime > currentTime, 0, 0, p => p.ExpiredTime, false, null);
+                    if (otpDb.Items!.FirstOrDefault() == null)
+                    {
+                        return BuildAppActionResultError(result, $"Mã OTP không tồn tại");
+                    }
+                    else
+                    {
+                        accountDb.Email = email;
+                        accountDb.UserName = email;
+                        accountDb.NormalizedEmail = email.ToUpper();
+                        accountDb.NormalizedUserName = email.ToUpper();
+                    }
                 }
+
 
                 await _accountRepository.Update(accountDb);
                 await _unitOfWork.SaveChangesAsync();
