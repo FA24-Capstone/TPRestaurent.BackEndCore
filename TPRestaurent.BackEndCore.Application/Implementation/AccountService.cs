@@ -1127,32 +1127,75 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> GetAccountsByRoleName(string roleName, int pageNumber, int pageSize)
         {
             var result = new AppActionResult();
-
             try
             {
                 var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
-                var roleDb = await roleRepository!.GetByExpression(r => r.NormalizedName.Equals(roleName.ToLower()));
-                if (roleDb != null)
+                var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
+
+                var rolePriority = new[] { "ADMIN", "CHEF", "SHIPPER", "DEVICE", "CUSTOMER" };
+
+                var normalizedRoleName = roleName.ToUpper();
+
+                if (!rolePriority.Contains(normalizedRoleName))
                 {
-                    var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
-                    var userRoleDb = await userRoleRepository!.GetAllDataByExpression(u => u.RoleId == roleDb.Id, 0, 0, null, false, null);
-                    if (userRoleDb.Items != null && userRoleDb.Items.Count > 0)
+                    return BuildAppActionResultError(result, $"Invalid role: {roleName}");
+                }
+
+                var role = await roleRepository!.GetByExpression(r => r.NormalizedName == normalizedRoleName);
+                if (role == null)
+                {
+                    return BuildAppActionResultError(result, $"Role not found: {roleName}");
+                }
+
+                var roleId = role.Id;
+                List<string> accountIds = new List<string>();
+
+                var usersWithRole = await userRoleRepository!.GetAllDataByExpression(ur => ur.RoleId == roleId, 0, 0, null, false, null);
+
+                foreach (var userRole in usersWithRole.Items)
+                {
+                    if (normalizedRoleName == "CUSTOMER")
                     {
-                        var accountIds = userRoleDb.Items.Select(u => u.UserId).Distinct().ToList();
-                        var accountDb = await _accountRepository.GetAllDataByExpression(a => accountIds.Contains(a.Id), pageNumber, pageSize, null, false, null);
-                        result.Result = accountDb;
+                        accountIds.Add(userRole.UserId);
+                        continue;
+                    }
+
+                    bool hasHigherPriorityRole = false;
+                    foreach (var higherRole in rolePriority.TakeWhile(r => r != normalizedRoleName))
+                    {
+                        var higherRoleEntity = await roleRepository.GetByExpression(r => r.NormalizedName == higherRole);
+                        if (higherRoleEntity != null)
+                        {
+                            var hasHigherRole = await userRoleRepository.GetByExpression(ur => ur.UserId == userRole.UserId && ur.RoleId == higherRoleEntity.Id);
+                            if (hasHigherRole != null)
+                            {
+                                hasHigherPriorityRole = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!hasHigherPriorityRole)
+                    {
+                        accountIds.Add(userRole.UserId);
                     }
                 }
-                else
-                {
-                    result = BuildAppActionResultError(result, $"Không tìm thấy vai trò {roleName}");
-                }
+
+                var accountDb = await _accountRepository.GetAllDataByExpression(
+                    a => accountIds.Contains(a.Id),
+                    pageNumber,
+                    pageSize,
+                    null,
+                    false,
+                    null
+                );
+
+                result.Result = accountDb;
             }
             catch (Exception ex)
             {
                 result = BuildAppActionResultError(result, ex.Message);
             }
-
             return result;
         }
 
