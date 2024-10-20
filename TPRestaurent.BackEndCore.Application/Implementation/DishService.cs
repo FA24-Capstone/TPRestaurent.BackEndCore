@@ -365,28 +365,32 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     List<DishSizeDetail> addDishSizeDetails = new List<DishSizeDetail>();
                     if (dto.UpdateDishSizeDetailDtos.Count > 0)
                     {
-                        dto.UpdateDishSizeDetailDtos.ForEach(async d =>
+                        foreach(var dishSizeDetail in dto.UpdateDishSizeDetailDtos)
                         {
                             if (dto.UpdateDishSizeDetailDtos.Count(d => d.DishSize == DishSize.SMALL) > 1
-                       || dto.UpdateDishSizeDetailDtos.Count(d => d.DishSize == DishSize.MEDIUM) > 1
-                       || dto.UpdateDishSizeDetailDtos.Count(d => d.DishSize == DishSize.LARGE) > 1)
+                    || dto.UpdateDishSizeDetailDtos.Count(d => d.DishSize == DishSize.MEDIUM) > 1
+                    || dto.UpdateDishSizeDetailDtos.Count(d => d.DishSize == DishSize.LARGE) > 1)
                             {
                                 result = BuildAppActionResultError(result, $"Món ăn tồn tại kích thước trùng. Vui lòng kiểm tra lại");
                             }
-                            if (d.DishSizeDetailId.HasValue)
+                            if (dishSizeDetail.DishSizeDetailId.HasValue)
                             {
-                                var dishSizeDetailDb = await dishSizeDetailRepository.GetById(d.DishSizeDetailId.Value);
-                                updateDishSizeDetails.Add(new DishSizeDetail
+                                var dishSizeDetailDb = await dishSizeDetailRepository.GetById(dishSizeDetail.DishSizeDetailId.Value);
+                                if (dishSizeDetailDb != null)
                                 {
-                                    DishSizeDetailId = (Guid)d.DishSizeDetailId,
-                                    DishId = dishDb.DishId,
-                                    DishSizeId = d.DishSize,
-                                    Discount = d.Discount,
-                                    IsAvailable = d.IsAvailable,
-                                    DailyCountdown = (int)(d.DailyCountdown.HasValue ? d.DailyCountdown : dishSizeDetailDb.DailyCountdown),
-                                    QuantityLeft = !d.QuantityLeft.HasValue ? dishSizeDetailDb.QuantityLeft.HasValue ? dishSizeDetailDb.QuantityLeft.Value : d.DailyCountdown : d.DailyCountdown,
-                                    Price = d.Price
-                                });
+                                    dishSizeDetailDb.DishSizeId = dishSizeDetail.DishSize;
+                                    dishSizeDetailDb.Discount = dishSizeDetail.Discount;
+                                    dishSizeDetailDb.IsAvailable = dishSizeDetail.IsAvailable;
+                                    dishSizeDetailDb.DailyCountdown = (int)(dishSizeDetail.DailyCountdown.HasValue ? dishSizeDetail.DailyCountdown : dishSizeDetailDb.DailyCountdown);
+                                    dishSizeDetailDb.QuantityLeft = !dishSizeDetail.QuantityLeft.HasValue ? dishSizeDetailDb.QuantityLeft.HasValue ? dishSizeDetailDb.QuantityLeft.Value : dishSizeDetail.DailyCountdown : dishSizeDetail.DailyCountdown;
+                                    dishSizeDetailDb.Price = dishSizeDetail.Price;
+                                    
+                                    updateDishSizeDetails.Add(dishSizeDetailDb);
+                                }
+                                else
+                                {
+                                    result = BuildAppActionResultError(result, $"Không tìm thấy size món ăn chi tiết với id {dishSizeDetail.DishSizeDetailId.Value}");
+                                }
                             }
                             else
                             {
@@ -394,14 +398,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 {
                                     DishSizeDetailId = Guid.NewGuid(),
                                     DishId = dishDb.DishId,
-                                    DishSizeId = d.DishSize,
-                                    Discount = d.Discount,
-                                    IsAvailable = d.IsAvailable,
-                                    Price = d.Price
+                                    DishSizeId = dishSizeDetail.DishSize,
+                                    Discount = dishSizeDetail.Discount,
+                                    IsAvailable = dishSizeDetail.IsAvailable,
+                                    Price = dishSizeDetail.Price
                                 });
                             }
-                        });
+                        }
                     }
+                    
 
 
                     if (!BuildAppActionResultIsError(result))
