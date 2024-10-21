@@ -1154,13 +1154,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 foreach (var userRole in usersWithRole.Items)
                 {
-                    if (normalizedRoleName == "CUSTOMER")
-                    {
-                        accountIds.Add(userRole.UserId);
-                        continue;
-                    }
-
                     bool hasHigherPriorityRole = false;
+
                     foreach (var higherRole in rolePriority.TakeWhile(r => r != normalizedRoleName))
                     {
                         var higherRoleEntity = await roleRepository.GetByExpression(r => r.NormalizedName == higherRole);
@@ -1181,15 +1176,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                 }
 
-                var accountDb = await _accountRepository.GetAllDataByExpression(
-                    a => accountIds.Contains(a.Id),
-                    pageNumber,
-                    pageSize,
-                    null,
-                    false,
-                    null
-                );
-
+                var accountDb = await _accountRepository.GetAllDataByExpression(a => accountIds.Contains(a.Id), pageNumber, pageSize, null, false, null);
                 result.Result = accountDb;
             }
             catch (Exception ex)
