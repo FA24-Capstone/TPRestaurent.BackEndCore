@@ -2042,55 +2042,61 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
                 var orderSessionService = Resolve<IOrderSessionService>();
-                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => orderDetailIds.Contains(p.OrderDetailId), 0, 0, null, false, o => o.OrderSession);
+                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => orderDetailIds.Contains(p.OrderDetailId) && !(p.OrderDetailStatusId == OrderDetailStatus.Reserved || p.OrderDetailStatusId == OrderDetailStatus.ReadyToServe || p.OrderDetailStatusId == OrderDetailStatus.Cancelled), 0, 0, null, false, null);
                 if (orderDetailDb.Items.Count != orderDetailIds.Count)
                 {
-                    return BuildAppActionResultError(result, $"Tồn tại id gọi món hông nằm trong hệ thống");
-                }
-
-                if (orderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.Reserved || o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe || o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
-                {
-                    return BuildAppActionResultError(result, $"Các chi tiết đơn hàng không thể cập nhật trạng thái v2i đều không ở trạn thái chờ hay đang xừ lí");
+                    return BuildAppActionResultError(result, $"Tồn tại id gọi món không nằm trong hệ thống hoặc không thể ập nhập trạng thái được");
                 }
 
                 var utility = Resolve<Utility>();
                 var time = utility.GetCurrentDateTimeInTimeZone();
                 bool orderSessionUpdated = false;
-                if (orderDetailDb.Items[0].OrderDetailStatusId == OrderDetailStatus.Unchecked)
+
+                foreach (var orderDetail in orderDetailDb.Items)
                 {
-                    orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = OrderDetailStatus.Processing);
-                    foreach (var item in orderDetailDb.Items)
+                    if (orderDetail.OrderDetailStatusId == OrderDetailStatus.Unchecked)
                     {
-                        if (item.OrderSession != null && item.OrderSession.OrderSessionStatusId == OrderSessionStatus.Confirmed)
+                        if (isSuccessful)
                         {
-                            await orderSessionService.UpdateOrderSessionStatus(item.OrderSession.OrderSessionId, OrderSessionStatus.Processing, false);
-                            orderSessionUpdated = true;
+                            orderDetail.OrderDetailStatusId = OrderDetailStatus.Processing;
+                        } else
+                        {
+                            orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
                         }
+
                     }
-                }
-                else if (orderDetailDb.Items[0].OrderDetailStatusId == OrderDetailStatus.Processing)
-                {
-                    if (isSuccessful)
+                    else if (orderDetail.OrderDetailStatusId == OrderDetailStatus.Processing)
                     {
-                        orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = OrderDetailStatus.ReadyToServe);
-                    }
-                    else
-                    {
-                        orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = OrderDetailStatus.Cancelled);
+                        if (isSuccessful)
+                        {
+                            orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = OrderDetailStatus.ReadyToServe);
+                        }
+                        else
+                        {
+                            return BuildAppActionResultError(result, $"Chi tiết đơn hàng đang ở trạng thái dang xử lí, không thể huỷ");
+                        }
                     }
                 }
 
                 await orderDetailRepository.UpdateRange(orderDetailDb.Items);
-                var orderSessionDb = orderDetailDb.Items.DistinctBy(o => o.OrderSessionId).Select(o => o.OrderSession).Where(o => o != null).ToList();
+                var orderSessionIds = orderDetailDb.Items.DistinctBy(o => o.OrderSessionId).Select(o => o.OrderSessionId).ToList();
+                var orderSessionDb = await orderSessionRepository.GetAllDataByExpression(o => orderDetailIds.Contains(o.OrderSessionId), 0, 0, null, false, null);
                 var orderSessionSet = new HashSet<Guid>();
-                foreach (var session in orderSessionDb)
+                foreach (var session in orderSessionDb.Items)
                 {
                     if (orderSessionSet.Contains(session.OrderSessionId))
                     {
                         continue;
                     }
-                    if (orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
+
+                    if (session.OrderSessionStatusId == OrderSessionStatus.Confirmed)
+                    {
+                        await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Processing, false);
+                        orderSessionUpdated = true;
+                    }
+                    else if (orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
                     {
                         await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Cancelled, false);
                         orderSessionUpdated = true;
