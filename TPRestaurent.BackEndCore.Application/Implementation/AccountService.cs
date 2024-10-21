@@ -1711,11 +1711,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {updateCustomerInforAddress.AccountId}");
                     }
 
-                    customerInfoDb.CustomerInfoAddressName = updateCustomerInforAddress.CustomerInfoAddressName;
-                    customerInfoDb.IsCurrentUsed = updateCustomerInforAddress.IsCurrentUsed;
-                    customerInfoDb.AccountId = updateCustomerInforAddress.AccountId;
-                    customerInfoDb.Lat = updateCustomerInforAddress.Lat;
-                    customerInfoDb.Lng = updateCustomerInforAddress.Lng;
+                    customerInfoDb.IsDeleted = true;
+
+                    var newCustomerAddress = new CustomerInfoAddress
+                    {
+                        CustomerInfoAddressId = Guid.NewGuid(),
+                        AccountId = updateCustomerInforAddress.AccountId,
+                        CustomerInfoAddressName = updateCustomerInforAddress.CustomerInfoAddressName,
+                        IsCurrentUsed = updateCustomerInforAddress.IsCurrentUsed,
+                        Lat = updateCustomerInforAddress.Lat,
+                        Lng = updateCustomerInforAddress.Lng
+                    };
 
                     if (updateCustomerInforAddress.IsCurrentUsed == true)
                     {
@@ -1733,6 +1739,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (!BuildAppActionResultIsError(result))
                     {
                         await customerInfoAddressRepository!.Update(customerInfoDb);
+                        await customerInfoAddressRepository.Insert(newCustomerAddress);
                         await _unitOfWork.SaveChangesAsync();
                     }
                     scope.Complete();
