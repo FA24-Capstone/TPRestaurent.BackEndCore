@@ -1836,7 +1836,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
                 var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
 
-                var shipperRoleDb = await roleRepository.GetByExpression(r => r.Name.Equals("CHEF"));
+                var shipperRoleDb = await roleRepository.GetByExpression(r => r.Name.Equals("SHIPPER"));
                 if (shipperRoleDb == null)
                 {
                     return BuildAppActionResultError(result, $"Không có thông tin về vai trò shipper");
