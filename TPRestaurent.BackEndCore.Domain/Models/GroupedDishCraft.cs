@@ -10,7 +10,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
     {
         public Guid GroupedDishCraftId { get; set; }
         public DateTime StartTime { get; set; }
-        public string OrderDetailIdList { get; set; }
+        public string OrderDetailidList { get; set; }
         public string GroupedDishJson { get; set; }
     }
 }

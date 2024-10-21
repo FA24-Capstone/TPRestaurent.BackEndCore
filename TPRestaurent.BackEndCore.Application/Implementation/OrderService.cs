@@ -183,9 +183,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     return result;
                                 }
                             }
-                            orderDb.StatusId = IsSuccessful ? OrderStatus.Dining : OrderStatus.Cancelled;
+                            orderDb.StatusId = IsSuccessful ? OrderStatus.TemporarilyCompleted : OrderStatus.Cancelled;
                         }
-                        else if (orderDb.StatusId == OrderStatus.Dining)
+                        else if (orderDb.StatusId == OrderStatus.TemporarilyCompleted)
                         {
                             if (IsSuccessful)
                             {
@@ -273,7 +273,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     else
                     {
-                        if (orderDb.StatusId == OrderStatus.Dining)
+                        if (orderDb.StatusId == OrderStatus.TemporarilyCompleted)
                         {
                             if (IsSuccessful)
                             {
@@ -552,7 +552,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     else if (orderRequestDto.OrderType == OrderType.MealWithoutReservation)
                     {
                         order.OrderTypeId = OrderType.MealWithoutReservation;
-                        order.StatusId = OrderStatus.Dining;
+                        order.StatusId = OrderStatus.TemporarilyCompleted;
                         order.MealTime = utility.GetCurrentDateTimeInTimeZone();
                         order.NumOfPeople = 0;
                         order.TotalAmount = money;
