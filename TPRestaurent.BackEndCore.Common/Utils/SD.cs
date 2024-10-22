@@ -203,6 +203,7 @@ public class SD
         public static string LOAD_GROUPED_DISHES = "LOAD_GROUPED_DISHES";
         public static string LOAD_ORDER_DETAIL_STATUS = "LOAD_ORDER_DETAIL_STATUS";
         public static string LOAD_ORDER = "LOAD_ORDER";
+        public static string LOAD_ORDER_DELIVERY = "LOAD_ORDER_DELIVERY";
 
     }
 

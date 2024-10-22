@@ -16,11 +16,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 {
     public class StoreCreditService : GenericBackendService, IStoreCreditService
     {
-        private readonly IGenericRepository<StoreCredit> _repository;
+        private readonly IGenericRepository<Account> _repository;
         //private readonly IGenericRepository<StoreCreditHistory> _historyRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
-        public StoreCreditService(IGenericRepository<StoreCredit> repository,  IMapper mapper, IUnitOfWork unitOfWork, IServiceProvider service) : base(service)
+        public StoreCreditService(IGenericRepository<Account> repository,  IMapper mapper, IUnitOfWork unitOfWork, IServiceProvider service) : base(service)
         {
             _repository = repository;
             //_historyRepository = historyRepository;
@@ -36,13 +36,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-                var storeCreditDb = await _repository.GetAllDataByExpression(p => p.ExpiredDate < currentTime, 0, 0, null, false, null);
-                if (storeCreditDb.Items!.Count > 0 && storeCreditDb.Items != null)
+                var accountDb = await _repository.GetAllDataByExpression(p => p.ExpiredDate < currentTime, 0, 0, null, false, null);
+                if (accountDb.Items!.Count > 0 && accountDb.Items != null)
                 {
-                    foreach (var storeCredit in storeCreditDb!.Items!)
+                    foreach (var account in accountDb!.Items!)
                     {
-                        storeCredit.Amount = 0;
-                        await _repository.Update(storeCredit);
+                        account.StoreCreditAmount = 0;
+                        await _repository.Update(account);
                     }
                 }
                 await _unitOfWork.SaveChangesAsync();
@@ -63,8 +63,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     //Validate in transaction
                     var transactionRepository = Resolve<IGenericRepository<Transaction>>();
-                    var transactionDb = await transactionRepository.GetByExpression(t => t.Id == transactionId && t.TransationStatusId == Domain.Enums.TransationStatus.SUCCESSFUL, t => t.StoreCredit);
-                    if (transactionDb == null || !transactionDb.StoreCreditId.HasValue)
+                    var transactionDb = await transactionRepository.GetByExpression(t => t.Id == transactionId && t.TransationStatusId == Domain.Enums.TransationStatus.SUCCESSFUL, t => t.Account);
+                    if (transactionDb == null || string.IsNullOrEmpty(transactionDb.AccountId))
                     {
                         return BuildAppActionResultError(result, $"Không tìm thấy thông tin giao dịch cho việc nộp ví");
                     }
@@ -74,7 +74,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         return BuildAppActionResultError(result, $"Giao dịch với id {transactionId} đã được cập nhật vào ví");
                     }
 
-                    transactionDb.StoreCredit.Amount += transactionDb.Amount;
+                    transactionDb.Account.StoreCreditAmount += transactionDb.Amount;
 
                     var utility = Resolve<Utility>();
                     var configurationRepository = Resolve<IGenericRepository<Configuration>>();
@@ -85,10 +85,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     var expireTimeInDay = double.Parse(configurationDb.CurrentValue);
 
-                    transactionDb.StoreCredit!.ExpiredDate = utility.GetCurrentDateInTimeZone().AddDays(expireTimeInDay);
+                    transactionDb.Account!.ExpiredDate = utility.GetCurrentDateInTimeZone().AddDays(expireTimeInDay);
                     transactionDb.TransationStatusId = Domain.Enums.TransationStatus.APPLIED;
                     await transactionRepository.Update(transactionDb);
-                    await _repository.Update(transactionDb.StoreCredit!);
+                    await _repository.Update(transactionDb.Account!);
                     await _unitOfWork.SaveChangesAsync();
                     scope.Complete();
                 }
