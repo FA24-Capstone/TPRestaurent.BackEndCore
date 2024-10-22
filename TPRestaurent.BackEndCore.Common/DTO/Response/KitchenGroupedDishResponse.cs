@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,10 +18,25 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
 
     public class KitchenGroupedDishItemResponse
     {
-        public List<QuantityBySize> Total { get; set; } = new List<QuantityBySize> ();
-        public Dish Dish { get; set; }
+        public DishQuantityResponse Dish { get; set; }
         public List<DishFromTableOrder> UncheckedDishFromTableOrders { get; set; } = new List<DishFromTableOrder>();
         public List<DishFromTableOrder> ProcessingDishFromTableOrders { get; set; } = new List<DishFromTableOrder>();
+    }
+
+    public class DishQuantityResponse
+    {
+        public Guid DishId { get; set; }
+        public string Name { get; set; } = null!;
+        public string Description { get; set; } = null!;
+        public string Image { get; set; } = null!;
+        public Domain.Enums.DishItemType DishItemTypeId { get; set; }
+        public Domain.Models.EnumModels.DishItemType? DishItemType { get; set; }
+        public bool IsAvailable { get; set; }
+        public bool IsDeleted { get; set; }
+        public bool IsMainItem { get; set; }
+        public int? PreparationTime { get; set; }
+        public List<QuantityBySize> Total { get; set; } = new List<QuantityBySize>();
+
     }
 
     public class DishFromTableOrder
