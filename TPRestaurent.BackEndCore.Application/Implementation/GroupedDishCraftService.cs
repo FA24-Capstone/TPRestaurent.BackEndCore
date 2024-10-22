@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TPRestaurent.BackEndCore.Application.Contract;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
@@ -30,7 +29,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var groupedDishDb = await _repository.GetAllDataByExpression(g => !g.IsFinished, 0, 0, null, false, null);
+                var groupedDishDb = await _repository.GetAllDataByExpression(g => !g.IsFinished, 0, 0, g => g.GroupNumber, false, null);
                 result.Result = groupedDishDb;
             }
             catch (Exception ex)

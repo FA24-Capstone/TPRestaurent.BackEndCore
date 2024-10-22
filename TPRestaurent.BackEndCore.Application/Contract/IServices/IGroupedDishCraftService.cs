@@ -7,7 +7,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
 
-namespace TPRestaurent.BackEndCore.Application.Contract
+namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
     public interface IGroupedDishCraftService
     {
