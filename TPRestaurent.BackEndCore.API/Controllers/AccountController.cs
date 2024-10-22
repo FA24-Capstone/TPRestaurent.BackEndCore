@@ -168,9 +168,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPut("update-delivering-status/{shipperId}")]
-        public async Task<AppActionResult> UpdateDeliveringStatus(string shipperId)
+        public async Task<AppActionResult> UpdateDeliveringStatus(string shipperId, bool isDelivering)
         {
-            return await _accountService.UpdateDeliveringStatus(shipperId);
+            return await _accountService.UpdateDeliveringStatus(shipperId, isDelivering);
         }
 
         [HttpPost("change-email-request")]
