@@ -1,4 +1,5 @@
-﻿using NPOI.POIFS.Crypt.Agile;
+﻿using AutoMapper;
+using NPOI.POIFS.Crypt.Agile;
 using NPOI.SS.Formula.Functions;
 using System;
 using System.Collections.Generic;
@@ -23,13 +24,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly IGenericRepository<OrderSession> _orderSessionRepository;
         private readonly IGenericRepository<Order> _orderRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
         private IHubServices.IHubServices _hubServices;
 
-        public OrderSessionService(IGenericRepository<OrderSession> orderSessionRepository, IGenericRepository<Order> orderRepository, IUnitOfWork unitOfWork, IHubServices.IHubServices hubService, IServiceProvider serviceProvider) : base(serviceProvider)
+        public OrderSessionService(IGenericRepository<OrderSession> orderSessionRepository, IGenericRepository<Order> orderRepository, IUnitOfWork unitOfWork, IMapper mapper, IHubServices.IHubServices hubService, IServiceProvider serviceProvider) : base(serviceProvider)
         {
             _orderSessionRepository = orderSessionRepository;
             _orderRepository = orderRepository;
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
             _hubServices = hubService;
         }
         public async Task DeleteOrderSession()
@@ -184,8 +187,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     groupedDish.OrderDetailIds = orderDetailDb.Items.DistinctBy(o => o.OrderDetailId).Select(o => o.OrderDetailId).ToList();
                     foreach (var dish in data)
                     {
-                        if(dish.Total.Count() == 1 
-                            && dish.Total.FirstOrDefault().UncheckedQuantity + dish.Total.FirstOrDefault().ProcessingQuantity == 1)
+                        if(dish.Dish.Total.Count() == 1 
+                            && dish.Dish.Total.Sum(d => d.UncheckedQuantity) + dish.Dish.Total.Sum(d => d.ProcessingQuantity) == 1)
                         {
                             groupedDish.SingleOrderDishes.Add(dish);
                         } else
@@ -208,7 +211,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 Dictionary<string, Domain.Models.EnumModels.DishSize> sizes = new Dictionary<string, Domain.Models.EnumModels.DishSize>();
-                Dictionary<Guid, Dish> dishes = new Dictionary<Guid, Dish>();
+                Dictionary<Guid, DishQuantityResponse> dishes = new Dictionary<Guid, DishQuantityResponse>();
 
                 data.ForEach(d =>
                 {
@@ -218,7 +221,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                 });
 
-                data.ForEach(d => d.Total.ForEach(t =>
+                data.ForEach(d => d.Dish.Total.ForEach(t =>
                 {
                     if (!sizes.ContainsKey(t.DishSize.Name))
                     {
@@ -227,12 +230,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }));
                 return data
      .GroupBy(d => d.Dish.DishId) // Group by Dish
-     .Select(group => new KitchenGroupedDishItemResponse
+     .Select(group =>
      {
-         Dish = dishes[group.Key],
+         var kitchenGroupedDishItemResponse = new KitchenGroupedDishItemResponse();
+         kitchenGroupedDishItemResponse.Dish = dishes[group.Key];
 
-         Total = group
-             .SelectMany(d => d.Total)
+         kitchenGroupedDishItemResponse.Dish.Total = group
+             .SelectMany(d => d.Dish.Total)
              .GroupBy(q => q.DishSize.Name) // Group by DishSize
              .Select(g => new QuantityBySize
              {
@@ -241,15 +245,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                  ProcessingQuantity = g.Sum(q => q.ProcessingQuantity) // Sum quantities for each size
              })
              .OrderBy(g => g.DishSize.Id)
-             .ToList(),
+             .ToList();
 
-         UncheckedDishFromTableOrders = group
-             .SelectMany(d => d.UncheckedDishFromTableOrders)
-             .ToList(),
-         ProcessingDishFromTableOrders = group
+             kitchenGroupedDishItemResponse.UncheckedDishFromTableOrders = group
+              .SelectMany(d => d.UncheckedDishFromTableOrders)
+              .ToList();
+
+             kitchenGroupedDishItemResponse.ProcessingDishFromTableOrders = group
              .SelectMany(d => d.ProcessingDishFromTableOrders)
-             .ToList(),
-
+             .ToList();
+         return kitchenGroupedDishItemResponse;
      })
      .ToList();
             }
@@ -280,15 +285,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     foreach(var dish in dishDictionary)
                     {
                         var groupedDishItem = new KitchenGroupedDishItemResponse();
-                        groupedDishItem.Dish = dish.Value.FirstOrDefault().DishCombo.DishSizeDetail.Dish;
+                        groupedDishItem.Dish = _mapper.Map<DishQuantityResponse>(dish.Value.FirstOrDefault().DishCombo.DishSizeDetail.Dish);
                         var totalDictionary = dish.Value.GroupBy(d => d.DishCombo.DishSizeDetail.DishSize).ToDictionary(t => t.Key, t => t.ToList()).ToList();
                         foreach (var sizeTotal in totalDictionary)
                         {
-                            groupedDishItem.Total.Add(new QuantityBySize
+                            groupedDishItem.Dish.Total.Add(new QuantityBySize
                             {
                                 DishSize = sizeTotal.Key,
-                                UncheckedQuantity = sizeTotal.Value.Count(d => d.OrderDetail.OrderDetailStatusId == OrderDetailStatus.Unchecked),
-                                ProcessingQuantity = sizeTotal.Value.Count(d => d.OrderDetail.OrderDetailStatusId == OrderDetailStatus.Processing)
+                                UncheckedQuantity = sizeTotal.Value.Where(d => d.OrderDetail.OrderDetailStatusId == OrderDetailStatus.Unchecked).Sum(d => d.OrderDetail.Quantity * d.DishCombo.Quantity),
+                                ProcessingQuantity = sizeTotal.Value.Where(d => d.OrderDetail.OrderDetailStatusId == OrderDetailStatus.Processing).Sum(d => d.OrderDetail.Quantity * d.DishCombo.Quantity)
                             });
                         }
                         var dishData = await GetListDishFromTableOrder(dish.Value);
@@ -314,15 +319,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var groupedDishItem = new KitchenGroupedDishItemResponse();
 
-                    groupedDishItem.Dish = dish.Value.FirstOrDefault().DishSizeDetail.Dish;
+                    groupedDishItem.Dish = _mapper.Map<DishQuantityResponse>(dish.Value.FirstOrDefault().DishSizeDetail.Dish);
                     var totalDictionary = dish.Value.GroupBy(d => d.DishSizeDetail.DishSize).ToDictionary(t => t.Key, t => t.ToList()).ToList();
                     foreach(var sizeTotal in totalDictionary)
                     {
-                        groupedDishItem.Total.Add(new QuantityBySize
+                        groupedDishItem.Dish.Total.Add(new QuantityBySize
                         {
                             DishSize = sizeTotal.Key,
-                            UncheckedQuantity = sizeTotal.Value.Where(d => d.OrderDetailStatusId == OrderDetailStatus.Unchecked).Count(),
-                            ProcessingQuantity = sizeTotal.Value.Where(d => d.OrderDetailStatusId == OrderDetailStatus.Processing).Count(),
+                            UncheckedQuantity = sizeTotal.Value.Where(d => d.OrderDetailStatusId == OrderDetailStatus.Unchecked).Sum(d => d.Quantity),
+                            ProcessingQuantity = sizeTotal.Value.Where(d => d.OrderDetailStatusId == OrderDetailStatus.Processing).Sum(d => d.Quantity),
                         });
                     }
 
