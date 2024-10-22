@@ -82,7 +82,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             try
             {
-                var deviceRepository = Resolve<IGenericRepository<Device>>();
+                var deviceRepository = Resolve<IGenericRepository<Table>>();
                 var utility = Resolve<Common.Utils.Utility>();
                 var device = await deviceRepository!.GetByExpression(u => u.DeviceCode == loginDeviceRequestDto.DeviceCode, null);
 

@@ -17,13 +17,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 {
     public class DeviceService : GenericBackendService, IDeviceService
     {
-        private readonly IGenericRepository<Device> _repository;
+        private readonly IGenericRepository<Table> _repository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private readonly TokenDto _tokenDto;
 
         public DeviceService(
-            IGenericRepository<Device> repository,
+            IGenericRepository<Table> repository,
             IMapper mapper, IUnitOfWork unitOfWork, 
             IServiceProvider service
             ) : base(service)
@@ -40,25 +40,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 string hashedPassword = BCrypt.Net.BCrypt.HashPassword(deviceAccess.DevicePassword);
-                var isExistedDevice = await _repository.GetByExpression(p => p.DeviceCode == deviceAccess.DeviceCode);
-                if (isExistedDevice != null)
+                var tableDb = await _repository.GetByExpression(p => p.TableId == deviceAccess.TableId);
+                if (tableDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"Thiết bị với code {isExistedDevice.DeviceCode} đã tồn tại");
+                    return BuildAppActionResultError(result, $"Không tồn tại bàn với id {deviceAccess.TableId}");
                 }
-                var newDeviceDb = new Device
+
+                if (!string.IsNullOrEmpty(tableDb.DeviceCode) && !string.IsNullOrEmpty(tableDb.DevicePassword))
                 {
-                    DeviceId = Guid.NewGuid(),
-                    DeviceCode = deviceAccess.DeviceCode,
-                    DevicePassword = hashedPassword,
-                    TableId = deviceAccess.TableId,
-                };
-                await _repository.Insert(newDeviceDb);  
+                    return BuildAppActionResultError(result, $"Thiết bị với code {tableDb.DeviceCode} đã tồn tại");
+                }
+
+                tableDb.DeviceCode = deviceAccess.DeviceCode;
+                tableDb.DevicePassword = deviceAccess.DevicePassword;
+
+                await _repository.Update(tableDb);  
                 await _unitOfWork.SaveChangesAsync();
-                result.Result = newDeviceDb; 
+                result.Result = _mapper.Map<DeviceResponse>(tableDb); 
             }
             catch (Exception ex) 
             { 
-                result = BuildAppActionResultError(result, ex.Message);
+                return BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
@@ -68,12 +70,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();     
             try
             {
-                var deviceDb = await _repository.GetAllDataByExpression(null, pageNumber, pageIndex, null, false, p => p.Table!);
-                result.Result = deviceDb;       
+                var deviceDb = await _repository.GetAllDataByExpression(null, pageNumber, pageIndex, null, false, null);
+                result.Result = new PagedResult<DeviceResponse>
+                {
+                    Items = _mapper.Map<List<DeviceResponse>>(deviceDb.Items),
+                    TotalPages = deviceDb.TotalPages
+                };       
             }
             catch (Exception ex) 
             { 
-                result = BuildAppActionResultError(result, ex.Message);
+                return BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
@@ -83,16 +89,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                var deviceDb = await _repository.GetByExpression(p => p.DeviceId == deviceId, p => p.Table!);
+                var deviceDb = await _repository.GetById(deviceId);
                 if (deviceDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"Thiết bị với id {deviceId} không tồn tại");
+                     BuildAppActionResultError(result, $"Thiết bị với id {deviceId} không tồn tại");
                 }
-                result.Result = deviceDb;   
+                result.Result = _mapper.Map<DeviceResponse>(deviceDb);   
             }
             catch (Exception ex)
             {
-                result = BuildAppActionResultError(result, ex.Message);
+                return BuildAppActionResultError(result, ex.Message);
             }
             return result;  
         }
@@ -102,23 +108,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                var device = await _repository!.GetByExpression(p => p.DeviceCode == loginDeviceRequestDto.DeviceCode, p => p.Table);
+                var device = await _repository!.GetByExpression(p => p.DeviceCode.Equals(loginDeviceRequestDto.DeviceCode), null);
                 if (device == null)
-                    result = BuildAppActionResultError(result, $" Thiết bị với {loginDeviceRequestDto.DeviceCode} này không tồn tại trong hệ thống");
-
+                {
+                    return BuildAppActionResultError(result, $" Thiết bị với {loginDeviceRequestDto.DeviceCode} này không tồn tại trong hệ thống");
+                }
                 var verifyPasswordHashed = BCrypt.Net.BCrypt.Verify(loginDeviceRequestDto.Password, device.DevicePassword);
                 var passwordSignIn = await _repository.GetByExpression(p => p.DeviceCode == loginDeviceRequestDto.DeviceCode);
-                if (passwordSignIn == null || !verifyPasswordHashed) result = BuildAppActionResultError(result, "Đăng nhâp thất bại");
+                if (passwordSignIn == null || !verifyPasswordHashed) return BuildAppActionResultError(result, "Đăng nhâp thất bại");
                 if (!BuildAppActionResultIsError(result)) result = await LoginDefaultDevice(loginDeviceRequestDto.DeviceCode, device);
             }
             catch (Exception ex)
             {
-                result = BuildAppActionResultError(result, ex.Message);
+                return BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
 
-        private async Task<AppActionResult> LoginDefaultDevice(string deviceCode, Device? device)
+        private async Task<AppActionResult> LoginDefaultDevice(string deviceCode, Table? device)
         {
             var result = new AppActionResult();
 
@@ -128,7 +135,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             _tokenDto.Token = token;
             _tokenDto.DeviceResponse = _mapper.Map<DeviceResponse>(device);
-            _tokenDto.DeviceResponse.TableName = device.Table.TableName;
+            _tokenDto.DeviceResponse.TableName = device.TableName;
             _tokenDto.MainRole = "DEVICE";
 
             _tokenDto.DeviceResponse.MainRole = _tokenDto.MainRole;
