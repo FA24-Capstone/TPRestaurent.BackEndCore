@@ -37,7 +37,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpGet("get-grouped-dish")]
         public async Task<AppActionResult> GetGroupedDish()
         {
-            return await _service.GetGroupedDish();
+            return await _service.GetGroupedDish(null);
         }
     }
 }

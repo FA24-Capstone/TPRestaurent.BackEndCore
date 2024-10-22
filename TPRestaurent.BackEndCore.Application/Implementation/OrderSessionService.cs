@@ -132,14 +132,28 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-        public async Task<AppActionResult> GetGroupedDish()
+        public async Task<AppActionResult> GetGroupedDish(DateTime?[]? groupedTime)
         {
             AppActionResult result = new AppActionResult();
             try
             {
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                 var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
-                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderSession.OrderSessionStatusId != OrderSessionStatus.Completed 
+                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => (
+                                                                                                groupedTime == null 
+                                                                                                || (
+                                                                                                    groupedTime != null 
+                                                                                                    && (
+                                                                                                        !groupedTime[0].HasValue
+                                                                                                        || (
+                                                                                                            groupedTime[0].HasValue
+                                                                                                            && groupedTime[0] < o.OrderSession.OrderSessionTime
+                                                                                                            )
+                                                                                                        )
+                                                                                                    && groupedTime[1] > o.OrderSession.OrderSessionTime
+                                                                                                   )
+                                                                                            )
+                                                                                            && o.OrderSession.OrderSessionStatusId != OrderSessionStatus.Completed 
                                                                                             && o.OrderSession.OrderSessionStatusId != OrderSessionStatus.Cancelled
                                                                                             && o.OrderSession.OrderSessionStatusId != OrderSessionStatus.PreOrder
                                                                                             && (o.OrderDetailStatusId == OrderDetailStatus.Unchecked
@@ -167,6 +181,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     data = await RefineGroupDishData(data);
 
                     var groupedDish = new KitchenGroupedDishResponse();
+                    groupedDish.OrderDetailIds = orderDetailDb.Items.DistinctBy(o => o.OrderDetailId).Select(o => o.OrderDetailId).ToList();
                     foreach (var dish in data)
                     {
                         if(dish.Total.Count() == 1 

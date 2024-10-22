@@ -31,6 +31,7 @@ using TPRestaurent.BackEndCore.Domain.Models;
 using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
 using Transaction = TPRestaurent.BackEndCore.Domain.Models.Transaction;
 using Utility = TPRestaurent.BackEndCore.Common.Utils.Utility;
+using TPRestaurent.BackEndCore.Application.Contract;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -2044,6 +2045,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                 var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
                 var orderSessionService = Resolve<IOrderSessionService>();
+                var groupedDishCraftService = Resolve<IGroupedDishCraftService>();
                 var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => orderDetailIds.Contains(p.OrderDetailId) && !(p.OrderDetailStatusId == OrderDetailStatus.Reserved || p.OrderDetailStatusId == OrderDetailStatus.ReadyToServe || p.OrderDetailStatusId == OrderDetailStatus.Cancelled), 0, 0, null, false, null);
                 if (orderDetailDb.Items.Count != orderDetailIds.Count)
                 {
@@ -2112,6 +2114,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
 
                 await _unitOfWork.SaveChangesAsync();
+
+                await groupedDishCraftService.UpdateGroupedDish(orderDetailDb.Items.Where(o => o.OrderDetailStatusId == OrderDetailStatus.Unchecked 
+                                                                                            || o.OrderDetailStatusId == OrderDetailStatus.Processing 
+                                                                                            || o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe)
+                                                                                   .Select(o => o.OrderDetailId).ToList());
 
                 await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
                 if (orderSessionUpdated)

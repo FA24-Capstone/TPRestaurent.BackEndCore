@@ -12,6 +12,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
     {
         public List<KitchenGroupedDishItemResponse> MutualOrderDishes { get; set; } = new List<KitchenGroupedDishItemResponse> ();
         public List<KitchenGroupedDishItemResponse> SingleOrderDishes { get; set; } = new List<KitchenGroupedDishItemResponse> ();
+        public List<Guid> OrderDetailIds { get; set; } = new List<Guid> ();
     }
 
     public class KitchenGroupedDishItemResponse
