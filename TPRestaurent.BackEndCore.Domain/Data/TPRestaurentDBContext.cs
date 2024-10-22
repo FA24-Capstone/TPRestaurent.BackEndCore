@@ -38,14 +38,13 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.Configuration> Configurations { get; set; } = null!;
         public DbSet<Models.Combo> Combos { get; set; } = null!;
         public DbSet<Models.DishCombo> DishCombos { get; set; } = null!;
-        public DbSet<Models.StoreCredit> StoreCredits { get; set; } = null!;
         public DbSet<Models.DishSizeDetail> DishSizeDetails { get; set; } = null!;
         public DbSet<Models.CustomerInfoAddress> CustomerInfoAddress { get; set; } = null!;
         public DbSet<Models.Transaction> Transactions { get; set; } = null!;
-        public DbSet<Models.Device> Devices { get; set; } = null!;
         public DbSet<Models.ComboOrderDetail> DishComboComboDetails { get; set; } = null!;
         public DbSet<Models.ComboOptionSet> ComboOptionSets { get; set; } = null!;
         public DbSet<Models.ConfigurationVersion> ConfigurationVersions { get; set; } = null!;
+        public DbSet<Models.GroupedDishCraft> GroupedDishCrafts { get; set; } = null!;
         public DbSet<Models.NotificationMessage> NotificationMessages { get; set; } = null!;
         public DbSet<Models.EnumModels.OrderStatus> OrderStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.OTPType> OTPTypes { get; set; } = null!;

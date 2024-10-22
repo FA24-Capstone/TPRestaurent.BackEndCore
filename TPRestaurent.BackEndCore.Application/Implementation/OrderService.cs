@@ -183,9 +183,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     return result;
                                 }
                             }
-                            orderDb.StatusId = IsSuccessful ? OrderStatus.Dining : OrderStatus.Cancelled;
+                            orderDb.StatusId = IsSuccessful ? OrderStatus.TemporarilyCompleted : OrderStatus.Cancelled;
                         }
-                        else if (orderDb.StatusId == OrderStatus.Dining)
+                        else if (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing)
                         {
                             if (IsSuccessful)
                             {
@@ -273,7 +273,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     else
                     {
-                        if (orderDb.StatusId == OrderStatus.Dining)
+                        if (orderDb.StatusId == OrderStatus.TemporarilyCompleted)
                         {
                             if (IsSuccessful)
                             {
@@ -552,7 +552,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     else if (orderRequestDto.OrderType == OrderType.MealWithoutReservation)
                     {
                         order.OrderTypeId = OrderType.MealWithoutReservation;
-                        order.StatusId = OrderStatus.Dining;
+                        order.StatusId = OrderStatus.Processing;
                         order.MealTime = utility.GetCurrentDateTimeInTimeZone();
                         order.NumOfPeople = 0;
                         order.TotalAmount = money;
@@ -1401,7 +1401,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var utility = Resolve<Utility>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(-minute.GetValueOrDefault(0));
-                var orderDb = await _repository.GetAllDataByExpression(p => p.MealTime <= currentTime && p.StatusId == OrderStatus.Dining,
+                var orderDb = await _repository.GetAllDataByExpression(p => p.MealTime <= currentTime && (p.StatusId == OrderStatus.Processing || p.StatusId == OrderStatus.TemporarilyCompleted),
                     pageNumber, pageSize, p => p.MealTime, false, p => p.Account!,
                         p => p.Status!,
                         p => p.Account!,
@@ -1822,7 +1822,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     foreach (var order in orderListDb.Items)
                     {
-                        order.StatusId = OrderStatus.Dining;
+                        order.StatusId = OrderStatus.TemporarilyCompleted;
                         await _repository.Update(order);
                     }
                 }
@@ -1843,7 +1843,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-                var orderListDb = await _repository.GetAllDataByExpression(p => p.MealTime!.Value.AddMinutes(-30) <= currentTime && p.StatusId == OrderStatus.Dining, 0, 0, null, false, null);
+                var orderListDb = await _repository.GetAllDataByExpression(p => p.MealTime!.Value.AddMinutes(-30) <= currentTime && p.StatusId == OrderStatus.TemporarilyCompleted, 0, 0, null, false, null);
                 if (orderListDb!.Items!.Count > 0 && orderListDb.Items != null)
                 {
                     var orderIds = orderListDb.Items.Select(o => o.OrderId).ToList();
@@ -2137,7 +2137,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                 var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
-                var tableDetailDb = await tableDetailRepository.GetAllDataByExpression(t => t.Order.StatusId == OrderStatus.Dining, 0, 0, null, false, t => t.Table, t => t.Order);
+                var tableDetailDb = await tableDetailRepository.GetAllDataByExpression(t => t.Order.StatusId == OrderStatus.Processing || t.Order.StatusId == OrderStatus.TemporarilyCompleted, 0, 0, null, false, t => t.Table, t => t.Order);
                 if (tableDetailDb.Items.Count > 0)
                 {
                     var latestSessionByTable = tableDetailDb.Items.GroupBy(t => t.TableId).Select(t => t.OrderByDescending(ta => ta.StartTime).FirstOrDefault());

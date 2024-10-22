@@ -58,8 +58,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var paymentGatewayService = Resolve<IPaymentGatewayService>();
                     var orderRepository = Resolve<IGenericRepository<Order>>();
+                    var accountRepository = Resolve<IGenericRepository<Account>>();
                     var orderService = Resolve<IOrderService>();
-                    var storeCreditRepository = Resolve<IGenericRepository<StoreCredit>>();
                     var hasingService = Resolve<IHashingService>();
                     var utility = Resolve<Utility>();
                     var transaction = new Transaction();
@@ -70,7 +70,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     string key = config["HashingKeys:PaymentLink"];
                     string paymentUrl = "";
                     double amount = 0;
-                    if (!paymentRequest.OrderId.HasValue && !paymentRequest.StoreCreditId.HasValue)
+                    if (!paymentRequest.OrderId.HasValue && string.IsNullOrEmpty(paymentRequest.AccountId))
                     {
                         result = BuildAppActionResultError(result, $"Đơn hàng/Đặt bàn/Ví này không tồn tại");
                         return result;
@@ -84,7 +84,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 if (paymentRequest.OrderId.HasValue)
                                 {
                                     var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
-                                    if (orderDb.StatusId == OrderStatus.Dining || orderDb.StatusId == OrderStatus.Pending || orderDb.StatusId == OrderStatus.Delivering)
+                                    if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
+                                        || orderDb.StatusId == OrderStatus.Pending 
+                                        || orderDb.StatusId == OrderStatus.TableAssigned)
                                     {
                                         amount = orderDb.TotalAmount;
                                     }
@@ -124,17 +126,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                     result.Result = paymentUrl;
                                 }
-                                else if (paymentRequest.StoreCreditId.HasValue)
+                                else if (!string.IsNullOrEmpty(paymentRequest.AccountId))
                                 {
                                     if (paymentRequest.StoreCreditAmount.HasValue)
                                     {
-                                        var storeCreditDb = await storeCreditRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p.Account!);
+                                        var accountDb = await accountRepository!.GetById(paymentRequest.AccountId);
                                         transaction = new Transaction
                                         {
                                             Id = Guid.NewGuid(),
                                             Amount = (double)(paymentRequest.StoreCreditAmount),
                                             PaymentMethodId = Domain.Enums.PaymentMethod.VNPAY,
-                                            StoreCreditId = paymentRequest.StoreCreditId,
+                                            AccountId = paymentRequest.AccountId,
                                             Date = utility!.GetCurrentDateTimeInTimeZone(),
                                             TransationStatusId = TransationStatus.PENDING,
                                             TransactionTypeId = TransactionType.CreditStore,
@@ -145,8 +147,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             TransactionID = transaction.Id.ToString(),
                                             PaymentMethod = paymentRequest.PaymentMethod,
                                             Amount = (double)paymentRequest.StoreCreditAmount,
-                                            CustomerName = storeCreditDb!.Account!.LastName,
-                                            AccountID = storeCreditDb.AccountId,
+                                            CustomerName = accountDb!.LastName,
+                                            AccountID = accountDb.Id,
                                         };
 
                                         await _repository.Insert(transaction);
@@ -160,7 +162,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 if (paymentRequest.OrderId.HasValue)
                                 {
                                     var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
-                                    if (orderDb.StatusId == OrderStatus.Dining || orderDb.StatusId == OrderStatus.Pending || orderDb.StatusId == OrderStatus.Delivering)
+                                    if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
+                                        || orderDb.StatusId == OrderStatus.Pending
+                                        || orderDb.StatusId == OrderStatus.TableAssigned)
                                     {
                                         amount = orderDb.TotalAmount;
                                     }
@@ -240,18 +244,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         result.Result = jmessage.GetValue("payUrl").ToString();
                                     }
                                 }
-                                else if (paymentRequest.StoreCreditId.HasValue)
+                                else if (!string.IsNullOrEmpty(paymentRequest.AccountId))
                                 {
                                     if(paymentRequest.StoreCreditAmount > 0)
                                     {
                                         {
-                                            var storCreditDb = await storeCreditRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p.Account!);
+                                            var accountDb = await accountRepository!.GetById(paymentRequest.AccountId);
                                             transaction = new Transaction
                                             {
                                                 Id = Guid.NewGuid(),
                                                 Amount = (double)(paymentRequest.StoreCreditAmount),
                                                 PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
-                                                StoreCreditId = storCreditDb.StoreCreditId,
+                                                AccountId = accountDb.Id,
                                                 Date = utility!.GetCurrentDateTimeInTimeZone(),
                                                 TransationStatusId = TransationStatus.PENDING,
                                                 TransactionTypeId = TransactionType.CreditStore
@@ -326,7 +330,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         return BuildAppActionResultError(result, $"Không tìm thấy tài khoản đặt hàng. Khôn thể thực hiện thanh toán với phương thức: Thanh toán với số dư tài khoản.");
                                     }
 
-                                    if (orderDb.StatusId == OrderStatus.Dining || orderDb.StatusId == OrderStatus.Pending || orderDb.StatusId == OrderStatus.Delivering)
+                                    if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
+                                        || orderDb.StatusId == OrderStatus.Pending
+                                        || orderDb.StatusId == OrderStatus.TableAssigned)
                                     {
                                         amount = orderDb.TotalAmount;
                                     }
@@ -342,18 +348,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         }
                                     }
 
-                                    var storeCreditDb = await storeCreditRepository.GetByExpression(s => s.AccountId == orderDb.AccountId, null);
-                                    if(storeCreditDb == null)
+                                    var accountDb = await accountRepository.GetById(orderDb.AccountId);
+                                    if(accountDb == null)
                                     {
                                         return BuildAppActionResultError(result, $"Không tìm thấy số dư tài khoản khách hàng");
                                     }
 
-                                    if(storeCreditDb.Amount < amount)
+                                    if(accountDb.StoreCreditAmount < amount)
                                     {
                                         return BuildAppActionResultError(result, $"Số dư tài khoản của quý khách không đủ");
                                     }
 
-                                    storeCreditDb.Amount -= amount;
+                                    accountDb.StoreCreditAmount -= amount;
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
@@ -368,7 +374,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                     await _repository.Insert(transaction);
                                     await orderService.ChangeOrderStatus(orderDb.OrderId, true);
-                                    await storeCreditRepository.Update(storeCreditDb);
+                                    await accountRepository.Update(accountDb);
                                 }
                                 break;
                             default:
@@ -380,7 +386,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 if (paymentRequest.OrderId.HasValue)
                                 {
                                     var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
-                                    if (orderDb.StatusId == OrderStatus.Dining || orderDb.StatusId == OrderStatus.Pending || orderDb.StatusId == OrderStatus.TableAssigned )
+                                    if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
+                                        || orderDb.StatusId == OrderStatus.Pending
+                                        || orderDb.StatusId == OrderStatus.TableAssigned)
                                     {
                                         amount = orderDb.TotalAmount;
                                     } 
@@ -409,15 +417,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     await _repository.Insert(transaction);
                                     result.Result = transaction;
                                 }
-                                else if (paymentRequest.StoreCreditId.HasValue)
+                                else if (!string.IsNullOrEmpty(paymentRequest.AccountId))
                                 {
                                     if (paymentRequest.StoreCreditAmount.HasValue)
                                     {
-                                        var storeCreditDb = await storeCreditRepository!.GetByExpression(p => p.StoreCreditId == paymentRequest.StoreCreditId, p => p.Account!);
+                                        var storeCreditDb = await accountRepository!.GetById(paymentRequest.AccountId);
 
                                         if (storeCreditDb == null)
                                         {
-                                            result = BuildAppActionResultError(result, $"Khong tìm thấy thông tin ví với id {paymentRequest.StoreCreditId}");
+                                            result = BuildAppActionResultError(result, $"Khong tìm thấy thông tin ví với id {paymentRequest.AccountId}");
                                             return result;
                                         }
 
@@ -426,7 +434,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             Id = Guid.NewGuid(),
                                             Amount = paymentRequest.StoreCreditAmount.Value,
                                             PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
-                                            StoreCreditId = storeCreditDb.StoreCreditId,
+                                            AccountId = storeCreditDb.Id,
                                             Date = utility!.GetCurrentDateTimeInTimeZone(),
                                             TransationStatusId = TransationStatus.PENDING,
                                             TransactionTypeId = TransactionType.CreditStore
@@ -485,7 +493,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var transactionDb = await _repository.GetAllDataByExpression(t => !transactionStatus.HasValue || (transactionStatus.HasValue && transactionStatus.Value == t.TransationStatusId), pageNumber, pageSize, p => p.Date, false , 
-                    t => t.StoreCredit!.Account!, 
+                    t => t.Account!, 
                     t => t.Order!.Account!,
                     t => t.TransationStatus,
                     t => t.PaymentMethod!,
@@ -507,10 +515,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var transactionDb = await _repository.GetAllDataByExpression(t => (!type.HasValue || type.Value == 0 || (type.HasValue && type.Value == t.TransactionTypeId)) &&
                                                                                         (t.OrderId.HasValue && t.Order.AccountId.Equals(customerId.ToString())
-                                                                                        || (t.StoreCreditId.HasValue && t.StoreCredit.AccountId.Equals(customerId.ToString()))
+                                                                                        || (!string.IsNullOrEmpty(t.AccountId) && t.AccountId.Equals(customerId.ToString()))
                                                                                         )
                                                                                         , 0, 0, null, false,
-                                                                                    t => t.StoreCredit,
                                                                                     t => t.Order,
                                                                                     t => t.TransactionType,
                                                                                     t => t.TransationStatus);
@@ -531,7 +538,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var data = new TransactionReponse();
-                var transactionDb = await _repository.GetByExpression(t => t.Id == paymentId, t => t.StoreCredit, t => t.TransactionType, t => t.TransationStatus);
+                var transactionDb = await _repository.GetByExpression(t => t.Id == paymentId, t => t.TransactionType, t => t.TransationStatus);
                 data.Transaction = transactionDb;
                 if (transactionDb.OrderId.HasValue)
                 {
@@ -639,10 +646,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var transactionDb = await _repository.GetAllDataByExpression(t => (t.PaymentMethodId == PaymentMethod.STORE_CREDIT || t.TransactionTypeId == TransactionType.CreditStore || t.TransactionTypeId == TransactionType.Refund) &&
                                                                                         (t.OrderId.HasValue && t.Order.AccountId.Equals(customerId.ToString())
-                                                                                        || (t.StoreCreditId.HasValue && t.StoreCredit.AccountId.Equals(customerId.ToString()))
+                                                                                        || (!string.IsNullOrEmpty(t.AccountId) && t.AccountId.Equals(customerId.ToString()))
                                                                                         )
                                                                                         , 0, 0, null, false,
-                                                                                    t => t.StoreCredit,
                                                                                     t => t.Order,
                                                                                     t => t.TransactionType,
                                                                                     t => t.TransationStatus,

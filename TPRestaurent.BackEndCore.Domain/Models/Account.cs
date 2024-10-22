@@ -23,5 +23,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public string? Avatar { get; set; }
         public bool IsManuallyCreated { get; set; }
         public bool IsDelivering { get; set; }
+        public double StoreCreditAmount { get; set; }
+        public DateTime ExpiredDate { get; set; }
     }
 }

@@ -13,6 +13,8 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         [Key]
         public Guid TableId { get; set; }
         public string TableName { get; set; } = null!;
+        public string DeviceCode { get; set; } = null!;
+        public string DevicePassword { get; set; } = null!;
         public Enums.TableSize TableSizeId { get; set; }
         [ForeignKey(nameof(TableSizeId))]
         public EnumModels.TableSize? TableSize { get; set; }

@@ -29,13 +29,15 @@ public class MappingConfig
                 .ForMember(desc => desc.IsManuallyCreated, act => act.MapFrom(src => src.IsManuallyCreated))
                 .ForMember(desc => desc.IsDeleted, act => act.MapFrom(src => src.IsDeleted))
                 .ForMember(desc => desc.IsDelivering, act => act.MapFrom(src => src.IsDelivering))
+                .ForMember(desc => desc.StoreCreditExpireDay, act => act.MapFrom(src => src.ExpiredDate))
+                .ForMember(desc => desc.Amount, act => act.MapFrom(src => src.StoreCreditAmount))
                 ;
 
-            config.CreateMap<Device, DeviceResponse>()
-            .ForMember(desc => desc.DeviceId, act => act.MapFrom(src => src.DeviceId))
+            config.CreateMap<Table, DeviceResponse>()
             .ForMember(desc => desc.DeviceCode, act => act.MapFrom(src => src.DeviceCode))
             .ForMember(desc => desc.DevicePassword, act => act.MapFrom(src => src.DevicePassword))
             .ForMember(desc => desc.TableId, act => act.MapFrom(src => src.TableId))
+            .ForMember(desc => desc.TableName, act => act.MapFrom(src => src.TableName))
             .ReverseMap()   
             ;
 
