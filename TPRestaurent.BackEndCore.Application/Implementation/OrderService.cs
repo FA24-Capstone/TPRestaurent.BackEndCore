@@ -767,7 +767,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await _repository.Insert(order);
                         await _unitOfWork.SaveChangesAsync();
 
-                        if (order.OrderTypeId != OrderType.Reservation)
+                        if (order.OrderTypeId == OrderType.MealWithoutReservation)
                         {
 
                             await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
