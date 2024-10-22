@@ -1818,7 +1818,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> UpdateDeliveringStatus(string accountId)
+        public async Task<AppActionResult> UpdateDeliveringStatus(string accountId, bool isDelivering)
         {
             AppActionResult result = new AppActionResult();
             try
@@ -1839,7 +1839,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var shipperDb = await _accountRepository.GetByExpression(a => a.IsVerified && !a.IsDeleted && userRoleDb.UserId.Equals(a.Id));
                 if (shipperDb != null)
                 {
-                    shipperDb.IsDelivering = !shipperDb.IsDelivering;
+                    shipperDb.IsDelivering = isDelivering;
                     await _accountRepository.Update(shipperDb);
                     await _unitOfWork.SaveChangesAsync();
                 }
