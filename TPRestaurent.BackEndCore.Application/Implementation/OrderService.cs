@@ -31,7 +31,6 @@ using TPRestaurent.BackEndCore.Domain.Models;
 using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
 using Transaction = TPRestaurent.BackEndCore.Domain.Models.Transaction;
 using Utility = TPRestaurent.BackEndCore.Common.Utils.Utility;
-using TPRestaurent.BackEndCore.Application.Contract;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
