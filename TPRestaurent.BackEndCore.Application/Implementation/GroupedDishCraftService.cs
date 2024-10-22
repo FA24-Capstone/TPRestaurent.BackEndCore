@@ -68,7 +68,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
 
                 var groupedDishDb = await _repository.GetAllDataByExpression(null, 0, 0, null, false, null);
-                var previousTimeStamp = groupedDishDb.Items.OrderByDescending(g => g.EndTime).First();
+                var previousTimeStamp = groupedDishDb.Items.OrderByDescending(g => g.EndTime).FirstOrDefault();
 
                 DateTime?[] groupedTime = new DateTime?[2];
                 groupedTime[0] = previousTimeStamp == null ? null : previousTimeStamp.EndTime;
@@ -82,12 +82,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var groupedDishData = groupedDishResult.Result as KitchenGroupedDishResponse;
+                if(groupedDishData == null || groupedDishData?.MutualOrderDishes?.Count == 0 && groupedDishData?.SingleOrderDishes?.Count == 0)
+                {
+                    return;
+                }
 
                 var newGroupDish = new GroupedDishCraft
                 {
                     GroupedDishCraftId = Guid.NewGuid(),
                     GroupNumber = previousTimeStamp == null ? 1 : previousTimeStamp.GroupNumber + 1,
-                    StartTime = previousTimeStamp.EndTime == null ? currentTime : currentTime,
+                    StartTime = previousTimeStamp == null ? DateTime.Today.AddHours(8) : previousTimeStamp.EndTime,
                     EndTime = currentTime,
                     IsFinished = false,
                     OrderDetailidList = string.Join(",", groupedDishData.OrderDetailIds),
@@ -157,14 +161,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var groupedDishData = groupedDishResult.Result as KitchenGroupedDishResponse;
-
-                groupedDishDb.GroupedDishJson = JsonConvert.SerializeObject(groupedDishData);
-
-                if (groupedDishData.SingleOrderDishes.Count == 0 && groupedDishData.MutualOrderDishes.Count == 0)
+                if(groupedDishData != null)
                 {
-                    groupedDishDb.IsFinished = true;
+                    groupedDishDb.GroupedDishJson = JsonConvert.SerializeObject(groupedDishData);
+                    groupedDishDb.OrderDetailidList = string.Join(",", groupedDishData.OrderDetailIds);
+                    if (groupedDishData.SingleOrderDishes.Count == 0 && groupedDishData.MutualOrderDishes.Count == 0)
+                    {
+                        groupedDishDb.IsFinished = true;
+                    }
+                    isSuccessful = true;
                 }
-                isSuccessful = true;
+               
             }
             catch (Exception ex)
             {

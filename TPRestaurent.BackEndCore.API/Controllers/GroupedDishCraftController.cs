@@ -26,5 +26,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _service.GetGroupedDishById(id);
         }
+
+        [HttpPost("add-grouped-dish")]
+        public async Task InsertGroupedDish()
+        {
+            await _service.InsertGroupedDish();
+        }
     }
 }
