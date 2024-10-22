@@ -18,6 +18,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private IUnitOfWork _unitOfWork;
         private IStoreCreditService _storeCreditService;  
         private IAccountService _accountService;
+        private IGroupedDishCraftService _groupedDishCraftService;
 
         public WorkerService(IServiceProvider serviceProvider,
             BackEndLogger logger,
@@ -26,7 +27,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             //IReservationService reservationService,
             IConfigService configService,
             IStoreCreditService storeCreditService,
-            IAccountService accountService
+            IAccountService accountService,
+            IGroupedDishCraftService groupedDishCraftService
             ) : base(serviceProvider)
         {
             _logger = logger;
@@ -36,6 +38,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _orderService = orderService;
             _storeCreditService = storeCreditService;   
             _accountService = accountService;   
+            _groupedDishCraftService = groupedDishCraftService;
         }
 
 
@@ -48,6 +51,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             RecurringJob.AddOrUpdate(() => _storeCreditService.ChangeOverdueStoreCredit(), Cron.DayInterval(1), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _accountService.DeleteOverdueOTP(), Cron.DayInterval(1), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _orderService.CancelReservation(), Cron.HourInterval(2), vietnamTimeZone);
+            RecurringJob.AddOrUpdate(() => _groupedDishCraftService.InsertGroupedDish(), Cron.MinuteInterval(10), vietnamTimeZone);
         }
     }
 }

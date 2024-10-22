@@ -40,5 +40,6 @@ public class ServiceInstaller : IInstaller
         services.AddScoped<IDishManagementService, DishManagementService>();
         services.AddScoped<IOrderSessionService, OrderSessionService>();
         services.AddScoped<INotificationMessageService, NotificationMessageService>();
+        services.AddScoped<IGroupedDishCraftService, GroupedDishCraftService>();
     }
 }
