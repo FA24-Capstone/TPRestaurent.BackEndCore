@@ -71,7 +71,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var previousTimeStamp = groupedDishDb.Items.OrderByDescending(g => g.EndTime).FirstOrDefault();
 
                 DateTime?[] groupedTime = new DateTime?[2];
-                groupedTime[0] = previousTimeStamp == null ? null : previousTimeStamp.EndTime;
+                groupedTime[0] = previousTimeStamp == null ? utility.GetCurrentDateInTimeZone().AddHours(8) : previousTimeStamp.EndTime;
                 groupedTime[1] = currentTime;
 
 
@@ -91,7 +91,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     GroupedDishCraftId = Guid.NewGuid(),
                     GroupNumber = previousTimeStamp == null ? 1 : previousTimeStamp.GroupNumber + 1,
-                    StartTime = previousTimeStamp == null ? DateTime.Today.AddHours(8) : previousTimeStamp.EndTime,
+                    StartTime = previousTimeStamp == null ? utility.GetCurrentDateInTimeZone().AddHours(8) : previousTimeStamp.EndTime,
                     EndTime = currentTime,
                     IsFinished = false,
                     OrderDetailidList = string.Join(",", groupedDishData.OrderDetailIds),
