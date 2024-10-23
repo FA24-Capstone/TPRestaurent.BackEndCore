@@ -22,9 +22,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-grouped-dish-by-id/{id}")]
-        public async Task<AppActionResult> GetGroupedDishById(Guid id)
+        public async Task<AppActionResult> GetGroupedDishById(Guid id, Guid? dishId, bool? isMutual)
         {
-            return await _service.GetGroupedDishById(id);
+            return await _service.GetGroupedDishById(id, dishId, isMutual);
         }
 
         [HttpPost("add-grouped-dish")]
