@@ -39,8 +39,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetGroupedDishById(Guid groupedDishId)
+        public async Task<AppActionResult> GetGroupedDishById(Guid groupedDishId, Guid? dishId, bool? isMutual)
         {
+            //tìm dish Id thuộc 
             AppActionResult result = new AppActionResult();
             try
             {
@@ -49,7 +50,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy phiên gom món với id {groupedDishId}");
                 }
-                result.Result = groupedDishDb;
+                var groupedDishes = JsonConvert.DeserializeObject<KitchenGroupedDishResponse>(groupedDishDb.GroupedDishJson);
+                if (dishId.HasValue)
+                {
+                    if (isMutual.HasValue)
+                    {
+                        if (isMutual.Value)
+                        {
+                            result.Result = groupedDishes.MutualOrderDishes.FirstOrDefault(m => m.Dish.DishId == dishId.Value);
+                        } else
+                        {
+                            result.Result = groupedDishes.SingleOrderDishes.FirstOrDefault(m => m.Dish.DishId == dishId.Value);
+                        }
+                    } 
+                }
+                else
+                {
+                    result.Result = groupedDishes;
+                }
             }
             catch (Exception ex)
             {
