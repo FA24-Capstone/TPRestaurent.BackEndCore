@@ -187,8 +187,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         groupedDishDb.IsFinished = true;
                     }
-                    isSuccessful = true;
+                } else
+                {
+                    groupedDishDb.GroupedDishJson = JsonConvert.SerializeObject(new KitchenGroupedDishResponse());
+                    groupedDishDb.OrderDetailidList = "";
+                    groupedDishDb.IsFinished = true;
                 }
+                isSuccessful = true;
                
             }
             catch (Exception ex)
