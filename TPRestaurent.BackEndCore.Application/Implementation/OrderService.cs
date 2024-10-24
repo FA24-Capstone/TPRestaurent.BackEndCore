@@ -798,7 +798,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             foreach (var user in userRole.Items)
                             {
                                 var token = await tokenRepostiory!.GetAllDataByExpression(p => p.AccountId == user.UserId, 0, 0, null, false, p => p.Account);
-                                tokenList.AddRange(token!.Items.Select(p => p.AccessTokenValue));
+                                tokenList.AddRange(token!.Items.Select(p => p.DeviceToken));
                             }
 
                             StringBuilder messageBody = new StringBuilder();
