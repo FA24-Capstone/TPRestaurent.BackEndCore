@@ -47,5 +47,21 @@ namespace TPRestaurent.BackEndCore.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+    
+    [HttpPost("send-multi")]
+    public async Task<IActionResult> SendMulticastAsync([FromBody] List<NotificationRequest> request)
+    {
+        try
+        {
+                
+            var result = await _firebase.SendMulticastAsync(request.Select(a=> a.DeviceToken).ToList(),"test","test"
+            );
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
+}
 }
