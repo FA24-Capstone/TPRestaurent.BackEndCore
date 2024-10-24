@@ -34,7 +34,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task UpdateOrderDetailStatusBeforeDining();
         public Task<AppActionResult> GetUpdateCartComboDto(string cartComboJson);
         public Task<AppActionResult> GetUpdateCartDishDto(string cartDishJson);
-        public Task<AppActionResult> UpdateOrderDetailStatus(List<Guid> orderDetailIds, bool isSuccessful);
+        public Task<AppActionResult> UpdateOrderDetailStatus(List<UpdateOrderDetailItemRequest> orderDetailIds, bool isSuccessful);
         public Task<AppActionResult> GetCurrentTableSession();
         public Task<AppActionResult> GetAllOrderDetail(Guid orderId);
         public Task<AppActionResult> GetAllTableDetails(OrderStatus orderStatus, int pageNumber, int pageSize);
