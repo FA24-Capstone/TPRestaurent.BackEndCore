@@ -16,8 +16,10 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public DateTime TransactionDate { get; set; }
         public int PointChanged { get; set; }
         public int NewBalance { get; set; }
+        public bool isApplied { get; set; }
         public Guid? OrderId { get; set; }
         [ForeignKey(nameof(OrderId))]
         public Order? Order { get; set; }
+
     }
 }

@@ -193,13 +193,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 //Trong DB có transaction có status là successful rồiva2 transaction đó status phải là Order
                                 var transactionRepository = Resolve<IGenericRepository<Domain.Models.Transaction>>();
-                                var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.SUCCESSFUL && t.TransactionTypeId == TransactionType.Order, null);
+                                var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.SUCCESSFUL && t.TransactionTypeId == TransactionType.Order, t => t.Order.Account);
                                 if (reservationTransactionDb == null)
                                 {
                                     result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch thành công cho đơn hàng với id {orderId}");
                                     return result;
                                 }
 
+                                await ApplyLoyalTyPoint(reservationTransactionDb.Order);
                                 orderDb.StatusId = OrderStatus.Completed;
                             }
                             else
@@ -313,6 +314,29 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
+        }
+
+        private async Task ApplyLoyalTyPoint(Order order)
+        {
+            try
+            {
+                var loyaltyPointRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
+                var accountRepository = Resolve<IGenericRepository<Account>>();
+                var accountDb = order.Account;
+                var loyaltyPointDb = await loyaltyPointRepository.GetAllDataByExpression(l => l.OrderId == order.OrderId, 0, 0, l => l.PointChanged, true, null);
+                foreach(var loyaltyPoint in loyaltyPointDb.Items)
+                {
+                    accountDb.LoyaltyPoint += loyaltyPoint.PointChanged;
+                    loyaltyPoint.NewBalance = accountDb.LoyaltyPoint;
+                }
+                await accountRepository.Update(accountDb);
+                await loyaltyPointRepository.UpdateRange(loyaltyPointDb.Items);
+                await _unitOfWork.SaveChangesAsync();
+
+            } catch(Exception ex)
+            {
+                
+            }
         }
 
         public async Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto)
@@ -726,7 +750,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
                                     OrderId = order.OrderId,
                                     PointChanged = -(int)loyaltyDiscount,
-                                    NewBalance = accountDb.LoyaltyPoint
+                                    NewBalance = accountDb.LoyaltyPoint,
+                                    isApplied = false
                                 };
 
                                 await loyalPointsHistoryRepository!.Insert(loyalPointUsageHistory);
@@ -744,12 +769,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
                             OrderId = order.OrderId,
                             PointChanged = (int)money / 100,
-                            NewBalance = accountDb.LoyaltyPoint + (int)money / 100
+                            NewBalance = accountDb.LoyaltyPoint + (int)money / 100,
+                            isApplied = false
                         };
 
                         await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
 
-                        accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
 
                         orderWithPayment.Order = order;
 
@@ -760,10 +785,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
 
 
-                        if (!BuildAppActionResultIsError(result))
-                        {
-                            await accountRepository.Update(accountDb);
-                        }
+                        //if (!BuildAppActionResultIsError(result))
+                        //{
+                        //    accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
+                        //    await accountRepository.Update(accountDb);
+                        //}
                     }
                     else
                     {
@@ -1045,7 +1071,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
                                     OrderId = orderDb.OrderId,
                                     PointChanged = -(int)loyaltyDiscount,
-                                    NewBalance = accountDb.LoyaltyPoint
+                                    NewBalance = accountDb.LoyaltyPoint,
+                                    isApplied = false
                                 };
 
                                 await loyalPointsHistoryRepository!.Insert(loyalPointUsageHistory);
@@ -1063,13 +1090,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
                             OrderId = orderDb.OrderId,
                             PointChanged = (int)money / 100,
-                            NewBalance = accountDb.LoyaltyPoint + (int)money / 100
+                            NewBalance = accountDb.LoyaltyPoint + (int)money / 100,
+                            isApplied = false
                         };
 
                         await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
 
-                        accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
-                        await customerInfoRepository.Update(accountDb);
+                        //accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
+                        //await customerInfoRepository.Update(accountDb);
                     }
 
                     if (!BuildAppActionResultIsError(result))
