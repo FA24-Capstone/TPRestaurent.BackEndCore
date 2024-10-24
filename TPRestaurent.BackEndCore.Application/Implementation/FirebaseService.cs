@@ -103,25 +103,36 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         public async Task<List<string>> SendMulticastAsync(List<string> deviceTokens, string title, string body, AppActionResult data = null)
         {
-            var message = new MulticastMessage
-            {
-                Tokens = deviceTokens,
-                Notification = new Notification
-                {
-                    Title = title,
-                    Body = body
-                },
-                Data = Utility.ToDictionary( data)
-            };
-
             try
             {
-                var response = await _messaging.SendMulticastAsync(message);
-                return response.SuccessCount > 0 ? deviceTokens : new List<string>();
+                var messages = new List<Message>();
+                foreach (var token in deviceTokens)
+                {
+                    var message = new Message
+                    {
+                        Token = token,
+                        Notification = new Notification
+                        {
+                            Title = title,
+                            Body = body
+                        },
+                        Data = data != null ? Utility.ToDictionary(data) : null // Optional data payload
+                    };
+
+                    messages.Add(message);
+                }
+
+                // Send all messages as a batch
+                foreach (var message in messages)
+                {
+                    await _messaging.SendAsync(message);
+                }
+                return deviceTokens; // Successfully sent all messages
+
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error sending multicast FCM notification: {ex.Message}");
+                throw new Exception($"Error sending batch FCM notifications: {ex.Message}");
             }
         }
 
