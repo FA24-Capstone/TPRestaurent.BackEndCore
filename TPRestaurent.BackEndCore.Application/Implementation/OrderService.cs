@@ -805,7 +805,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             var tokenList = new List<string>();
                             foreach (var user in userRole.Items)
                             {
-                                var token = await tokenRepostiory!.GetAllDataByExpression(p => p.AccountId == user.UserId, 0, 0, null, false, p => p.Account);
+                                var token = await tokenRepostiory!.GetAllDataByExpression(p => p.AccountId == user.UserId && !string.IsNullOrEmpty(p.DeviceToken), 0, 0, null, false, p => p.Account);
                                 tokenList.AddRange(token!.Items.Select(p => p.DeviceToken));
                             }
 
@@ -2062,50 +2062,115 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-        public async Task<AppActionResult> UpdateOrderDetailStatus(List<Guid> orderDetailIds, bool isSuccessful)
+        public async Task<AppActionResult> UpdateOrderDetailStatus(List<UpdateOrderDetailItemRequest> orderDetailItems, bool isSuccessful)
         {
             AppActionResult result = new AppActionResult();
             try
             {
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                 var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
+                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
                 var orderSessionService = Resolve<IOrderSessionService>();
                 var groupedDishCraftService = Resolve<IGroupedDishCraftService>();
+                var orderDetailIds = orderDetailItems.Select(o => o.OrderDetailId).ToList();
                 var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => orderDetailIds.Contains(p.OrderDetailId) && !(p.OrderDetailStatusId == OrderDetailStatus.Reserved || p.OrderDetailStatusId == OrderDetailStatus.ReadyToServe || p.OrderDetailStatusId == OrderDetailStatus.Cancelled), 0, 0, null, false, null);
-                if (orderDetailDb.Items.Count != orderDetailIds.Count)
-                {
-                    return BuildAppActionResultError(result, $"Tồn tại id gọi món không nằm trong hệ thống hoặc không thể ập nhập trạng thái được");
-                }
+                //if (orderDetailDb.Items.Count != orderDetailIds.Count)
+                //{
+                //    return BuildAppActionResultError(result, $"Tồn tại id gọi món không nằm trong hệ thống hoặc không thể ập nhập trạng thái được");
+                //}
 
                 var utility = Resolve<Utility>();
                 var time = utility.GetCurrentDateTimeInTimeZone();
                 bool orderSessionUpdated = false;
 
-                foreach (var orderDetail in orderDetailDb.Items)
+                foreach (var orderDetail in orderDetailDb.Items.ToList())
                 {
-                    if (orderDetail.OrderDetailStatusId == OrderDetailStatus.Unchecked)
+                    if (orderDetail.ComboId.HasValue)
                     {
-                        if (isSuccessful)
-                        {
-                            orderDetail.OrderDetailStatusId = OrderDetailStatus.Processing;
-                        }
-                        else
-                        {
-                            orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
-                        }
+                        var orderComboDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId 
+                                                                                                                && (c.StatusId !=  DishComboDetailStatus.Reserved  
+                                                                                                                    && c.StatusId != DishComboDetailStatus.ReadyToServe 
+                                                                                                                    && c.StatusId != DishComboDetailStatus.Cancelled), 
+                                                                                                              0, 0, null, false, c => c.DishCombo.DishSizeDetail);
 
+                        if(orderComboDetailDb.Items.Count() > 0)
+                        {
+                            var orderComboDetail = orderComboDetailDb.Items.FirstOrDefault(o => o.DishCombo.DishSizeDetail.DishId == orderDetailItems.FirstOrDefault(od => od.OrderDetailId == orderDetail.OrderDetailId
+                                                                                                                                                    && od.DishId == o.DishCombo.DishSizeDetail.DishId).DishId);
+                            if (orderComboDetail != null)
+                            {
+                                if (orderComboDetail.StatusId == DishComboDetailStatus.Unchecked)
+                                {
+                                    if (isSuccessful)
+                                    {
+                                        orderComboDetail.StatusId = DishComboDetailStatus.Processing;
+                                    }
+                                    else
+                                    {
+                                        orderComboDetail.StatusId = DishComboDetailStatus.Cancelled;
+                                    }
+
+                                }
+                                else if (orderComboDetail.StatusId == DishComboDetailStatus.Processing)
+                                {
+                                    if (isSuccessful)
+                                    {
+                                        orderComboDetail.StatusId = DishComboDetailStatus.ReadyToServe;
+                                    }
+                                    else
+                                    {
+                                        return BuildAppActionResultError(result, $"Chi tiết đơn hàng đang ở trạng thái dang xử lí, không thể huỷ");
+                                    }
+                                }
+                            }
+
+                            if(orderComboDetail.StatusId == DishComboDetailStatus.Processing)
+                            {
+                                if(orderComboDetailDb.Items.Where(o => o.ComboOrderDetailId != orderComboDetail.ComboOrderDetailId)
+                                                           .All(o => o.StatusId == DishComboDetailStatus.Unchecked))
+                                {
+                                    orderDetail.OrderDetailStatusId = OrderDetailStatus.Processing;
+                                }
+                            } 
+                            else if(orderComboDetail.StatusId == DishComboDetailStatus.ReadyToServe)
+                            {
+                                if (orderComboDetailDb.Items.Where(o => o.ComboOrderDetailId != orderComboDetail.ComboOrderDetailId)
+                                                          .All(o => o.StatusId == DishComboDetailStatus.ReadyToServe))
+                                {
+                                    orderDetail.OrderDetailStatusId = OrderDetailStatus.ReadyToServe;
+                                }
+                            }
+                            await comboOrderDetailRepository.Update(orderComboDetail);
+                        }
                     }
-                    else if (orderDetail.OrderDetailStatusId == OrderDetailStatus.Processing)
+                    else
                     {
-                        if (isSuccessful)
+                        if (orderDetail.OrderDetailStatusId == OrderDetailStatus.Unchecked)
                         {
-                            orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = OrderDetailStatus.ReadyToServe);
+                            if (isSuccessful)
+                            {
+                                orderDetail.OrderDetailStatusId = OrderDetailStatus.Processing;
+                            }
+                            else
+                            {
+                                orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
+                            }
+
                         }
-                        else
+                        else if (orderDetail.OrderDetailStatusId == OrderDetailStatus.Processing)
                         {
-                            return BuildAppActionResultError(result, $"Chi tiết đơn hàng đang ở trạng thái dang xử lí, không thể huỷ");
+                            if (isSuccessful)
+                            {
+                                orderDetail.OrderDetailStatusId = OrderDetailStatus.ReadyToServe;
+                            }
+                            else
+                            {
+                                return BuildAppActionResultError(result, $"Chi tiết đơn hàng đang ở trạng thái dang xử lí, không thể huỷ");
+                            }
                         }
                     }
+
+                    
                 }
 
                 await orderDetailRepository.UpdateRange(orderDetailDb.Items);
@@ -2879,7 +2944,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             try
             {
+                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
                 orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
+                var comboOrderDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(o => orderDetails.Where(or => or.ComboId.HasValue)
+                                                                                                                  .Select(or => or.OrderDetailId).ToList().Contains(o.OrderDetailId.Value), 
+                                                                                                                  0, 0, null, false, null);
+                comboOrderDetailDb.Items.ForEach(c => c.StatusId = DishComboDetailStatus.Unchecked);
+                await comboOrderDetailRepository.UpdateRange(comboOrderDetailDb.Items);
                 await _detailRepository.UpdateRange(orderDetails);
             }
             catch (Exception ex)

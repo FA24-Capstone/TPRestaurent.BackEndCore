@@ -32,6 +32,7 @@
     "Dining": "Đang Dùng Bữa",
     "Pending": "Chờ Xử Lý",
     "Processing": "Đang Xử Lý",
+    "TemporarilyCompleted": "Đã lên hết món",
     "ReadyForDelivery": "Sẳn sàng để giao",
     "AssignedToShipper": "Đã tiếp nhận đơn",
     "Delivering": "Đang Giao",
@@ -79,6 +80,6 @@
     "Refund": "Hoàn tiền",
     "Reserved": "Đặt trước",
     "Unchecked": "Chờ xử lý",
-    "ReadyToServe":  "Đã hoàn thành"
+    "ReadyToServe": "Đã hoàn thành"
   }
 }
