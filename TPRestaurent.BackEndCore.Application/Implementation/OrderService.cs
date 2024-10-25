@@ -2967,7 +2967,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 result = _mapper.Map<ReservationTableItemResponse>(order);
-                result.Tables = (await _tableDetailRepository.GetAllDataByExpression(t => t.OrderId == order.OrderId, 0, 0, t => t.Table.TableName, false, t => t.Table)).Items;
+                result.Tables = (await _tableDetailRepository.GetAllDataByExpression(t => t.OrderId == order.OrderId, 0, 0, t => t.Table.TableName, false, t => t.Table.TableSize, t => t.Table.Room)).Items;
             }
             catch (Exception ex)
             {
