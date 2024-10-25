@@ -12,5 +12,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public OrderStatus? Status { get; set; }
+        public Guid? TableId { get; set; }
     }
 }
