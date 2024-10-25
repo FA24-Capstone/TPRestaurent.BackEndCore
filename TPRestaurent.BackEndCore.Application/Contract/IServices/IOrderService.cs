@@ -42,7 +42,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> UploadConfirmedOrderImage(ConfirmedOrderRequest confirmedOrderRequest);
         public Task<AppActionResult> UpdateOrderStatus(Guid orderId, Domain.Enums.OrderStatus status);
         public Task<AppActionResult> UpdateOrderDetailStatusForce(List<Guid> orderDetailIds, OrderDetailStatus status);
-        public Task<AppActionResult> GetReservationTable(ReservationTableRequest request);
+        public Task<AppActionResult> GetOrderWithFilter(ReservationTableRequest request);
         public Task CancelReservation();
 
     }
