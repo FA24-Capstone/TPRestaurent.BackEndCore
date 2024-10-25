@@ -63,33 +63,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        //public async Task<AppActionResult> GetAllAvailableTable(int pageNumber, int pageSize)
-        //{
-        //    AppActionResult result = new AppActionResult();
-        //    try
-        //    {
-        //        result.Result = await _repository.GetAllDataByExpression(t => !t.IsDeleted, pageNumber, pageSize, null, false, t => t.TableRating);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        result = BuildAppActionResultError(result, ex.Message);
-        //    }
-        //    return result;
-        //}
-
-        //public async Task<AppActionResult> GetAllTable(int pageNumber, int pageSize)
-        //{
-        //    AppActionResult result = new AppActionResult();
-        //    try
-        //    {
-        //        result.Result = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, null, false, t => t.TableRating);
-        //    }
-        //    catch (Exception ex) 
-        //    {
-        //            result = BuildAppActionResultError(result, ex.Message);
-        //    }
-        //    return result;
-        //}
+        public async Task<AppActionResult> GetAllTable(int pageNumber, int pageSize)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                result.Result = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, null, false, t => t.Room, t => t.TableSize);
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
 
         //public async Task<AppActionResult> GetTableById(Guid TableId)
         //{
