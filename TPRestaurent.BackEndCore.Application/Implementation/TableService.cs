@@ -46,7 +46,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var tableRatingRepository = Resolve<IGenericRepository<Room>>();
                 if((await tableRatingRepository.GetById(dto.TableRatingId) == null))
                 {
-                    result = BuildAppActionResultError(result, $"Không tìm thấy phân loại bàn với id {dto.TableRatingId}");
+                    result = BuildAppActionResultError(result, $"Không tìm thấy phòng với id {dto.TableRatingId}");
                     return result;
                 }
 
