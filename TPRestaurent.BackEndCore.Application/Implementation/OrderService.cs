@@ -38,17 +38,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     {
         private readonly IGenericRepository<Order> _repository;
         private readonly IGenericRepository<OrderDetail> _detailRepository;
+        private readonly IGenericRepository<TableDetail> _tableDetailRepository;
         private readonly IGenericRepository<OrderSession> _sessionRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private BackEndLogger _logger;
         private IHubServices.IHubServices _hubServices;
 
-        public OrderService(IGenericRepository<Order> repository, IGenericRepository<OrderDetail> detailRepository, IGenericRepository<OrderSession> sessionRepository, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service, BackEndLogger logger, IHubServices.IHubServices hubServices
+        public OrderService(IGenericRepository<Order> repository, IGenericRepository<OrderDetail> detailRepository, IGenericRepository<TableDetail> tableDetailRepository, IGenericRepository<OrderSession> sessionRepository, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service, BackEndLogger logger, IHubServices.IHubServices hubServices
         ) : base(service)
         {
             _repository = repository;
             _detailRepository = detailRepository;
+            _tableDetailRepository = tableDetailRepository;
             _sessionRepository = sessionRepository;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
@@ -2888,26 +2890,101 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return true;
         }
 
-        public async Task RemindOrderReservation()
+        public async Task<AppActionResult> GetReservationTable(ReservationTableRequest request)
         {
+            AppActionResult result = new AppActionResult();
             try
             {
-                var utility = Resolve<Utility>();
-                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-                var pastReservationDb = await _repository.GetAllDataByExpression(
-                   (p => p.ReservationDate.HasValue && p.ReservationDate.Value.AddMinutes(30) < currentTime &&
-                   (p.StatusId == OrderStatus.Pending || p.StatusId == OrderStatus.TableAssigned
-                   )), 0, 0, null, false, null
-                   );
-                if (pastReservationDb.Items!.Count > 0 && pastReservationDb.Items != null)
-                {
+                var reservationDb = await _repository.GetAllDataByExpression(o => o.OrderTypeId == OrderType.Reservation
+                                                                                  && (o.StatusId != OrderStatus.Completed && o.StatusId != OrderStatus.Cancelled)
+                                                                                  && (o.MealTime >= request.StartTime && o.MealTime <= request.EndTime)
+                                                                                  && (!request.Status.HasValue
+                                                                                        || request.Status.HasValue && o.StatusId == request.Status.Value),
+                                                                                  0, 0, null, false, 
+                                                                                  o => o.Status,
+                                                                                  o => o.OrderType,
+                                                                                  o => o.Account);
 
+                if(reservationDb.Items.Count == 0)
+                {
+                    return result;
                 }
+                var groupedReservation = reservationDb.Items.GroupBy(r => r.MealTime.Value.Date).ToDictionary(r => r.Key, r => r.OrderBy(r => r.MealTime).ToList());
+
+                List<ReservationTableResponse> data = new List<ReservationTableResponse>();
+                foreach(var reservation in groupedReservation.OrderBy(g => g.Key))
+                {
+                    var reservationByDate = new ReservationTableResponse
+                    {
+                        Date = reservation.Key
+                    };
+
+                    var reservationList = await GetReservationListDetailByOrder(reservation.Value);
+                    if(reservationList == null)
+                    {
+                        result.Messages.Add($"Xảy ra lỗi khi truy vấn đặt bàn ngày {reservation.Key}");
+                    } else
+                    {
+                        reservationByDate.Reservations = reservationList.OrderBy(o => o.MealTime).ToList();
+                    }
+                    data.Add(reservationByDate);
+                }
+                result.Result = data;
+            }
+            catch(Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        private async Task<List<ReservationTableItemResponse>> GetReservationListDetailByOrder(List<Order> orders)
+        {
+            List<ReservationTableItemResponse> result = new List<ReservationTableItemResponse>();
+            try
+            {
+                if(orders.Count == 0)
+                {
+                    return result;
+                }
+
+                foreach (var reservation in orders)
+                {
+                    var reservationResponse = await GetReservationDetailByOrder(reservation);
+                    if (reservationResponse != null)
+                    {
+                        result.Add(reservationResponse);
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                
+            }
+            return result;
+        }
+
+        private async Task<ReservationTableItemResponse> GetReservationDetailByOrder(Order order)
+        {
+            ReservationTableItemResponse result = null;
+            try
+            {
+                result = _mapper.Map<ReservationTableItemResponse>(order);
+                result.Tables = (await _tableDetailRepository.GetAllDataByExpression(t => t.OrderId == order.OrderId, 0, 0, t => t.Table.TableName, false, t => t.Table)).Items;
             }
             catch (Exception ex)
             {
             }
-            Task.CompletedTask.Wait();
+            return result;
+        }
+
+        public Task RemindOrderReservation()
+        {
+            throw new NotImplementedException();
         }
     }
 }
