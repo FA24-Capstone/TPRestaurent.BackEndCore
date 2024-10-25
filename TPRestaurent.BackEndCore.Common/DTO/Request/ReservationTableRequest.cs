@@ -9,9 +9,9 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
 {
     public class ReservationTableRequest
     {
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
+        public DateTime Date { get; set; }
         public OrderStatus? Status { get; set; }
+        public OrderType Type { get; set; }
         public Guid? TableId { get; set; }
     }
 }
