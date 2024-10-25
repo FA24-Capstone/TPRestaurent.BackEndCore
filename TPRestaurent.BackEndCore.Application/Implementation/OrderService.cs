@@ -2888,21 +2888,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var reservationDb = await _repository.GetAllDataByExpression(o => o.OrderTypeId == OrderType.Reservation
-                                                                                  && (o.StatusId != OrderStatus.Completed && o.StatusId != OrderStatus.Cancelled)
-                                                                                  && (o.MealTime >= request.StartTime && o.MealTime <= request.EndTime)
+                var reservationDb = await _tableDetailRepository.GetAllDataByExpression(o => o.Order.OrderTypeId == OrderType.Reservation
+                                                                                  && (o.Order.StatusId != OrderStatus.Completed && o.Order.StatusId != OrderStatus.Cancelled)
+                                                                                  && (o.Order.MealTime >= request.StartTime && o.Order.MealTime <= request.EndTime)
                                                                                   && (!request.Status.HasValue
-                                                                                        || request.Status.HasValue && o.StatusId == request.Status.Value),
+                                                                                        || request.Status.HasValue && o.Order.StatusId == request.Status.Value)
+                                                                                  && (!request.TableId.HasValue
+                                                                                        || request.TableId.HasValue && o.TableId == request.TableId.Value),
                                                                                   0, 0, null, false, 
-                                                                                  o => o.Status,
-                                                                                  o => o.OrderType,
-                                                                                  o => o.Account);
+                                                                                  o => o.Order.Status,
+                                                                                  o => o.Order.OrderType,
+                                                                                  o => o.Order.Account);
 
                 if(reservationDb.Items.Count == 0)
                 {
                     return result;
                 }
-                var groupedReservation = reservationDb.Items.GroupBy(r => r.MealTime.Value.Date).ToDictionary(r => r.Key, r => r.OrderBy(r => r.MealTime).ToList());
+                var groupedReservation = reservationDb.Items.Select(o => o.Order).GroupBy(r => r.MealTime.Value.Date).ToDictionary(r => r.Key, r => r.OrderBy(r => r.MealTime).ToList());
 
                 List<ReservationTableResponse> data = new List<ReservationTableResponse>();
                 foreach(var reservation in groupedReservation.OrderBy(g => g.Key))
