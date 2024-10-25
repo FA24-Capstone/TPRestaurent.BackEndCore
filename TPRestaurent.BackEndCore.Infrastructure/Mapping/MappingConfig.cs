@@ -160,9 +160,28 @@ public class MappingConfig
             .ForMember(dest => dest.IsPrivate, act => act.MapFrom(src => src.IsPrivate))
             .ForMember(dest => dest.ValidatingImg, act => act.MapFrom(src => src.ValidatingImg))
             .ReverseMap();
+
+            config.CreateMap<Order, ReservationTableItemResponse>()
+            .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.OrderId))
+            .ForMember(dest => dest.ReservationDate, opt => opt.MapFrom(src => src.ReservationDate))
+            .ForMember(dest => dest.MealTime, opt => opt.MapFrom(src => src.MealTime))
+            .ForMember(dest => dest.EndTime, opt => opt.MapFrom(src => src.EndTime))
+            .ForMember(dest => dest.TotalAmount, opt => opt.MapFrom(src => src.TotalAmount))
+            .ForMember(dest => dest.StatusId, opt => opt.MapFrom(src => src.StatusId))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
+            .ForMember(dest => dest.AccountId, opt => opt.MapFrom(src => src.AccountId))
+            .ForMember(dest => dest.Account, opt => opt.MapFrom(src => src.Account))
+            .ForMember(dest => dest.LoyalPointsHistoryId, opt => opt.MapFrom(src => src.LoyalPointsHistoryId))
+            .ForMember(dest => dest.LoyalPointsHistory, opt => opt.MapFrom(src => src.LoyalPointsHistory))
+            .ForMember(dest => dest.Note, opt => opt.MapFrom(src => src.Note))
+            .ForMember(dest => dest.OrderTypeId, opt => opt.MapFrom(src => src.OrderTypeId))
+            .ForMember(dest => dest.OrderType, opt => opt.MapFrom(src => src.OrderType))
+            .ForMember(dest => dest.NumOfPeople, opt => opt.MapFrom(src => src.NumOfPeople))
+            .ForMember(dest => dest.Deposit, opt => opt.MapFrom(src => src.Deposit))
+            .ForMember(dest => dest.IsPrivate, opt => opt.MapFrom(src => src.IsPrivate));
         });
 
-        // Trong class MappingConfig
+
 
         return mappingConfig;
     }
