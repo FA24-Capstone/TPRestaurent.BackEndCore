@@ -143,10 +143,10 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.UploadConfirmedOrderImage(confirmedOrderRequest);
         }
 
-        [HttpPost("get-reservation-table")]
-        public async Task<AppActionResult> GetReservationTable([FromBody] ReservationTableRequest request)
+        [HttpPost("get-order-with-filter")]
+        public async Task<AppActionResult> GetOrderWithFilter([FromBody] ReservationTableRequest request)
         {
-            return await _service.GetReservationTable(request);
+            return await _service.GetOrderWithFilter(request);
         }
         //[HttpPost("calculate-order-total")]
         //public async Task<AppActionResult> GetOrderTotal([FromBody]CalculateOrderRequest dto)

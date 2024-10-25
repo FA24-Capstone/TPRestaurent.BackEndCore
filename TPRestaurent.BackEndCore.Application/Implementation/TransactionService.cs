@@ -85,8 +85,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 {
                                     var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
                                     if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
-                                        || orderDb.StatusId == OrderStatus.Pending 
-                                        || orderDb.StatusId == OrderStatus.TableAssigned)
+                                        || orderDb.StatusId == OrderStatus.Pending)
                                     {
                                         amount = orderDb.TotalAmount;
                                     }
@@ -163,8 +162,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 {
                                     var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
                                     if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
-                                        || orderDb.StatusId == OrderStatus.Pending
-                                        || orderDb.StatusId == OrderStatus.TableAssigned)
+                                        || orderDb.StatusId == OrderStatus.Pending)
                                     {
                                         amount = orderDb.TotalAmount;
                                     }
@@ -331,8 +329,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     }
 
                                     if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
-                                        || orderDb.StatusId == OrderStatus.Pending
-                                        || orderDb.StatusId == OrderStatus.TableAssigned)
+                                        || orderDb.StatusId == OrderStatus.Pending)
                                     {
                                         amount = orderDb.TotalAmount;
                                     }
@@ -387,8 +384,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 {
                                     var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
                                     if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
-                                        || orderDb.StatusId == OrderStatus.Pending
-                                        || orderDb.StatusId == OrderStatus.TableAssigned)
+                                        || orderDb.StatusId == OrderStatus.Pending)
                                     {
                                         amount = orderDb.TotalAmount;
                                     } 

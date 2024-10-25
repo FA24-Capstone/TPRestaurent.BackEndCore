@@ -2883,14 +2883,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return true;
         }
 
-        public async Task<AppActionResult> GetReservationTable(ReservationTableRequest request)
+        public async Task<AppActionResult> GetOrderWithFilter(ReservationTableRequest request)
         {
             AppActionResult result = new AppActionResult();
             try
             {
-                var reservationDb = await _tableDetailRepository.GetAllDataByExpression(o => o.Order.OrderTypeId == OrderType.Reservation
-                                                                                  && (o.Order.StatusId != OrderStatus.Completed && o.Order.StatusId != OrderStatus.Cancelled)
-                                                                                  && (o.Order.MealTime >= request.StartTime && o.Order.MealTime <= request.EndTime)
+                var reservationDb = await _tableDetailRepository.GetAllDataByExpression(o => 
+                                                                                  ((o.Order.OrderTypeId == OrderType.Reservation && o.Order.MealTime.Value.Date == request.Date.Date)
+                                                                                  || (o.Order.OrderTypeId == OrderType.MealWithoutReservation && o.Order.MealTime.Value.Date == request.Date.Date)
+                                                                                  || (o.Order.OrderTypeId == OrderType.Delivery && o.Order.OrderDate.Date == request.Date.Date))
                                                                                   && (!request.Status.HasValue
                                                                                         || request.Status.HasValue && o.Order.StatusId == request.Status.Value)
                                                                                   && (!request.TableId.HasValue
@@ -2904,25 +2905,28 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     return result;
                 }
-                var groupedReservation = reservationDb.Items.Select(o => o.Order).GroupBy(r => r.MealTime.Value.Date).ToDictionary(r => r.Key, r => r.OrderBy(r => r.MealTime).ToList());
-
-                List<ReservationTableResponse> data = new List<ReservationTableResponse>();
-                foreach(var reservation in groupedReservation.OrderBy(g => g.Key))
+                var reservationlist = reservationDb.Items.Select(o => o.Order).ToList();
+                if(reservationlist.FirstOrDefault().OrderTypeId != OrderType.Delivery)
                 {
-                    var reservationByDate = new ReservationTableResponse
-                    {
-                        Date = reservation.Key
-                    };
+                    reservationlist = reservationlist.OrderBy(o => o.MealTime).ToList();
+                } else
+                {
+                    reservationlist = reservationlist.OrderBy(o => o.OrderDate).ToList();
+                }
 
-                    var reservationList = await GetReservationListDetailByOrder(reservation.Value);
-                    if(reservationList == null)
+                List<ReservationTableItemResponse> data = new List<ReservationTableItemResponse>();
+                foreach(var item in reservationlist)
+                {
+                   if(item == null)
                     {
-                        result.Messages.Add($"Xảy ra lỗi khi truy vấn đặt bàn ngày {reservation.Key}");
-                    } else
-                    {
-                        reservationByDate.Reservations = reservationList.OrderBy(o => o.MealTime).ToList();
+                        continue;
                     }
-                    data.Add(reservationByDate);
+                    var reservation = await GetReservationDetailByOrder(item);
+                    if(reservation == null)
+                    {
+                        result.Messages.Add($"Xảy ra lỗi khi truy vấn đặt bàn ngày {item.MealTime}");
+                    } 
+                    data.Add(reservation);
                 }
                 result.Result = data;
             }
