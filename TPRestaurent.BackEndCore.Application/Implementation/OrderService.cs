@@ -368,7 +368,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.AccountId = orderRequestDto.CustomerId.ToString();
                     }
 
-                    if ((orderRequestDto.OrderType == OrderType.Reservation && orderRequestDto.ReservationOrder == null)
+                    if ((orderRequestDto.OrderType < OrderType.Reservation && orderRequestDto.OrderType > OrderType.Delivery)
+                        || (orderRequestDto.OrderType == OrderType.Reservation && orderRequestDto.ReservationOrder == null)
                         || (orderRequestDto.OrderType == OrderType.MealWithoutReservation && orderRequestDto.MealWithoutReservation == null)
                         || (orderRequestDto.OrderType == OrderType.Delivery && orderRequestDto.DeliveryOrder == null))
                     {
@@ -602,7 +603,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, "Không có thông tin bàn");
                         }
                     }
-                    else
+                    else if(orderRequestDto.OrderType == OrderType.Delivery)
                     {
                         order.OrderTypeId = OrderType.Delivery;
                         order.StatusId = OrderStatus.Pending;
@@ -763,6 +764,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await accountRepository.Update(accountDb);
                         }
                     }
+                    else
+                    {
+                        return BuildAppActionResultError(result, $"Thiếu loại đơn hàng (orderType) trong yêu cầu tạo");
+                    }
+
                     if (!BuildAppActionResultIsError(result))
                     {
                         await orderSessionRepository.Insert(orderSession);
@@ -2865,34 +2871,67 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var reservationDb = await _tableDetailRepository.GetAllDataByExpression(o => 
-                                                                                  ((o.Order.OrderTypeId == OrderType.Reservation && o.Order.MealTime.Value.Date == request.Date.Date)
-                                                                                  || (o.Order.OrderTypeId == OrderType.MealWithoutReservation && o.Order.MealTime.Value.Date == request.Date.Date)
-                                                                                  || (o.Order.OrderTypeId == OrderType.Delivery && o.Order.OrderDate.Date == request.Date.Date))
-                                                                                  && (!request.Status.HasValue
-                                                                                        || request.Status.HasValue && o.Order.StatusId == request.Status.Value)
-                                                                                  && (!request.TableId.HasValue
-                                                                                        || request.TableId.HasValue && o.TableId == request.TableId.Value),
-                                                                                  0, 0, null, false, 
-                                                                                  o => o.Order.Status,
-                                                                                  o => o.Order.OrderType,
-                                                                                  o => o.Order.Account);
+                List<Order> orderDb = null;
+                if(request.Type != OrderType.Delivery)
+                {
+                    var orderDiningDb = await _tableDetailRepository.GetAllDataByExpression(
+                                                                                      o => (                                                                                                
+                                                                                            o.Order.MealTime.Value >= request.StartDate
+                                                                                            && o.Order.MealTime.Value <= request.EndDate)                                                                                               
+                                                                                            && o.Order.OrderTypeId == request.Type
+                                                                                            &&
+                                                                                            (
+                                                                                                !request.Status.HasValue
+                                                                                                || (request.Status.HasValue && o.Order.StatusId == request.Status.Value)
+                                                                                            )
+                                                                                            &&
+                                                                                            (
+                                                                                                !request.TableId.HasValue
+                                                                                                || (request.TableId.HasValue && o.TableId == request.TableId.Value)
+                                                                                            ),
+                                                                                            0, 0, null, false,
+                                                                                            o => o.Order.Status,
+                                                                                            o => o.Order.OrderType,
+                                                                                            o => o.Order.Account
+                                                                                        );
 
-                if(reservationDb.Items.Count == 0)
-                {
-                    return result;
-                }
-                var reservationlist = reservationDb.Items.Select(o => o.Order).ToList();
-                if(reservationlist.FirstOrDefault().OrderTypeId != OrderType.Delivery)
-                {
-                    reservationlist = reservationlist.OrderBy(o => o.MealTime).ToList();
+                    if (orderDiningDb.Items.Count == 0)
+                    {
+                        return result;
+                    }
+                    orderDb = orderDiningDb.Items.Select(o => o.Order).ToList();
                 } else
                 {
-                    reservationlist = reservationlist.OrderBy(o => o.OrderDate).ToList();
+                    var orderDeliveryDb = (await _repository.GetAllDataByExpression(o => o.OrderDate >= request.StartDate
+                                                                                            && o.OrderDate <= request.EndDate
+                                                                                            && o.OrderTypeId == request.Type
+                                                                                            &&
+                                                                                            (
+                                                                                                !request.Status.HasValue
+                                                                                                || (request.Status.HasValue && o.StatusId == request.Status.Value)
+                                                                                            )
+                                                                                            ,
+                                                                                            0, 0, null, false,
+                                                                                            o => o.Status!,
+                                                                                            o => o.OrderType!,
+                                                                                            o => o.Account!));
+                    if(orderDeliveryDb.Items!.Count > 0)
+                    {
+                        orderDb = orderDeliveryDb.Items;
+                    }
+                }
+
+                
+                if(orderDb.FirstOrDefault()!.OrderTypeId != OrderType.Delivery)
+                {
+                    orderDb = orderDb.OrderBy(o => o.MealTime).ToList();
+                } else
+                {
+                    orderDb = orderDb.OrderBy(o => o.OrderDate).ToList();
                 }
 
                 List<ReservationTableItemResponse> data = new List<ReservationTableItemResponse>();
-                foreach(var item in reservationlist)
+                foreach(var item in orderDb)
                 {
                    if(item == null)
                     {
