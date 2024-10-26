@@ -2872,9 +2872,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 List<Order> orderDb = null;
+                int totalPage = 0;
                 if(request.Type != OrderType.Delivery)
                 {
-                    var orderDiningDb = await _tableDetailRepository.GetAllDataByExpression(
+                    var orderDiningTableDb = await _tableDetailRepository.GetAllDataByExpression(
                                                                                       o => (                                                                                                
                                                                                             o.Order.MealTime.Value.Date >= request.StartDate.Date
                                                                                             && o.Order.MealTime.Value.Date <= request.EndDate.Date)                                                                                               
@@ -2889,17 +2890,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                                 !request.TableId.HasValue
                                                                                                 || (request.TableId.HasValue && o.TableId == request.TableId.Value)
                                                                                             ),
-                                                                                            request.pageNumber, request.pageSize, null, false,
-                                                                                            o => o.Order.Status,
-                                                                                            o => o.Order.OrderType,
-                                                                                            o => o.Order.Account
-                                                                                        );
+                                                                                            0, 0, null, false, null);
 
-                    if (orderDiningDb.Items.Count == 0)
+                    if (orderDiningTableDb.Items.Count == 0)
                     {
                         return result;
                     }
-                    orderDb = orderDiningDb.Items.Select(o => o.Order).ToList();
+
+                    var orderIds = orderDiningTableDb.Items.DistinctBy(o => o.OrderId).Select(o => o.OrderId).ToList();
+                    var orderDiningDb = await _repository.GetAllDataByExpression(o => orderIds.Contains(o.OrderId), request.pageNumber, request.pageSize, null, false, o => o.Status,
+                                                                                                                                        o => o.OrderType,
+                                                                                                                                        o => o.Account);
+                    if (orderDiningDb.Items!.Count > 0)
+                    {
+                        orderDb = orderDiningDb.Items;
+                        totalPage = orderDiningDb.TotalPages;
+                    }
+
                 } else
                 {
                     var orderDeliveryDb = (await _repository.GetAllDataByExpression(o => o.OrderDate.Date >= request.StartDate.Date
@@ -2918,6 +2925,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if(orderDeliveryDb.Items!.Count > 0)
                     {
                         orderDb = orderDeliveryDb.Items;
+                        totalPage = orderDeliveryDb.TotalPages;
                     }
                 }
 
@@ -2948,7 +2956,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         data.Add(reservation);
                     }
                 }
-                result.Result = data;
+                result.Result = new PagedResult<ReservationTableItemResponse>
+                {
+                    Items = data,
+                    TotalPages = totalPage
+                };
             }
             catch(Exception ex)
             {
