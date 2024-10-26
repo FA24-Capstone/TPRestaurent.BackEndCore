@@ -14,5 +14,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public OrderStatus? Status { get; set; }
         public OrderType Type { get; set; }
         public Guid? TableId { get; set; }
+        public int pageNumber { get; set; } = 0;
+        public int pageSize { get; set; } = 0;
     }
 }

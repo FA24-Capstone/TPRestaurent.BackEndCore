@@ -2872,9 +2872,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 List<Order> orderDb = null;
+                int totalPage = 0;
                 if(request.Type != OrderType.Delivery)
                 {
-                    var orderDiningDb = await _tableDetailRepository.GetAllDataByExpression(
+                    var orderDiningTableDb = await _tableDetailRepository.GetAllDataByExpression(
                                                                                       o => (                                                                                                
                                                                                             o.Order.MealTime.Value.Date >= request.StartDate.Date
                                                                                             && o.Order.MealTime.Value.Date <= request.EndDate.Date)                                                                                               
@@ -2889,17 +2890,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                                 !request.TableId.HasValue
                                                                                                 || (request.TableId.HasValue && o.TableId == request.TableId.Value)
                                                                                             ),
-                                                                                            0, 0, null, false,
-                                                                                            o => o.Order.Status,
-                                                                                            o => o.Order.OrderType,
-                                                                                            o => o.Order.Account
-                                                                                        );
+                                                                                            0, 0, null, false, null);
 
-                    if (orderDiningDb.Items.Count == 0)
+                    if (orderDiningTableDb.Items.Count == 0)
                     {
                         return result;
                     }
-                    orderDb = orderDiningDb.Items.Select(o => o.Order).ToList();
+
+                    var orderIds = orderDiningTableDb.Items.DistinctBy(o => o.OrderId).Select(o => o.OrderId).ToList();
+                    var orderDiningDb = await _repository.GetAllDataByExpression(o => orderIds.Contains(o.OrderId), request.pageNumber, request.pageSize, null, false, o => o.Status,
+                                                                                                                                        o => o.OrderType,
+                                                                                                                                        o => o.Account);
+                    if (orderDiningDb.Items!.Count > 0)
+                    {
+                        orderDb = orderDiningDb.Items;
+                        totalPage = orderDiningDb.TotalPages;
+                    }
+
                 } else
                 {
                     var orderDeliveryDb = (await _repository.GetAllDataByExpression(o => o.OrderDate.Date >= request.StartDate.Date
@@ -2911,40 +2918,49 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                                 || (request.Status.HasValue && o.StatusId == request.Status.Value)
                                                                                             )
                                                                                             ,
-                                                                                            0, 0, null, false,
+                                                                                            request.pageNumber, request.pageSize, null, false,
                                                                                             o => o.Status!,
                                                                                             o => o.OrderType!,
                                                                                             o => o.Account!));
                     if(orderDeliveryDb.Items!.Count > 0)
                     {
                         orderDb = orderDeliveryDb.Items;
+                        totalPage = orderDeliveryDb.TotalPages;
                     }
                 }
 
                 
-                if(orderDb.FirstOrDefault()!.OrderTypeId != OrderType.Delivery)
-                {
-                    orderDb = orderDb.OrderBy(o => o.MealTime).ToList();
-                } else
-                {
-                    orderDb = orderDb.OrderBy(o => o.OrderDate).ToList();
-                }
-
                 List<ReservationTableItemResponse> data = new List<ReservationTableItemResponse>();
-                foreach(var item in orderDb)
+                if(orderDb != null && orderDb.Count > 0)
                 {
-                   if(item == null)
+                    if (orderDb.FirstOrDefault()!.OrderTypeId != OrderType.Delivery)
                     {
-                        continue;
+                        orderDb = orderDb.OrderBy(o => o.MealTime).ToList();
                     }
-                    var reservation = await GetReservationDetailByOrder(item);
-                    if(reservation == null)
+                    else
                     {
-                        result.Messages.Add($"Xảy ra lỗi khi truy vấn đặt bàn ngày {item.MealTime}");
-                    } 
-                    data.Add(reservation);
+                        orderDb = orderDb.OrderBy(o => o.OrderDate).ToList();
+                    }
+
+                    foreach (var item in orderDb)
+                    {
+                        if (item == null)
+                        {
+                            continue;
+                        }
+                        var reservation = await GetReservationDetailByOrder(item);
+                        if (reservation == null)
+                        {
+                            result.Messages.Add($"Xảy ra lỗi khi truy vấn đặt bàn có id {item.OrderId}");
+                        }
+                        data.Add(reservation);
+                    }
                 }
-                result.Result = data;
+                result.Result = new PagedResult<ReservationTableItemResponse>
+                {
+                    Items = data,
+                    TotalPages = totalPage
+                };
             }
             catch(Exception ex)
             {
