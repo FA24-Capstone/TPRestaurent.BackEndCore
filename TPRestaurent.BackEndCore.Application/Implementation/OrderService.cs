@@ -2899,8 +2899,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var orderDiningDb = await _tableDetailRepository.GetAllDataByExpression(
                                                                                       o => (                                                                                                
-                                                                                            o.Order.MealTime.Value >= request.StartDate
-                                                                                            && o.Order.MealTime.Value <= request.EndDate)                                                                                               
+                                                                                            o.Order.MealTime.Value.Date >= request.StartDate.Date
+                                                                                            && o.Order.MealTime.Value.Date <= request.EndDate.Date)                                                                                               
                                                                                             && o.Order.OrderTypeId == request.Type
                                                                                             &&
                                                                                             (
@@ -2925,8 +2925,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     orderDb = orderDiningDb.Items.Select(o => o.Order).ToList();
                 } else
                 {
-                    var orderDeliveryDb = (await _repository.GetAllDataByExpression(o => o.OrderDate >= request.StartDate
-                                                                                            && o.OrderDate <= request.EndDate
+                    var orderDeliveryDb = (await _repository.GetAllDataByExpression(o => o.OrderDate.Date >= request.StartDate.Date
+                                                                                            && o.OrderDate.Date <= request.EndDate.Date
                                                                                             && o.OrderTypeId == request.Type
                                                                                             &&
                                                                                             (
