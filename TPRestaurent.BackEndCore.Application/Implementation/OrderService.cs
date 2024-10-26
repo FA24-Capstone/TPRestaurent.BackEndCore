@@ -154,7 +154,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
         }
 
-        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful)
+        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful, OrderStatus? status)
         {
             var result = new AppActionResult();
             try
@@ -185,26 +185,34 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     return result;
                                 }
                             }
-                            orderDb.StatusId = IsSuccessful ? OrderStatus.TemporarilyCompleted : OrderStatus.Cancelled;
+                            orderDb.StatusId = IsSuccessful ? OrderStatus.Processing : OrderStatus.Cancelled;
                         }
                         else if (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing)
                         {
-                            if (IsSuccessful)
+                            if (status.HasValue)
                             {
-                                //Trong DB có transaction có status là successful rồiva2 transaction đó status phải là Order
-                                var transactionRepository = Resolve<IGenericRepository<Domain.Models.Transaction>>();
-                                var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.SUCCESSFUL && t.TransactionTypeId == TransactionType.Order, null);
-                                if (reservationTransactionDb == null)
-                                {
-                                    result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch thành công cho đơn hàng với id {orderId}");
-                                    return result;
-                                }
-
-                                orderDb.StatusId = OrderStatus.Completed;
+                                if (status.Value == OrderStatus.TemporarilyCompleted) orderDb.StatusId = OrderStatus.TemporarilyCompleted;
+                                else if (status.Value == OrderStatus.Processing) orderDb.StatusId = OrderStatus.Processing;
                             }
                             else
                             {
-                                orderDb.StatusId = OrderStatus.Cancelled;
+                                if (IsSuccessful)
+                                {
+                                    //Trong DB có transaction có status là successful rồiva2 transaction đó status phải là Order
+                                    var transactionRepository = Resolve<IGenericRepository<Domain.Models.Transaction>>();
+                                    var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.SUCCESSFUL && t.TransactionTypeId == TransactionType.Order, null);
+                                    if (reservationTransactionDb == null)
+                                    {
+                                        result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch thành công cho đơn hàng với id {orderId}");
+                                        return result;
+                                    }
+
+                                    orderDb.StatusId = OrderStatus.Completed;
+                                }
+                                else
+                                {
+                                    orderDb.StatusId = OrderStatus.Cancelled;
+                                }
                             }
                         }
                         else
@@ -2559,7 +2567,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {orderId}");
                         }
                         orderDb.ShipperId = shipperId;
-                        await ChangeOrderStatus(orderDb.OrderId, true);
+                        await ChangeOrderStatus(orderDb.OrderId, true, null);
                         orderList.Add(orderDb);
                     }
                     if (!BuildAppActionResultIsError(result))
