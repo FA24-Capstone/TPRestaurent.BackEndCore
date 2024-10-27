@@ -188,7 +188,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     return result;
                                 }
                             }
-                            orderDb.StatusId = IsSuccessful ? OrderStatus.Processing : OrderStatus.Cancelled;
+                            if (status.HasValue && status.Value == OrderStatus.Processing) 
+                            { 
+                                orderDb.StatusId = OrderStatus.Processing;
+                            }
                         }
                         else if (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing)
                         {
@@ -1283,7 +1286,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 PagedResult<OrderWithFirstDetailResponse> orderList = new PagedResult<OrderWithFirstDetailResponse>();
                 if (status.HasValue && status > 0 && orderType.HasValue && orderType > 0)
                 {
-                    var orderListDb = await _repository.GetAllDataByExpression(o => o.StatusId == status && o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                    var orderListDb = await _repository.GetAllDataByExpression(o => o.StatusId == status && o.OrderTypeId == orderType && o.Account.PhoneNumber.Equals(phoneNumber), pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
                                                                      p => p.Status!,
                                                                      p => p.Account!,
                                                                      p => p.LoyalPointsHistory!,
@@ -1306,7 +1309,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else if (status.HasValue && status > 0)
                 {
-                    var orderListDb = await _repository.GetAllDataByExpression(o => o.StatusId == status, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                    var orderListDb = await _repository.GetAllDataByExpression(o => o.StatusId == status && o.Account.PhoneNumber.Equals(phoneNumber), pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
                                                                      p => p.Status!,
                                                                      p => p.Account!,
                                                                      p => p.LoyalPointsHistory!,
@@ -1330,7 +1333,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else if (orderType.HasValue && orderType > 0)
                 {
-                    var orderListDb = await _repository.GetAllDataByExpression(o => o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                    var orderListDb = await _repository.GetAllDataByExpression(o => o.OrderTypeId == orderType && o.Account.PhoneNumber.Equals(phoneNumber), pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
                                                                      p => p.Status!,
                                                                      p => p.Account!,
                                                                      p => p.LoyalPointsHistory!,
@@ -1910,9 +1913,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderListDb = await _repository.GetAllDataByExpression(p => p.MealTime!.Value.AddHours(-1) <= currentTime && p.StatusId == OrderStatus.DepositPaid, 0, 0, null, false, null);
                 if (orderListDb!.Items!.Count > 0 && orderListDb.Items != null)
                 {
+                    var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => orderListDb.Items.Select(or => or.OrderId).ToList().Contains(o.OrderId), 0, 0, null, false, null);
                     foreach (var order in orderListDb.Items)
                     {
-                        order.StatusId = OrderStatus.TemporarilyCompleted;
+                        var orderItems = orderDetailDb.Items.Where(o => o.OrderId == order.OrderId);
+                        if (orderItems.Count() > 0)
+                        {
+                            order.StatusId = OrderStatus.Processing;
+                        }
                         await _repository.Update(order);
                     }
                 }
@@ -1933,7 +1941,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-                var orderListDb = await _repository.GetAllDataByExpression(p => p.MealTime!.Value.AddMinutes(-30) <= currentTime && p.StatusId == OrderStatus.TemporarilyCompleted, 0, 0, null, false, null);
+                var orderListDb = await _repository.GetAllDataByExpression(p => p.MealTime!.Value.AddMinutes(-30) <= currentTime && (p.StatusId == OrderStatus.DepositPaid), 0, 0, null, false, null);
                 if (orderListDb!.Items!.Count > 0 && orderListDb.Items != null)
                 {
                     var orderIds = orderListDb.Items.Select(o => o.OrderId).ToList();
@@ -2990,7 +2998,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if (orderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.Reserved || o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
                 {
-                    return BuildAppActionResultError(result, $"Các chi tiết đơn hàng không thể cập nhật trạng thái v2i đều không ở trạn thái chờ hay đang xừ lí");
+                    return BuildAppActionResultError(result, $"Các chi tiết đơn hàng không thể cập nhật trạng thái vì đều không ở trạn thái chờ hay đang xừ lí");
                 }
 
                 orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = OrderDetailStatus.ReadyToServe);
