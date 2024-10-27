@@ -657,5 +657,91 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+        public async Task<AppActionResult> CreateRefund(Order order)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                if (order == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng");
+                }
+                if (!order.CancelledTime.HasValue || order.StatusId != OrderStatus.Cancelled)
+                {
+                    return BuildAppActionResultError(result, $"Đơn hàng chưa được huỷ");
+                }
+
+                var utility = Resolve<Utility>();
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var accountRepository = Resolve<IGenericRepository<Account>>();
+                var emailService = Resolve<IEmailService>();
+                var timeConfigurationDb = await configurationRepository.GetByExpression(t => t.Name.Equals(SD.DefaultValue.TIME_FOR_REFUND));
+                if(timeConfigurationDb == null)
+                {
+                    return BuildAppActionResultError(result, $"không tìm thấy cấu hình tên {SD.DefaultValue.TIME_FOR_REFUND}");
+                }
+
+
+                if((order.MealTime - order.CancelledTime).Value.Hours > double.Parse(timeConfigurationDb.CurrentValue))
+                {
+                    return result;
+                }
+
+                var refundedOrderDb = await _repository.GetAllDataByExpression(r => r.OrderId == order.OrderId && r.TransactionTypeId == TransactionType.Refund 
+                                                                                    && r.TransationStatusId == TransationStatus.SUCCESSFUL, 0, 0, null, false, null);
+
+                if(refundedOrderDb.Items.Count() > 0)
+                {
+                    return BuildAppActionResultError(result, $"Đơn hàng đã được hàng tiền");
+                }
+
+                var percentageConfigurationDb = await configurationRepository.GetByExpression(t => t.Name.Equals(SD.DefaultValue.REFUND_PERCENTAGE));
+                if (timeConfigurationDb == null)
+                {
+                    return BuildAppActionResultError(result, $"không tìm thấy cấu hình tên {SD.DefaultValue.TIME_FOR_REFUND}");
+                }
+
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+
+                var refundTransaction = new Transaction
+                {
+                    Id = Guid.NewGuid(),
+                    TransactionTypeId = TransactionType.Refund,
+                    Amount = (double)(order.Deposit * double.Parse(percentageConfigurationDb.CurrentValue.ToString())),
+                    AccountId = order.AccountId,    
+                    Date = currentTime,
+                    PaidDate = currentTime,
+                    OrderId = order.OrderId,
+                    TransationStatusId = TransationStatus.SUCCESSFUL
+                };
+
+                var accountDb = await accountRepository.GetById(order.AccountId);
+
+                accountDb.StoreCreditAmount += refundTransaction.Amount;
+
+                var configurationDb = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.EXPIRE_TIME_FOR_STORE_CREDIT), null);
+                if (configurationDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Xảy ra lỗi khi ghi lại thông tin nạp tiền. Vui lòng thử lại");
+                }
+                var expireTimeInDay = double.Parse(configurationDb.CurrentValue);
+
+                accountDb.ExpiredDate = utility.GetCurrentDateInTimeZone().AddDays(expireTimeInDay);
+
+                await _repository.Insert(refundTransaction);
+                await accountRepository.Update(accountDb);
+                await _unitOfWork.SaveChangesAsync();
+
+                emailService.SendEmail(accountDb.Email, "THÔNG BÁO HUỶ ĐẶT BÀN TẠI NHÀ HÀNG THIÊN PHÚ", TemplateMappingHelper.GetTemplateMailToCancelReservation(accountDb.FirstName, order));
+
+                result.Result = refundTransaction;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
     }
 }

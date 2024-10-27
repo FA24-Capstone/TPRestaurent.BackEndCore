@@ -156,10 +156,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful)
         {
-            var result = new AppActionResult();
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            {
+                var result = new AppActionResult();
             try
             {
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var transactionService = Resolve<ITransactionService>();
                 var orderDb = await _repository.GetById(orderId);
                 if (orderDb == null)
                 {
@@ -211,6 +214,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         else
                         {
                             result = BuildAppActionResultError(result, $"Đơn hàng không thể cập nhật những trạng thái khác");
+                        }
+
+                        if (orderDb.StatusId == OrderStatus.Cancelled)
+                        {
+                            var utility = Resolve<Utility>();
+                            orderDb.CancelledTime = utility.GetCurrentDateTimeInTimeZone();
                         }
                     }
                     else if (orderDb.OrderTypeId == OrderType.Delivery)
@@ -300,13 +309,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                     }
 
+
                     await _repository.Update(orderDb);
                     await _unitOfWork.SaveChangesAsync();
+                    
+                    if(orderDb.OrderTypeId == OrderType.Reservation && orderDb.StatusId == OrderStatus.Cancelled)
+                    {
+                            var refund = await transactionService.CreateRefund(orderDb);
+                            if (!refund.IsSuccess)
+                            {
+                                result = BuildAppActionResultError(result, $"Thực hiện hoàn tiền thất bại");
+                            }
+                        }
+
+                        scope.Complete();
                     if (orderDb.StatusId == OrderStatus.Processing || orderDb.StatusId == OrderStatus.ReadyForDelivery)
                     {
                         await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
                         await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
                     }
+
                 }
             }
             catch (Exception ex)
@@ -314,6 +336,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
+            }
         }
 
         private async Task ApplyLoyalTyPoint(Order order)
@@ -751,7 +774,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     OrderId = order.OrderId,
                                     PointChanged = -(int)loyaltyDiscount,
                                     NewBalance = accountDb.LoyaltyPoint,
-                                    isApplied = false
+                                    IsApplied = false
                                 };
 
                                 await loyalPointsHistoryRepository!.Insert(loyalPointUsageHistory);
@@ -770,7 +793,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             OrderId = order.OrderId,
                             PointChanged = (int)money / 100,
                             NewBalance = accountDb.LoyaltyPoint + (int)money / 100,
-                            isApplied = false
+                            IsApplied = false
                         };
 
                         await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
@@ -1072,7 +1095,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     OrderId = orderDb.OrderId,
                                     PointChanged = -(int)loyaltyDiscount,
                                     NewBalance = accountDb.LoyaltyPoint,
-                                    isApplied = false
+                                    IsApplied = false
                                 };
 
                                 await loyalPointsHistoryRepository!.Insert(loyalPointUsageHistory);
@@ -1091,7 +1114,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             OrderId = orderDb.OrderId,
                             PointChanged = (int)money / 100,
                             NewBalance = accountDb.LoyaltyPoint + (int)money / 100,
-                            isApplied = false
+                            IsApplied = false
                         };
 
                         await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
