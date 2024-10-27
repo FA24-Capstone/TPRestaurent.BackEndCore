@@ -676,14 +676,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var configurationRepository = Resolve<IGenericRepository<Configuration>>();
                 var accountRepository = Resolve<IGenericRepository<Account>>();
                 var emailService = Resolve<IEmailService>();
-                var timeConfigurationDb = await configurationRepository.GetByExpression(t => t.Name.Equals(SD.DefaultValue.TIME_FOR_REFUND));
-                if(timeConfigurationDb == null)
-                {
-                    return BuildAppActionResultError(result, $"không tìm thấy cấu hình tên {SD.DefaultValue.TIME_FOR_REFUND}");
-                }
 
+                var paidDepositOrder = await _repository.GetAllDataByExpression(r => r.OrderId == order.OrderId && r.TransactionTypeId == TransactionType.Deposit
+                                                                                    && r.TransationStatusId == TransationStatus.SUCCESSFUL, 0, 0, null, false, null);
 
-                if((order.MealTime - order.CancelledTime).Value.Hours > double.Parse(timeConfigurationDb.CurrentValue))
+                if (paidDepositOrder.Items.Count() == 0)
                 {
                     return result;
                 }
@@ -694,6 +691,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if(refundedOrderDb.Items.Count() > 0)
                 {
                     return BuildAppActionResultError(result, $"Đơn hàng đã được hàng tiền");
+                }
+
+                var timeConfigurationDb = await configurationRepository.GetByExpression(t => t.Name.Equals(SD.DefaultValue.TIME_FOR_REFUND));
+                if(timeConfigurationDb == null)
+                {
+                    return BuildAppActionResultError(result, $"không tìm thấy cấu hình tên {SD.DefaultValue.TIME_FOR_REFUND}");
+                }
+
+
+                if((order.MealTime - order.CancelledTime).Value.Hours > double.Parse(timeConfigurationDb.CurrentValue))
+                {
+                    return result;
                 }
 
                 var percentageConfigurationDb = await configurationRepository.GetByExpression(t => t.Name.Equals(SD.DefaultValue.REFUND_PERCENTAGE));
@@ -713,7 +722,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     Date = currentTime,
                     PaidDate = currentTime,
                     OrderId = order.OrderId,
-                    TransationStatusId = TransationStatus.SUCCESSFUL
+                    TransationStatusId = TransationStatus.SUCCESSFUL,
+                    PaymentMethodId = PaymentMethod.STORE_CREDIT
                 };
 
                 var accountDb = await accountRepository.GetById(order.AccountId);
