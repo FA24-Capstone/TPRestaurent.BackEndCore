@@ -227,7 +227,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
                                 orderDb.StatusId = OrderStatus.Processing;
                                 var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderId, 0, 0, null, false, null);
-                                if(orderDetailDb.Items.Count() > 0)
+                                if (orderDetailDb.Items.Count() > 0)
                                 {
                                     await ChangeOrderDetailStatusAfterPayment(orderDetailDb.Items.Where(o => o.OrderDetailStatusId == OrderDetailStatus.Reserved).ToList());
                                 }
@@ -748,7 +748,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
 
                         orderWithPayment.Order = order;
-                      
+
                         orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Reserved);
                         order.TotalAmount = money;
 
@@ -846,7 +846,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     await fireBaseService!.SendMulticastAsync(tokenList, "Nhà hàng có một thông báo mới", messageBody.ToString(), result);
                                 }
                             }
-                          
+
 
                             await _unitOfWork.SaveChangesAsync();
                         }
@@ -1221,7 +1221,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                      p => p.Account!,
                                                                      p => p.LoyalPointsHistory!,
                                                                      p => p.OrderType!,
-                                                                     p => p.Shipper, 
+                                                                     p => p.Shipper,
                                                                      p => p.CustomerInfoAddress
                      );
                     orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
@@ -1268,7 +1268,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                      p => p.Account!,
                                                                      p => p.LoyalPointsHistory!,
                                                                      p => p.OrderType!,
-                                                                     p => p.Shipper, 
+                                                                     p => p.Shipper,
                                                                      p => p.CustomerInfoAddress
                      );
                     orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
@@ -1293,7 +1293,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             p => p.Account!,
                             p => p.LoyalPointsHistory!,
                             p => p.OrderType!,
-                            p => p.Shipper, 
+                            p => p.Shipper,
                             p => p.CustomerInfoAddress
                         );
 
@@ -1343,7 +1343,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                        p => p.Account!,
                        p => p.LoyalPointsHistory!,
                        p => p.OrderType!,
-                       p => p.Shipper!, 
+                       p => p.Shipper!,
                        p => p.CustomerInfoAddress
                        );
                 }
@@ -1778,27 +1778,45 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
             try
             {
-                var currentTime = utility!.GetCurrentDateTimeInTimeZone().AddHours(24);
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var configWithReservationDish = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_RESERVATION_WITH_DISHES_LAST);
+                var configWithoutReservationDish = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_RESERVATION_LAST);
+
+                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
                 var pastReservationDb = await _repository.GetAllDataByExpression(
-                    (p => p.ReservationDate.HasValue && p.ReservationDate.Value.AddHours(24) < currentTime &&
+                    (p => p.ReservationDate.HasValue &&
                     (p.StatusId == OrderStatus.Pending || p.StatusId == OrderStatus.TableAssigned
                     )), 0, 0, null, false, null
                     );
+
                 if (pastReservationDb!.Items!.Count > 0 && pastReservationDb.Items != null)
                 {
                     foreach (var reservation in pastReservationDb.Items)
                     {
-                        reservation.StatusId = OrderStatus.Cancelled;
-                        await _repository.Update(reservation);
-                        var orderDetailsDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderId == reservation.OrderId, 0, 0, null, false, null);
-                        if (orderDetailsDb!.Items!.Count > 0 && orderDetailsDb.Items != null)
+                        var reservationDetailsDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderId == reservation.OrderId, 0, 0, null, false, null);
+                        if (reservationDetailsDb!.Items!.Count > 0 && reservationDetailsDb.Items != null)
                         {
-                            foreach (var orderDetail in orderDetailsDb.Items)
+                            var pastReservationTime = reservation!.ReservationDate!.Value.AddHours(double.Parse(configWithReservationDish!.CurrentValue));
+                            if (pastReservationTime < currentTime)
                             {
-                                orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
-                                await orderDetailRepository.Update(orderDetail);
+                                reservation.StatusId = OrderStatus.Cancelled;
+                                foreach (var orderDetail in reservationDetailsDb.Items)
+                                {
+                                    orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
+                                    await orderDetailRepository.Update(orderDetail);
+                                }
                             }
                         }
+                        else
+                        {
+                            var pastReservationTime = reservation!.ReservationDate!.Value.AddHours(double.Parse(configWithoutReservationDish!.CurrentValue));
+                            if (pastReservationTime < currentTime)
+                            {
+                                reservation.StatusId = OrderStatus.Cancelled;
+                            }
+                        }
+
+                        await _unitOfWork.SaveChangesAsync();
                     }
                 }
                 await _unitOfWork.SaveChangesAsync();
@@ -2062,7 +2080,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (isSuccessful)
                         {
                             orderDetail.OrderDetailStatusId = OrderDetailStatus.Processing;
-                        } else
+                        }
+                        else
                         {
                             orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
                         }
@@ -2114,8 +2133,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 await _unitOfWork.SaveChangesAsync();
 
-                await groupedDishCraftService.UpdateGroupedDish(orderDetailDb.Items.Where(o => o.OrderDetailStatusId == OrderDetailStatus.Unchecked 
-                                                                                            || o.OrderDetailStatusId == OrderDetailStatus.Processing 
+                await groupedDishCraftService.UpdateGroupedDish(orderDetailDb.Items.Where(o => o.OrderDetailStatusId == OrderDetailStatus.Unchecked
+                                                                                            || o.OrderDetailStatusId == OrderDetailStatus.Processing
                                                                                             || o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe)
                                                                                    .Select(o => o.OrderDetailId).ToList());
 
@@ -2701,6 +2720,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         [Hangfire.Queue("cancel-reservation")]
         public async Task CancelReservation()
         {
+            var emailService = Resolve<IEmailService>();
             var utility = Resolve<Utility>();
             var configurationRepository = Resolve<IGenericRepository<Configuration>>();
             var timeLastForReservationWithDishesConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_RESERVATION_WITH_DISHES_LAST).Result;
@@ -2740,6 +2760,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 await _repository.Update(orderReservation);
                             }
                         }
+
+                        var username = orderReservation.Account.FirstName + "" + orderReservation.Account.LastName;
+                        emailService.SendEmail(orderReservation.Account.Email, SD.SubjectMail.CANCEL_RESERVATION, TemplateMappingHelper.GetTemplateMailToCancelReservation(username, orderReservation));
                     }
                 }
 
@@ -2780,7 +2803,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var customerInfoRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
-                var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.CustomerInfoAddressId == order.AddressId );
+                var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.CustomerInfoAddressId == order.AddressId);
                 if (customerAddressDb == null)
                 {
                     return order;
@@ -2856,6 +2879,28 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 return false;
             }
             return true;
+        }
+
+        public async Task RemindOrderReservation()
+        {
+            try
+            {
+                var utility = Resolve<Utility>();
+                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+                var pastReservationDb = await _repository.GetAllDataByExpression(
+                   (p => p.ReservationDate.HasValue && p.ReservationDate.Value.AddMinutes(30) < currentTime &&
+                   (p.StatusId == OrderStatus.Pending || p.StatusId == OrderStatus.TableAssigned
+                   )), 0, 0, null, false, null
+                   );
+                if (pastReservationDb.Items!.Count > 0 && pastReservationDb.Items != null)
+                {
+
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+            Task.CompletedTask.Wait();
         }
     }
 }
