@@ -32,8 +32,8 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task CancelOverReservation();
         public Task UpdateOrderStatusBeforeMealTime();
         public Task UpdateOrderDetailStatusBeforeDining();
-        public Task<AppActionResult> GetUpdateCartComboDto(string cartComboJson);
-        public Task<AppActionResult> GetUpdateCartDishDto(string cartDishJson);
+        public Task<AppActionResult> GetUpdateCartComboDto(ComboChoice cartComboJson);
+        public Task<AppActionResult> GetUpdateCartDishDto(List<CartDishItem> cartDishJson);
         public Task<AppActionResult> UpdateOrderDetailStatus(List<UpdateOrderDetailItemRequest> orderDetailIds, bool isSuccessful);
         public Task<AppActionResult> GetCurrentTableSession();
         public Task<AppActionResult> GetAllOrderDetail(Guid orderId);

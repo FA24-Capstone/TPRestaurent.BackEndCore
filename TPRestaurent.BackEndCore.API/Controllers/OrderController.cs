@@ -83,14 +83,14 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.MakeDineInOrderBill(dto);
         }
 
-        [HttpGet("get-cart-combo-item")]
-        public async Task<AppActionResult> GetCartItem(string cartItem)
+        [HttpPost("get-cart-combo-item")]
+        public async Task<AppActionResult> GetCartItem([FromBody] ComboChoice cartItem)
         {
             return await _service.GetUpdateCartComboDto(cartItem);
         }
 
-        [HttpGet("get-cart-dish-item")]
-        public async Task<AppActionResult> GetUpdateCartDishDto(string cartItem)
+        [HttpPost("get-cart-dish-item")]
+        public async Task<AppActionResult> GetUpdateCartDishDto([FromBody] List<CartDishItem> cartItem)
         {
             return await _service.GetUpdateCartDishDto(cartItem);
         }
