@@ -324,6 +324,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var utility = Resolve<Utility>();
                     var accountRepository = Resolve<IGenericRepository<Account>>();
+                    var notificationService = Resolve<INotificationMessageService>();
                     var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
                     var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
                     var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
@@ -800,21 +801,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 orderWithPayment.PaymentLink = linkPaymentDb!.Result!.ToString();
                             }
 
-                            var chefRole = await roleRepository!.GetByExpression(p => p.Name == SD.RoleName.ROLE_CHEF);
-                            var userRole = await userRoleRepository!.GetAllDataByExpression(p => p.RoleId == chefRole.Id.ToString(), 0, 0, null, false, null);
-                            var tokenList = new List<string>();
-                            foreach (var user in userRole.Items)
-                            {
-                                var tokenDb = await tokenRepostiory!.GetAllDataByExpression(p => p.AccountId == user.UserId, 0, 0, null, false, p => p.Account);
-                                foreach (var token in tokenDb.Items)
-                                {
-                                    if (token.DeviceToken != null)
-                                    {
-                                        tokenList.Add(token.DeviceToken);
-                                    }
-                                }
-
-                            }
 
                             StringBuilder messageBody = new StringBuilder();
                             if (orderDetails != null && orderDetails.Count > 0)
@@ -840,26 +826,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 messageBody.Length -= 2;
 
-                                var notificationList = new List<NotificationMessage>();
-                                var currentTime = utility.GetCurrentDateTimeInTimeZone();
-                                foreach (var user in userRole.Items)
-                                {
-                                    var notification = new NotificationMessage
-                                    {
-                                        NotificationId = Guid.NewGuid(),
-                                        NotificationName = "Nhà hàng có thông báo mới",
-                                        Messages = messageBody.ToString(),
-                                        NotifyTime = currentTime,
-                                        AccountId = user.UserId,
-                                    };
-                                    notificationList.Add(notification);
-                                }
+                                await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_CHEF, messageBody.ToString());
 
-                                await notificationMessageRepository!.InsertRange(notificationList);
-                                if (tokenList.Count() > 0)
-                                {
-                                    await fireBaseService!.SendMulticastAsync(tokenList, "Nhà hàng có một thông báo mới", messageBody.ToString(), result);
-                                }
                             }
 
 
