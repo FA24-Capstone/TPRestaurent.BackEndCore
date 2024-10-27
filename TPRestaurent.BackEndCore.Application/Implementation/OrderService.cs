@@ -858,7 +858,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 tokenList.AddRange(token!.Items.Select(p => p.DeviceToken));
                             }
 
-                            }
+
 
                             StringBuilder messageBody = new StringBuilder();
                             if (orderDetails != null && orderDetails.Count > 0)
@@ -905,12 +905,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     await fireBaseService!.SendMulticastAsync(tokenList, "Nhà hàng có một thông báo mới", messageBody.ToString(), result);
                                 }
                             }
-
-
                             await _unitOfWork.SaveChangesAsync();
                         }
-                        scope.Complete();
                     }
+                        scope.Complete();
+                    
                     result.Result = orderWithPayment;
                 }
                 catch (Exception ex)
