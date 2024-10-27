@@ -112,7 +112,7 @@ public class SD
         public static string WELCOME = "CHÀO MỪNG BẠN ĐẾN VỚI NHÀ HÀNG THIÊN PHÚ";
         public static string REMIND_PAYMENT = "NHẮC NHỞ THANH TOÁN";
         public static string PASSCODE_FORGOT_PASSWORD = "MÃ XÁC THỰC QUÊN MẬT KHẨU";
-        public static string CANCEL_RESERVATION = "NHÀ HÀNG THIÊN PHÚ XIN THÔNG BÁO";
+        public static string NOTIFY_RESERVATION = "NHÀ HÀNG THIÊN PHÚ XIN THÔNG BÁO";
     }
 
     public class WeekForYear
