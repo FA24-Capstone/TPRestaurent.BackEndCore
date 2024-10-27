@@ -7,5 +7,5 @@ public interface INotificationMessageService
     Task<AppActionResult> GetNotificationMessageById(Guid notifiId);
     Task<AppActionResult> GetNotificationMessageByAccountId(string accountId);
     Task<AppActionResult> SendNotificationToAccountAsync(string accountId, string message);
-    Task<AppActionResult> SendNotificationToRoleAsync(string roleName, string message)
+    Task<AppActionResult> SendNotificationToRoleAsync(string roleName, string message);
 }
