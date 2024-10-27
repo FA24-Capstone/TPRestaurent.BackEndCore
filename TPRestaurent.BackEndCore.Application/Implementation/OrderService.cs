@@ -159,19 +159,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
                 var result = new AppActionResult();
-                try
+            try
+            {
+                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var transactionService = Resolve<ITransactionService>();
+                var orderDb = await _repository.GetById(orderId);
+                if (orderDb == null)
                 {
-                    var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-                    var transactionService = Resolve<ITransactionService>();
-                    var orderDb = await _repository.GetById(orderId);
-                    if (orderDb == null)
+                    result = BuildAppActionResultError(result, $"Đơn hàng với id {orderId} không tồn tại");
+                }
+                else
+                {
+                    if (orderDb.OrderTypeId == OrderType.Reservation)
                     {
-                        result = BuildAppActionResultError(result, $"Đơn hàng với id {orderId} không tồn tại");
-                    }
-                    else
-                    {
-                        if (orderDb.OrderTypeId == OrderType.Reservation)
-                        {
                             if (orderDb.StatusId == OrderStatus.TableAssigned)
                             {
                                 if (IsSuccessful)
