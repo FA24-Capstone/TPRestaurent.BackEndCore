@@ -8,6 +8,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Payment.PaymentRequest;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Domain.Enums;
+using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
@@ -21,5 +22,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GetTransactionHistory(Guid customerId, TransactionType? type);
         Task<AppActionResult> GetStoreCreditTransactionHistory(Guid customerId);
         Task<AppActionResult> GetLoyaltyPointHistory(Guid customerId);
+        Task<AppActionResult> CreateRefund(Order order);
     }
 }
