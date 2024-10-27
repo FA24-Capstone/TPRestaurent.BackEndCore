@@ -164,11 +164,6 @@ public class MappingConfig
             .ForMember(dest => dest.ValidatingImg, act => act.MapFrom(src => src.ValidatingImg))
             .ReverseMap();
 
-    //public DateTime? AssignedTime { get; set; }
-    //public DateTime? StartDeliveringTime { get; set; }
-    //public DateTime? DeliveredTime { get; set; }
-    //public DateTime? CancelledTime { get; set; }
-
     config.CreateMap<Order, ReservationTableItemResponse>()
             .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.OrderId))
             .ForMember(dest => dest.ReservationDate, opt => opt.MapFrom(src => src.ReservationDate))
