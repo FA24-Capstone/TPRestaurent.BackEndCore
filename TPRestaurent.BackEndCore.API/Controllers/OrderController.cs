@@ -96,7 +96,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPut("update-order-detail-status")]
-        public async Task<AppActionResult> UpdatePrelistOrderStatus(List<Guid> list, bool? isSuccessful = true)
+        public async Task<AppActionResult> UpdatePrelistOrderStatus(List<UpdateOrderDetailItemRequest> list, bool? isSuccessful = true)
         {
             return await _service.UpdateOrderDetailStatus(list, !isSuccessful.HasValue || isSuccessful.HasValue && isSuccessful.Value);
         }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241027054112_AddOrderConboOrderDetailStatus")]
+    partial class AddOrderConboOrderDetailStatus
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1534,9 +1536,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("IsApplied")
-                        .HasColumnType("bit");
-
                     b.Property<int>("NewBalance")
                         .HasColumnType("int");
 
@@ -1597,9 +1596,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("AssignedTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("CancelledTime")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("DeliveredTime")
