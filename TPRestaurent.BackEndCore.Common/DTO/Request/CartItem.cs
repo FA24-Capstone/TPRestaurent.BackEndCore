@@ -4,53 +4,97 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
+using TPRestaurent.BackEndCore.Domain.Models;
 using TPRestaurent.BackEndCore.Domain.Models.EnumModels;
 
 namespace TPRestaurent.BackEndCore.Common.DTO.Request
 {
     public class ComboChoice
     {
-        public List<CartItem> items { get; set; } = new List<CartItem>();
-        public double total { get; set; } // Assuming total represents the subtotal of the cart item
+        public List<Item> items { get; set; }
+        public double total { get; set; }
     }
 
-    public class CartItem
+    public class Item
     {
-        public string comboId { get; set; }
-        public string name { get; set; }
-        public double price { get; set; }
+        public CartCombo combo { get; set; }
+        public List<SelectedDish> selectedDishes { get; set; }
+        public string note { get; set; }
         public int quantity { get; set; }
-        public Dictionary<string, List<CartSelectedDish>> selectedDishes { get; set; } = new Dictionary<string, List<CartSelectedDish>>();
     }
 
-    public class CartSelectedDish
+    public class CartCombo
     {
-        public string dishComboId { get; set; }
-        public int quantity { get; set; }
-        public CartDishSizeDetail dishSizeDetail { get; set; }
-        public string comboOptionSetId { get; set; } // Consider using a reference to the ComboOptionSet class if applicable
+        public Guid ComboId { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string Image { get; set; }
+        public double Price { get; set; }
+        public double Discount { get; set; }
+        public int CategoryId { get; set; }
+        public Category? Category { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public bool IsAvailable { get; set; }
+        public bool IsDeleted { get; set; }
+        public int AverageRating { get; set; }
+        public int NumberOfRating { get; set; }
+        public int? QuantityLeft { get; set; }
+        public int DailyCountdown { get; set; }
+    }
+
+    public class Category
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string VietnameseName { get; set; }
+    }
+
+    public class SelectedDish
+    {
+        public Guid DishComboId { get; set; }
+        public int Quantity { get; set; }
+        public bool IsAvailable { get; set; }
+        public int? QuantityLeft { get; set; }
+        public int DailyCountdown { get; set; }
+        public Guid DishSizeDetailId { get; set; }
+        public CartDishSizeDetail? DishSizeDetail { get; set; }
+        public Guid ComboOptionSetId { get; set; }
+        public CartComboOptionSet? ComboOptionSet { get; set; } // Adjust type if ComboOptionSet has properties
     }
 
     public class CartDishSizeDetail
     {
-        public string dishSizeDetailId { get; set; }
-        public bool isAvailable { get; set; }
-        public double price { get; set; }
-        public double discount { get; set; }
-        public CartDish dish { get; set; }
-        public int dishSizeId { get; set; } // Consider using a reference to the DishSize class if applicable
-        public DishSize dishSize { get; set; } // Include only if you have separate data for dish sizes
+        public Guid DishSizeDetailId { get; set; }
+        public bool IsAvailable { get; set; }
+        public double Price { get; set; }
+        public double Discount { get; set; }
+        public Guid DishId { get; set; }
+        public CartDish Dish { get; set; }
+        public int DishSizeId { get; set; }
+        public CartDishSize DishSize { get; set; }
+        public int? QuantityLeft { get; set; }
+        public int DailyCountdown { get; set; }
     }
 
     public class CartDish
     {
-        public string dishId { get; set; }
-        public string name { get; set; }
-        public string description { get; set; }
-        public string image { get; set; }
-        public int dishItemTypeId { get; set; } // Consider using a reference to the DishItemType class if applicable
-        public string dishItemType { get; set; } // Include only if DishItemType has separate data
-        public bool isAvailable { get; set; }
+        public Guid DishId { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string Image { get; set; }
+        public int DishItemTypeId { get; set; }
+        public CartDishItemType? DishItemType { get; set; } // Adjust type if DishItemType has properties
+        public bool IsAvailable { get; set; }
+        public bool IsDeleted { get; set; }
+        public bool IsMainItem { get; set; }
+        public int? PreparationTime { get; set; }
     }
 
+    public class CartDishSize
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string VietnameseName { get; set; }
+    }
 }

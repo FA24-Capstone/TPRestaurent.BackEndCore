@@ -15,7 +15,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
     public class CartDishItem
     {
         public CartSizeDetail dish { get; set; }
-        public CartDishSize size { get; set; }
+        public CartComboDishSize size { get; set; }
         public int quantity { get; set; }
     }
 
@@ -28,6 +28,10 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public int dishItemTypeId { get; set; }
         public CartDishItemType dishItemType { get; set; }
         public bool isAvailable { get; set; }
+        public bool isDeleted { get; set; }
+        public bool isMainItem { get; set; }
+        public double averageRating { get; set; }
+        public double numberOfRating { get; set; }
     }
 
     public class CartDishItemType
@@ -37,13 +41,13 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public string vietnameseName { get; set; }
     }
 
-    public class CartDishSize
+    public class CartComboDishSize
     {
         public string dishSizeDetailId { get; set; }
         public bool isAvailable { get; set; }
         public double price { get; set; }
         public double discount { get; set; }
-        public CartSizeDetail dish { get; set; }
+        public CartSizeDetail? dish { get; set; }
         public int dishSizeId { get; set; }
         public DishSizeDetails dishSize { get; set; }
     }
