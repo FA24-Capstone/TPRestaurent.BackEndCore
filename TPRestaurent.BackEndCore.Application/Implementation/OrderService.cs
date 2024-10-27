@@ -371,6 +371,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var utility = Resolve<Utility>();
                     var accountRepository = Resolve<IGenericRepository<Account>>();
+                    var notificationService = Resolve<INotificationMessageService>();
                     var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
                     var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
                     var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
@@ -650,7 +651,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, "Không có thông tin bàn");
                         }
                     }
-                    else if(orderRequestDto.OrderType == OrderType.Delivery)
+                    else if (orderRequestDto.OrderType == OrderType.Delivery)
                     {
                         order.OrderTypeId = OrderType.Delivery;
                         order.StatusId = OrderStatus.Pending;
@@ -772,8 +773,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
                                     OrderId = order.OrderId,
                                     PointChanged = -(int)loyaltyDiscount,
-                                    NewBalance = accountDb.LoyaltyPoint,
-                                    IsApplied = false
+                                    NewBalance = accountDb.LoyaltyPoint
                                 };
 
                                 await loyalPointsHistoryRepository!.Insert(loyalPointUsageHistory);
@@ -791,12 +791,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
                             OrderId = order.OrderId,
                             PointChanged = (int)money / 100,
-                            NewBalance = accountDb.LoyaltyPoint + (int)money / 100,
-                            IsApplied = false
+                            NewBalance = accountDb.LoyaltyPoint + (int)money / 100
                         };
 
                         await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
 
+                        accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
 
                         orderWithPayment.Order = order;
 
@@ -807,11 +807,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
 
 
-                        //if (!BuildAppActionResultIsError(result))
-                        //{
-                        //    accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
-                        //    await accountRepository.Update(accountDb);
-                        //}
+                        if (!BuildAppActionResultIsError(result))
+                        {
+                            await accountRepository.Update(accountDb);
+                        }
                     }
                     else
                     {
@@ -849,16 +848,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 orderWithPayment.PaymentLink = linkPaymentDb!.Result!.ToString();
                             }
 
-                            var chefRole = await roleRepository!.GetByExpression(p => p.Name == SD.RoleName.ROLE_CHEF);
-                            var userRole = await userRoleRepository!.GetAllDataByExpression(p => p.RoleId == chefRole.Id.ToString(), 0, 0, null, false, null);
-                            var tokenList = new List<string>();
-                            foreach (var user in userRole.Items)
-                            {
-                                var token = await tokenRepostiory!.GetAllDataByExpression(p => p.AccountId == user.UserId && !string.IsNullOrEmpty(p.DeviceToken), 0, 0, null, false, p => p.Account);
-                                tokenList.AddRange(token!.Items.Select(p => p.DeviceToken));
-                            }
-
-
 
                             StringBuilder messageBody = new StringBuilder();
                             if (orderDetails != null && orderDetails.Count > 0)
@@ -884,32 +873,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 messageBody.Length -= 2;
 
-                                var notificationList = new List<NotificationMessage>();
-                                var currentTime = utility.GetCurrentDateTimeInTimeZone();
-                                foreach (var user in userRole.Items)
-                                {
-                                    var notification = new NotificationMessage
-                                    {
-                                        NotificationId = Guid.NewGuid(),
-                                        NotificationName = "Nhà hàng có thông báo mới",
-                                        Messages = messageBody.ToString(),
-                                        NotifyTime = currentTime,
-                                        AccountId = user.UserId,
-                                    };
-                                    notificationList.Add(notification);
-                                }
+                                await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_CHEF, messageBody.ToString());
 
-                                await notificationMessageRepository!.InsertRange(notificationList);
-                                if (tokenList.Count() > 0)
-                                {
-                                    await fireBaseService!.SendMulticastAsync(tokenList, "Nhà hàng có một thông báo mới", messageBody.ToString(), result);
-                                }
                             }
+
+
                             await _unitOfWork.SaveChangesAsync();
                         }
-                    }
                         scope.Complete();
-                    
+                    }
                     result.Result = orderWithPayment;
                 }
                 catch (Exception ex)
