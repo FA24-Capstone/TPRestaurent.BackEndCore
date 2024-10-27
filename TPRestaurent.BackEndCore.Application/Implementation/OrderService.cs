@@ -2903,12 +2903,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 List<Order> orderDb = null;
                 int totalPage = 0;
-                if(request.Type != OrderType.Delivery)
+                if (request.Type != OrderType.Delivery)
                 {
                     var orderDiningTableDb = await _tableDetailRepository.GetAllDataByExpression(
-                                                                                      o => (                                                                                                
+                                                                                      o => (
                                                                                             o.Order.MealTime.Value.Date >= request.StartDate.Date
-                                                                                            && o.Order.MealTime.Value.Date <= request.EndDate.Date)                                                                                               
+                                                                                            && o.Order.MealTime.Value.Date <= request.EndDate.Date)
                                                                                             && o.Order.OrderTypeId == request.Type
                                                                                             &&
                                                                                             (
@@ -2937,7 +2937,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         totalPage = orderDiningDb.TotalPages;
                     }
 
-                } else
+                }
+                else
                 {
                     var orderDeliveryDb = (await _repository.GetAllDataByExpression(o => o.OrderDate.Date >= request.StartDate.Date
                                                                                             && o.OrderDate.Date <= request.EndDate.Date
@@ -2952,16 +2953,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                             o => o.Status!,
                                                                                             o => o.OrderType!,
                                                                                             o => o.Account!));
-                    if(orderDeliveryDb.Items!.Count > 0)
+                    if (orderDeliveryDb.Items!.Count > 0)
                     {
                         orderDb = orderDeliveryDb.Items;
                         totalPage = orderDeliveryDb.TotalPages;
                     }
                 }
 
-                
+
                 List<ReservationTableItemResponse> data = new List<ReservationTableItemResponse>();
-                if(orderDb != null && orderDb.Count > 0)
+                if (orderDb != null && orderDb.Count > 0)
                 {
                     if (orderDb.FirstOrDefault()!.OrderTypeId != OrderType.Delivery)
                     {
@@ -2992,14 +2993,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     TotalPages = totalPage
                 };
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
 
-      
+
 
         private async Task<List<ReservationTableItemResponse>> GetReservationListDetailByOrder(List<Order> orders)
         {
