@@ -878,12 +878,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_CHEF, messageBody.ToString());
 
                             }
-
-
                             await _unitOfWork.SaveChangesAsync();
                         }
-                        scope.Complete();
                     }
+                        scope.Complete();
+                    
                     result.Result = orderWithPayment;
                 }
                 catch (Exception ex)
