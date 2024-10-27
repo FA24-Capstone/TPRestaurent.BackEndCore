@@ -292,13 +292,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             groupedDishItem.Dish.Total.Add(new QuantityBySize
                             {
                                 DishSize = sizeTotal.Key,
-                                UncheckedQuantity = sizeTotal.Value.Where(d => d.OrderDetail.OrderDetailStatusId == OrderDetailStatus.Unchecked).Sum(d => d.OrderDetail.Quantity * d.DishCombo.Quantity),
-                                ProcessingQuantity = sizeTotal.Value.Where(d => d.OrderDetail.OrderDetailStatusId == OrderDetailStatus.Processing).Sum(d => d.OrderDetail.Quantity * d.DishCombo.Quantity)
+                                UncheckedQuantity = sizeTotal.Value.Where(d => d.StatusId == DishComboDetailStatus.Unchecked).Sum(d => d.OrderDetail.Quantity * d.DishCombo.Quantity),
+                                ProcessingQuantity = sizeTotal.Value.Where(d => d.StatusId == DishComboDetailStatus.Processing).Sum(d => d.OrderDetail.Quantity * d.DishCombo.Quantity)
                             });
                         }
                         var dishData = await GetListDishFromTableOrder(dish.Value);
-                        groupedDishItem.UncheckedDishFromTableOrders = dishData.Where(d => d.OrderDetail.OrderDetailStatusId == OrderDetailStatus.Unchecked).ToList();
-                        groupedDishItem.ProcessingDishFromTableOrders = dishData.Where(d => d.OrderDetail.OrderDetailStatusId == OrderDetailStatus.Processing).ToList();
+                        groupedDishItem.UncheckedDishFromTableOrders = dishData.Where(d => d.ComboOrderDetail.StatusId == DishComboDetailStatus.Unchecked).ToList();
+                        groupedDishItem.ProcessingDishFromTableOrders = dishData.Where(d => d.ComboOrderDetail.StatusId == DishComboDetailStatus.Processing).ToList();
                         result.Add(groupedDishItem);
                     }
                 }
