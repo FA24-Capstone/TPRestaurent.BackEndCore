@@ -102,7 +102,8 @@ public class SD
         public static string TIME_TO_RESERVATION_WITH_DISHES_LAST = "TIME_TO_RESERVATION_WITH_DISHES_LAST";
         public static string TIME_TO_RESERVATION_LAST = "TIME_TO_RESERVATION_LAST";
         public static string TIME_FOR_GROUPED_DISH = "TIME_FOR_GROUPED_DISH";
-
+        public static string TIME_FOR_REFUND = "TIME_FOR_REFUND";
+        public static string REFUND_PERCENTAGE = "REFUND_PERCENTAGE";
     }
 
     public class SubjectMail
