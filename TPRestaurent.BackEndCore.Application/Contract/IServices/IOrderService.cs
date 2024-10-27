@@ -44,6 +44,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> UpdateOrderDetailStatusForce(List<Guid> orderDetailIds, OrderDetailStatus status);
         public Task<AppActionResult> GetOrderWithFilter(ReservationTableRequest request);
         public Task CancelReservation();
+        public Task RemindOrderReservation();
 
     }
 }

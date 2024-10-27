@@ -1,4 +1,7 @@
-﻿namespace TPRestaurent.BackEndCore.Common.Utils;
+﻿using System.Xml.Linq;
+using TPRestaurent.BackEndCore.Domain.Models;
+
+namespace TPRestaurent.BackEndCore.Common.Utils;
 
 public class TemplateMappingHelper
 {
@@ -665,6 +668,157 @@ public class TemplateMappingHelper
 ";
                 break;
         }
+        return content;
+    }
+
+    public static string GetTemplateMailToCancelReservation(string username, Order order)
+    {
+        var content = $@"
+<html>
+  <head>
+    <style>
+      * {{
+        margin: 0;
+        padding: 0;
+      }}
+
+      body {{
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4; /* Background color for the entire email */
+      }}
+
+      .container {{
+        max-width: 900px;
+        margin: 20px auto;
+        border-radius: 5px;
+        box-shadow: 0px 0px 5px 2px #ccc; /* Add a shadow to the content */
+      }}
+
+      .header {{
+        text-align: center;
+        background-color: #ffba00; /* Header background color */
+        padding: 20px;
+      }}
+      .header-title {{
+        text-align: left;
+        background-color: #2ad65e; /* Header background color */
+        padding: 20px;
+        color: white;
+      }}
+      .title {{
+        color: black; /* Text color for the title */
+        font-size: 30px;
+        font-weight: bold;
+      }}
+
+      .greeting {{
+        font-size: 18px;
+        margin: 10px 5px;
+      }}
+      .emailBody {{
+        margin: 5px 5px;
+      }}
+      .support {{
+        font-size: 15px;
+        font-style: italic;
+        margin: 5px 5px;
+      }}
+
+      .mainBody {{
+        background-color: #ffffff; /* Main content background color */
+        padding: 20px;
+      }}
+      .body-content {{
+        border: 1px #fff8ea;
+        border-radius: 5px;
+        margin: 10px 5px;
+        padding: 10px;
+        box-shadow: 0px 0px 5px 2px #ccc;
+      }}
+      .title-content {{
+        font-weight: bold;
+      }}
+
+      u i {{
+        color: blue;
+      }}
+
+      .footer {{
+        font-size: 14px;
+        text-align: center;
+        background-color: #ffba00; /* Footer background color */
+        padding: 10px;
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+      }}
+      .footer-Text {{
+        font-weight: 600;
+      }}
+      .signature {{
+        text-align: right;
+        font-size: 16px;
+        margin: 5px 5px;
+      }}
+    </style>
+  </head>
+  <body>
+    <div class=""container"">
+      <div
+        style=""
+          height: 100px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: white;
+        ""
+      >
+        <p
+          style=""
+            color: #515151;
+            text-align: center;
+            margin: auto 0;
+            font-size: 30px;
+          ""
+        >
+          Nhà hàng Thiên Phú
+        </p>
+      </div>
+      <div class=""mainBody"">
+        <h2 class=""emailBody"">Hello {username},</h2>
+        
+        <p class=""emailBody"">
+          We are sorry to inform you that your reservation has been canceled at <b><i>Nhà hàng Thiên Phú</i></b>.
+        </p>
+
+        <p class=""emailBody"">
+          Reservation ID: <b>{order.OrderTypeId}</b><br>
+          Reservation Time: <b>{order.ReservationDate}</b>
+        </p>
+
+        <p class=""emailBody"">
+          If this was a mistake or if you would like to make another reservation, please visit our website or contact us directly.
+        </p>
+
+        <p class=""emailBody"">
+          For any inquiries, please reach out to our support team at 
+          <u><i>qk.backend@gmail.com</i></u>.
+        </p>
+
+        <p class=""support"">
+          Thank you for your understanding, and we hope to serve you in the future.
+        </p>
+        <div class=""signature"">
+          <p>Best regards,</p>
+          <p>
+            <b><i>Nhà hàng Thiên Phú Team</i></b>
+          </p>
+        </div>
+      </div>
+      <div style=""height: 100px""></div>
+    </div>
+  </body>
+</html>";
         return content;
     }
 

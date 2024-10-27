@@ -161,8 +161,8 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             //{
             //    optionsBuilder.UseSqlServer(cs);
             //}
-            //optionsBuilder.UseSqlServer(
-            //"Server=tcp:tprestaurent.database.windows.net,1433;Initial Catalog=TPRestaurent;Persist Security Info=False;User ID=tprestaurentsa;Password=Tp06042003@;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+            optionsBuilder.UseSqlServer(
+            "Server=tcp:tprestaurent.database.windows.net,1433;Initial Catalog=TPRestaurent;Persist Security Info=False;User ID=tprestaurentsa;Password=Tp06042003@;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
         }
     }
 }
