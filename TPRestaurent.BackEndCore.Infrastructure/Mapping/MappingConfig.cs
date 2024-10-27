@@ -164,10 +164,15 @@ public class MappingConfig
             .ForMember(dest => dest.ValidatingImg, act => act.MapFrom(src => src.ValidatingImg))
             .ReverseMap();
 
-            config.CreateMap<Order, ReservationTableItemResponse>()
+    config.CreateMap<Order, ReservationTableItemResponse>()
             .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.OrderId))
             .ForMember(dest => dest.ReservationDate, opt => opt.MapFrom(src => src.ReservationDate))
+            .ForMember(dest => dest.OrderDate, opt => opt.MapFrom(src => src.OrderDate))
             .ForMember(dest => dest.MealTime, opt => opt.MapFrom(src => src.MealTime))
+            .ForMember(dest => dest.AssignedTime, opt => opt.MapFrom(src => src.AssignedTime))
+            .ForMember(dest => dest.StartDeliveringTime, opt => opt.MapFrom(src => src.StartDeliveringTime))
+            .ForMember(dest => dest.DeliveredTime, opt => opt.MapFrom(src => src.DeliveredTime))
+            .ForMember(dest => dest.CancelledTime, opt => opt.MapFrom(src => src.CancelledTime))
             .ForMember(dest => dest.EndTime, opt => opt.MapFrom(src => src.EndTime))
             .ForMember(dest => dest.TotalAmount, opt => opt.MapFrom(src => src.TotalAmount))
             .ForMember(dest => dest.StatusId, opt => opt.MapFrom(src => src.StatusId))

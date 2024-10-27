@@ -154,56 +154,65 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
         }
 
-        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful)
+        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful, OrderStatus? status)
         {
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
                 var result = new AppActionResult();
-                try
+            try
+            {
+                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var transactionService = Resolve<ITransactionService>();
+                var orderDb = await _repository.GetById(orderId);
+                if (orderDb == null)
                 {
-                    var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-                    var transactionService = Resolve<ITransactionService>();
-                    var orderDb = await _repository.GetById(orderId);
-                    if (orderDb == null)
+                    result = BuildAppActionResultError(result, $"Đơn hàng với id {orderId} không tồn tại");
+                }
+                else
+                {
+                    if (orderDb.OrderTypeId == OrderType.Reservation)
                     {
-                        result = BuildAppActionResultError(result, $"Đơn hàng với id {orderId} không tồn tại");
-                    }
-                    else
-                    {
-                        if (orderDb.OrderTypeId == OrderType.Reservation)
+                        if (orderDb.StatusId == OrderStatus.TableAssigned)
                         {
-                            if (orderDb.StatusId == OrderStatus.TableAssigned)
+                            orderDb.StatusId = IsSuccessful ? OrderStatus.DepositPaid : OrderStatus.Cancelled;
+                        }
+                        else if (orderDb.StatusId == OrderStatus.DepositPaid)
+                        {
+                            if (IsSuccessful)
                             {
-                                orderDb.StatusId = IsSuccessful ? OrderStatus.DepositPaid : OrderStatus.Cancelled;
-                            }
-                            else if (orderDb.StatusId == OrderStatus.DepositPaid)
-                            {
-                                if (IsSuccessful)
+                                var transactionRepository = Resolve<IGenericRepository<Domain.Models.Transaction>>();
+                                var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.SUCCESSFUL && t.TransactionTypeId == TransactionType.Deposit, null);
+                                if (reservationTransactionDb == null)
                                 {
-                                    var transactionRepository = Resolve<IGenericRepository<Domain.Models.Transaction>>();
-                                    var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.SUCCESSFUL && t.TransactionTypeId == TransactionType.Deposit, null);
-                                    if (reservationTransactionDb == null)
-                                    {
-                                        result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch thành công cho đơn hàng với id {orderId}");
-                                        return result;
-                                    }
+                                    result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch thành công cho đơn hàng với id {orderId}");
+                                    return result;
                                 }
-                                orderDb.StatusId = IsSuccessful ? OrderStatus.TemporarilyCompleted : OrderStatus.Cancelled;
                             }
-                            else if (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing)
+                            if (status.HasValue && status.Value == OrderStatus.Processing) 
+                            { 
+                                orderDb.StatusId = OrderStatus.Processing;
+                            }
+                        }
+                        else if (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing)
+                        {
+                            if (status.HasValue)
+                            {
+                                if (status.Value == OrderStatus.TemporarilyCompleted) orderDb.StatusId = OrderStatus.TemporarilyCompleted;
+                                else if (status.Value == OrderStatus.Processing) orderDb.StatusId = OrderStatus.Processing;
+                            }
+                            else
                             {
                                 if (IsSuccessful)
                                 {
                                     //Trong DB có transaction có status là successful rồiva2 transaction đó status phải là Order
                                     var transactionRepository = Resolve<IGenericRepository<Domain.Models.Transaction>>();
-                                    var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.SUCCESSFUL && t.TransactionTypeId == TransactionType.Order, t => t.Order.Account);
+                                    var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.SUCCESSFUL && t.TransactionTypeId == TransactionType.Order, null);
                                     if (reservationTransactionDb == null)
                                     {
                                         result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch thành công cho đơn hàng với id {orderId}");
                                         return result;
                                     }
 
-                                    await ApplyLoyalTyPoint(reservationTransactionDb.Order);
                                     orderDb.StatusId = OrderStatus.Completed;
                                 }
                                 else
@@ -211,10 +220,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     orderDb.StatusId = OrderStatus.Cancelled;
                                 }
                             }
-                            else
-                            {
-                                result = BuildAppActionResultError(result, $"Đơn hàng không thể cập nhật những trạng thái khác");
-                            }
+                        }
+                        else
+                        {
+                            result = BuildAppActionResultError(result, $"Đơn hàng không thể cập nhật những trạng thái khác");
+                        }
 
                             if (orderDb.StatusId == OrderStatus.Cancelled)
                             {
@@ -1249,7 +1259,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 PagedResult<OrderWithFirstDetailResponse> orderList = new PagedResult<OrderWithFirstDetailResponse>();
                 if (status.HasValue && status > 0 && orderType.HasValue && orderType > 0)
                 {
-                    var orderListDb = await _repository.GetAllDataByExpression(o => o.StatusId == status && o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                    var orderListDb = await _repository.GetAllDataByExpression(o => o.StatusId == status && o.OrderTypeId == orderType && o.Account.PhoneNumber.Equals(phoneNumber), pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
                                                                      p => p.Status!,
                                                                      p => p.Account!,
                                                                      p => p.LoyalPointsHistory!,
@@ -1272,7 +1282,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else if (status.HasValue && status > 0)
                 {
-                    var orderListDb = await _repository.GetAllDataByExpression(o => o.StatusId == status, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                    var orderListDb = await _repository.GetAllDataByExpression(o => o.StatusId == status && o.Account.PhoneNumber.Equals(phoneNumber), pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
                                                                      p => p.Status!,
                                                                      p => p.Account!,
                                                                      p => p.LoyalPointsHistory!,
@@ -1296,7 +1306,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else if (orderType.HasValue && orderType > 0)
                 {
-                    var orderListDb = await _repository.GetAllDataByExpression(o => o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                    var orderListDb = await _repository.GetAllDataByExpression(o => o.OrderTypeId == orderType && o.Account.PhoneNumber.Equals(phoneNumber), pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
                                                                      p => p.Status!,
                                                                      p => p.Account!,
                                                                      p => p.LoyalPointsHistory!,
@@ -1876,9 +1886,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderListDb = await _repository.GetAllDataByExpression(p => p.MealTime!.Value.AddHours(-1) <= currentTime && p.StatusId == OrderStatus.DepositPaid, 0, 0, null, false, null);
                 if (orderListDb!.Items!.Count > 0 && orderListDb.Items != null)
                 {
+                    var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => orderListDb.Items.Select(or => or.OrderId).ToList().Contains(o.OrderId), 0, 0, null, false, null);
                     foreach (var order in orderListDb.Items)
                     {
-                        order.StatusId = OrderStatus.TemporarilyCompleted;
+                        var orderItems = orderDetailDb.Items.Where(o => o.OrderId == order.OrderId);
+                        if (orderItems.Count() > 0)
+                        {
+                            order.StatusId = OrderStatus.Processing;
+                        }
                         await _repository.Update(order);
                     }
                 }
@@ -1899,7 +1914,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-                var orderListDb = await _repository.GetAllDataByExpression(p => p.MealTime!.Value.AddMinutes(-30) <= currentTime && p.StatusId == OrderStatus.TemporarilyCompleted, 0, 0, null, false, null);
+                var orderListDb = await _repository.GetAllDataByExpression(p => p.MealTime!.Value.AddMinutes(-30) <= currentTime && (p.StatusId == OrderStatus.DepositPaid), 0, 0, null, false, null);
                 if (orderListDb!.Items!.Count > 0 && orderListDb.Items != null)
                 {
                     var orderIds = orderListDb.Items.Select(o => o.OrderId).ToList();
@@ -2673,7 +2688,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {orderId}");
                         }
                         orderDb.ShipperId = shipperId;
-                        await ChangeOrderStatus(orderDb.OrderId, true);
+                        await ChangeOrderStatus(orderDb.OrderId, true, null);
                         orderList.Add(orderDb);
                     }
                     if (!BuildAppActionResultIsError(result))
@@ -2956,7 +2971,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if (orderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.Reserved || o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
                 {
-                    return BuildAppActionResultError(result, $"Các chi tiết đơn hàng không thể cập nhật trạng thái v2i đều không ở trạn thái chờ hay đang xừ lí");
+                    return BuildAppActionResultError(result, $"Các chi tiết đơn hàng không thể cập nhật trạng thái vì đều không ở trạn thái chờ hay đang xừ lí");
                 }
 
                 orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = OrderDetailStatus.ReadyToServe);

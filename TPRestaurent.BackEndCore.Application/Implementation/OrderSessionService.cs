@@ -490,9 +490,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         var orderService = Resolve<IOrderService>();
                         var orderDb = orderDetailDb.Items.FirstOrDefault().Order;
-                        if (orderDb.StatusId == OrderStatus.Processing)
+                        var allOrderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderDb.OrderId, 0, 0, null, false, null);
+                        if (orderDb.StatusId == OrderStatus.Processing && allOrderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe))
                         {
-                            await orderService.ChangeOrderStatus(orderDb.OrderId, true);
+                            await orderService.ChangeOrderStatus(orderDb.OrderId, true, OrderStatus.TemporarilyCompleted);
                             if (sendSignalR)
                             {
                                 await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
