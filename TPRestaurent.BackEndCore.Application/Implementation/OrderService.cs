@@ -2999,6 +2999,109 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> GetOrderWithFilter(ReservationTableRequest request)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                List<Order> orderDb = null;
+                int totalPage = 0;
+                if(request.Type != OrderType.Delivery)
+                {
+                    var orderDiningTableDb = await _tableDetailRepository.GetAllDataByExpression(
+                                                                                      o => (                                                                                                
+                                                                                            o.Order.MealTime.Value.Date >= request.StartDate.Date
+                                                                                            && o.Order.MealTime.Value.Date <= request.EndDate.Date)                                                                                               
+                                                                                            && o.Order.OrderTypeId == request.Type
+                                                                                            &&
+                                                                                            (
+                                                                                                !request.Status.HasValue
+                                                                                                || (request.Status.HasValue && o.Order.StatusId == request.Status.Value)
+                                                                                            )
+                                                                                            &&
+                                                                                            (
+                                                                                                !request.TableId.HasValue
+                                                                                                || (request.TableId.HasValue && o.TableId == request.TableId.Value)
+                                                                                            ),
+                                                                                            0, 0, null, false, null);
+
+                    if (orderDiningTableDb.Items.Count == 0)
+                    {
+                        return result;
+                    }
+
+                    var orderIds = orderDiningTableDb.Items.DistinctBy(o => o.OrderId).Select(o => o.OrderId).ToList();
+                    var orderDiningDb = await _repository.GetAllDataByExpression(o => orderIds.Contains(o.OrderId), request.pageNumber, request.pageSize, null, false, o => o.Status,
+                                                                                                                                        o => o.OrderType,
+                                                                                                                                        o => o.Account);
+                    if (orderDiningDb.Items!.Count > 0)
+                    {
+                        orderDb = orderDiningDb.Items;
+                        totalPage = orderDiningDb.TotalPages;
+                    }
+
+                } else
+                {
+                    var orderDeliveryDb = (await _repository.GetAllDataByExpression(o => o.OrderDate.Date >= request.StartDate.Date
+                                                                                            && o.OrderDate.Date <= request.EndDate.Date
+                                                                                            && o.OrderTypeId == request.Type
+                                                                                            &&
+                                                                                            (
+                                                                                                !request.Status.HasValue
+                                                                                                || (request.Status.HasValue && o.StatusId == request.Status.Value)
+                                                                                            )
+                                                                                            ,
+                                                                                            request.pageNumber, request.pageSize, null, false,
+                                                                                            o => o.Status!,
+                                                                                            o => o.OrderType!,
+                                                                                            o => o.Account!));
+                    if(orderDeliveryDb.Items!.Count > 0)
+                    {
+                        orderDb = orderDeliveryDb.Items;
+                        totalPage = orderDeliveryDb.TotalPages;
+                    }
+                }
+
+                
+                List<ReservationTableItemResponse> data = new List<ReservationTableItemResponse>();
+                if(orderDb != null && orderDb.Count > 0)
+                {
+                    if (orderDb.FirstOrDefault()!.OrderTypeId != OrderType.Delivery)
+                    {
+                        orderDb = orderDb.OrderBy(o => o.MealTime).ToList();
+                    }
+                    else
+                    {
+                        orderDb = orderDb.OrderBy(o => o.OrderDate).ToList();
+                    }
+
+                    foreach (var item in orderDb)
+                    {
+                        if (item == null)
+                        {
+                            continue;
+                        }
+                        var reservation = await GetReservationDetailByOrder(item);
+                        if (reservation == null)
+                        {
+                            result.Messages.Add($"Xảy ra lỗi khi truy vấn đặt bàn có id {item.OrderId}");
+                        }
+                        data.Add(reservation);
+                    }
+                }
+                result.Result = new PagedResult<ReservationTableItemResponse>
+                {
+                    Items = data,
+                    TotalPages = totalPage
+                };
+            }
+            catch(Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
         private async Task<List<ReservationTableItemResponse>> GetReservationListDetailByOrder(List<Order> orders)
         {
             List<ReservationTableItemResponse> result = new List<ReservationTableItemResponse>();
