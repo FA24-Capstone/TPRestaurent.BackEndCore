@@ -57,7 +57,8 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.EnumModels.OrderDetailStatus> OrderDetailStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.TransactionType> TransactionTypes { get; set; } = null!;
         public DbSet<Models.EnumModels.OrderSessionStatus> OrderSessionStatuses { get; set; } = null!;
-        
+        public DbSet<Models.EnumModels.DishComboDetailStatus> DishComboDetailStatuses { get; set; } = null!;
+
 
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -115,6 +116,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             SeedEnumTable<Models.EnumModels.OrderType, Enums.OrderType>(builder, enums);
             SeedEnumTable<Models.EnumModels.TransactionType, Enums.TransactionType>(builder, enums);
             SeedEnumTable<Models.EnumModels.OrderSessionStatus, Enums.OrderSessionStatus>(builder, enums);
+            SeedEnumTable<Models.EnumModels.DishComboDetailStatus, Enums.DishComboDetailStatus>(builder, enums);
         }
 
         private static void SeedEnumTable<TEntity, TEnum>(ModelBuilder modelBuilder, IConfiguration enums)
@@ -161,8 +163,8 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             //{
             //    optionsBuilder.UseSqlServer(cs);
             //}
-            //optionsBuilder.UseSqlServer(
-            //"Server=tcp:tprestaurent.database.windows.net,1433;Initial Catalog=TPRestaurent;Persist Security Info=False;User ID=tprestaurentsa;Password=Tp06042003@;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+            optionsBuilder.UseSqlServer(
+            "Server=tcp:tprestaurent.database.windows.net,1433;Initial Catalog=TPRestaurent;Persist Security Info=False;User ID=tprestaurentsa;Password=Tp06042003@;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
         }
     }
 }

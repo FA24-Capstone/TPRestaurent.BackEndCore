@@ -1,4 +1,7 @@
-﻿namespace TPRestaurent.BackEndCore.Common.Utils;
+﻿using System.Xml.Linq;
+using TPRestaurent.BackEndCore.Domain.Models;
+
+namespace TPRestaurent.BackEndCore.Common.Utils;
 
 public class TemplateMappingHelper
 {
@@ -668,101 +671,95 @@ public class TemplateMappingHelper
         return content;
     }
 
-    public static string GetTemplateNotification(string name)
+    public static string GetTemplateMailToCancelReservation(string username, Order order)
     {
-        var body = @"
+        var content = $@"
 <html>
   <head>
     <style>
-      * {
+      * {{
         margin: 0;
         padding: 0;
-      }
+      }}
 
-      body {
+      body {{
         font-family: Arial, sans-serif;
-        background-color: #f4f4f4; /* Background color for the entire email */
-      }
+        background-color: #f4f4f4; /* Màu nền cho toàn bộ email */
+      }}
 
-      .container {
+      .container {{
         max-width: 900px;
-        margin: 20 auto;
-        /* padding: 20px; */
+        margin: 20px auto;
         border-radius: 5px;
-        box-shadow: 0px 0px 5px 2px #ccc; /*Add a shadow to the content */
-      }
+        box-shadow: 0px 0px 5px 2px #ccc; /* Thêm bóng cho nội dung */
+      }}
 
-      .header {
-        Text-align: center;
-        background-color: #ffba00; /* Header background color */
+      .header {{
+        text-align: center;
+        background-color: #ffba00; /* Màu nền cho tiêu đề */
         padding: 20px;
-      }
-      .header-title {
-        Text-align: left;
-        background-color: #2ad65e; /* Header background color */
+      }}
+      .header-title {{
+        text-align: left;
+        background-color: #2ad65e; /* Màu nền cho tiêu đề */
         padding: 20px;
         color: white;
-      }
-      .title {
-        color: black; /* Text color for the title */
+      }}
+      .title {{
+        color: black; /* Màu chữ cho tiêu đề */
         font-size: 30px;
         font-weight: bold;
-      }
+      }}
 
-      .greeting {
+      .greeting {{
         font-size: 18px;
-        margin: 10 5;
-      }
-      .emailBody {
-        margin: 5 5;
-      }
-      .support {
+        margin: 10px 5px;
+      }}
+      .emailBody {{
+        margin: 5px 5px;
+      }}
+      .support {{
         font-size: 15px;
         font-style: italic;
-        margin: 5 5;
-      }
+        margin: 5px 5px;
+      }}
 
-      .mainBody {
-        background-color: #ffffff; /* Main content background color */
+      .mainBody {{
+        background-color: #ffffff; /* Màu nền cho nội dung chính */
         padding: 20px;
-        /* border-radius: 5px; */
-        /* box-shadow: 0px 0px 5px 2px #ccc; Add a shadow to the content */
-      }
-      .body-content {
-        /* display: flex;
-        flex-direction: column; */
+      }}
+      .body-content {{
         border: 1px #fff8ea;
         border-radius: 5px;
-        margin: 10 5;
+        margin: 10px 5px;
         padding: 10px;
-        /* background-color: #fff8ea; */
         box-shadow: 0px 0px 5px 2px #ccc;
-      }
-      .title-content {
+      }}
+      .title-content {{
         font-weight: bold;
-      }
+      }}
 
-      u i {
+      u i {{
         color: blue;
-      }
+      }}
 
-      .footer {
+      .footer {{
         font-size: 14px;
-        Text-align: center;
-        background-color: #ffba00; /* Header background color */
+        text-align: center;
+        background-color: #ffba00; /* Màu nền cho chân trang */
         padding: 10px;
         display: flex;
         justify-content: center;
         flex-direction: column;
-      }
-      .footer-Text {
+      }}
+      .footer-Text {{
         font-weight: 600;
-      }
-      .signature {
-        Text-align: right;
+      }}
+      .signature {{
+        text-align: right;
         font-size: 16px;
-        margin: 5 5;
-      }
+        margin: 5px 5px;
+      }}
     </style>
   </head>
   <body>
@@ -779,7 +776,7 @@ public class TemplateMappingHelper
         <p
           style=""
             color: #515151;
-            Text-align: center;
+            text-align: center;
             margin: auto 0;
             font-size: 30px;
           ""
@@ -788,42 +785,142 @@ public class TemplateMappingHelper
         </p>
       </div>
       <div class=""mainBody"">
-        <!-- <div class=""header-title"">
-        </div> -->
-        <h2 class=""emailBody"">Hello " + name + @" ,</h2>
-        <p class=""greeting""></p>
+        <h2 class=""emailBody"">Xin chào {username},</h2>
+        
+        <p class=""emailBody"">
+          Chúng tôi rất tiếc phải thông báo rằng đặt chỗ của bạn đã bị hủy tại <b><i>Nhà hàng Thiên Phú</i></b>.
+        </p>
 
         <p class=""emailBody"">
-         Your quote request has been completed at <b><i>Nhà hàng Thiên Phú </i></b>.
+          Mã đặt chỗ: <b>{order.OrderId}</b><br>
+          Thời gian đặt chỗ: <b>{order.ReservationDate}</b>
         </p>
+
         <p class=""emailBody"">
-         Please enter the system to view the quote and moderate this quote
+          Nếu đây là một sai sót hoặc nếu bạn muốn thực hiện một đặt chỗ khác, vui lòng truy cập website của chúng tôi hoặc liên hệ trực tiếp với chúng tôi.
         </p>
-            <a href=""https://lovehouse.vercel.app/""
-            ><span style=""font-weight: bold; Text-transform: uppercase""
-              >here</span
-            ></a
-          >
+
+        <p class=""emailBody"">
+          Để biết thêm thông tin, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi qua 
+          <u><i>qk.backend@gmail.com</i></u>.
+        </p>
+
         <p class=""support"">
-          Thank you for your interest in the services of <b><i>Nhà hàng Thiên Phú</i></b
-          >, for any inquiries, please contact
-          <u><i>qk.backend@gmail.com</i></u> for support
+          Cảm ơn bạn đã thông cảm, và chúng tôi hy vọng được phục vụ bạn trong tương lai.
         </p>
         <div class=""signature"">
-          <p>Best regards,</p>
+          <p>Trân trọng,</p>
           <p>
-            <b><i>Nhà hàng Thiên Phú Team</i></b>
+            <b><i>Đội ngũ Nhà hàng Thiên Phú</i></b>
           </p>
         </div>
       </div>
-      <div style=""height: 100px"">
-
-      </div>
+      <div style=""height: 100px""></div>
     </div>
   </body>
-</html>
-
-";
-        return body;
+</html>";
+        return content;
     }
+
+    public static string GetTemplateNotification(string username, Order order)
+    {
+        var content = $@"
+<html>
+  <head>
+    <style>
+      * {{
+        margin: 0;
+        padding: 0;
+      }}
+
+      body {{
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4; /* Màu nền cho toàn bộ email */
+      }}
+
+      .container {{
+        max-width: 900px;
+        margin: 20px auto;
+        border-radius: 5px;
+        box-shadow: 0px 0px 5px 2px #ccc; /* Thêm bóng cho nội dung */
+      }}
+
+      .header {{
+        text-align: center;
+        background-color: #ffba00; /* Màu nền cho tiêu đề */
+        padding: 20px;
+      }}
+
+      .mainBody {{
+        background-color: #ffffff; /* Màu nền cho nội dung chính */
+        padding: 20px;
+      }}
+
+      .emailBody {{
+        margin: 5px 5px;
+      }}
+
+      .support {{
+        font-size: 15px;
+        font-style: italic;
+        margin: 5px 5px;
+      }}
+
+      .footer {{
+        font-size: 14px;
+        text-align: center;
+        background-color: #ffba00; /* Màu nền cho chân trang */
+        padding: 10px;
+      }}
+
+      .signature {{
+        text-align: right;
+        font-size: 16px;
+        margin: 5px 5px;
+      }}
+    </style>
+  </head>
+  <body>
+    <div class=""container"">
+      <div class=""header"">
+        <h1 style=""color: #515151;"">Nhà hàng Thiên Phú</h1>
+      </div>
+      <div class=""mainBody"">
+        <h2 class=""emailBody"">Xin chào {username},</h2>
+        
+        <p class=""emailBody"">
+          Đây là lời nhắc nhở để thông báo rằng thời gian đặt chỗ của bạn tại <b><i>Nhà hàng Thiên Phú</i></b> đang đến gần!
+        </p>
+
+        <p class=""emailBody"">
+          Mã đặt chỗ: <b>{order.OrderId}</b><br>
+          Thời gian đặt chỗ: <b>{order.ReservationDate}</b>
+        </p>
+
+        <p class=""emailBody"">
+          Chúng tôi rất mong được chào đón bạn và hy vọng bạn sẽ có một trải nghiệm tuyệt vời.
+        </p>
+
+        <p class=""emailBody"">
+          Nếu bạn cần thay đổi hoặc hủy bỏ đặt chỗ, vui lòng liên hệ với chúng tôi qua email <u><i>qk.backend@gmail.com</i></u>.
+        </p>
+
+        <p class=""support"">
+          Cảm ơn bạn đã chọn <b><i>Nhà hàng Thiên Phú</i></b>!
+        </p>
+        <div class=""signature"">
+          <p>Trân trọng,</p>
+          <p>
+            <b><i>Đội ngũ Nhà hàng Thiên Phú</i></b>
+          </p>
+        </div>
+      </div>
+      <div style=""height: 100px""></div>
+    </div>
+  </body>
+</html>";
+        return content;
+    }
+
+
 }

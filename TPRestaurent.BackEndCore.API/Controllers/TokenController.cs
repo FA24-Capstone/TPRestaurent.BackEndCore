@@ -34,7 +34,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("enable-notification")]
-        public async Task<AppActionResult> EnableNotification(string deviceToken)
+        public async Task<AppActionResult> EnableNotification(string? deviceToken)
         {
             return await _tokenService.EnableNotification(deviceToken, HttpContext);
         }

@@ -76,6 +76,20 @@ builder.Services.AddHangfireServer(options =>
     options.WorkerCount = 5;
 });
 
+builder.Services.AddHangfireServer(options =>
+{
+    options.ServerName = $"{Environment.MachineName}:order";
+    options.Queues = new[] { "cancel-over-reservation" };
+    options.WorkerCount = 5;
+});
+
+builder.Services.AddHangfireServer(options =>
+{
+    options.ServerName = $"{Environment.MachineName}:order";
+    options.Queues = new[] { "remind-order-reservation" };
+    options.WorkerCount = 5;
+});
+
 var app = builder.Build();
 
 app.UseSwagger(op => op.SerializeAsV2 = false);

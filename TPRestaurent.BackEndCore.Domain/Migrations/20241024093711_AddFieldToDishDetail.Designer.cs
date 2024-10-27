@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241024093711_AddFieldToDishDetail")]
+    partial class AddFieldToDishDetail
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -769,12 +771,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                             Id = 3,
                             Name = "ReadyToServe",
                             VietnameseName = "Đã hoàn thành"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Name = "Cancelled",
-                            VietnameseName = "Đã Huỷ"
                         });
                 });
 
@@ -1534,9 +1530,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("IsApplied")
-                        .HasColumnType("bit");
-
                     b.Property<int>("NewBalance")
                         .HasColumnType("int");
 
@@ -1597,9 +1590,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("AssignedTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("CancelledTime")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("DeliveredTime")
@@ -1936,6 +1926,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("DeviceToken")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("ExpiryTimeAccessToken")

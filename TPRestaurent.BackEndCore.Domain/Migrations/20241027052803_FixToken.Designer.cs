@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241027052803_FixToken")]
+    partial class FixToken
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -423,16 +425,11 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid?>("OrderDetailId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("StatusId")
-                        .HasColumnType("int");
-
                     b.HasKey("ComboOrderDetailId");
 
                     b.HasIndex("DishComboId");
 
                     b.HasIndex("OrderDetailId");
-
-                    b.HasIndex("StatusId");
 
                     b.ToTable("DishComboComboDetails");
                 });
@@ -729,55 +726,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         });
                 });
 
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.DishComboDetailStatus", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("VietnameseName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("DishComboDetailStatuses");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 0,
-                            Name = "Reserved",
-                            VietnameseName = "Đặt trước"
-                        },
-                        new
-                        {
-                            Id = 1,
-                            Name = "Unchecked",
-                            VietnameseName = "Chờ xử lý"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = "Processing",
-                            VietnameseName = "Đang Xử Lý"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "ReadyToServe",
-                            VietnameseName = "Đã hoàn thành"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Name = "Cancelled",
-                            VietnameseName = "Đã Huỷ"
-                        });
-                });
-
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.DishItemType", b =>
                 {
                     b.Property<int>("Id")
@@ -1066,8 +1014,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         new
                         {
                             Id = 3,
-                            Name = "TemporarilyCompleted",
-                            VietnameseName = "Đã lên hết món"
+                            Name = "TemporarilyCompleted"
                         },
                         new
                         {
@@ -1534,9 +1481,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("IsApplied")
-                        .HasColumnType("bit");
-
                     b.Property<int>("NewBalance")
                         .HasColumnType("int");
 
@@ -1597,9 +1541,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("AssignedTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("CancelledTime")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("DeliveredTime")
@@ -2116,15 +2057,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .WithMany()
                         .HasForeignKey("OrderDetailId");
 
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.DishComboDetailStatus", "DishComboDetailStatus")
-                        .WithMany()
-                        .HasForeignKey("StatusId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("DishCombo");
-
-                    b.Navigation("DishComboDetailStatus");
 
                     b.Navigation("OrderDetail");
                 });
