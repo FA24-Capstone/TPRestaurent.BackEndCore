@@ -753,5 +753,45 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+        public async Task<AppActionResult> CreateDepositRefund(DepositRefundRequest request)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var utility = Resolve<Utility>();
+                var accountRepository = Resolve<IGenericRepository<Account>>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                var refundTransaction = new Transaction
+                {
+                    OrderId = request.OrderId,
+                    Amount = request.RefundAmount,
+                    Date = currentTime,
+                    PaidDate = currentTime,
+                    TransactionTypeId = TransactionType.Refund,
+                    TransationStatusId = TransationStatus.SUCCESSFUL
+                };
+
+                if (request.PaymentMethod == PaymentMethod.Cash)
+                {
+                    refundTransaction.PaymentMethodId = PaymentMethod.Cash;                   
+                }
+                else
+                {
+                    refundTransaction.PaymentMethodId = PaymentMethod.STORE_CREDIT;
+                    request.Account.StoreCreditAmount += request.RefundAmount;
+                    await accountRepository.Update(request.Account);
+                }
+
+                await _repository.Insert(refundTransaction);
+                await _unitOfWork.SaveChangesAsync();
+                result.Result = refundTransaction;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
     }
 }
