@@ -1976,6 +1976,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
 
                     cartItem.combo.Price = comboDb.Price;
+                    cartItem.combo.IsAvailable = comboDb.IsAvailable;
                     foreach (var dishDetail in cartItem.selectedDishes)
                     {
                         dishComboDb = await dishComboRepository.GetById(dishDetail.DishComboId);
@@ -2003,6 +2004,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         dishDetail.DishSizeDetail.Price = dishSizeDetailDb.Price;
                         dishDetail.DishSizeDetail.Discount = dishSizeDetailDb.Discount;
+                        dishDetail.DishSizeDetail.IsAvailable = dishSizeDetailDb.IsAvailable;
 
                         dishDb = await dishRepository.GetByExpression(d => d.DishId == dishDetail.DishSizeDetail.DishId,null);
                         if (dishDb == null)
@@ -2012,7 +2014,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             break;
                         }
 
-                        if (!dishDb.isAvailable)
+                        if (dishDb.IsDeleted)
                         {
                             cartItemstoRemove.Add(cartItem);
                             isRemoved = true;
@@ -2022,6 +2024,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         dishDetail.DishSizeDetail.Dish.Name = dishDb.Name;
                         dishDetail.DishSizeDetail.Dish.Description = dishDb.Description;
                         dishDetail.DishSizeDetail.Dish.Image = dishDb.Image;
+                        dishDetail.DishSizeDetail.Dish.IsAvailable = dishDb.isAvailable;
                     }
                     if (!isRemoved)
                     {
@@ -2097,15 +2100,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     );
                     if (ratingDb.Items.Count > 0)
                     {
-                        dish.dish.averageRating = ratingDb.Items.Average(r => int.Parse(r.PointId.ToString()));
-                        dish.dish.numberOfRating = ratingDb.Items.Count();
-                    }
-
-                    dishSizeDetailDb = await dishSizeDetailRepository.GetById(Guid.Parse(dish.size.dishSizeDetailId));
-                    if (dishSizeDetailDb == null)
-                    {
                         dishToRemove.Add(dish);
                         continue;
+                        continue;
+                    }
+                    //if (!dishSizeDetailDb.IsAvailable)
+                    //{
+                    //    dishToRemove.Add(dish);
+                    //    continue;
+                    //}
                     }
 
                     //if (!dishSizeDetailDb.IsAvailable)
@@ -2119,10 +2122,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     dish.size.isAvailable = dishSizeDetailDb.IsAvailable;
 
                     //string unProcessedJson = JsonConvert.SerializeObject(cart);
-                    //string formattedJson = unProcessedJson.Replace("\\\"", "\"");
-                    result.Result = cart;
+                }
+
+                if(dishToRemove.Count() > 0)
+                {
+                    dishToRemove.ForEach(d => cart.Remove(d));
                 }
                 result.Result = cart;
+            }
             }
             catch (Exception ex)
             {
