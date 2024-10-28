@@ -147,6 +147,8 @@ public class MappingConfig
             .ForMember(dest => dest.MealTime, act => act.MapFrom(src => src.MealTime))
             .ForMember(dest => dest.EndTime, act => act.MapFrom(src => src.EndTime))
             .ForMember(dest => dest.TotalAmount, act => act.MapFrom(src => src.TotalAmount))
+            .ForMember(dest => dest.CashReceived, act => act.MapFrom(src => src.CashReceived))
+            .ForMember(dest => dest.ChangeReturned, act => act.MapFrom(src => src.ChangeReturned))
             .ForMember(dest => dest.StatusId, act => act.MapFrom(src => src.StatusId))
             .ForMember(dest => dest.Status, act => act.MapFrom(src => src.Status))
             .ForMember(dest => dest.AccountId, act => act.MapFrom(src => src.AccountId))
