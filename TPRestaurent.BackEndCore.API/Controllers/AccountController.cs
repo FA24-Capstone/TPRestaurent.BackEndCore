@@ -184,5 +184,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _accountService.VerifyChangeEmail(email, accountId, otpCode);
         }
+
+        [HttpPost("up-role")]
+        public async Task<AppActionResult> UpLevel(string accountId, string roleName)
+        {
+            return await _accountService.UpRole(accountId, roleName);   
+        }
     }
 }

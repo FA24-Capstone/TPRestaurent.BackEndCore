@@ -135,7 +135,7 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
                 var userRoleDb = await userRoleRepository!.GetAllDataByExpression(p => p.RoleId == roleDb!.Id, 0, 0, null, false, null);
                 if (userRoleDb == null)
                 {
-                    return BuildAppActionResultError(result, $"Không tìm thấy danh sách user với od {roleDb.Id}");
+                    return BuildAppActionResultError(result, $"Không tìm thấy danh sách user với role {roleDb.Id}");
                 }
                 foreach (var user in userRoleDb!.Items!)
                 {

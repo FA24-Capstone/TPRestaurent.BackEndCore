@@ -42,6 +42,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     {
         private readonly IGenericRepository<Account> _accountRepository;
         private readonly IGenericRepository<IdentityUserRole<string>> _userRoleRepository;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IMapper _mapper;
         private readonly SignInManager<Account> _signInManager;
         private readonly TokenDto _tokenDto;
@@ -1909,6 +1910,42 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 await _accountRepository.Update(accountDb);
                 await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> UpRole(string accountId, string roleName)
+        {
+            var result = new AppActionResult();
+            var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
+            try
+            {
+                if (roleName.Equals("CHEF") || roleName.Equals("SHIPPER"))
+                {
+                    var accountDb = await _userManager.FindByIdAsync(accountId);    
+
+                    var roleDb = await roleRepository!.GetByExpression(p => p.Name == roleName);
+                    if (roleDb == null)
+                    {
+                        return BuildAppActionResultError(result, $"Không tìm thấy vai trò {roleName}");
+                    }
+
+                    var userRoleDb = await _userRoleRepository!.GetAllDataByExpression(p => p.UserId == accountDb.Id, 0, 0, null, false, null);
+                    var userRole = userRoleDb.Items!.FirstOrDefault();
+                    if (userRole == null)
+                    {
+                        return BuildAppActionResultError(result, $"Không tìm thấy tài khoản với id {userRole.UserId} vai trò");
+                    }
+
+                    var currentRoles = await _userManager.GetRolesAsync(accountDb);
+
+                    await _userManager.RemoveFromRolesAsync(accountDb, currentRoles);
+                    await _userManager.AddToRoleAsync(accountDb, roleName);
+                }
             }
             catch (Exception ex)
             {
