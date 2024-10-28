@@ -4,18 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Domain.Enums;
+using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Common.DTO.Request
 {
-    public class OrderPaymentRequestDto
+    public class DepositRefundRequest
     {
         public Guid OrderId { get; set; }
-        public double? CashReceived { get; set; }
-        public double? ChangeReturned { get; set; }
+        public Account? Account { get; set; }
+        public double RefundAmount { get; set; }
         public PaymentMethod PaymentMethod { get; set; }
-        public List<Guid>? CouponIds { get; set; } = new List<Guid> { };
-        public int? LoyalPointsToUse { get; set; }
-        public bool? ChooseCashRefund {  get; set; } = false;
-
     }
 }

@@ -20,6 +20,8 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public DateTime? MealTime { get; set; }
         public DateTime? EndTime { get; set; }
         public double TotalAmount { get; set; }
+        public double? CashReceived { get; set; }
+        public double? ChangeReturned { get; set; }
         public OrderStatus StatusId { get; set; }
         [ForeignKey(nameof(StatusId))]
         public Domain.Models.EnumModels.OrderStatus? Status { get; set; }
