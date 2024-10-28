@@ -2058,20 +2058,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 DishCombo dishComboDb = null;
                 DishSizeDetail dishSizeDetailDb = null;
                 Dish dishDb = null;
+                List<CartDishItem> dishToRemove = new List<CartDishItem>();
                 foreach (var dish in cart)
                 {
                     dishDb = await dishRepository.GetById(Guid.Parse(dish.dish.dishId));
                     if (dishDb == null)
                     {
-                        cart.Remove(dish);
-                        if (cart.Count == 0) break;
+                        dishToRemove.Add(dish);
                         continue;
                     }
 
                     if (dishDb.IsDeleted)
                     {
-                        cart.Remove(dish);
-                        if (cart.Count == 0) break;
+                        dishToRemove.Add(dish);
                         continue;
                     }
 
@@ -2095,15 +2094,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     dishSizeDetailDb = await dishSizeDetailRepository.GetById(Guid.Parse(dish.size.dishSizeDetailId));
                     if (dishSizeDetailDb == null)
                     {
-                        cart.Remove(dish);
-                        if (cart.Count == 0) break;
+                        dishToRemove.Add(dish);
                         continue;
                     }
 
                     if (!dishSizeDetailDb.IsAvailable)
                     {
-                        cart.Remove(dish);
-                        if (cart.Count == 0) break;
+                        dishToRemove.Add(dish);
                         continue;
                     }
 
@@ -2112,8 +2109,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     //string unProcessedJson = JsonConvert.SerializeObject(cart);
                     //string formattedJson = unProcessedJson.Replace("\\\"", "\"");
-                    result.Result = cart;
                 }
+
+                if(dishToRemove.Count() > 0)
+                {
+                    dishToRemove.ForEach(d => cart.Remove(d));
+                }
+                result.Result = cart;
             }
             catch (Exception ex)
             {
