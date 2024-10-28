@@ -148,6 +148,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _service.GetOrderWithFilter(request);
         }
+
+        [HttpPost("get-number-of-order-by-status")]
+        public async Task<AppActionResult> GetNumberOfOrderByStatus([FromBody]OrderFilterRequest request)
+        {
+            return  await _service.GetNumberOfOrderByStatus(request);       
+        }
         //[HttpPost("calculate-order-total")]
         //public async Task<AppActionResult> GetOrderTotal([FromBody]CalculateOrderRequest dto)
         //{

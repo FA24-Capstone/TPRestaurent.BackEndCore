@@ -45,6 +45,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> UpdateDeliveringStatus(string accountId, bool isDelivering);
         Task<AppActionResult> ChangeEmailRequest(string accountId, string newEmail);
         Task<AppActionResult> VerifyChangeEmail(string email, string accountId, string otpCode);
+        Task<AppActionResult> UpRole(string accountId, string roleName);
         Task DeleteOverdueOTP();
     }
 }

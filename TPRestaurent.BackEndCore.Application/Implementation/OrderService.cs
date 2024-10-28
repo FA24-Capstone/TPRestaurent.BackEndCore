@@ -159,19 +159,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
                 var result = new AppActionResult();
-            try
-            {
-                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-                var transactionService = Resolve<ITransactionService>();
-                var orderDb = await _repository.GetById(orderId);
-                if (orderDb == null)
+                try
                 {
-                    result = BuildAppActionResultError(result, $"Đơn hàng với id {orderId} không tồn tại");
-                }
-                else
-                {
-                    if (orderDb.OrderTypeId == OrderType.Reservation)
+                    var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                    var transactionService = Resolve<ITransactionService>();
+                    var orderDb = await _repository.GetById(orderId);
+                    if (orderDb == null)
                     {
+                        result = BuildAppActionResultError(result, $"Đơn hàng với id {orderId} không tồn tại");
+                    }
+                    else
+                    {
+                        if (orderDb.OrderTypeId == OrderType.Reservation)
+                        {
                             if (orderDb.StatusId == OrderStatus.TableAssigned)
                             {
                                 if (IsSuccessful)
@@ -2043,7 +2043,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         if (!dishSizeDetailDb.IsAvailable)
                         {
-                            cartItemstoRemove.Add(cartItem); 
+                            cartItemstoRemove.Add(cartItem);
                             isRemoved = true;
                             break;
                         }
@@ -2052,7 +2052,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         dishDetail.DishSizeDetail.Discount = dishSizeDetailDb.Discount;
                         dishDetail.DishSizeDetail.IsAvailable = dishSizeDetailDb.IsAvailable;
 
-                        dishDb = await dishRepository.GetByExpression(d => d.DishId == dishDetail.DishSizeDetail.DishId,null);
+                        dishDb = await dishRepository.GetByExpression(d => d.DishId == dishDetail.DishSizeDetail.DishId, null);
                         if (dishDb == null)
                         {
                             cartItemstoRemove.Add(cartItem);
@@ -2081,7 +2081,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     if (!isRemoved)
                     {
-                        total += cartItem.combo.Price * (1-cartItem.combo.Discount) * cartItem.quantity;
+                        total += cartItem.combo.Price * (1 - cartItem.combo.Discount) * cartItem.quantity;
                     }
                 }
 
@@ -2141,7 +2141,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         o => o.OrderDetailId.HasValue && o.OrderDetail.DishSizeDetailId.HasValue && dishDb.DishId == o.OrderDetail.DishSizeDetail.DishId,
                         0, 0, null, false, null
                     );
-                    if(ratingDb.Items.Count > 0)
+                    if (ratingDb.Items.Count > 0)
                     {
                         dish.dish.averageRating = ratingDb.Items.Average(r => int.Parse(r.PointId.ToString()));
                         dish.dish.numberOfRating = ratingDb.Items.Count();
@@ -3255,6 +3255,73 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
             }
             Task.CompletedTask.Wait();
+        }
+
+        public async Task<AppActionResult> GetNumberOfOrderByStatus(OrderFilterRequest request)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                int numberOfOrder = 0;
+                int totalPage = 0;
+                if (request.Type != OrderType.Delivery)
+                {
+                    var orderDiningTableDb = await _tableDetailRepository.GetAllDataByExpression(
+                                                                                      o => (
+                                                                                            o.Order.MealTime.Value.Date >= request.StartDate.Date
+                                                                                            && o.Order.MealTime.Value.Date <= request.EndDate.Date)
+                                                                                            && o.Order.OrderTypeId == request.Type
+                                                                                            &&
+                                                                                            (
+                                                                                                !request.Status.HasValue
+                                                                                                || (request.Status.HasValue && o.Order.StatusId == request.Status.Value)
+                                                                                            )
+                                                                                            ,
+                                                                                            0, 0, null, false, null);
+
+                    if (orderDiningTableDb.Items.Count == 0)
+                    {
+                        return result;
+                    }
+
+                    var orderIds = orderDiningTableDb.Items.DistinctBy(o => o.OrderId).Select(o => o.OrderId).ToList();
+                    var orderDiningDb = await _repository.GetAllDataByExpression(o => orderIds.Contains(o.OrderId), request.pageNumber, request.pageSize, null, false, o => o.Status,
+                                                                                                                                        o => o.OrderType,
+                                                                                                                                        o => o.Account);
+                    if (orderDiningDb.Items!.Count > 0)
+                    {
+                        numberOfOrder = orderDiningDb.Items!.Count;
+                    }
+
+                }
+                else
+                {
+                    var orderDeliveryDb = (await _repository.GetAllDataByExpression(o => o.OrderDate.Date >= request.StartDate.Date
+                                                                                            && o.OrderDate.Date <= request.EndDate.Date
+                                                                                            && o.OrderTypeId == request.Type
+                                                                                            &&
+                                                                                            (
+                                                                                                !request.Status.HasValue
+                                                                                                || (request.Status.HasValue && o.StatusId == request.Status.Value)
+                                                                                            )
+                                                                                            ,
+                                                                                            request.pageNumber, request.pageSize, null, false,
+                                                                                            o => o.Status!,
+                                                                                            o => o.OrderType!,
+                                                                                            o => o.Account!));
+                    if (orderDeliveryDb.Items!.Count > 0)
+                    {
+                        numberOfOrder = orderDeliveryDb.Items.Count();
+                    }
+                }
+
+                result.Result = numberOfOrder;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         }
     }
 }
