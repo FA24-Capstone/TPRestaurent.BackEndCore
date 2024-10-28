@@ -2092,22 +2092,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         dish.dish.numberOfRating = ratingDb.Items.Count();
                     }
 
-                    var ratingDb = await ratingRepository.GetAllDataByExpression(
-                        o => o.OrderDetailId.HasValue && o.OrderDetail.DishSizeDetailId.HasValue && dishDb.DishId == o.OrderDetail.DishSizeDetail.DishId,
-                        0, 0, null, false, null
-                    );
-                    if (ratingDb.Items.Count > 0)
+                    dishSizeDetailDb = await dishSizeDetailRepository.GetById(Guid.Parse(dish.size.dishSizeDetailId));
+                    if (dishSizeDetailDb == null)
                     {
                         cart.Remove(dish);
                         if (cart.Count == 0) break;
                         continue;
-                        continue;
-                    }
-                    //if (!dishSizeDetailDb.IsAvailable)
-                    //{
-                    //    dishToRemove.Add(dish);
-                    //    continue;
-                    //}
                     }
 
                     if (!dishSizeDetailDb.IsAvailable)
