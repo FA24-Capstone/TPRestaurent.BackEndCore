@@ -1044,7 +1044,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     orderDetailDb.Items.ForEach(o => money += o.Price * o.Quantity);
 
                     money -= ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0) ? Math.Ceiling(orderDb.Deposit.Value) : 0);
-                                      
+
                     if (money < 0)
                     {
                         if (!orderRequestDto.ChooseCashRefund.Value && string.IsNullOrEmpty(orderDb.AccountId))
@@ -1056,7 +1056,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             OrderId = orderDb.OrderId,
                             Account = orderDb.Account,
                             RefundAmount = -Math.Ceiling(-money),
-                            PaymentMethod = orderRequestDto.ChooseCashRefund.Value?PaymentMethod.Cash : PaymentMethod.STORE_CREDIT
+                            PaymentMethod = orderRequestDto.ChooseCashRefund.Value ? PaymentMethod.Cash : PaymentMethod.STORE_CREDIT
                         };
                         var refundResult = await transactionService.CreateDepositRefund(depositRefundRequest);
                         if (refundResult.IsSuccess)
@@ -1064,7 +1064,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             refundTransaction = refundResult.Result as Transaction;
                         }
 
-                    } else
+                    }
+                    else
                     {
                         if (!string.IsNullOrEmpty(orderDb.AccountId))
                         {
@@ -1178,10 +1179,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 orderDb.ChangeReturned = 0;
                             }
                         }
-                            await _repository.Update(orderDb);
-                            await _unitOfWork.SaveChangesAsync();
+                        await _repository.Update(orderDb);
+                        await _unitOfWork.SaveChangesAsync();
 
-                        if (refundTransaction == null) { 
+                        if (refundTransaction == null)
+                        {
                             var paymentRequest = new PaymentRequestDto
                             {
                                 OrderId = orderDb.OrderId,
@@ -1193,7 +1195,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 return BuildAppActionResultError(result, "Tạo thanh toán thất bại");
                             }
                             orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
-                        } 
+                        }
 
                         result.Result = orderWithPayment;
                         scope.Complete();
@@ -1867,14 +1869,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var configurationRepository = Resolve<IGenericRepository<Configuration>>();
-                var configWithReservationDish = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_RESERVATION_WITH_DISHES_LAST);
-                var configWithoutReservationDish = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_RESERVATION_LAST);
 
                 var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+                var cancelTime = currentTime.AddMinutes(30);
                 var pastReservationDb = await _repository.GetAllDataByExpression(
-                    (p => p.ReservationDate.HasValue &&
+                    (p => p.ReservationDate.HasValue && p.ReservationDate <= cancelTime &&
                     (p.StatusId == OrderStatus.Pending || p.StatusId == OrderStatus.TableAssigned || p.StatusId == OrderStatus.TemporarilyCompleted
-                    )), 0, 0, null, false, p => p.Account!
+                    )), 0, 0, null, false, p => p.Account!, p => p.Status!
                     );
 
                 if (pastReservationDb!.Items!.Count > 0 && pastReservationDb.Items != null)
@@ -1884,34 +1885,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var reservationDetailsDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderId == reservation.OrderId, 0, 0, null, false, null);
                         if (reservationDetailsDb!.Items!.Count > 0 && reservationDetailsDb.Items != null)
                         {
-                            var pastReservationTime = reservation!.ReservationDate!.Value.AddHours(double.Parse(configWithReservationDish!.CurrentValue));
-                            if (pastReservationTime < currentTime)
+                            foreach (var orderDetail in reservationDetailsDb.Items)
                             {
-                                reservation.StatusId = OrderStatus.Cancelled;
-                                reservation.CancelledTime = currentTime;
-                                foreach (var orderDetail in reservationDetailsDb.Items)
-                                {
-                                    orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
-                                    await orderDetailRepository.Update(orderDetail);
-                                }
+                                orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
                             }
+
+                            await orderDetailRepository.UpdateRange(reservationDetailsDb.Items);
                         }
-                        else
-                        {
-                            var pastReservationTime = reservation!.ReservationDate!.Value.AddHours(double.Parse(configWithoutReservationDish!.CurrentValue));
-                            if (pastReservationTime < currentTime)
-                            {
-                                reservation.StatusId = OrderStatus.Cancelled;
-                                reservation.CancelledTime = currentTime;
-                            }
-                        }
+
+                        reservation.StatusId = OrderStatus.Cancelled;
 
                         var username = reservation.Account.FirstName + " " + reservation.Account.LastName;
                         emailService.SendEmail(reservation.Account.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateMailToCancelReservation(username, reservation));
 
+                        await _repository.Update(reservation);
                     }
+                    await _unitOfWork.SaveChangesAsync();
                 }
-                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -2168,7 +2158,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     //string formattedJson = unProcessedJson.Replace("\\\"", "\"");
                 }
 
-                if(dishToRemove.Count() > 0)
+                if (dishToRemove.Count() > 0)
                 {
                     dishToRemove.ForEach(d => cart.Remove(d));
                 }
@@ -3237,7 +3227,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var currentTime = utility!.GetCurrentDateTimeInTimeZone();
                 var reservationDb = await _repository.GetAllDataByExpression(
-                    (p => p.ReservationDate.HasValue && p.ReservationDate.Value.AddMinutes(30) < currentTime &&
+                    (p => p.ReservationDate.HasValue && p.ReservationDate.Value.AddMinutes(30) == currentTime &&
                     (p.StatusId == OrderStatus.Pending || p.StatusId == OrderStatus.TableAssigned || p.StatusId == OrderStatus.TemporarilyCompleted
                     )), 0, 0, null, false, p => p.Account
                     );
