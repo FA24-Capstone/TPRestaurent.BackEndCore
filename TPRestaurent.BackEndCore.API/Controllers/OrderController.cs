@@ -154,6 +154,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return  await _service.GetNumberOfOrderByStatus(request);       
         }
+
+        //[HttpPut("over")]
+        //public async Task CancelOverReservation()
+        //{
+        //    await _service.CancelOverReservation();
+        //}
         //[HttpPost("calculate-order-total")]
         //public async Task<AppActionResult> GetOrderTotal([FromBody]CalculateOrderRequest dto)
         //{

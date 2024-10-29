@@ -1869,14 +1869,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var configurationRepository = Resolve<IGenericRepository<Configuration>>();
 
                 var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-                var cancelTime = currentTime.AddMinutes(30);
                 var pastReservationDb = await _repository.GetAllDataByExpression(
-                    (p => p.ReservationDate.HasValue && p.ReservationDate <= cancelTime &&
-                    (p.StatusId == OrderStatus.Pending || p.StatusId == OrderStatus.TableAssigned || p.StatusId == OrderStatus.TemporarilyCompleted
-                    )), 0, 0, null, false, p => p.Account!, p => p.Status!
+                    (p => p.MealTime.HasValue && p.MealTime.Value.AddMinutes(30) <= currentTime &&
+                    p.StatusId == OrderStatus.DepositPaid), 0, 0, null, false, p => p.Account!, p => p.Status!
                     );
 
-                if (pastReservationDb!.Items!.Count > 0 && pastReservationDb.Items != null)
+                if (pastReservationDb!.Items!.Count > 0)
                 {
                     foreach (var reservation in pastReservationDb.Items)
                     {
@@ -1891,11 +1889,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await orderDetailRepository.UpdateRange(reservationDetailsDb.Items);
                         }
 
+                        reservation.CancelledTime = currentTime;
                         reservation.StatusId = OrderStatus.Cancelled;
-
+                        //await ChangeOrderStatus(reservation.OrderId, false, null);
                         var username = reservation.Account.FirstName + " " + reservation.Account.LastName;
-                        emailService.SendEmail(reservation.Account.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateMailToCancelReservation(username, reservation));
-
+                        //emailService.SendEmail(reservation.Account.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateMailToCancelReservation(username, reservation));
                     }
                     await _repository.UpdateRange(pastReservationDb.Items);
                 }
