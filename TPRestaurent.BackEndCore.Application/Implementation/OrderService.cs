@@ -134,7 +134,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         orderDb.TotalAmount += orderDetail.Price * orderDetail.Quantity;
                         orderDetails.Add(orderDetail);
                     }
-
+                    orderDb.TotalAmount = Math.Ceiling(orderDb.TotalAmount);
                     await _repository.Update(orderDb);
                     await orderSessionRepository.Insert(orderSession);
                     await orderDetailRepository.InsertRange(orderDetails);
@@ -531,7 +531,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     if (orderDetails.Count > 0)
                     {
-                        order.TotalAmount = money;
+                        order.TotalAmount = Math.Ceiling(money);
                         await orderDetailRepository.InsertRange(orderDetails);
                         if (comboOrderDetails.Count > 0)
                         {
@@ -568,7 +568,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.MealTime = orderRequestDto.ReservationOrder.MealTime;
                         order.EndTime = orderRequestDto.ReservationOrder.EndTime;
                         order.IsPrivate = orderRequestDto.ReservationOrder.IsPrivate;
-                        order.Deposit = orderRequestDto.ReservationOrder.Deposit;
+                        order.Deposit = Math.Ceiling((double)orderRequestDto.ReservationOrder.Deposit);
 
                         var suggestTableDto = new SuggestTableDto
                         {
@@ -621,7 +621,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.StatusId = OrderStatus.Processing;
                         order.MealTime = utility.GetCurrentDateTimeInTimeZone();
                         order.NumOfPeople = 0;
-                        order.TotalAmount = money;
+                        order.TotalAmount = Math.Ceiling(money);
                         if (orderDetails.Count > 0)
                         {
                             orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
@@ -670,7 +670,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         order.OrderTypeId = OrderType.Delivery;
                         order.StatusId = OrderStatus.Pending;
-                        order.TotalAmount = money;
+                        order.TotalAmount = Math.Ceiling(money);
                         order.OrderDate = utility.GetCurrentDateTimeInTimeZone();
                         if (accountDb == null)
                         {
@@ -816,7 +816,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         orderWithPayment.Order = order;
 
                         orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Reserved);
-                        order.TotalAmount = money;
+                        order.TotalAmount = Math.Ceiling(money);
 
                         await orderDetailRepository.InsertRange(orderDetails);
 
@@ -1043,7 +1043,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     double money = 0;
                     orderDetailDb.Items.ForEach(o => money += o.Price * o.Quantity);
 
-                    money -= ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0) ? orderDb.Deposit.Value : 0);
+                    money -= ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0) ? Math.Ceiling(orderDb.Deposit.Value) : 0);
                                       
                     if (money < 0)
                     {
@@ -1174,7 +1174,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                             else
                             {
-                                orderDb.CashReceived = orderDb.TotalAmount;
+                                orderDb.CashReceived = Math.Ceiling(orderDb.TotalAmount);
                                 orderDb.ChangeReturned = 0;
                             }
                         }
