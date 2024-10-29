@@ -1180,7 +1180,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                             await _repository.Update(orderDb);
                             await _unitOfWork.SaveChangesAsync();
-
+                            await ChangeOrderStatus(orderDb.OrderId, false, null);
                         if (refundTransaction == null) { 
                             var paymentRequest = new PaymentRequestDto
                             {
@@ -1910,6 +1910,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         emailService.SendEmail(reservation.Account.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateMailToCancelReservation(username, reservation));
 
                     }
+                    await _repository.UpdateRange(pastReservationDb.Items);
                 }
                 await _unitOfWork.SaveChangesAsync();
             }
