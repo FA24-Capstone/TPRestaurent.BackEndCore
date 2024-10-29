@@ -888,24 +888,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 messageBody.Length -= 2;
 
-                                await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_CHEF, messageBody.ToString());
-
+                                var sendNotificationResult = await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_CHEF, messageBody.ToString());
+                                if (!sendNotificationResult.IsSuccess)
+                                {
+                                    return BuildAppActionResultError(result, "Gửi thông báo cho nhà bếp thất bại");
+                                }
                             }
-
-
-                            await _unitOfWork.SaveChangesAsync();
                         }
-                        scope.Complete();
                     }
                     result.Result = orderWithPayment;
+                    scope.Complete();
                 }
                 catch (Exception ex)
                 {
                     result = BuildAppActionResultError(result, ex.Message);
                 }
+                return result;
             }
-
-            return result;
         }
 
         public async Task<AppActionResult> GetAllOrderByCustomertId(string customerId, OrderStatus? status, OrderType? orderType, int pageNumber, int pageSize)
