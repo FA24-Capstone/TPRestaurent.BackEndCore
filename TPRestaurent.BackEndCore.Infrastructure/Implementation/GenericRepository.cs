@@ -57,7 +57,7 @@ namespace TPRestaurent.BackEndCore.Infrastructure.Implementation
                 return result;
             }
 
-            var data = await query.AsNoTracking().ToListAsync();
+            var data = await query.ToListAsync();
             result.Items = data;
             result.TotalPages = data.Count() > 0 ? 1 : 0;
             return result;
@@ -76,7 +76,10 @@ namespace TPRestaurent.BackEndCore.Infrastructure.Implementation
 
         public async Task<T> Update(T entity)
         {
-            _dbSet.Attach(entity);
+            if (_context.Entry(entity).State == EntityState.Detached)
+            {
+                _dbSet.Attach(entity);
+            }
             _context.Entry(entity).State = EntityState.Modified;
             return entity;
         }
@@ -116,7 +119,12 @@ namespace TPRestaurent.BackEndCore.Infrastructure.Implementation
         {
             foreach (var entity in entities)
             {
-                _dbSet.Attach(entity);
+                if (_context.Entry(entity).State == EntityState.Detached)
+                {
+                    _dbSet.Attach(entity);
+                }
+
+                // Mark the entity as modified
                 _context.Entry(entity).State = EntityState.Modified;
             }
             return entities.ToList();

@@ -888,24 +888,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 messageBody.Length -= 2;
 
-                                await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_CHEF, messageBody.ToString());
-
+                                var sendNotificationResult = await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_CHEF, messageBody.ToString());
+                                if (!sendNotificationResult.IsSuccess)
+                                {
+                                    return BuildAppActionResultError(result, "Gửi thông báo cho nhà bếp thất bại");
+                                }
                             }
-
-
-                            await _unitOfWork.SaveChangesAsync();
                         }
-                        scope.Complete();
                     }
                     result.Result = orderWithPayment;
+                    scope.Complete();
                 }
                 catch (Exception ex)
                 {
                     result = BuildAppActionResultError(result, ex.Message);
                 }
+                return result;
             }
-
-            return result;
         }
 
         public async Task<AppActionResult> GetAllOrderByCustomertId(string customerId, OrderStatus? status, OrderType? orderType, int pageNumber, int pageSize)
@@ -1044,7 +1043,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     orderDetailDb.Items.ForEach(o => money += o.Price * o.Quantity);
 
                     money -= ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0) ? Math.Ceiling(orderDb.Deposit.Value) : 0);
-
+                                      
                     if (money < 0)
                     {
                         if (!orderRequestDto.ChooseCashRefund.Value && string.IsNullOrEmpty(orderDb.AccountId))
@@ -1179,11 +1178,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 orderDb.ChangeReturned = 0;
                             }
                         }
-                        await _repository.Update(orderDb);
-                        await _unitOfWork.SaveChangesAsync();
-
-                        if (refundTransaction == null)
-                        {
+                            await _repository.Update(orderDb);
+                            await _unitOfWork.SaveChangesAsync();
+                            await ChangeOrderStatus(orderDb.OrderId, false, null);
+                        if (refundTransaction == null) { 
                             var paymentRequest = new PaymentRequestDto
                             {
                                 OrderId = orderDb.OrderId,
@@ -1871,14 +1869,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var configurationRepository = Resolve<IGenericRepository<Configuration>>();
 
                 var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-                var cancelTime = currentTime.AddMinutes(30);
                 var pastReservationDb = await _repository.GetAllDataByExpression(
-                    (p => p.ReservationDate.HasValue && p.ReservationDate <= cancelTime &&
-                    (p.StatusId == OrderStatus.Pending || p.StatusId == OrderStatus.TableAssigned || p.StatusId == OrderStatus.TemporarilyCompleted
-                    )), 0, 0, null, false, p => p.Account!, p => p.Status!
+                    (p => p.MealTime.HasValue && p.MealTime.Value.AddMinutes(30) <= currentTime &&
+                    p.StatusId == OrderStatus.DepositPaid), 0, 0, null, false, p => p.Account!, p => p.Status!
                     );
 
-                if (pastReservationDb!.Items!.Count > 0 && pastReservationDb.Items != null)
+                if (pastReservationDb!.Items!.Count > 0)
                 {
                     foreach (var reservation in pastReservationDb.Items)
                     {
@@ -1893,15 +1889,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await orderDetailRepository.UpdateRange(reservationDetailsDb.Items);
                         }
 
+                        reservation.CancelledTime = currentTime;
                         reservation.StatusId = OrderStatus.Cancelled;
-
+                        //await ChangeOrderStatus(reservation.OrderId, false, null);
                         var username = reservation.Account.FirstName + " " + reservation.Account.LastName;
-                        emailService.SendEmail(reservation.Account.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateMailToCancelReservation(username, reservation));
-
-                        await _repository.Update(reservation);
+                        //emailService.SendEmail(reservation.Account.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateMailToCancelReservation(username, reservation));
                     }
-                    await _unitOfWork.SaveChangesAsync();
+                    await _repository.UpdateRange(pastReservationDb.Items);
                 }
+                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
