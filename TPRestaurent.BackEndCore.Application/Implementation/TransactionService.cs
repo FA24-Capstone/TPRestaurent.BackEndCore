@@ -87,13 +87,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
                                         || orderDb.StatusId == OrderStatus.Pending)
                                     {
-                                        amount = Math.Ceiling(orderDb.TotalAmount);
+                                        amount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
                                     }
                                     else
                                     {
                                         if (orderDb.Deposit.HasValue)
                                         {
-                                            amount = Math.Ceiling(orderDb.Deposit.Value);
+                                            amount = Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000;
                                         }
                                         else
                                         {
@@ -164,13 +164,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
                                         || orderDb.StatusId == OrderStatus.Pending)
                                     {
-                                        amount = Math.Ceiling(orderDb.TotalAmount);
+                                        amount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
                                     }
                                     else
                                     {
                                         if (orderDb.Deposit.HasValue)
                                         {
-                                            amount = Math.Ceiling(orderDb.Deposit.Value);
+                                            amount = Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000;
                                         }
                                         else
                                         {
@@ -201,7 +201,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     string extraData = transaction.OrderId.ToString();
 
                                     string rawHash = "accessKey=" + accessKey +
-                                                     "&amount=" + Math.Ceiling(transaction.Amount).ToString() +
+                                                     "&amount=" + (Math.Ceiling(transaction.Amount / 1000) * 1000).ToString() +
                                                      "&extraData=" + extraData +
                                                      "&ipnUrl=" + ipnUrl +
                                                      "&orderId=" + transaction.Id +
@@ -272,7 +272,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             string extraData = transaction.OrderId.ToString();
 
                                             string rawHash = "accessKey=" + accessKey +
-                                                             "&amount=" + Math.Ceiling(transaction.Amount).ToString() +
+                                                             "&amount=" + (Math.Ceiling(transaction.Amount / 1000) * 1000).ToString() +
                                                              "&extraData=" + extraData +
                                                              "&ipnUrl=" + ipnUrl +
                                                              "&orderId=" + transaction.Id +
@@ -331,13 +331,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
                                         || orderDb.StatusId == OrderStatus.Pending)
                                     {
-                                        amount = Math.Ceiling(orderDb.TotalAmount);
+                                        amount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
                                     }
                                     else
                                     {
                                         if (orderDb.Deposit.HasValue)
                                         {
-                                            amount = Math.Ceiling(orderDb.Deposit.Value);
+                                            amount = Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000;
                                         }
                                         else
                                         {
@@ -370,8 +370,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     };
 
                                     await _repository.Insert(transaction);
-                                    await orderService.ChangeOrderStatus(orderDb.OrderId, true);
                                     await accountRepository.Update(accountDb);
+                                    //await orderService.ChangeOrderStatus(orderDb.OrderId, true);
                                 }
                                 break;
                             default:
@@ -386,13 +386,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
                                         || orderDb.StatusId == OrderStatus.Pending)
                                     {
-                                        amount = Math.Ceiling(orderDb.TotalAmount);
+                                        amount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
                                     } 
                                     else
                                     {
                                         if (orderDb.Deposit.HasValue)
                                         {
-                                            amount = Math.Ceiling(orderDb.Deposit.Value); ;
+                                            amount = Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000;
                                         }
                                         else
                                         {
@@ -717,7 +717,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     Id = Guid.NewGuid(),
                     TransactionTypeId = TransactionType.Refund,
-                    Amount = Math.Ceiling((double)(order.Deposit * double.Parse(percentageConfigurationDb.CurrentValue.ToString()))),
+                    Amount = Math.Ceiling((double)(order.Deposit * double.Parse(percentageConfigurationDb.CurrentValue.ToString())) / 1000) * 1000,
                     AccountId = order.AccountId,    
                     Date = currentTime,
                     PaidDate = currentTime,

@@ -134,7 +134,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         orderDb.TotalAmount += orderDetail.Price * orderDetail.Quantity;
                         orderDetails.Add(orderDetail);
                     }
-                    orderDb.TotalAmount = Math.Ceiling(orderDb.TotalAmount);
+                    orderDb.TotalAmount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
                     await _repository.Update(orderDb);
                     await orderSessionRepository.Insert(orderSession);
                     await orderDetailRepository.InsertRange(orderDetails);
@@ -531,7 +531,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     if (orderDetails.Count > 0)
                     {
-                        order.TotalAmount = Math.Ceiling(money);
+                        order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
                         await orderDetailRepository.InsertRange(orderDetails);
                         if (comboOrderDetails.Count > 0)
                         {
@@ -568,7 +568,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.MealTime = orderRequestDto.ReservationOrder.MealTime;
                         order.EndTime = orderRequestDto.ReservationOrder.EndTime;
                         order.IsPrivate = orderRequestDto.ReservationOrder.IsPrivate;
-                        order.Deposit = Math.Ceiling((double)orderRequestDto.ReservationOrder.Deposit);
+                        order.Deposit = Math.Ceiling((double)orderRequestDto.ReservationOrder.Deposit / 1000) * 1000;
 
                         var suggestTableDto = new SuggestTableDto
                         {
@@ -621,7 +621,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.StatusId = OrderStatus.Processing;
                         order.MealTime = utility.GetCurrentDateTimeInTimeZone();
                         order.NumOfPeople = 0;
-                        order.TotalAmount = Math.Ceiling(money);
+                        order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
                         if (orderDetails.Count > 0)
                         {
                             orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
@@ -670,7 +670,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         order.OrderTypeId = OrderType.Delivery;
                         order.StatusId = OrderStatus.Pending;
-                        order.TotalAmount = Math.Ceiling(money);
+                        order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
                         order.OrderDate = utility.GetCurrentDateTimeInTimeZone();
                         if (accountDb == null)
                         {
@@ -816,7 +816,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         orderWithPayment.Order = order;
 
                         orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Reserved);
-                        order.TotalAmount = Math.Ceiling(money);
+                        order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
 
                         await orderDetailRepository.InsertRange(orderDetails);
 
@@ -856,8 +856,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             var linkPaymentDb = await transcationService!.CreatePayment(paymentRequest);
                             if (!linkPaymentDb.IsSuccess)
                             {
-                                return BuildAppActionResultError(result, "Tạo thanh toán thất bại");
+                                return BuildAppActionResultError(result, String.Join(", ", linkPaymentDb.Messages));
                             }
+
+                            if ((orderRequestDto.DeliveryOrder?.PaymentMethod != null && orderRequestDto.DeliveryOrder?.PaymentMethod == PaymentMethod.STORE_CREDIT)
+                                || (orderRequestDto.ReservationOrder?.PaymentMethod != null && orderRequestDto.ReservationOrder?.PaymentMethod == PaymentMethod.STORE_CREDIT))              
+                            {
+                                await ChangeOrderStatus(order.OrderId, true, null);
+                            }
+
                             if (linkPaymentDb.Result != null && !string.IsNullOrEmpty(linkPaymentDb.Result.ToString()))
                             {
                                 orderWithPayment.PaymentLink = linkPaymentDb!.Result!.ToString();
@@ -1042,7 +1049,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     double money = 0;
                     orderDetailDb.Items.ForEach(o => money += o.Price * o.Quantity);
 
-                    money -= ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0) ? Math.Ceiling(orderDb.Deposit.Value) : 0);
+                    money -= ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0) ? Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000 : 0);
                                       
                     if (money < 0)
                     {
@@ -1054,7 +1061,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             OrderId = orderDb.OrderId,
                             Account = orderDb.Account,
-                            RefundAmount = -Math.Ceiling(-money),
+                            RefundAmount = -Math.Ceiling(-money / 1000) * 1000,
                             PaymentMethod = orderRequestDto.ChooseCashRefund.Value ? PaymentMethod.Cash : PaymentMethod.STORE_CREDIT
                         };
                         var refundResult = await transactionService.CreateDepositRefund(depositRefundRequest);
@@ -1161,7 +1168,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     if (!BuildAppActionResultIsError(result))
                     {
-                        orderDb.TotalAmount = Math.Max(Math.Ceiling(money), 0);
+                        orderDb.TotalAmount = Math.Max(Math.Ceiling(money / 1000) * 1000, 0);
                         var orderWithPayment = new OrderWithPaymentResponse();
                         orderWithPayment.Order = orderDb;
 
@@ -1174,7 +1181,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                             else
                             {
-                                orderDb.CashReceived = Math.Ceiling(orderDb.TotalAmount);
+                                orderDb.CashReceived = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
                                 orderDb.ChangeReturned = 0;
                             }
                         }
@@ -3050,8 +3057,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
                 orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
-                var comboOrderDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(o => orderDetails.Where(or => or.ComboId.HasValue)
-                                                                                                                  .Select(or => or.OrderDetailId).ToList().Contains(o.OrderDetailId.Value),
+                var orderDetailIds = orderDetails.Where(or => or.ComboId.HasValue).Select(or => or.OrderDetailId).ToList();
+                var comboOrderDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(o => orderDetailIds.Contains(o.OrderDetailId.Value),
                                                                                                                   0, 0, null, false, null);
                 comboOrderDetailDb.Items.ForEach(c => c.StatusId = DishComboDetailStatus.Unchecked);
                 await comboOrderDetailRepository.UpdateRange(comboOrderDetailDb.Items);
