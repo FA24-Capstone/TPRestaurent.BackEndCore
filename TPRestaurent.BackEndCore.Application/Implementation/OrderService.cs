@@ -3333,42 +3333,50 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         public async Task<AppActionResult> CancelDeliveringOrder(CancelDeliveringOrderRequest cancelDeliveringOrderRequest)
         {
-            var result = new AppActionResult();
-            var utility = Resolve<Utility>();
-            var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-            var transactionRepository = Resolve<IGenericRepository<Transaction>>();
-            var accountRepository = Resolve<IGenericRepository<Account>>();
-            var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
-            var notificationService = Resolve<INotificationMessageService>();
-            var orderAssignedRequestRepository = Resolve<IGenericRepository<OrderAssignedRequest>>();
 
+            var result = new AppActionResult();
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
+                var utility = Resolve<Utility>();
+                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+                var transactionRepository = Resolve<IGenericRepository<Transaction>>();
+                var accountRepository = Resolve<IGenericRepository<Account>>();
+                var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
+                var notificationService = Resolve<INotificationMessageService>();
+                var orderAssignedRequestRepository = Resolve<IGenericRepository<OrderAssignedRequest>>();
+
                 try
                 {
-                    var orderDb = await _repository.GetAllDataByExpression(p => p.OrderId == cancelDeliveringOrderRequest.OrderId, 0, 0, null, false, p => p.Status!,
-                                                                                                p => p.OrderType!,
-                                                                                                p => p.Account!,
-                                                                                                p => p.Shipper!,
-                                                                                                p => p.LoyalPointsHistory!
-                                                                                                );
-                    if (orderDb!.Items!.Count < 0 && orderDb.Items != null)
+                    var orderDb = await _repository.GetAllDataByExpression(
+                        p => p.OrderId == cancelDeliveringOrderRequest.OrderId,
+                        0, 0, null, false,
+                        p => p.Status!, p => p.OrderType!,
+                        p => p.Account!, p => p.Shipper!,
+                        p => p.LoyalPointsHistory!
+                    );
+
+                    if (orderDb!.Items!.Count <= 0)
                     {
-                        return BuildAppActionResultError(result, $"không tìm thấy đơn hàng với id {cancelDeliveringOrderRequest.OrderId}");
+                        return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {cancelDeliveringOrderRequest.OrderId}");
                     }
 
                     var order = orderDb.Items!.FirstOrDefault();
-                    var accountDb = await accountRepository!.GetByExpression(p => p.Id == order!.AccountId);
+                    if (order == null)
+                    {
+                        return BuildAppActionResultError(result, "Order is null.");
+                    }
+
+                    var accountDb = await accountRepository!.GetById(order.AccountId);
                     if (accountDb == null)
                     {
-                        return BuildAppActionResultError(result, $"Không tìm thấy khách hàng với id {accountDb!.Id}");
+                        return BuildAppActionResultError(result, $"Không tìm thấy khách hàng với id {order.AccountId}");
                     }
 
                     if (cancelDeliveringOrderRequest.isCancelledByAdmin == true)
                     {
-                        order!.CancelDeliveryReason = SD.CancelledReason.CANCELLED_BY_SYSTEM;
+                        order.CancelDeliveryReason = SD.CancelledReason.CANCELLED_BY_SYSTEM;
 
-                        var newTranscation = new Transaction
+                        var newTransaction = new Transaction
                         {
                             Id = Guid.NewGuid(),
                             AccountId = order.AccountId,
@@ -3380,7 +3388,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             TransationStatusId = TransationStatus.SUCCESSFUL
                         };
 
-                        await transactionRepository!.Insert(newTranscation);
+                        await transactionRepository!.Insert(newTransaction);
 
                         accountDb.LoyaltyPoint += (int)order.TotalAmount;
                         var newLoyaltyPointHistory = new LoyalPointsHistory
@@ -3394,22 +3402,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         await loyalPointsHistoryRepository!.Insert(newLoyaltyPointHistory);
 
-
                         string message = $"Đơn hàng ID {order.OrderId} đã bị hủy và chúng tôi đã hoàn tiền {order.TotalAmount} cho bạn.";
-                        var sendNotificationResult = await notificationService!.SendNotificationToAccountAsync(accountDb.Id, message);
+                        await notificationService!.SendNotificationToAccountAsync(accountDb.Id, message);
                     }
                     else
                     {
-                        var shipperDb = await accountRepository.GetByExpression(p => p.Id == cancelDeliveringOrderRequest.ShipperRequestId);
+                        var shipperDb = await accountRepository.GetById(cancelDeliveringOrderRequest.ShipperRequestId);
                         if (shipperDb == null)
                         {
-                            return BuildAppActionResultError(result, $"Không tìm thấy tài khoản shipper với id {shipperDb.Id}");
+                            return BuildAppActionResultError(result, $"Không tìm thấy tài khoản shipper với id {cancelDeliveringOrderRequest.ShipperRequestId}");
                         }
 
                         var orderAssignedRequest = new OrderAssignedRequest
                         {
                             OrderAssignedRequestId = Guid.NewGuid(),
-                            RequestTime = currentTime,  
+                            RequestTime = currentTime,
                             OrderId = order.OrderId,
                             ShipperAssignedId = shipperDb.Id,
                             StatusId = OrderAssignedStatus.Pending,
@@ -3420,14 +3427,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         order.CancelDeliveryReason = cancelDeliveringOrderRequest.CancelledReasons;
 
-                        string message = $"Đơn hàng ID {order.OrderId} đã được yêu cầu hủy bởi Shipper {shipperDb.FirstName}" + " " + $"{shipperDb.LastName}";
-                        var sendNotificationResult = await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
+                        string message = $"Đơn hàng ID {order.OrderId} đã được yêu cầu hủy bởi Shipper {shipperDb.FirstName} {shipperDb.LastName}";
+                        await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
                         await _hubServices.SendAsync(SD.SignalMessages.LOAD_RE_DELIVERING_REQUEST);
-
                     }
 
                     order.StatusId = OrderStatus.Cancelled;
-                    order!.CancelledTime = currentTime;
+                    order.CancelledTime = currentTime;
 
                     if (!BuildAppActionResultIsError(result))
                     {
@@ -3435,7 +3441,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await _repository.Update(order);
                         await _unitOfWork.SaveChangesAsync();
                     }
-                    scope.Complete();
                 }
                 catch (Exception ex)
                 {
