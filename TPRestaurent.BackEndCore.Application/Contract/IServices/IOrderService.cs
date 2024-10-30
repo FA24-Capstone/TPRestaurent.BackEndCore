@@ -48,5 +48,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> GetNumberOfOrderByStatus(OrderFilterRequest request);
         public Task<AppActionResult> CancelDeliveringOrder(CancelDeliveringOrderRequest cancelDeliveringOrderRequest);
 
+
     }
 }
