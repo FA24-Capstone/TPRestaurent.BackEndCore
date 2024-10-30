@@ -26,7 +26,10 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public double Price { get; set; }
         public string? Note { get; set; }
         public DateTime OrderTime { get; set; }
+        public DateTime? HandOverTime { get; set; }
+        public DateTime? StartProcessingTime { get; set; }
         public DateTime? ReadyToServeTime { get; set; }
+        public DateTime? CancelTime { get; set; }
         public OrderDetailStatus OrderDetailStatusId { get; set; }
         [ForeignKey(nameof(OrderDetailStatusId))]
         public EnumModels.OrderDetailStatus? OrderDetailStatus { get; set; }     

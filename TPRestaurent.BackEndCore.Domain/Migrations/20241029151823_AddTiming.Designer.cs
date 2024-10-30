@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241029151823_AddTiming")]
+    partial class AddTiming
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1531,25 +1533,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.ToTable("StaticFiles");
                 });
 
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Invoice", b =>
-                {
-                    b.Property<Guid>("InvoiceId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("OrderDetailJson")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("pdfLink")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("InvoiceId");
-
-                    b.ToTable("Invoices");
-                });
-
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.LoyalPointsHistory", b =>
                 {
                     b.Property<Guid>("LoyalPointsHistoryId")
@@ -1884,9 +1867,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid>("TableId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Coordinates")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("DeviceCode")
                         .IsRequired()
