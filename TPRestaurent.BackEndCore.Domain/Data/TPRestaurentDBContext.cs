@@ -31,6 +31,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.Rating> Ratings { get; set; } = null!;
         public DbSet<Models.TableDetail> ReservationTableDetail { get; set; } = null!;
         public DbSet<Models.Image> StaticFiles { get; set; } = null!;
+        public DbSet<Models.Invoice> Invoices { get; set; } = null!;
         public DbSet<Models.Table> Tables { get; set; } = null!;
         public DbSet<Models.Room> TableRatings { get; set; } = null!;
         public DbSet<Models.Tag> Tags { get; set; } = null!;

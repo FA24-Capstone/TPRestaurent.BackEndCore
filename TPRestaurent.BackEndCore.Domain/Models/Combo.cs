@@ -24,5 +24,6 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public DateTime EndDate { get; set; }
         public bool IsAvailable { get; set; }
         public bool IsDeleted { get; set; }
+        public int? PreparationTime { get; set; }
     }
 }

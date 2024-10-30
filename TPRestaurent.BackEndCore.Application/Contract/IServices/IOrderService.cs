@@ -47,5 +47,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task RemindOrderReservation();
         public Task<AppActionResult> GetNumberOfOrderByStatus(OrderFilterRequest request);
 
+
     }
 }

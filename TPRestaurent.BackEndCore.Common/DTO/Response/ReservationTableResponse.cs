@@ -44,5 +44,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public double? Deposit { get; set; }
         public bool? IsPrivate { get; set; }
         public List<TableDetail> Tables { get; set; }
+        public string? CancelDeliveryReason { get; set; }
     }
 }
