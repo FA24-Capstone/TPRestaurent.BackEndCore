@@ -142,7 +142,7 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
                     var tokenDb = await tokenRepository!.GetAllDataByExpression(p => p.AccountId == user.UserId, 0, 0, null, false, p => p.Account);
                     foreach (var token in tokenDb.Items)
                     {
-                        if (token.DeviceToken != null)
+                        if (!string.IsNullOrEmpty(token.DeviceToken))
                         {
                             tokenList.Add(token.DeviceToken);
                         }
