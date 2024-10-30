@@ -47,7 +47,6 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.ConfigurationVersion> ConfigurationVersions { get; set; } = null!;
         public DbSet<Models.GroupedDishCraft> GroupedDishCrafts { get; set; } = null!;
         public DbSet<Models.NotificationMessage> NotificationMessages { get; set; } = null!;
-        public DbSet<Models.OrderAssignedRequest> OrderAssignedRequest { get; set; } = null!;
         public DbSet<Models.EnumModels.OrderStatus> OrderStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.OTPType> OTPTypes { get; set; } = null!;
         public DbSet<Models.EnumModels.PaymentMethod> PaymentMethods { get; set; } = null!;
@@ -60,8 +59,6 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.EnumModels.TransactionType> TransactionTypes { get; set; } = null!;
         public DbSet<Models.EnumModels.OrderSessionStatus> OrderSessionStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.DishComboDetailStatus> DishComboDetailStatuses { get; set; } = null!;
-        public DbSet<Models.EnumModels.OrderAssignedStatus> OrderAssignedStatus { get; set; } = null!;
-
 
 
 
@@ -121,8 +118,6 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             SeedEnumTable<Models.EnumModels.TransactionType, Enums.TransactionType>(builder, enums);
             SeedEnumTable<Models.EnumModels.OrderSessionStatus, Enums.OrderSessionStatus>(builder, enums);
             SeedEnumTable<Models.EnumModels.DishComboDetailStatus, Enums.DishComboDetailStatus>(builder, enums);
-            SeedEnumTable<Models.EnumModels.OrderAssignedStatus, Enums.OrderAssignedStatus>(builder, enums);
-
         }
 
         private static void SeedEnumTable<TEntity, TEnum>(ModelBuilder modelBuilder, IConfiguration enums)

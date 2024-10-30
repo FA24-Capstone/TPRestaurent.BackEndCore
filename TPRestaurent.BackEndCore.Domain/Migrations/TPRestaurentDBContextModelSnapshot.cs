@@ -933,37 +933,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         });
                 });
 
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.OrderAssignedStatus", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("VietnameseName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("OrderAssignedStatus");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Name = "Pending",
-                            VietnameseName = "Chờ Xử Lý"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = "Completed",
-                            VietnameseName = "Thành Công"
-                        });
-                });
-
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.OrderDetailStatus", b =>
                 {
                     b.Property<int>("Id")
@@ -1729,46 +1698,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.ToTable("Orders");
                 });
 
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.OrderAssignedRequest", b =>
-                {
-                    b.Property<Guid>("OrderAssignedRequestId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("AssignedTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Reasons")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("RequestTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ShipperAssignedId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ShipperRequestId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("StatusId")
-                        .HasColumnType("int");
-
-                    b.HasKey("OrderAssignedRequestId");
-
-                    b.HasIndex("OrderId");
-
-                    b.HasIndex("ShipperAssignedId");
-
-                    b.HasIndex("ShipperRequestId");
-
-                    b.HasIndex("StatusId");
-
-                    b.ToTable("OrderAssignedRequest");
-                });
-
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.OrderDetail", b =>
                 {
                     b.Property<Guid>("OrderDetailId")
@@ -2433,37 +2362,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Navigation("OrderType");
 
                     b.Navigation("Shipper");
-
-                    b.Navigation("Status");
-                });
-
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.OrderAssignedRequest", b =>
-                {
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Order", "Order")
-                        .WithMany()
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "ShipperAssigned")
-                        .WithMany()
-                        .HasForeignKey("ShipperAssignedId");
-
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "ShipperRequest")
-                        .WithMany()
-                        .HasForeignKey("ShipperRequestId");
-
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.OrderAssignedStatus", "Status")
-                        .WithMany()
-                        .HasForeignKey("StatusId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Order");
-
-                    b.Navigation("ShipperAssigned");
-
-                    b.Navigation("ShipperRequest");
 
                     b.Navigation("Status");
                 });
