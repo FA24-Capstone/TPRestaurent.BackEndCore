@@ -89,6 +89,12 @@ builder.Services.AddHangfireServer(options =>
     options.Queues = new[] { "remind-order-reservation" };
     options.WorkerCount = 5;
 });
+builder.Services.AddHangfireServer(options =>
+{
+    options.ServerName = $"{Environment.MachineName}:transaction";
+    options.Queues = new[] { "cancel-pending-transaction" };
+    options.WorkerCount = 5;
+});
 
 var app = builder.Build();
 
