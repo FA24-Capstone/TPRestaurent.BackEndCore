@@ -24,6 +24,14 @@
   <ItemGroup>
     <None Remove="Data\" />
     <None Remove="Models\" />
+    <None Remove="vietnamesenames.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="vietnamesenames.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Data\" />
