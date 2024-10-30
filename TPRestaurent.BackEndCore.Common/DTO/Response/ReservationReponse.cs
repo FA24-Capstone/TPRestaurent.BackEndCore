@@ -25,6 +25,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public DateTime? AssignedTime { get; set; }
         public DateTime? StartDeliveringTime { get; set; }
         public DateTime? DeliveredTime { get; set; }
+        public DateTime? CancelledTime { get; set; }
         public DateTime? ReservationDate { get; set; }
         public DateTime? MealTime { get; set; }
         public DateTime? EndTime { get; set; }
@@ -53,7 +54,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public Account? Shipper { get; set; }
         public string? TotalDistance { get; set; }
         public string? TotalDuration { get; set; }
-
+        public string? CancelDeliveryReason { get; set; }
     }
 
     public class OrderDishDto

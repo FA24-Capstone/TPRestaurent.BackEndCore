@@ -85,7 +85,8 @@ public class MappingConfig
             .ForMember(dest => dest.StartDate, act => act.MapFrom(src => src.StartDate))
             .ForMember(dest => dest.EndDate, act => act.MapFrom(src => src.EndDate))
             .ForMember(dest => dest.IsAvailable, act => act.MapFrom(src => src.IsAvailable))
-            .ForMember(dest => dest.IsDeleted, act => act.MapFrom(src => src.IsDeleted));
+            .ForMember(dest => dest.IsDeleted, act => act.MapFrom(src => src.IsDeleted))
+            .ForMember(dest => dest.PreparationTime, act => act.MapFrom(src => src.PreparationTime));
 
             config.CreateMap<Dish, DishReponse>()
             .ForMember(dest => dest.DishId, act => act.MapFrom(src => src.DishId))
@@ -96,7 +97,9 @@ public class MappingConfig
             .ForMember(dest => dest.DishItemType, act => act.MapFrom(src => src.DishItemType))
             .ForMember(dest => dest.IsAvailable, act => act.MapFrom(src => src.isAvailable))
             .ForMember(dest => dest.IsDeleted, act => act.MapFrom(src => src.IsDeleted))
-            .ForMember(dest => dest.IsMainItem, act => act.MapFrom(src => src.IsMainItem));
+            .ForMember(dest => dest.IsMainItem, act => act.MapFrom(src => src.IsMainItem))
+            .ForMember(dest => dest.PreparationTime, act => act.MapFrom(src => src.PreparationTime))
+            ;
 
             config.CreateMap<Dish, DishQuantityResponse>()
             .ForMember(dest => dest.DishId, act => act.MapFrom(src => src.DishId))
@@ -107,7 +110,9 @@ public class MappingConfig
             .ForMember(dest => dest.DishItemType, act => act.MapFrom(src => src.DishItemType))
             .ForMember(dest => dest.IsAvailable, act => act.MapFrom(src => src.isAvailable))
             .ForMember(dest => dest.IsDeleted, act => act.MapFrom(src => src.IsDeleted))
-            .ForMember(dest => dest.IsMainItem, act => act.MapFrom(src => src.IsMainItem));
+            .ForMember(dest => dest.IsMainItem, act => act.MapFrom(src => src.IsMainItem))
+            .ForMember(dest => dest.PreparationTime, act => act.MapFrom(src => src.PreparationTime))
+;
 
 
             config.CreateMap<Order, OrderResponse>()
@@ -119,6 +124,7 @@ public class MappingConfig
     .ForMember(dest => dest.ReservationDate, act => act.MapFrom(src => src.ReservationDate))
     .ForMember(dest => dest.MealTime, act => act.MapFrom(src => src.MealTime))
     .ForMember(dest => dest.EndTime, act => act.MapFrom(src => src.EndTime))
+    .ForMember(dest => dest.CancelledTime, act => act.MapFrom(src => src.CancelledTime))
     .ForMember(dest => dest.TotalAmount, act => act.MapFrom(src => src.TotalAmount))
     .ForMember(dest => dest.StatusId, act => act.MapFrom(src => src.StatusId))
     .ForMember(dest => dest.Status, act => act.MapFrom(src => src.Status))
@@ -135,6 +141,7 @@ public class MappingConfig
     .ForMember(dest => dest.Deposit, act => act.MapFrom(src => src.Deposit))
     .ForMember(dest => dest.ValidatingImg, act => act.MapFrom(src => src.ValidatingImg))
     .ForMember(dest => dest.Shipper, act => act.MapFrom(src => src.Shipper))
+    .ForMember(dest => dest.CancelDeliveryReason, act => act.MapFrom(src => src.CancelDeliveryReason))
     .ForMember(dest => dest.IsPrivate, act => act.MapFrom(src => src.IsPrivate));
 
             config.CreateMap<Order, OrderWithFirstDetailResponse>()
@@ -142,10 +149,12 @@ public class MappingConfig
             .ForMember(dest => dest.OrderDate, act => act.MapFrom(src => src.OrderDate))
             .ForMember(dest => dest.AssignedTime, act => act.MapFrom(src => src.AssignedTime))
             .ForMember(dest => dest.StartDeliveringTime, act => act.MapFrom(src => src.StartDeliveringTime))
-            .ForMember(dest => dest.Shipper, act => act.MapFrom(src => src.Shipper))
             .ForMember(dest => dest.ReservationDate, act => act.MapFrom(src => src.ReservationDate))
+            .ForMember(dest => dest.DeliveredTime, act => act.MapFrom(src => src.DeliveredTime))
+            .ForMember(dest => dest.CancelledTime, act => act.MapFrom(src => src.CancelledTime))
             .ForMember(dest => dest.MealTime, act => act.MapFrom(src => src.MealTime))
             .ForMember(dest => dest.EndTime, act => act.MapFrom(src => src.EndTime))
+            .ForMember(dest => dest.Shipper, act => act.MapFrom(src => src.Shipper))
             .ForMember(dest => dest.TotalAmount, act => act.MapFrom(src => src.TotalAmount))
             .ForMember(dest => dest.CashReceived, act => act.MapFrom(src => src.CashReceived))
             .ForMember(dest => dest.ChangeReturned, act => act.MapFrom(src => src.ChangeReturned))
@@ -164,6 +173,7 @@ public class MappingConfig
             .ForMember(dest => dest.Deposit, act => act.MapFrom(src => src.Deposit))
             .ForMember(dest => dest.IsPrivate, act => act.MapFrom(src => src.IsPrivate))
             .ForMember(dest => dest.ValidatingImg, act => act.MapFrom(src => src.ValidatingImg))
+            .ForMember(dest => dest.CancelDeliveryReason, act => act.MapFrom(src => src.CancelDeliveryReason))
             .ReverseMap();
 
     config.CreateMap<Order, ReservationTableItemResponse>()
@@ -188,7 +198,9 @@ public class MappingConfig
             .ForMember(dest => dest.OrderType, opt => opt.MapFrom(src => src.OrderType))
             .ForMember(dest => dest.NumOfPeople, opt => opt.MapFrom(src => src.NumOfPeople))
             .ForMember(dest => dest.Deposit, opt => opt.MapFrom(src => src.Deposit))
-            .ForMember(dest => dest.IsPrivate, opt => opt.MapFrom(src => src.IsPrivate));
+            .ForMember(dest => dest.IsPrivate, opt => opt.MapFrom(src => src.IsPrivate))
+            .ForMember(dest => dest.CancelDeliveryReason, act => act.MapFrom(src => src.CancelDeliveryReason))
+;
         });
 
 

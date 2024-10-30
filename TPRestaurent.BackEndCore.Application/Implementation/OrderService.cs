@@ -2781,7 +2781,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 try
                 {
                     var firebaseService = Resolve<IFirebaseService>();
-                    var orderDb = await _repository.GetByExpression(p => p.OrderId == confirmedOrderRequest.OrderId);
+                    var utility = Resolve<Utility>();
+                    var orderDb = await _repository.GetByExpression(p => p.OrderId == confirmedOrderRequest.OrderId && p.StatusId == OrderStatus.Delivering);
                     if (orderDb == null)
                     {
                         return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {confirmedOrderRequest.OrderId}");
@@ -2793,8 +2794,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
                     }
-
                     orderDb.ValidatingImg = upload.Result!.ToString();
+
+                    if (!confirmedOrderRequest.IsSuccessful.HasValue || confirmedOrderRequest.IsSuccessful.Value)
+                    {
+                        orderDb.DeliveredTime = utility.GetCurrentDateTimeInTimeZone();
+                        orderDb.StatusId = OrderStatus.Completed;
+                    }
+                    else
+                    {
+                        orderDb.CancelledTime = utility.GetCurrentDateTimeInTimeZone();
+                        orderDb.CancelDeliveryReason = confirmedOrderRequest.CancelReason;
+                        orderDb.StatusId = OrderStatus.Cancelled;
+                    }
+
                     if (!BuildAppActionResultIsError(result))
                     {
                         await _repository.Update(orderDb);

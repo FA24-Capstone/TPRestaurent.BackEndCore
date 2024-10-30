@@ -14,5 +14,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         //public Task<AppActionResult> GetTableById(Guid TableId);
         public Task<AppActionResult> CreateTable(TableDto dto);
         //public Task<AppActionResult> UpdateTable(Guid TableId, TableDto dto);
+        public Task<AppActionResult> FindTable(FindTableDto dto);
     }
 }
