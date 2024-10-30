@@ -155,6 +155,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return  await _service.GetNumberOfOrderByStatus(request);       
         }
 
+        [HttpPost("cancel-delivering-order")]
+        public async Task<AppActionResult> CancelDeliveringOrder(CancelDeliveringOrderRequest cancelDeliveringOrderRequest)
+        {
+            return await _service.CancelDeliveringOrder(cancelDeliveringOrderRequest);      
+        }
+
         //[HttpPut("over")]
         //public async Task CancelOverReservation()
         //{

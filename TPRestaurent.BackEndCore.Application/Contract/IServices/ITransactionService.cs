@@ -24,5 +24,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GetLoyaltyPointHistory(Guid customerId);
         Task<AppActionResult> CreateRefund(Order order);
         Task<AppActionResult> CreateDepositRefund(DepositRefundRequest request);
+        Task CancelPendingTransaction();
     }
 }

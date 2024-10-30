@@ -207,6 +207,8 @@ public class SD
         public static string LOAD_ORDER_DETAIL_STATUS = "LOAD_ORDER_DETAIL_STATUS";
         public static string LOAD_ORDER = "LOAD_ORDER";
         public static string LOAD_ORDER_DELIVERY = "LOAD_ORDER_DELIVERY";
+        public static string LOAD_RE_DELIVERING_REQUEST = "LOAD_RE_DELIVERING_REQUEST";
+
 
     }
 
@@ -218,5 +220,12 @@ public class SD
     public class RoleName
     {
         public static string ROLE_CHEF = "CHEF";
+        public static string ROLE_ADMIN = "ADMIN";
+
+    }
+
+    public class CancelledReason
+    {
+        public static string CANCELLED_BY_SYSTEM = "Đơn hàng được hủy bởi hệ thống";
     }
 }
