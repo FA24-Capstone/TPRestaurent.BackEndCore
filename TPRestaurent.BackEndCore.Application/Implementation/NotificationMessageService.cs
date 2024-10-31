@@ -55,6 +55,28 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
         return result;
     }
 
+    public async Task<AppActionResult> MarkMessageAsRead(List<Guid> messageIds)
+    {
+        var result = new AppActionResult();
+        try
+        {
+            var notificationDb = await _repository.GetAllDataByExpression(r => messageIds.Contains(r.NotificationId), 0, 0, null, false, null);
+            if (messageIds.Count != notificationDb.Items.Count)
+            {
+                return BuildAppActionResultError(result, $"Danh sách chứa id thông báo không tồn tại");
+            }
+
+            notificationDb.Items.ForEach(n => n.IsRead = true);
+            await _repository.UpdateRange(notificationDb.Items);
+            await _unitOfWork.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            result = BuildAppActionResultError(result, ex.Message);
+        }
+        return result;
+    }
+
     public async Task<AppActionResult> SendNotificationToAccountAsync(string accountId, string message)
     {
         var result = new AppActionResult();
