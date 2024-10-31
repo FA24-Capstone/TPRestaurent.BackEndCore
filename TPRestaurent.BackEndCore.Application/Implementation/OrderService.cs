@@ -592,6 +592,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                        $"vào lúc {orderRequestDto.ReservationOrder.MealTime.Hour}h{orderRequestDto.ReservationOrder.MealTime.Minute}p " +
                                                                        $"ngày {orderRequestDto.ReservationOrder.MealTime.Date}");
                         }
+
+                        if(suggestedTables.Messages.Count > 0)
+                        {
+                            result.Messages.AddRange(suggestedTables.Messages);
+                        }
+
                         //Add busniness rule for reservation time(if needed)
                         List<TableDetail> reservationTableDetails = new List<TableDetail>();
 
