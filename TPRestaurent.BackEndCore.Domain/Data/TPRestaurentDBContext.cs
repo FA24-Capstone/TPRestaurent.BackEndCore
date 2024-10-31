@@ -106,7 +106,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
 
 
             base.OnModelCreating(builder);
-            IConfiguration enums = GetVietnameseNames();
+          //  IConfiguration enums = GetVietnameseNames();
             SeedEnumTable<Models.EnumModels.OrderStatus, Enums.OrderStatus>(builder, enums);
             SeedEnumTable<Models.EnumModels.OTPType, Enums.OTPType>(builder, enums);
             SeedEnumTable<Models.EnumModels.PaymentMethod, Enums.PaymentMethod>(builder, enums);
