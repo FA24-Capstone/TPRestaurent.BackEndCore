@@ -40,15 +40,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _firebaseConfiguration = Resolve<FirebaseConfiguration>();
             _firebaseAdminSdk = Resolve<FirebaseAdminSDK>();
             _configuration = configuration;
-            if (FirebaseApp.DefaultInstance == null)
-            {
-                var credentials = GoogleCredential.FromFile("thienphu-app-firebase-adminsdk-7o08t-c9f521286a.json");
-                FirebaseApp.Create(new AppOptions
-                {
-                    Credential = credentials
-                });
-            }
-            _messaging = FirebaseMessaging.DefaultInstance;
+           
         }
 
         public async Task<AppActionResult> DeleteFileFromFirebase(string pathFileName)
@@ -79,6 +71,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         public async Task<string> SendNotificationAsync(string deviceToken, string title, string body, AppActionResult data = null)
         {
+            if (FirebaseApp.DefaultInstance == null)
+            {
+                var credentials = GoogleCredential.FromFile("thienphu-app-firebase-adminsdk-7o08t-c9f521286a.json");
+                FirebaseApp.Create(new AppOptions
+                {
+                    Credential = credentials
+                });
+            }
+            _messaging = FirebaseMessaging.DefaultInstance;
             var message = new Message
             {
                 Token = deviceToken,
@@ -106,6 +107,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             try
             {
+                if (FirebaseApp.DefaultInstance == null)
+                {
+                    var credentials = GoogleCredential.FromFile("thienphu-app-firebase-adminsdk-7o08t-c9f521286a.json");
+                    FirebaseApp.Create(new AppOptions
+                    {
+                        Credential = credentials
+                    });
+                }
+                _messaging = FirebaseMessaging.DefaultInstance;
                 var messages = new List<Message>();
                 foreach (var token in deviceTokens)
                 {
