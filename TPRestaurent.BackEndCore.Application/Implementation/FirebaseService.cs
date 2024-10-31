@@ -42,7 +42,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _configuration = configuration;
             if (FirebaseApp.DefaultInstance == null)
             {
-                var credentials = GoogleCredential.FromFile("thienphu-app-firebase-adminsdk-7o08t-63842a0fee.json");
+                var credentials = GoogleCredential.FromFile("thienphu-app-firebase-adminsdk-7o08t-c9f521286a.json");
                 FirebaseApp.Create(new AppOptions
                 {
                     Credential = credentials
