@@ -121,7 +121,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             SeedEnumTable<Models.EnumModels.TransactionType, Enums.TransactionType>(builder, enums);
             SeedEnumTable<Models.EnumModels.OrderSessionStatus, Enums.OrderSessionStatus>(builder, enums);
             SeedEnumTable<Models.EnumModels.DishComboDetailStatus, Enums.DishComboDetailStatus>(builder, enums);
-            SeedEnumTable<Models.EnumModels.DishComboDetailStatus, Enums.OrderAssignedStatus>(builder, enums);
+            SeedEnumTable<Models.EnumModels.OrderAssignedStatus, Enums.OrderAssignedStatus>(builder, enums);
 
         }
 
