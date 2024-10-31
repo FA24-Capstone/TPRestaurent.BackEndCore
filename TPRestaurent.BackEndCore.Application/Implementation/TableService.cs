@@ -103,6 +103,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var tableList = await FindBestTables(new List<Table>(availableTables), possibleTable);
                     if(tableList != null && tableList.Count > 0)
                     {
+                        int tableSizeCheck = 0;
                         foreach (var table in tableList)
                         {
                             var tableResponse = _mapper.Map<TableArrangementResponseItem>(table);
@@ -112,9 +113,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 tableResponse.Position.X = tableCoordinates.FirstOrDefault().Item1;
                                 tableResponse.Position.Y = tableCoordinates.FirstOrDefault().Item2;
                             }
-                            data.Add(tableResponse);    
+                            data.Add(tableResponse);
+                            tableSizeCheck += (int)table.TableSizeId;
                         }
                         result.Result = data;
+                        if(tableSizeCheck > dto.NumOfPeople)
+                        {
+                            result.Messages.Add("Lịch đặt bàn hiện tại đang khá dày nên nhà hàng sẽ phải kê thêm ghế cho quý khách");
+                        }
+
                         break;
                     }
                 }
