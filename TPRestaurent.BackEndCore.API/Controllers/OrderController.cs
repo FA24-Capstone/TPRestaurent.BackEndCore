@@ -107,11 +107,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.GetCurrentTableSession();
         }
 
-        [HttpPost("suggest-table")]
-        public async Task<AppActionResult> SuggestTable(SuggestTableDto dto)
-        {
-            return await _service.SuggestTable(dto);
-        }
+        //[HttpPost("suggest-table")]
+        //public async Task<AppActionResult> SuggestTable(SuggestTableDto dto)
+        //{
+        //    return await _service.SuggestTable(dto);
+        //}
 
         [HttpGet("get-table-reservation-with-time")]
         public async Task<AppActionResult> GetTableReservationWithTime(Guid tableId, DateTime? time)
@@ -153,6 +153,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         public async Task<AppActionResult> GetNumberOfOrderByStatus([FromBody]OrderFilterRequest request)
         {
             return  await _service.GetNumberOfOrderByStatus(request);       
+        }
+
+        [HttpPost("cancel-delivering-order")]
+        public async Task<AppActionResult> CancelDeliveringOrder(CancelDeliveringOrderRequest cancelDeliveringOrderRequest)
+        {
+            return await _service.CancelDeliveringOrder(cancelDeliveringOrderRequest);      
         }
 
         //[HttpPut("over")]

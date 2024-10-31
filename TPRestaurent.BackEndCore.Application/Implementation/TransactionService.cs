@@ -793,5 +793,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+        [Hangfire.Queue("cancel-pending-transaction")]
+        public async Task CancelPendingTransaction()
+        {
+            try
+            {
+                var transactionDb = await _repository.GetAllDataByExpression(p => p.TransationStatusId == TransationStatus.PENDING, 0, 0, null, false, null);
+                if (transactionDb!.Items!.Count > 0 && transactionDb.Items != null)
+                {
+                    await _repository.DeleteRange(transactionDb.Items); 
+                }
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+
+            }
+            Task.CompletedTask.Wait();  
+        }
     }
 }
