@@ -11,6 +11,7 @@ public class NotificationMessage
     public string NotificationName { get; set; }
     public string Messages { get; set; }
     public DateTime NotifyTime { get; set; }
+    public bool IsRead { get; set; }
     public string AccountId { get; set; }
     [ForeignKey(nameof(AccountId))]
     public Account? Account { get; set; }
