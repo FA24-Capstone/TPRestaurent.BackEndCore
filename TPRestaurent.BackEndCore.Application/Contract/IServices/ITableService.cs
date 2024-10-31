@@ -13,7 +13,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> GetAllTable(int pageNumber, int pageSize);
         //public Task<AppActionResult> GetTableById(Guid TableId);
         public Task<AppActionResult> CreateTable(TableDto dto);
-        //public Task<AppActionResult> UpdateTable(Guid TableId, TableDto dto);
+        public Task<AppActionResult> UpdateTableCoordinates(List<TableArrangementResponseItem> request);
         public Task<AppActionResult> FindTable(FindTableDto dto);
     }
 }

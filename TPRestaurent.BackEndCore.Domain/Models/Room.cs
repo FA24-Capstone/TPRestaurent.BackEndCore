@@ -12,5 +12,6 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         [Key]
         public Guid TableRatingId { get; set; }
         public string Name { get; set; } = null!;
+        public bool IsPrivate { get; set; }
     }
 }

@@ -72,16 +72,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var orderService = Resolve<IOrderService>();
-                var availableTables = await GetAvailableTable(dto.StartTime, dto.EndTime, dto.RoomId, dto.Quantity, 0, 0);
+                var data = new List<TableArrangementResponseItem>();
+                var availableTables = await GetAvailableTable(dto.StartTime, dto.EndTime, dto.IsPrivate, dto.NumOfPeople, 0, 0);
                 if (availableTables.Count == 0)
                 {
                     result.Messages.Add("Không tìm thấy bàn cho yêu cầu đặt bàn");
                     return result;
                 }
                 int[] sizes = { 2, 4, 6, 9, 11 }; // Possible sizes
-                int target = dto.Quantity + 2;
+                int target = dto.NumOfPeople + 2;
                 List<List<int>> possibleTableSet = new List<List<int>>();
-                await Backtrack(possibleTableSet, new List<int>(), sizes, dto.Quantity, 0, target);
+                await Backtrack(possibleTableSet, new List<int>(), sizes, dto.NumOfPeople, 0, target);
 
                 // Filter out subsets that are not optimal
                 possibleTableSet = await FilterOptimalSubsets(possibleTableSet);
@@ -102,7 +103,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var tableList = await FindBestTables(new List<Table>(availableTables), possibleTable);
                     if(tableList != null && tableList.Count > 0)
                     {
-                        result.Result = tableList;
+                        foreach (var table in tableList)
+                        {
+                            var tableResponse = _mapper.Map<TableArrangementResponseItem>(table);
+                            List<(int, int)> tableCoordinates = DeserializeList(table.Coordinates);
+                            if(tableCoordinates.Count > 0)
+                            {
+                                tableResponse.Position.X = tableCoordinates.FirstOrDefault().Item1;
+                                tableResponse.Position.Y = tableCoordinates.FirstOrDefault().Item2;
+                            }
+                            data.Add(tableResponse);    
+                        }
+                        result.Result = data;
                         break;
                     }
                 }
@@ -277,7 +289,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return proximity;
         }
 
-        public async Task<List<Table>> GetAvailableTable(DateTime startTime, DateTime? endTime, Guid roomId, int? numOfPeople, int pageNumber, int pageSize)
+        public async Task<List<Table>> GetAvailableTable(DateTime startTime, DateTime? endTime, bool isPrivate, int? numOfPeople, int pageNumber, int pageSize)
         {
             List<Table> result = new List<Table>();
             try
@@ -316,12 +328,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var reservationTableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
                     var reservedTableDb = await reservationTableDetailRepository!.GetAllDataByExpression(r => unavailableReservationIds.Contains(r.OrderId), 0, 0, null, false, r => r.Table.Room);
                     var reservedTableIds = reservedTableDb.Items!.Select(x => x.TableId);
-                    var availableTableDb = await _repository!.GetAllDataByExpression(t => !reservedTableIds.Contains(t.TableId) && t.RoomId == roomId, 0, 0, null, false, t => t.Room);
+                    var availableTableDb = await _repository!.GetAllDataByExpression(t => !reservedTableIds.Contains(t.TableId) && t.Room.IsPrivate == isPrivate, 0, 0, null, false, t => t.Room);
                     result = availableTableDb.Items;
                 }
                 else
                 {
-                    result = (await _repository!.GetAllDataByExpression(t => t.RoomId == roomId, 0, 0, null, false, r => r.Room)).Items;
+                    result = (await _repository!.GetAllDataByExpression(t => t.Room.IsPrivate == isPrivate, 0, 0, null, false, r => r.Room)).Items;
                 }
                 //result.Result = availableReservation.Items.Select(x => x.Table);
             }
@@ -359,64 +371,43 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        //public async Task<AppActionResult> GetTableById(Guid TableId)
-        //{
-        //    AppActionResult result = new AppActionResult();
-        //    try
-        //    {
-        //        result.Result = await _repository.GetByExpression(null, t => t.TableRating);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        result = BuildAppActionResultError(result, ex.Message);
-        //    }
-        //    return result;
-        //}
+        public async Task<AppActionResult> UpdateTableCoordinates(List<TableArrangementResponseItem> request)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var tableIds = request.Select(r => r.Id).ToList();
+                var tableDb = await _repository.GetAllDataByExpression(r => tableIds.Contains(r.TableId), 0, 0, null, false, null);
+                if (tableIds.Count != tableDb.Items.Count)
+                {
+                    return BuildAppActionResultError(result, $"Danh sách chứa id bàn không tồn tại");
+                }
+                foreach (var table in tableDb.Items)
+                {
+                    var inputTable = request.FirstOrDefault(i => i.Id == table.TableId);
+                    List<(int, int)> coordinate = new List<(int, int)>();
+                    coordinate.Add((inputTable.Position.X, inputTable.Position.Y));
+                    for (int i = 2; i < (int)inputTable.TableSizeId; i+=2)
+                    {
+                        coordinate.Add((inputTable.Position.X + i, inputTable.Position.Y));
+                    }
+                    table.TableSizeId = inputTable.TableSizeId; 
+                    table.Coordinates = ParseListToString(coordinate);  
+                }
+                await _repository.UpdateRange(tableDb.Items);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+            }
+            return result;
+        }
 
-        //public async Task<AppActionResult> UpdateTable(Guid TableId, TableDto dto)
-        //{
-        //    AppActionResult result = new AppActionResult();
-        //    try
-        //    {
-        //        var tableDb = await _repository.GetById(TableId);
-        //        if(tableDb == null)
-        //        {
-        //            result = BuildAppActionResultError(result, $"Không tìm thấy bàn với id {TableId}");
-        //            return result;
-        //        } 
+        private string ParseListToString(List<(int, int)> list)
+        {
+            // Convert the list of tuples to a string format "(x,y);(x,y);..."
+            return string.Join(";", list.Select(tuple => $"({tuple.Item1},{tuple.Item2})"));
+        }
 
-        //        //Name validation (if needed)
-        //        if (string.IsNullOrEmpty(dto.TableName))
-        //        {
-        //            result = BuildAppActionResultError(result, "Tên bàn không được để trống");
-        //            return result;
-        //        }
-
-        //        if ((int)dto.TableSizeId < 1)
-        //        {
-        //            result = BuildAppActionResultError(result, "Số ghế ngồi phải lớn hơn 0");
-        //            return result;
-        //        }
-
-        //        var tableRatingRepository = Resolve<IGenericRepository<Room>>();
-        //        if ((await tableRatingRepository.GetById(dto.TableRatingId) == null))
-        //        {
-        //            result = BuildAppActionResultError(result, $"Không tìm thấy phân loại bàn với id {dto.TableRatingId}");
-        //            return result;
-        //        }
-
-        //        tableDb.TableName = dto.TableName;  
-        //        tableDb.TableSizeId = dto.TableSizeId;  
-        //        tableDb.TableRatingId = dto.TableRatingId;
-
-        //        await _repository.Update(tableDb);
-        //        await _unitOfWork.SaveChangesAsync();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        result = BuildAppActionResultError(result, ex.Message);
-        //    }
-        //    return result;
-        //}
     }
 }
