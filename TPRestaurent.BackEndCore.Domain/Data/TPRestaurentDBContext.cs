@@ -150,7 +150,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
                 modelBuilder.Entity<TEntity>().HasData(entityInstance!);
             }
         }
-        public static IConfigurationSection GetVietnameseNames()
+     /*   public static IConfigurationSection GetVietnameseNames()
         {
             var configuration = new ConfigurationBuilder()
                      .SetBasePath(Directory.GetCurrentDirectory())
@@ -158,6 +158,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
                      .Build();
             return configuration.GetSection("VietnameseNames");
         }
+        */
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             //IConfiguration config = new ConfigurationBuilder()
