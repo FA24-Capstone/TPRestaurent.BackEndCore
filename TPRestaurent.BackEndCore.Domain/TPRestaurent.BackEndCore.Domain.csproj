@@ -24,7 +24,6 @@
   <ItemGroup>
     <None Remove="Data\" />
     <None Remove="Models\" />
-    <None Remove="vietnamesenames.json" />
   </ItemGroup>
 
   <ItemGroup>
