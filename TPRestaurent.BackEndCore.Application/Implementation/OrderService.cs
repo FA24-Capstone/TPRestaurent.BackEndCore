@@ -3440,6 +3440,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await accountRepository.Update(accountDb);
                         await _repository.Update(order);
                         await _unitOfWork.SaveChangesAsync();
+                        scope.Complete();
                     }
                 }
                 catch (Exception ex)
