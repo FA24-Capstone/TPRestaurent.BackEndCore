@@ -86,7 +86,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 // Filter out subsets that are not optimal
                 possibleTableSet = await FilterOptimalSubsets(possibleTableSet);
-                possibleTableSet = await FilterAvailableQuantity(possibleTableSet, availableTables.GroupBy(a => (int)a.TableSizeId).ToDictionary(a => a.Key, a => a.Count()));
+                var tableSizeDictionary = availableTables.GroupBy(a => (int)a.TableSizeId).ToDictionary(a => a.Key, a => a.Count());
+                var adjustedTableSizeDictionary = new Dictionary<int, int>();
+                foreach(var table in tableSizeDictionary)
+                {
+                    if(table.Key == 8 || table.Key == 10)
+                    {
+                        adjustedTableSizeDictionary.Add(table.Key + 1, table.Value);
+                    } else
+                    {
+                        adjustedTableSizeDictionary.Add(table.Key, table.Value);
+                    }
+                }
+                possibleTableSet = await FilterAvailableQuantity(possibleTableSet, adjustedTableSizeDictionary);
                 foreach (var possibleTable in possibleTableSet)
                 {
                     for (int i = 0; i < possibleTable.Count; i++)
@@ -142,7 +154,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 foreach (var possibleTable in possibleTableSet)
                 {
                     isValid = true;
-                    if (!possibleTable.Distinct().OrderBy(x => x).SequenceEqual(dictionary.Select(x => x.Key).OrderBy(x=> x)))
+                    var dictionaryKey = dictionary.Select(x => x.Key).OrderBy(x => x).ToList();
+                    var possibleTableKey = possibleTable.Distinct().OrderBy(x => x).ToList();
+                    if (dictionaryKey.All(possibleTableKey.Contains))
                     {
                         continue;
                     }
@@ -418,25 +432,25 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         for (int i = 1; i < (int)inputTable.TableSizeId / 2; i++)
                         {
-                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y + i));
+                            coordinate.Add((inputTable.Position.X + i, inputTable.Position.Y));
                         }
                     } else
                     {
                         if(inputTable.TableSizeId == TableSize.TEN)
                         {
-                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 1));
-                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 2));
-                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 3));
-
                             coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y));
+                            coordinate.Add((inputTable.Position.X + 2, inputTable.Position.Y));
+                            coordinate.Add((inputTable.Position.X + 3, inputTable.Position.Y));
+
+                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 1));
                             coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 1));
-                            coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 2));
-                            coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 3));
+                            coordinate.Add((inputTable.Position.X + 2, inputTable.Position.Y + 1));
+                            coordinate.Add((inputTable.Position.X + 3, inputTable.Position.Y + 1));
                         } else
                         {
-                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 1));
-
                             coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y));
+
+                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 1));
                             coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 1));
                         }
                     }
