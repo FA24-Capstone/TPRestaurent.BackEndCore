@@ -362,7 +362,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                result.Result = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, null, false, t => t.Room, t => t.TableSize);
+                var tableDb = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, null, false, t => t.Room, t => t.TableSize);
+                if (tableDb.Items.Count > 0)
+                {
+                    var data = new List<TableArrangementResponseItem>();
+                    foreach (var item in tableDb.Items)
+                    {
+                        var tableResponse = _mapper.Map<TableArrangementResponseItem>(item);
+                        List<(int, int)> tableCoordinates = DeserializeList(item.Coordinates);
+                        if (tableCoordinates.Count > 0)
+                        {
+                            tableResponse.Position.X = tableCoordinates.FirstOrDefault().Item1;
+                            tableResponse.Position.Y = tableCoordinates.FirstOrDefault().Item2;
+                        }
+                        data.Add(tableResponse);
+                    }
+                    result.Result = new PagedResult<TableArrangementResponseItem>
+                    {
+                        Items = data,
+                        TotalPages = tableDb.TotalPages
+                    };
+                }
             }
             catch (Exception ex)
             {
@@ -387,9 +407,31 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var inputTable = request.FirstOrDefault(i => i.Id == table.TableId);
                     List<(int, int)> coordinate = new List<(int, int)>();
                     coordinate.Add((inputTable.Position.X, inputTable.Position.Y));
-                    for (int i = 2; i < (int)inputTable.TableSizeId; i+=2)
+                    if(inputTable.TableSizeId != TableSize.EIGHT && inputTable.TableSizeId != TableSize.TEN)
                     {
-                        coordinate.Add((inputTable.Position.X + i, inputTable.Position.Y));
+                        for (int i = 1; i < (int)inputTable.TableSizeId / 2; i++)
+                        {
+                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y + i));
+                        }
+                    } else
+                    {
+                        if(inputTable.TableSizeId == TableSize.TEN)
+                        {
+                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 1));
+                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 2));
+                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 3));
+
+                            coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y));
+                            coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 1));
+                            coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 2));
+                            coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 3));
+                        } else
+                        {
+                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 1));
+
+                            coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y));
+                            coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 1));
+                        }
                     }
                     table.TableSizeId = inputTable.TableSizeId; 
                     table.Coordinates = ParseListToString(coordinate);  
