@@ -85,9 +85,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 Notification = new Notification
                 {
                     Title = title,
-                    Body = body
+                    Body = body,
+                    ImageUrl = "https://firebasestorage.googleapis.com/v0/b/thienphu-app.appspot.com/o/icon.png?alt=media&token=5a819b51-28eb-4f22-b303-0a01bfc5638d"
                 },
-                 Data =  Utility.ToDictionary( data)
+                Data = Utility.ToDictionary(data)
             };
 
             try
@@ -97,7 +98,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error sending FCM notification: {ex.Message}");
+                return null;
             }
         }
 
@@ -114,7 +115,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         Notification = new Notification
                         {
                             Title = title,
-                            Body = body
+                            Body = body,
+                            ImageUrl = "https://firebasestorage.googleapis.com/v0/b/thienphu-app.appspot.com/o/icon.png?alt=media&token=5a819b51-28eb-4f22-b303-0a01bfc5638d"
                         },
                         Data = data != null ? Utility.ToDictionary(data) : null // Optional data payload
                     };
@@ -132,7 +134,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error sending batch FCM notifications: {ex.Message}");
+                return null;
             }
         }
 
