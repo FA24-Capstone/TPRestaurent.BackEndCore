@@ -25,7 +25,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> MakeDineInOrderBill(OrderPaymentRequestDto orderRequestDto);
         public Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful, OrderStatus? status = null);
         public Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto);
-        public Task<AppActionResult> SuggestTable(SuggestTableDto dto);
+        //public Task<AppActionResult> SuggestTable(SuggestTableDto dto);
         //public Task<AppActionResult> GetOrderTotal(CalculateOrderRequest orderRequestDto);
         //public Task<AppActionResult> GetOrderJsonByTableSessionId(Guid TableSessionId);
         public Task<AppActionResult> GetTableReservationWithTime(Guid tableId, DateTime? time);
@@ -47,7 +47,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task RemindOrderReservation();
         public Task<AppActionResult> GetNumberOfOrderByStatus(OrderFilterRequest request);
         public Task<AppActionResult> CancelDeliveringOrder(CancelDeliveringOrderRequest cancelDeliveringOrderRequest);
-
 
 
     }

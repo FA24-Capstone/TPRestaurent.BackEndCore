@@ -48,20 +48,26 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             }
         }
     
-    [HttpPost("send-multi")]
-    public async Task<IActionResult> SendMulticastAsync([FromBody] List<NotificationRequest> request)
-    {
-        try
+        [HttpPost("send-multi")]
+        public async Task<IActionResult> SendMulticastAsync([FromBody] List<NotificationRequest> request)
         {
+            try
+            {
                 
-            var result = await _firebase.SendMulticastAsync(request.Select(a=> a.DeviceToken).ToList(),"test","test"
-            );
-            return Ok(result);
+                var result = await _firebase.SendMulticastAsync(request.Select(a=> a.DeviceToken).ToList(),"test","test"
+                );
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
-        catch (Exception ex)
+
+        [HttpPost("mark-as-read")]
+        public async Task<AppActionResult> SendMulticastAsync([FromBody] List<Guid> messageIds)
         {
-            return BadRequest(ex.Message);
+            return await _notificationMessageService.MarkMessageAsRead(messageIds);
         }
     }
-}
 }

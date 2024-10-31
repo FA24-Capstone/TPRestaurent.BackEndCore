@@ -406,6 +406,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
                     var tokenRepostiory = Resolve<IGenericRepository<Token>>();
                     var hubService = Resolve<IHubServices.IHubServices>();
+                    var tableService = Resolve<ITableService>();
                     var mapService = Resolve<IMapService>();
                     var createdOrderId = new Guid();
                     var dishSizeDetail = new DishSizeDetail();
@@ -570,7 +571,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.IsPrivate = orderRequestDto.ReservationOrder.IsPrivate;
                         order.Deposit = Math.Ceiling((double)orderRequestDto.ReservationOrder.Deposit / 1000) * 1000;
 
-                        var suggestTableDto = new SuggestTableDto
+                        var suggestTableDto = new FindTableDto
                         {
                             StartTime = orderRequestDto.ReservationOrder.MealTime,
                             EndTime = orderRequestDto.ReservationOrder.EndTime,
@@ -578,34 +579,37 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             NumOfPeople = orderRequestDto.ReservationOrder.NumberOfPeople,
                         };
 
-                        var suggestedTables = await GetSuitableTable(suggestTableDto);
-                        if (suggestedTables == null || suggestedTables.Count == 0)
+                        var suggestedTables = await tableService.FindTable(suggestTableDto);
+
+                        if (!suggestedTables.IsSuccess)
                         {
-                            result = BuildAppActionResultError(result, $"Không có bàn trống cho {orderRequestDto.ReservationOrder.NumberOfPeople} người " +
+                            return BuildAppActionResultError(result, $"Xảy ra lỗi khi xếp bàn. Vui lòng thử lại");
+                        }
+
+                        if (suggestedTables.Result == null)
+                        {
+                            return BuildAppActionResultError(result, $"Không có bàn trống cho {orderRequestDto.ReservationOrder.NumberOfPeople} người " +
                                                                        $"vào lúc {orderRequestDto.ReservationOrder.MealTime.Hour}h{orderRequestDto.ReservationOrder.MealTime.Minute}p " +
                                                                        $"ngày {orderRequestDto.ReservationOrder.MealTime.Date}");
-                            return result;
                         }
+
+                        if(suggestedTables.Messages.Count > 0)
+                        {
+                            result.Messages.AddRange(suggestedTables.Messages);
+                        }
+
                         //Add busniness rule for reservation time(if needed)
                         List<TableDetail> reservationTableDetails = new List<TableDetail>();
 
-                        //foreach(var suggestedTable in suggestedTables)
-                        //{
-                        //    reservationTableDetails.Add(new TableDetail
-                        //    {
-                        //        TableDetailId = Guid.NewGuid(),
-                        //        OrderId = order.OrderId,
-                        //        TableId = suggestedTable.TableId
-                        //    });
-                        //}
-
-                        reservationTableDetails.Add(new TableDetail
+                        foreach (var suggestedTable in suggestedTables.Result as List<TableArrangementResponseItem>)
                         {
-                            TableDetailId = Guid.NewGuid(),
-                            OrderId = order.OrderId,
-                            TableId = suggestedTables[0].TableId,
-                            StartTime = orderRequestDto.ReservationOrder.MealTime
-                        });
+                            reservationTableDetails.Add(new TableDetail
+                            {
+                                TableDetailId = Guid.NewGuid(),
+                                OrderId = order.OrderId,
+                                TableId = suggestedTable.Id
+                            });
+                        }
 
                         await tableDetailRepository.InsertRange(reservationTableDetails);
 
@@ -1712,35 +1716,35 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> SuggestTable(SuggestTableDto dto)
-        {
-            AppActionResult result = new AppActionResult();
-            try
-            {
-                if (dto.NumOfPeople <= 0)
-                {
-                    return null;
-                }
+        //public async Task<AppActionResult> SuggestTable(SuggestTableDto dto)
+        //{
+        //    AppActionResult result = new AppActionResult();
+        //    try
+        //    {
+        //        if (dto.NumOfPeople <= 0)
+        //        {
+        //            return null;
+        //        }
 
-                //Get All Available Table
-                var availableTableResult = await GetAvailableTable(dto.StartTime, dto.EndTime, dto.NumOfPeople, 0, 0);
-                if (availableTableResult.IsSuccess)
-                {
-                    var availableTable = (PagedResult<Table>)availableTableResult.Result!;
-                    if (availableTable.Items!.Count > 0)
-                    {
-                        var suitableTables = await GetTables(availableTable.Items, dto.NumOfPeople, dto.IsPrivate);
-                        result.Result = suitableTables.Count == 0 ? new List<Table>() : suitableTables;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
+        //        //Get All Available Table
+        //        var availableTableResult = await GetAvailableTable(dto.StartTime, dto.EndTime, dto.NumOfPeople, 0, 0);
+        //        if (availableTableResult.IsSuccess)
+        //        {
+        //            var availableTable = (PagedResult<Table>)availableTableResult.Result!;
+        //            if (availableTable.Items!.Count > 0)
+        //            {
+        //                var suitableTables = await GetTables(availableTable.Items, dto.NumOfPeople, dto.IsPrivate);
+        //                result.Result = suitableTables.Count == 0 ? new List<Table>() : suitableTables;
+        //            }
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        result = BuildAppActionResultError(result, ex.Message);
+        //    }
 
-            return result;
-        }
+        //    return result;
+        //}
         public async Task<List<Table>> GetTables(List<Table> allAvailableTables, int quantity, bool isPrivate)
         {
             List<Table> result = new List<Table>();
