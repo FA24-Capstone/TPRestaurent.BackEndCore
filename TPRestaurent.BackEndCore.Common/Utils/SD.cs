@@ -85,8 +85,8 @@ public class SD
     {
         public static string AVERAGE_MEAL_DURATION = "AVERAGE_MEAL_DURATION";
         public static string DEPOSIT_PERCENT = "DEPOSIT_PERCENT";
-        public static string DEPOSIT_FOR_NORMAL_TABLE= "DEPOSIT_FOR_NORMAL_TABLE";
-        public static string DEPOSIT_FOR_PRIVATE_TABLE= "DEPOSIT_FOR_PRIVATE_TABLE";
+        public static string DEPOSIT_FOR_NORMAL_TABLE = "DEPOSIT_FOR_NORMAL_TABLE";
+        public static string DEPOSIT_FOR_PRIVATE_TABLE = "DEPOSIT_FOR_PRIVATE_TABLE";
         public static string TIME_TO_LOOK_UP_FOR_RESERVATION = "TIME_TO_LOOK_UP_FOR_RESERVATION";
         public static string EXPIRE_TIME_FOR_STORE_CREDIT = "EXPIRE_TIME_FOR_STORE_CREDIT";
         public static string REFUND_APPLYING_TIME_FOR_RESEVATION_CANCELATION = "REFUND_APPLYING_TIME_FOR_RESEVATION_CANCELATION";
@@ -199,7 +199,7 @@ public class SD
         public static string COUPON_PREFIX = "coupon/";
         public static string ORDER_PREFIX = "order/";
     }
-    
+
     public class SignalMessages
     {
         public static string LOAD_ORDER_SESIONS = "LOAD_ORDER_SESIONS";
@@ -208,6 +208,7 @@ public class SD
         public static string LOAD_ORDER = "LOAD_ORDER";
         public static string LOAD_ORDER_DELIVERY = "LOAD_ORDER_DELIVERY";
         public static string LOAD_RE_DELIVERING_REQUEST = "LOAD_RE_DELIVERING_REQUEST";
+        public static string LOAD_ASSIGNED_ORDER = "LOAD_ASSIGNED_ORDER";
 
 
     }
@@ -221,6 +222,8 @@ public class SD
     {
         public static string ROLE_CHEF = "CHEF";
         public static string ROLE_ADMIN = "ADMIN";
+        public static string ROLE_SHIPPER = "ADMIN";
+
 
     }
 
