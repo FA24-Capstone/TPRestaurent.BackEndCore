@@ -85,6 +85,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 // Filter out subsets that are not optimal
                 possibleTableSet = await FilterOptimalSubsets(possibleTableSet);
+                possibleTableSet = await FilterAvailableQuantity(possibleTableSet, availableTables.GroupBy(a => (int)a.TableSizeId).ToDictionary(a => a.Key, a => a.Count()));
                 foreach (var possibleTable in possibleTableSet)
                 {
                     for (int i = 0; i < possibleTable.Count; i++)
@@ -111,6 +112,40 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 result = BuildAppActionResultError(result, ex.Message );
             }
             return result;
+        }
+
+        private async Task<List<List<int>>> FilterAvailableQuantity(List<List<int>> possibleTableSet, Dictionary<int, int> dictionary)
+        {
+            List<List<int>> reducedList = new List<List<int>>();
+            try
+            {
+                bool isValid = true;
+                foreach (var possibleTable in possibleTableSet)
+                {
+                    isValid = true;
+                    if (!possibleTable.Distinct().OrderBy(x => x).SequenceEqual(dictionary.Select(x => x.Key).OrderBy(x=> x)))
+                    {
+                        continue;
+                    }
+                    foreach (var kvp in dictionary)
+                    {
+                        if (possibleTable.Count(p => p == kvp.Key) > kvp.Value)
+                        {
+                            isValid = false;
+                            break;
+                        }
+                    }
+                    if (isValid)
+                    {
+                        reducedList.Add(possibleTable);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return possibleTableSet;
+            }
+            return reducedList;
         }
 
         private async Task Backtrack(List<List<int>> result, List<int> current, int[] sizes, int number, int start, int target)
@@ -175,7 +210,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private async Task<List<Table>> FindBestTables(List<Table> tables, List<int> requestedSizes)
         {
             List<Table> bestCombination = null;
-            Backtrack(tables, requestedSizes, new List<Table>(), ref bestCombination, 0);
+            Backtrack(new List<Table>(tables.OrderBy(t => t.Coordinates)), requestedSizes.OrderBy(r => r).ToList(), new List<Table>(), ref bestCombination, 0);
             return bestCombination;
         }
 
@@ -216,8 +251,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             if (bestTable != null)
             {
                 currentTables.Add(bestTable);
-                tables.Remove(bestTable);
-                Backtrack(tables, sizes.Skip(1).ToList(), currentTables, ref bestCombination, startIndex + 1);
+                Backtrack(tables.Where(t => t.TableId != bestTable.TableId).ToList(), sizes.Skip(1).ToList(), currentTables, ref bestCombination, startIndex);
                 currentTables.RemoveAt(currentTables.Count - 1); // Backtrack step
             }
         }
