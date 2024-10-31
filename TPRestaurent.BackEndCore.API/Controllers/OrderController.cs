@@ -107,11 +107,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.GetCurrentTableSession();
         }
 
-        [HttpPost("suggest-table")]
-        public async Task<AppActionResult> SuggestTable(SuggestTableDto dto)
-        {
-            return await _service.SuggestTable(dto);
-        }
+        //[HttpPost("suggest-table")]
+        //public async Task<AppActionResult> SuggestTable(SuggestTableDto dto)
+        //{
+        //    return await _service.SuggestTable(dto);
+        //}
 
         [HttpGet("get-table-reservation-with-time")]
         public async Task<AppActionResult> GetTableReservationWithTime(Guid tableId, DateTime? time)

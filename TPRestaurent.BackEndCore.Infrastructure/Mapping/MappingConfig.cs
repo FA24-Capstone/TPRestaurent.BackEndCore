@@ -199,8 +199,13 @@ public class MappingConfig
             .ForMember(dest => dest.NumOfPeople, opt => opt.MapFrom(src => src.NumOfPeople))
             .ForMember(dest => dest.Deposit, opt => opt.MapFrom(src => src.Deposit))
             .ForMember(dest => dest.IsPrivate, opt => opt.MapFrom(src => src.IsPrivate))
-            .ForMember(dest => dest.CancelDeliveryReason, act => act.MapFrom(src => src.CancelDeliveryReason))
-;
+            .ForMember(dest => dest.CancelDeliveryReason, act => act.MapFrom(src => src.CancelDeliveryReason));
+
+            config.CreateMap<Table, TableArrangementResponseItem>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TableId))
+            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.TableName))
+            .ForMember(dest => dest.TableSizeId, opt => opt.MapFrom(src => src.TableSizeId))
+            .ReverseMap();
         });
 
 
