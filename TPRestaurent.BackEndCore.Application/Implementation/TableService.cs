@@ -489,13 +489,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var congfigurationRepository = Resolve<IGenericRepository<Configuration>>();
-                var tableSetUpConfig = await congfigurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TABLE_IS_SET_UP), null);
                 if(!isForce.HasValue || !isForce.Value)
                 {
+                    var congfigurationRepository = Resolve<IGenericRepository<Configuration>>();
+                    var tableSetUpConfig = await congfigurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TABLE_IS_SET_UP), null);
                     if (tableSetUpConfig != null)
                     {
-                        if (tableSetUpConfig.CurrentValue.Equals(SD.DefaultValue.IS_SET_UP))
+                        if (tableSetUpConfig.CurrentValue.Equals("1"))
                         {
                             return BuildAppActionResultError(result, $"Sơ đồ bàn đã được thiết lập từ trước. Nếu thay đổi có ảnh hưởng đến lịch đặt bàn sau này");
                         }
