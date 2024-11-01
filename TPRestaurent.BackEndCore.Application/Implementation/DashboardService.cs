@@ -68,40 +68,44 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var utility = Resolve<TPRestaurent.BackEndCore.Common.Utils.Utility>();
             var currentTime = utility!.GetCurrentDateTimeInTimeZone();
             var transactionRepository = Resolve<IGenericRepository<Transaction>>();
+
             try
             {
-                double presentProfitNumber = 0;
-                double yesterdayProfitNumber = 0;
-                ProfitReportResponse profitReportResponse = new ProfitReportResponse();
-                var presentTransactionDb = await transactionRepository!.GetAllDataByExpression(p => p.Date.Date.Equals(currentTime.Date) && p.TransationStatusId == TransationStatus.SUCCESSFUL, 0, 0, null, false, null);
-                if (presentTransactionDb.Items.Count > 0 && presentTransactionDb.Items != null)
-                {
-                    foreach (var presentTransaction in presentTransactionDb.Items)
-                    {
-                        presentProfitNumber += presentTransaction.Amount;
-                    }
-                }
+                var todayStart = currentTime.Date;
+                var todayEnd = todayStart.AddDays(1).AddTicks(-1);
+                var yesterdayStart = todayStart.AddDays(-1);
+                var yesterdayEnd = todayStart.AddTicks(-1);
 
-                var yesterday = currentTime.AddDays(-1).Date;
-                var yesterdayTransactionDb = await transactionRepository!.GetAllDataByExpression(
-                    p => p.Date.Date == yesterday && p.TransationStatusId == TransationStatus.SUCCESSFUL,
+                var presentTransactionDb = await transactionRepository!.GetAllDataByExpression(
+                    p => p.Date >= todayStart &&
+                         p.Date <= todayEnd &&
+                         p.TransationStatusId == TransationStatus.SUCCESSFUL,
                     0, 0, null, false, null);
-                if (yesterdayTransactionDb.Items.Count > 0 && yesterdayTransactionDb.Items != null)
-                {
-                    foreach (var yesterdayTransaction in yesterdayTransactionDb.Items)
-                    {
-                        yesterdayProfitNumber += yesterdayTransaction.Amount;
-                    }
-                }
 
-                profitReportResponse.Profit = presentProfitNumber;
-                profitReportResponse.PercentProfit = Math.Round((presentProfitNumber / yesterdayProfitNumber));
+                var yesterdayTransactionDb = await transactionRepository!.GetAllDataByExpression(
+                    p => p.Date >= yesterdayStart &&
+                         p.Date <= yesterdayEnd &&
+                         p.TransationStatusId == TransationStatus.SUCCESSFUL,
+                    0, 0, null, false, null);
+
+                var presentProfitNumber = presentTransactionDb.Items?.Sum(t => t.Amount) ?? 0;
+                var yesterdayProfitNumber = yesterdayTransactionDb.Items?.Sum(t => t.Amount) ?? 0;
+
+                var profitReportResponse = new ProfitReportResponse
+                {
+                    Profit = presentProfitNumber,
+                    PercentProfit = yesterdayProfitNumber != 0
+                        ? Math.Round((presentProfitNumber / yesterdayProfitNumber) * 100, 2)
+                        : 0 
+                };
+
                 result.Result = profitReportResponse;
             }
             catch (Exception ex)
             {
                 result = BuildAppActionResultError(result, ex.Message);
             }
+
             return result;
         }
 
@@ -151,7 +155,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else
                 {
-                    result.Result = chefDb;
+                    result.Result = chefDb.Count();
                 }
             }
             catch (Exception ex)
@@ -174,13 +178,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var customerDb = await _userManager.GetUsersInRoleAsync(SD.RoleName.ROLE_CUSTOMER);
                 var customerLastWeekDb = await _userManager.GetUsersInRoleAsync(SD.RoleName.ROLE_CUSTOMER);
 
-                var customerLastWeek = customerLastWeekDb.Where(p => p.RegisteredDate.Date == currentTime.AddDays(-7));
-                customerStasticResponse.NumberOfCustomer = customerDb.Count();
-                customerStasticResponse.PercentIncrease = Math.Round(
-                customerStasticResponse.PercentIncrease = Math.Round(
-                    (double)customerDb.Count() / customerLastWeek.Count()
-                ));
-                result.Result = customerStasticResponse;        
+                var customerLastWeek = customerLastWeekDb.Where(p => p.RegisteredDate.Date == currentTime.AddDays(-7).Date);
+                var lastWeekCount = customerLastWeek.Count();
+                var customerCount = customerDb.Count();
+
+                customerStasticResponse.NumberOfCustomer = customerCount;
+                customerStasticResponse.PercentIncrease = lastWeekCount == 0 ? 0 : Math.Round(
+                    (double)customerCount / lastWeekCount
+                );
+                result.Result = customerStasticResponse;
             }
             catch (Exception ex)
             {
