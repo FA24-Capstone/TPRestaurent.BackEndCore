@@ -158,7 +158,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             ExpiryTimeAccessToken = utility.GetCurrentDateTimeInTimeZone().AddDays(30),
                             ExpiryTimeRefreshToken = utility.GetCurrentDateTimeInTimeZone().AddDays(30),
                             DeviceName = deviceName,
-                            DeviceToken = string.Empty,
+                            DeviceToken = null,
                             AccessTokenValue = tokenDto.Token!,
                             RefreshTokenValue = tokenDto.RefreshToken!,
                             IsActive = true,

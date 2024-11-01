@@ -16,11 +16,11 @@ COPY ["TPRestaurent.BackEndCore.Infrastructure/TPRestaurent.BackEndCore.Infrastr
 RUN dotnet restore "./TPRestaurent.BackEndCore.API/TPRestaurent.BackEndCore.API.csproj"
 COPY . .
 WORKDIR "/src/TPRestaurent.BackEndCore.API"
-RUN dotnet build "./TPRestaurent.BackEndCore.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./TPRestaurent.BackEndCore.API.csproj" -c Release  -o /app/build
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./TPRestaurent.BackEndCore.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./TPRestaurent.BackEndCore.API.csproj" -c Release  -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
