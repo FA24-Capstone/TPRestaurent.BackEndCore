@@ -25,5 +25,6 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public bool IsDelivering { get; set; }
         public double StoreCreditAmount { get; set; }
         public DateTime ExpiredDate { get; set; }
+        public DateTime RegisteredDate { get; set; }    
     }
 }
