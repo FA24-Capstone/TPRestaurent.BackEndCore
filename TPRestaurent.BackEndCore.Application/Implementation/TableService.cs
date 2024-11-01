@@ -412,11 +412,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> UpdateTableCoordinates(List<TableArrangementResponseItem> request)
+        public async Task<AppActionResult> UpdateTableCoordinates(List<TableArrangementResponseItem> request, bool? isForce = false)
         {
             AppActionResult result = new AppActionResult();
             try
             {
+                if(!isForce.HasValue || !isForce.Value)
+                {
+                    var congfigurationRepository = Resolve<IGenericRepository<Configuration>>();
+                    var tableSetUpConfig = await congfigurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TABLE_IS_SET_UP), null);
+                    if (tableSetUpConfig != null)
+                    {
+                        if (tableSetUpConfig.CurrentValue.Equals("1"))
+                        {
+                            return BuildAppActionResultError(result, $"Sơ đồ bàn đã được thiết lập từ trước. Nếu thay đổi có ảnh hưởng đến lịch đặt bàn sau này");
+                        }
+                    }
+                }
                 var tableIds = request.Select(r => r.Id).ToList();
                 var tableDb = await _repository.GetAllDataByExpression(r => tableIds.Contains(r.TableId), 0, 0, null, false, null);
                 if (tableIds.Count != tableDb.Items.Count)
@@ -432,20 +444,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         for (int i = 1; i < (int)inputTable.TableSizeId / 2; i++)
                         {
-                            coordinate.Add((inputTable.Position.X + i, inputTable.Position.Y));
+                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y + i));
                         }
                     } else
                     {
                         if(inputTable.TableSizeId == TableSize.TEN)
                         {
-                            coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y));
-                            coordinate.Add((inputTable.Position.X + 2, inputTable.Position.Y));
-                            coordinate.Add((inputTable.Position.X + 3, inputTable.Position.Y));
-
                             coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 1));
+                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 2));
+                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 3));
+
+                            coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y));
                             coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 1));
-                            coordinate.Add((inputTable.Position.X + 2, inputTable.Position.Y + 1));
-                            coordinate.Add((inputTable.Position.X + 3, inputTable.Position.Y + 1));
+                            coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 2));
+                            coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 3));
                         } else
                         {
                             coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y));
