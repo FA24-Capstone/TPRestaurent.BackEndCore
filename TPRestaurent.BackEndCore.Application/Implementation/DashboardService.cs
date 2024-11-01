@@ -245,15 +245,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
+                ShipperStatisticResponse shipperStatisticResponse = new ShipperStatisticResponse();
                 var shipperDb = await _userManager.GetUsersInRoleAsync(SD.RoleName.ROLE_SHIPPER);
-                if (shipperDb == null)
-                {
-                    result.Result = 0;
-                }
-                else
-                {
-                    result.Result = shipperDb;
-                }
+                shipperStatisticResponse.NumberOfShipperIsWorking = shipperDb.Where(p => p.IsDelivering).Count();
+                shipperStatisticResponse.NumberOfShipper = shipperDb.Count;
+                result.Result = shipperStatisticResponse;
             }
             catch (Exception ex)
             {
