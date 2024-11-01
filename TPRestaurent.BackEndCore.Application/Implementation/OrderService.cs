@@ -430,6 +430,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
 
                         order.AccountId = orderRequestDto.CustomerId.ToString();
+
+                        if(orderRequestDto.OrderType == OrderType.Reservation)
+                        {
+                            if(accountDb.Email.Contains("TPCustomer") || accountDb.LastName.ToLower().Contains("lastname") || accountDb.LastName.ToLower().Contains("firstname") || accountDb.DOB == new DateTime(1, 1, 1))
+                            {
+                                return BuildAppActionResultError(result, $"Quý khách chưa cập nhật thông tin tài khoản nên không thể tạo đặt bàn");
+                            }
+                        }
+
                     }
 
                     if ((orderRequestDto.OrderType < OrderType.Reservation && orderRequestDto.OrderType > OrderType.Delivery)
@@ -550,12 +559,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, $"Thiếu thông tin để tạo đặt bàn");
                         }
 
+
                         if (orderRequestDto.ReservationOrder.Deposit < 0)
                         {
                             result = BuildAppActionResultError(result, $"Số tiền cọc không hợp lệ");
                             return result;
                         }
 
+                        if (orderRequestDto.ReservationOrder == null)
+                        {
+                            return BuildAppActionResultError(result, $"Thiếu thông tin để tạo đặt bàn");
+                        }
+
+                        if (orderRequestDto.ReservationOrder == null)
+                        {
+                            return BuildAppActionResultError(result, $"Thiếu thông tin để tạo đặt bàn");
+                        }
                         if (orderRequestDto.ReservationOrder.MealTime < utility!.GetCurrentDateTimeInTimeZone())
                         {
                             result = BuildAppActionResultError(result, "Thời gian đặt bàn không hợp lệ");
@@ -593,7 +612,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                        $"ngày {orderRequestDto.ReservationOrder.MealTime.Date}");
                         }
 
-                        if(suggestedTables.Messages.Count > 0)
+                        if (suggestedTables.Messages.Count > 0)
                         {
                             result.Messages.AddRange(suggestedTables.Messages);
                         }
@@ -899,11 +918,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 messageBody.Length -= 2;
 
-                                var sendNotificationResult = await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_CHEF, messageBody.ToString());
-                                if (!sendNotificationResult.IsSuccess)
-                                {
-                                    return BuildAppActionResultError(result, "Gửi thông báo cho nhà bếp thất bại");
-                                }
+                                await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_CHEF, messageBody.ToString());
+                               
                             }
                         }
                     }
@@ -2013,14 +2029,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         continue;
                     }
 
-                    if (!comboDb.IsAvailable)
-                    {
-                        cartItemstoRemove.Add(cartItem);
-                        continue;
-                    }
-
                     cartItem.combo.Price = comboDb.Price;
-                    //cartItem.combo.IsAvailable = comboDb.IsAvailable;
                     foreach (var dishDetail in cartItem.selectedDishes)
                     {
                         dishComboDb = await dishComboRepository.GetById(dishDetail.DishComboId);
@@ -2048,17 +2057,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         dishDetail.DishSizeDetail.Price = dishSizeDetailDb.Price;
                         dishDetail.DishSizeDetail.Discount = dishSizeDetailDb.Discount;
-                        dishDetail.DishSizeDetail.IsAvailable = dishSizeDetailDb.IsAvailable;
 
                         dishDb = await dishRepository.GetByExpression(d => d.DishId == dishDetail.DishSizeDetail.DishId, null);
                         if (dishDb == null)
-                        {
-                            cartItemstoRemove.Add(cartItem);
-                            isRemoved = true;
-                            break;
-                        }
-
-                        if (dishDb.IsDeleted)
                         {
                             cartItemstoRemove.Add(cartItem);
                             isRemoved = true;
@@ -2075,7 +2076,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         dishDetail.DishSizeDetail.Dish.Name = dishDb.Name;
                         dishDetail.DishSizeDetail.Dish.Description = dishDb.Description;
                         dishDetail.DishSizeDetail.Dish.Image = dishDb.Image;
-                        dishDetail.DishSizeDetail.Dish.IsAvailable = dishDb.isAvailable;
                     }
                     if (!isRemoved)
                     {
@@ -2164,11 +2164,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     //string unProcessedJson = JsonConvert.SerializeObject(cart);
                     //string formattedJson = unProcessedJson.Replace("\\\"", "\"");
-                }
-
-                if (dishToRemove.Count() > 0)
-                {
-                    dishToRemove.ForEach(d => cart.Remove(d));
+                    result.Result = cart;
                 }
                 result.Result = cart;
             }
@@ -2204,6 +2200,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (orderDetail.ComboId.HasValue)
                     {
                         var orderComboDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId
+                                                                                                            
                                                                                                                 && (c.StatusId != DishComboDetailStatus.Reserved
                                                                                                                     && c.StatusId != DishComboDetailStatus.ReadyToServe
                                                                                                                     && c.StatusId != DishComboDetailStatus.Cancelled),
@@ -2212,7 +2209,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (orderComboDetailDb.Items.Count() > 0)
                         {
                             var orderComboDetail = orderComboDetailDb.Items.FirstOrDefault(o => o.DishCombo.DishSizeDetail.DishId == orderDetailItems.FirstOrDefault(od => od.OrderDetailId == orderDetail.OrderDetailId
-                                                                                                                                                    && od.DishId == o.DishCombo.DishSizeDetail.DishId).DishId);
+                                                                                                                                                    && od.DishId == o.DishCombo.DishSizeDetail.DishId)?.DishId);
                             if (orderComboDetail != null)
                             {
                                 if (orderComboDetail.StatusId == DishComboDetailStatus.Unchecked)
@@ -2740,6 +2737,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> AssignOrderForShipper(string shipperId, List<Guid> orderListId)
         {
             var result = new AppActionResult();
+            var notificationService = Resolve<INotificationMessageService>();
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
                 var accountRepository = Resolve<IGenericRepository<Account>>();
@@ -2762,12 +2760,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await ChangeOrderStatus(orderDb.OrderId, true, null);
                         orderList.Add(orderDb);
                     }
+
+                    string message = "Bạn đã có đơn hàng cần giao mới";
+                    await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_SHIPPER, message);
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_ASSIGNED_ORDER);
+
                     if (!BuildAppActionResultIsError(result))
                     {
                         await _repository.UpdateRange(orderList);
                         await _unitOfWork.SaveChangesAsync();
                         scope.Complete();
-                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
                     }
                 }
                 catch (Exception ex)
@@ -3339,117 +3341,115 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
 
             var result = new AppActionResult();
-            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+
+            var utility = Resolve<Utility>();
+            var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+            var transactionRepository = Resolve<IGenericRepository<Transaction>>();
+            var accountRepository = Resolve<IGenericRepository<Account>>();
+            var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
+            var notificationService = Resolve<INotificationMessageService>();
+            var orderAssignedRequestRepository = Resolve<IGenericRepository<OrderAssignedRequest>>();
+
+            try
             {
-                var utility = Resolve<Utility>();
-                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-                var transactionRepository = Resolve<IGenericRepository<Transaction>>();
-                var accountRepository = Resolve<IGenericRepository<Account>>();
-                var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
-                var notificationService = Resolve<INotificationMessageService>();
-                var orderAssignedRequestRepository = Resolve<IGenericRepository<OrderAssignedRequest>>();
+                var orderDb = await _repository.GetAllDataByExpression(
+                    p => p.OrderId == cancelDeliveringOrderRequest.OrderId,
+                    0, 0, null, false,
+                    p => p.Status!, p => p.OrderType!,
+                    p => p.Account!, p => p.Shipper!,
+                    p => p.LoyalPointsHistory!
+                );
 
-                try
+                if (orderDb!.Items!.Count <= 0)
                 {
-                    var orderDb = await _repository.GetAllDataByExpression(
-                        p => p.OrderId == cancelDeliveringOrderRequest.OrderId,
-                        0, 0, null, false,
-                        p => p.Status!, p => p.OrderType!,
-                        p => p.Account!, p => p.Shipper!,
-                        p => p.LoyalPointsHistory!
-                    );
-
-                    if (orderDb!.Items!.Count <= 0)
-                    {
-                        return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {cancelDeliveringOrderRequest.OrderId}");
-                    }
-
-                    var order = orderDb.Items!.FirstOrDefault();
-                    if (order == null)
-                    {
-                        return BuildAppActionResultError(result, "Order is null.");
-                    }
-
-                    var accountDb = await accountRepository!.GetById(order.AccountId);
-                    if (accountDb == null)
-                    {
-                        return BuildAppActionResultError(result, $"Không tìm thấy khách hàng với id {order.AccountId}");
-                    }
-
-                    if (cancelDeliveringOrderRequest.isCancelledByAdmin == true)
-                    {
-                        order.CancelDeliveryReason = SD.CancelledReason.CANCELLED_BY_SYSTEM;
-
-                        var newTransaction = new Transaction
-                        {
-                            Id = Guid.NewGuid(),
-                            AccountId = order.AccountId,
-                            PaymentMethodId = PaymentMethod.STORE_CREDIT,
-                            TransactionTypeId = TransactionType.Refund,
-                            Date = currentTime,
-                            Amount = order.TotalAmount,
-                            OrderId = order.OrderId,
-                            TransationStatusId = TransationStatus.SUCCESSFUL
-                        };
-
-                        await transactionRepository!.Insert(newTransaction);
-
-                        accountDb.LoyaltyPoint += (int)order.TotalAmount;
-                        var newLoyaltyPointHistory = new LoyalPointsHistory
-                        {
-                            LoyalPointsHistoryId = Guid.NewGuid(),
-                            OrderId = order.OrderId,
-                            TransactionDate = currentTime,
-                            PointChanged = (int)order.TotalAmount,
-                            NewBalance = accountDb.LoyaltyPoint
-                        };
-
-                        await loyalPointsHistoryRepository!.Insert(newLoyaltyPointHistory);
-
-                        string message = $"Đơn hàng ID {order.OrderId} đã bị hủy và chúng tôi đã hoàn tiền {order.TotalAmount} cho bạn.";
-                        await notificationService!.SendNotificationToAccountAsync(accountDb.Id, message);
-                    }
-                    else
-                    {
-                        var shipperDb = await accountRepository.GetById(cancelDeliveringOrderRequest.ShipperRequestId);
-                        if (shipperDb == null)
-                        {
-                            return BuildAppActionResultError(result, $"Không tìm thấy tài khoản shipper với id {cancelDeliveringOrderRequest.ShipperRequestId}");
-                        }
-
-                        var orderAssignedRequest = new OrderAssignedRequest
-                        {
-                            OrderAssignedRequestId = Guid.NewGuid(),
-                            RequestTime = currentTime,
-                            OrderId = order.OrderId,
-                            ShipperAssignedId = shipperDb.Id,
-                            StatusId = OrderAssignedStatus.Pending,
-                            Reasons = cancelDeliveringOrderRequest.CancelledReasons
-                        };
-
-                        await orderAssignedRequestRepository!.Insert(orderAssignedRequest);
-
-                        order.CancelDeliveryReason = cancelDeliveringOrderRequest.CancelledReasons;
-
-                        string message = $"Đơn hàng ID {order.OrderId} đã được yêu cầu hủy bởi Shipper {shipperDb.FirstName} {shipperDb.LastName}";
-                        await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
-                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_RE_DELIVERING_REQUEST);
-                    }
-
-                    order.StatusId = OrderStatus.Cancelled;
-                    order.CancelledTime = currentTime;
-
-                    if (!BuildAppActionResultIsError(result))
-                    {
-                        await accountRepository.Update(accountDb);
-                        await _repository.Update(order);
-                        await _unitOfWork.SaveChangesAsync();
-                    }
+                    return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {cancelDeliveringOrderRequest.OrderId}");
                 }
-                catch (Exception ex)
+
+                var order = orderDb.Items!.FirstOrDefault();
+                if (order == null)
                 {
-                    result = BuildAppActionResultError(result, ex.Message);
+                    return BuildAppActionResultError(result, "Order is null.");
                 }
+
+                var accountDb = await accountRepository!.GetById(order.AccountId);
+                if (accountDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy khách hàng với id {order.AccountId}");
+                }
+
+                if (cancelDeliveringOrderRequest.isCancelledByAdmin == true)
+                {
+                    order.CancelDeliveryReason = SD.CancelledReason.CANCELLED_BY_SYSTEM;
+
+                    var newTransaction = new Transaction
+                    {
+                        Id = Guid.NewGuid(),
+                        AccountId = order.AccountId,
+                        PaymentMethodId = PaymentMethod.STORE_CREDIT,
+                        TransactionTypeId = TransactionType.Refund,
+                        Date = currentTime,
+                        Amount = order.TotalAmount,
+                        OrderId = order.OrderId,
+                        TransationStatusId = TransationStatus.SUCCESSFUL
+                    };
+
+                    await transactionRepository!.Insert(newTransaction);
+
+                    accountDb.LoyaltyPoint += (int)order.TotalAmount;
+                    var newLoyaltyPointHistory = new LoyalPointsHistory
+                    {
+                        LoyalPointsHistoryId = Guid.NewGuid(),
+                        OrderId = order.OrderId,
+                        TransactionDate = currentTime,
+                        PointChanged = (int)order.TotalAmount,
+                        NewBalance = accountDb.LoyaltyPoint
+                    };
+
+                    await loyalPointsHistoryRepository!.Insert(newLoyaltyPointHistory);
+
+                    string message = $"Đơn hàng ID {order.OrderId} đã bị hủy và chúng tôi đã hoàn tiền {order.TotalAmount} cho bạn.";
+                    await notificationService!.SendNotificationToAccountAsync(accountDb.Id, message);
+                }
+                else
+                {
+                    var shipperDb = await accountRepository.GetById(cancelDeliveringOrderRequest.ShipperRequestId);
+                    if (shipperDb == null)
+                    {
+                        return BuildAppActionResultError(result, $"Không tìm thấy tài khoản shipper với id {cancelDeliveringOrderRequest.ShipperRequestId}");
+                    }
+
+                    var orderAssignedRequest = new OrderAssignedRequest
+                    {
+                        OrderAssignedRequestId = Guid.NewGuid(),
+                        RequestTime = currentTime,
+                        OrderId = order.OrderId,
+                        ShipperAssignedId = shipperDb.Id,
+                        StatusId = OrderAssignedStatus.Pending,
+                        Reasons = cancelDeliveringOrderRequest.CancelledReasons
+                    };
+
+                    await orderAssignedRequestRepository!.Insert(orderAssignedRequest);
+
+                    order.CancelDeliveryReason = cancelDeliveringOrderRequest.CancelledReasons;
+
+                    string message = $"Đơn hàng ID {order.OrderId} đã được yêu cầu hủy bởi Shipper {shipperDb.FirstName} {shipperDb.LastName}";
+                    await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_RE_DELIVERING_REQUEST);
+                }
+
+                order.StatusId = OrderStatus.Cancelled;
+                order.CancelledTime = currentTime;
+
+                if (!BuildAppActionResultIsError(result))
+                {
+                    await accountRepository.Update(accountDb);
+                    await _repository.Update(order);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
             }
 
             return result;

@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Castle.Core.Internal;
 using Org.BouncyCastle.Asn1.X509;
 using System;
