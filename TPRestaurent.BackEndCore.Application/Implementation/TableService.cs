@@ -34,6 +34,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
+                var congfigurationRepository = Resolve<IGenericRepository<Configuration>>();
                 //Name validation (if needed)
                 if (string.IsNullOrEmpty(dto.TableName)) {
                     result = BuildAppActionResultError(result, "Tên bàn không được để trống");
@@ -56,7 +57,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var newTable = _mapper.Map<Table>(dto);
                 newTable.TableId = Guid.NewGuid();
                 newTable.IsDeleted = false;
+                newTable.TableStatusId = TableStatus.NEW;
+                newTable.Coordinates = "(0,0)";
                 await _repository.Insert(newTable);
+
+                var tableSetUpConfig = await congfigurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TABLE_IS_SET_UP), null);
+                if (tableSetUpConfig != null)
+                {
+                    tableSetUpConfig.CurrentValue = SD.DefaultValue.NEW;
+                    await congfigurationRepository.Update(tableSetUpConfig);
+                }
+
                 await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
@@ -129,7 +140,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             tableSizeCheck += (int)table.TableSizeId;
                         }
                         result.Result = data;
-                        if(tableSizeCheck > dto.NumOfPeople)
+                        if(tableSizeCheck < dto.NumOfPeople)
                         {
                             result.Messages.Add("Lịch đặt bàn hiện tại đang khá dày nên nhà hàng sẽ phải kê thêm ghế cho quý khách");
                         }
@@ -387,6 +398,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (tableDb.Items.Count > 0)
                 {
                     var data = new List<TableArrangementResponseItem>();
+                    var unavailableTableIds = await GetUnavailableTableIds();
                     foreach (var item in tableDb.Items)
                     {
                         var tableResponse = _mapper.Map<TableArrangementResponseItem>(item);
@@ -396,8 +408,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             tableResponse.Position.X = tableCoordinates.FirstOrDefault().Item1;
                             tableResponse.Position.Y = tableCoordinates.FirstOrDefault().Item2;
                         }
+
+                        if (unavailableTableIds.Contains(tableResponse.Id))
+                        {
+                            tableResponse.TableStatusId = TableStatus.CURRENTLYUSED;
+                        } else
+                        {
+                            tableResponse.TableStatusId = TableStatus.AVAILABLE;
+                        }
                         data.Add(tableResponse);
                     }
+
+
+
                     result.Result = new PagedResult<TableArrangementResponseItem>
                     {
                         Items = data,
@@ -417,13 +440,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
+                var congfigurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var tableSetUpConfig = await congfigurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TABLE_IS_SET_UP), null);
                 if(!isForce.HasValue || !isForce.Value)
                 {
-                    var congfigurationRepository = Resolve<IGenericRepository<Configuration>>();
-                    var tableSetUpConfig = await congfigurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TABLE_IS_SET_UP), null);
                     if (tableSetUpConfig != null)
                     {
-                        if (tableSetUpConfig.CurrentValue.Equals("1"))
+                        if (tableSetUpConfig.CurrentValue.Equals(SD.DefaultValue.IS_SET_UP))
                         {
                             return BuildAppActionResultError(result, $"Sơ đồ bàn đã được thiết lập từ trước. Nếu thay đổi có ảnh hưởng đến lịch đặt bàn sau này");
                         }
@@ -469,6 +492,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     table.TableSizeId = inputTable.TableSizeId; 
                     table.Coordinates = ParseListToString(coordinate);  
                 }
+                if(tableSetUpConfig != null)
+                {
+                    tableSetUpConfig.CurrentValue = SD.DefaultValue.IS_SET_UP;
+                    await congfigurationRepository.Update(tableSetUpConfig);
+                }
                 await _repository.UpdateRange(tableDb.Items);
                 await _unitOfWork.SaveChangesAsync();
             }
@@ -482,6 +510,32 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             // Convert the list of tuples to a string format "(x,y);(x,y);..."
             return string.Join(";", list.Select(tuple => $"({tuple.Item1},{tuple.Item2})"));
+        }
+
+        public async Task<List<Guid>> GetUnavailableTableIds()
+        {
+            List<Guid> result = new List<Guid>();
+            try
+            {
+                var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var utility = Resolve<Utility>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                var configurationDb = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.AVERAGE_MEAL_DURATION), null);
+                var averageTime = double.Parse(configurationDb.CurrentValue);
+                var unavailableDetailDb = await tableDetailRepository.GetAllDataByExpression(t => t.Order.OrderTypeId != OrderType.Delivery
+                                                                                                  && t.Order.MealTime <= currentTime
+                                                                                                  && (t.Order.EndTime.HasValue && t.Order.EndTime.Value >= currentTime
+                                                                                                      || !t.Order.EndTime.HasValue && t.Order.MealTime.Value.AddHours(averageTime) >= currentTime), 
+                                                                                                  0, 0, null, false, null);
+
+                result = unavailableDetailDb.Items.DistinctBy(u => u.TableId).Select(u => u.TableId).ToList();
+            }
+            catch (Exception ex)
+            {
+                result = new List<Guid>();
+            }
+            return result;
         }
 
     }

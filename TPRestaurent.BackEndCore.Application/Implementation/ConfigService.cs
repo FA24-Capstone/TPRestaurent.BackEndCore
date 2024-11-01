@@ -44,8 +44,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             var closestConfig = configVersionDb!.Items!
                                    .OrderByDescending(p => p.ActiveDate)
                                    .FirstOrDefault();
-                            config.CurrentValue = closestConfig!.ActiveValue;
-                            await _repository.Update(config);
+                            if (closestConfig != null)
+                            {
+                                config.CurrentValue = closestConfig!.ActiveValue;
+                                await _repository.Update(config);
+                            }
                         }
                     }
                 }
