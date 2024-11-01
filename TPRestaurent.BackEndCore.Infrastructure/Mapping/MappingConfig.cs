@@ -51,6 +51,7 @@ public class MappingConfig
 
             config.CreateMap<Table, TableDto>()
              .ForMember(desc => desc.TableName, act => act.MapFrom(src => src.TableName))
+             .ForMember(desc => desc.TableStatusId, act => act.MapFrom(src => src.TableStatusId))
              .ForMember(desc => desc.TableSizeId, act => act.MapFrom(src => src.TableSizeId))
              .ForMember(desc => desc.TableRatingId, act => act.MapFrom(src => src.RoomId))
              .ForMember(desc => desc.DeviceCode, act => act.MapFrom(src => src.DeviceCode))
