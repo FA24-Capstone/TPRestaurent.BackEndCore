@@ -394,6 +394,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var comboRepository = Resolve<IGenericRepository<Combo>>();
                     var couponProgramRepository = Resolve<IGenericRepository<CouponProgram>>();
                     var fireBaseService = Resolve<IFirebaseService>();
+                    var dishRepository = Resolve<IGenericRepository<Dish>>();
                     var orderAppliedCouponRepository = Resolve<IGenericRepository<OrderAppliedCoupon>>();
                     var tableRepository = Resolve<IGenericRepository<Table>>();
                     var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
@@ -500,6 +501,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 orderDetail.DishSizeDetailId = item.DishSizeDetailId.Value;
                                 orderDetail.Price = dishSizeDetail.Price;
+
+                                dishSizeDetail.QuantityLeft -= item.Quantity;
+                                if (dishSizeDetail.QuantityLeft == 5)
+                                {
+                                    var dishDb = await dishRepository!.GetById(dishSizeDetail.DishId);
+                                    string message = $"{dishDb.Name} chỉ còn x{dishSizeDetail.QuantityLeft} món";
+                                    await hubService!.SendAsync(SD.SignalMessages.LOAD_NOTIFICATION);
+                                    await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
+                                }
                             }
                             else if (item.Combo != null)
                             {
