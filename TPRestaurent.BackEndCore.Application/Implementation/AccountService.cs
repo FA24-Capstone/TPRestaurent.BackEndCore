@@ -54,14 +54,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly IMapService _mapService;
         public AccountService(
             IGenericRepository<Account> accountRepository,
-            IUnitOfWork unitOfWork,
             UserManager<Account> userManager,
+            IGenericRepository<IdentityUserRole<string>> userRoleRepository,
             SignInManager<Account> signInManager,
+            IUnitOfWork unitOfWork,
             IEmailService emailService,
             IExcelService excelService,
             IMapper mapper,
             IServiceProvider serviceProvider,
-            IGenericRepository<IdentityUserRole<string>> userRoleRepository,
             IGenericRepository<OTP> otpRepository,
             IMapService mapService
         ) : base(serviceProvider)
@@ -297,6 +297,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         LoyaltyPoint = 0,
                         IsVerified = isGoogle ? true : false,
                         IsManuallyCreated = true,
+                        RegisteredDate = utility.GetCurrentDateInTimeZone()
                     };
 
 
