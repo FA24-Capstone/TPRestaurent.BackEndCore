@@ -15,7 +15,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GetTotalChef();
         Task<AppActionResult> GetTotalShipper();
         Task<AppActionResult> GetProfitReport();
-        Task<AppActionResult> GetRevenueReport(DateTime dateTime);
-        Task<AppActionResult> GetOrderStatusReport(DateTime dateTime);  
+        Task<AppActionResult> GetRevenueReportMonthly();
+        Task<AppActionResult> GetOrderStatusReport();  
     }
 }

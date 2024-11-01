@@ -36,9 +36,30 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _userRoleRepository = userRoleRepository;
         }
 
-        public Task<AppActionResult> GetOrderStatusReport(DateTime dateTime)
+        public async Task<AppActionResult> GetOrderStatusReport()
         {
-            throw new NotImplementedException();
+            var orderRepository = Resolve<IGenericRepository<Order>>();
+            var result = new AppActionResult();
+            var utility = Resolve<TPRestaurent.BackEndCore.Common.Utils.Utility>();
+            var currentTime = utility.GetCurrentDateTimeInTimeZone();
+            try
+            {
+                OrderStatusReportResponse orderStatusReportResponse = new OrderStatusReportResponse();
+                var successfulOrderDb = await orderRepository.GetAllDataByExpression(p => p.StatusId == OrderStatus.Completed && p.OrderDate.Date == currentTime.Date, 0, 0, null, false, null);
+                var cancellingOrderDb = await orderRepository.GetAllDataByExpression(p => p.StatusId == OrderStatus.Cancelled && p.OrderDate.Date == currentTime.Date, 0, 0, null, false, null);
+                var pendingOrderDb = await orderRepository.GetAllDataByExpression(p => p.StatusId == OrderStatus.Pending && p.OrderDate.Date == currentTime.Date, 0, 0, null, false, null);
+
+                orderStatusReportResponse.SuccessfullyOrderNumber = successfulOrderDb.Items.Count();
+                orderStatusReportResponse.CancellingOrderNumber = cancellingOrderDb.Items.Count();
+                orderStatusReportResponse.PendingOrderNumber = cancellingOrderDb.Items.Count();
+
+                result.Result = orderStatusReportResponse;      
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         }
 
         public async Task<AppActionResult> GetProfitReport()
@@ -84,9 +105,37 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public Task<AppActionResult> GetRevenueReport(DateTime dateTime)
+        public async Task<AppActionResult> GetRevenueReportMonthly()
         {
-            throw new NotImplementedException();
+            var result = new AppActionResult();
+            var transactionRepository = Resolve<IGenericRepository<Transaction>>();
+            var monthlyRevenue = new Dictionary<int, decimal>();
+
+            try
+            {
+                for (int month = 1; month <= 12; month++)
+                {
+                    var transactions = await transactionRepository.GetAllDataByExpression(
+                        p => p.Date.Month == month && p.TransationStatusId == TransationStatus.SUCCESSFUL,
+                        0,
+                        0,
+                        null,
+                        false,
+                        null
+                    );
+
+                    var totalRevenue = transactions.Items.Sum(t => t.Amount); 
+                    monthlyRevenue[month] = (decimal)totalRevenue;
+                }
+
+                result.Result = monthlyRevenue;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+
+            return result;
         }
 
         public async Task<AppActionResult> GetTotalChef()

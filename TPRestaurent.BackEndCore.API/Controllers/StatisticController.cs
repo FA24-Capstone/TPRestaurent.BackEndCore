@@ -21,6 +21,19 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _dashboardService.GetTotalCustomer();  
         }
 
+
+        [HttpGet("get-order-status-report")]
+        public async Task<AppActionResult> GetOrderStatusReport()
+        {
+            return await _dashboardService.GetOrderStatusReport();
+        }
+
+        [HttpGet("get-revenue-report-monthly")]
+        public async Task<AppActionResult> GetRevenueReportMonthly()
+        {
+            return await _dashboardService.GetRevenueReportMonthly();
+        }
+
         [HttpGet("get-total-delivering-order")]
         public async Task<AppActionResult> GetTotalDeliveringOrder()
         {
