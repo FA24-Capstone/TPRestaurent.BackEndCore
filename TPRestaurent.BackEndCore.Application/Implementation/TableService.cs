@@ -394,7 +394,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var tableDb = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, null, false, t => t.Room, t => t.TableSize);
+                var tableDb = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, null, false, t => t.Room, t => t.TableSize, t=> t.TableStatus);
                 if (tableDb.Items.Count > 0)
                 {
                     var data = new List<TableArrangementResponseItem>();

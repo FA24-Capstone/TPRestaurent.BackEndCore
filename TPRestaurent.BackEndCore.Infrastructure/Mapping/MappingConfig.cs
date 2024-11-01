@@ -209,6 +209,7 @@ public class MappingConfig
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.TableName))
             .ForMember(dest => dest.TableSizeId, opt => opt.MapFrom(src => src.TableSizeId))
             .ForMember(dest => dest.TableStatusId, opt => opt.MapFrom(src => src.TableStatusId))
+            //.ForMember(dest => dest.TableStatus, opt => opt.MapFrom(src => src.TableStatus))
             .ReverseMap();
         });
 
