@@ -2288,7 +2288,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 await orderDetailRepository.UpdateRange(orderDetailDb.Items);
                 var orderSessionIds = orderDetailDb.Items.DistinctBy(o => o.OrderSessionId).Select(o => o.OrderSessionId).ToList();
-                var orderSessionDb = await orderSessionRepository.GetAllDataByExpression(o => orderDetailIds.Contains(o.OrderSessionId), 0, 0, null, false, null);
+                var orderSessionDb = await orderSessionRepository.GetAllDataByExpression(o => orderSessionIds.Contains(o.OrderSessionId), 0, 0, null, false, null);
                 var orderSessionSet = new HashSet<Guid>();
                 foreach (var session in orderSessionDb.Items)
                 {
@@ -2297,17 +2297,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         continue;
                     }
 
+                    var sessionOrderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderSessionId == session.OrderSessionId && !orderDetailIds.Contains(o.OrderDetailId), 0, 0, null, false, null);
+
                     if (session.OrderSessionStatusId == OrderSessionStatus.Confirmed)
                     {
                         await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Processing, false);
                         orderSessionUpdated = true;
                     }
-                    else if (orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
+                    else if (orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled) 
+                             && sessionOrderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
                     {
                         await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Cancelled, false);
                         orderSessionUpdated = true;
                     }
-                    else if (orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe))
+                    else if (orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe)
+                             && sessionOrderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe))
                     {
                         await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Completed, false);
                         orderSessionUpdated = true;
@@ -2794,17 +2798,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {confirmedOrderRequest.OrderId}");
                     }
-                    var pathName = SD.FirebasePathName.ORDER_PREFIX + $"{confirmedOrderRequest.OrderId}{Guid.NewGuid()}.jpg";
-                    var upload = await firebaseService!.UploadFileToFirebase(confirmedOrderRequest.Image, pathName);
-
-                    if (!upload.IsSuccess)
-                    {
-                        return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
-                    }
-                    orderDb.ValidatingImg = upload.Result!.ToString();
-
+                    
                     if (!confirmedOrderRequest.IsSuccessful.HasValue || confirmedOrderRequest.IsSuccessful.Value)
                     {
+                        var pathName = SD.FirebasePathName.ORDER_PREFIX + $"{confirmedOrderRequest.OrderId}{Guid.NewGuid()}.jpg";
+                        var upload = await firebaseService!.UploadFileToFirebase(confirmedOrderRequest.Image, pathName);
+
+                        if (!upload.IsSuccess)
+                        {
+                            return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
+                        }
+                        orderDb.ValidatingImg = upload.Result!.ToString();
+
                         orderDb.DeliveredTime = utility.GetCurrentDateTimeInTimeZone();
                         orderDb.StatusId = OrderStatus.Completed;
                     }
