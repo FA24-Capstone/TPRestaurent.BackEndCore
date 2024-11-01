@@ -430,6 +430,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
 
                         order.AccountId = orderRequestDto.CustomerId.ToString();
+
+                        if(orderRequestDto.OrderType == OrderType.Reservation)
+                        {
+                            if(accountDb.Email.Contains("TPCustomer") || accountDb.LastName.ToLower().Contains("lastname") || accountDb.LastName.ToLower().Contains("firstname") || accountDb.DOB == new DateTime(1, 1, 1))
+                            {
+                                return BuildAppActionResultError(result, $"Quý khách chưa cập nhật thông tin tài khoản nên không thể tạo đặt bàn");
+                            }
+                        }
+
                     }
 
                     if ((orderRequestDto.OrderType < OrderType.Reservation && orderRequestDto.OrderType > OrderType.Delivery)
@@ -550,12 +559,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, $"Thiếu thông tin để tạo đặt bàn");
                         }
 
+
                         if (orderRequestDto.ReservationOrder.Deposit < 0)
                         {
                             result = BuildAppActionResultError(result, $"Số tiền cọc không hợp lệ");
                             return result;
                         }
 
+                        if (orderRequestDto.ReservationOrder == null)
+                        {
+                            return BuildAppActionResultError(result, $"Thiếu thông tin để tạo đặt bàn");
+                        }
+
+                        if (orderRequestDto.ReservationOrder == null)
+                        {
+                            return BuildAppActionResultError(result, $"Thiếu thông tin để tạo đặt bàn");
+                        }
                         if (orderRequestDto.ReservationOrder.MealTime < utility!.GetCurrentDateTimeInTimeZone())
                         {
                             result = BuildAppActionResultError(result, "Thời gian đặt bàn không hợp lệ");
@@ -2181,6 +2200,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (orderDetail.ComboId.HasValue)
                     {
                         var orderComboDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId
+                                                                                                            
                                                                                                                 && (c.StatusId != DishComboDetailStatus.Reserved
                                                                                                                     && c.StatusId != DishComboDetailStatus.ReadyToServe
                                                                                                                     && c.StatusId != DishComboDetailStatus.Cancelled),
@@ -2189,7 +2209,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (orderComboDetailDb.Items.Count() > 0)
                         {
                             var orderComboDetail = orderComboDetailDb.Items.FirstOrDefault(o => o.DishCombo.DishSizeDetail.DishId == orderDetailItems.FirstOrDefault(od => od.OrderDetailId == orderDetail.OrderDetailId
-                                                                                                                                                    && od.DishId == o.DishCombo.DishSizeDetail.DishId).DishId);
+                                                                                                                                                    && od.DishId == o.DishCombo.DishSizeDetail.DishId)?.DishId);
                             if (orderComboDetail != null)
                             {
                                 if (orderComboDetail.StatusId == DishComboDetailStatus.Unchecked)

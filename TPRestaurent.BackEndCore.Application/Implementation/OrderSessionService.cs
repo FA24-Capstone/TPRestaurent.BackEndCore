@@ -244,18 +244,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                  UncheckedQuantity = g.Sum(q => q.UncheckedQuantity), // Sum quantities for each size
                  ProcessingQuantity = g.Sum(q => q.ProcessingQuantity) // Sum quantities for each size
              })
+             .Where(g => g.UncheckedQuantity + g.ProcessingQuantity > 0)
              .OrderBy(g => g.DishSize.Id)
              .ToList();
 
              kitchenGroupedDishItemResponse.UncheckedDishFromTableOrders = group
               .SelectMany(d => d.UncheckedDishFromTableOrders)
               .ToList();
-
+            
              kitchenGroupedDishItemResponse.ProcessingDishFromTableOrders = group
              .SelectMany(d => d.ProcessingDishFromTableOrders)
              .ToList();
          return kitchenGroupedDishItemResponse;
      })
+     .Where(g => g.UncheckedDishFromTableOrders.Count + g.ProcessingDishFromTableOrders.Count > 0)
      .ToList();
             }
             catch (Exception ex)

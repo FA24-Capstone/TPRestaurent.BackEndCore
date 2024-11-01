@@ -45,7 +45,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var groupedDishDb = await _repository.GetById(groupedDishId);
+                var groupedDishDb = await _repository.GetByExpression(g => g.GroupedDishCraftId == groupedDishId && !g.IsFinished, null);
                 if (groupedDishDb == null)
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy phiên gom món với id {groupedDishId}");
