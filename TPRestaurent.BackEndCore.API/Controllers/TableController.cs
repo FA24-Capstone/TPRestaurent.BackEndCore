@@ -35,9 +35,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("update-table-coordinate")]
-        public async Task<AppActionResult> FindTable([FromBody] List<TableArrangementResponseItem> request)
+        public async Task<AppActionResult> FindTable([FromBody] List<TableArrangementResponseItem> request, bool? isForce = false)
         {
-            return await _service.UpdateTableCoordinates(request);
+            return await _service.UpdateTableCoordinates(request, isForce);
         }
     }
 }
