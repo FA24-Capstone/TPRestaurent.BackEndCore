@@ -528,20 +528,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         for (int i = 1; i < (int)inputTable.TableSizeId / 2; i++)
                         {
-                            coordinate.Add((inputTable.Position.X + i, inputTable.Position.Y));
+                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y + i));
                         }
                     } else
                     {
                         if(inputTable.TableSizeId == TableSize.TEN)
                         {
-                            coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y));
-                            coordinate.Add((inputTable.Position.X + 2, inputTable.Position.Y));
-                            coordinate.Add((inputTable.Position.X + 3, inputTable.Position.Y));
-
                             coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 1));
+                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 2));
+                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 3));
+
+                            coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y));
                             coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 1));
-                            coordinate.Add((inputTable.Position.X + 2, inputTable.Position.Y + 1));
-                            coordinate.Add((inputTable.Position.X + 3, inputTable.Position.Y + 1));
+                            coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 2));
+                            coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 3));
                         } else
                         {
                             coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y));
