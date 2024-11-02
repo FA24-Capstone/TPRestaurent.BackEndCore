@@ -61,6 +61,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.EnumModels.OrderSessionStatus> OrderSessionStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.DishComboDetailStatus> DishComboDetailStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.OrderAssignedStatus> OrderAssignedStatuses { get; set; } = null!;
+        public DbSet<Models.EnumModels.TableStatus> TableStatuses { get; set; } = null!;
 
 
 
@@ -106,22 +107,23 @@ namespace TPRestaurent.BackEndCore.Domain.Data
 
 
             base.OnModelCreating(builder);
-          //  IConfiguration enums = GetVietnameseNames();
-            //SeedEnumTable<Models.EnumModels.OrderStatus, Enums.OrderStatus>(builder, enums);
-            //SeedEnumTable<Models.EnumModels.OTPType, Enums.OTPType>(builder, enums);
-            //SeedEnumTable<Models.EnumModels.PaymentMethod, Enums.PaymentMethod>(builder, enums);
-            //SeedEnumTable<Models.EnumModels.RatingPoint, Enums.RatingPoint>(builder, enums);
-            //SeedEnumTable<Models.EnumModels.DishItemType, Enums.DishItemType>(builder, enums);
-            //SeedEnumTable<Models.EnumModels.TableSize, Enums.TableSize>(builder, enums);
-            //SeedEnumTable<Models.EnumModels.ComboCategory, Enums.ComboCategory>(builder, enums);
-            //SeedEnumTable<Models.EnumModels.DishSize, Enums.DishSize>(builder, enums);
-            //SeedEnumTable<Models.EnumModels.TransationStatus, Enums.TransationStatus>(builder, enums);
-            //SeedEnumTable<Models.EnumModels.OrderDetailStatus, Enums.OrderDetailStatus>(builder, enums);
-            //SeedEnumTable<Models.EnumModels.OrderType, Enums.OrderType>(builder, enums);
-            //SeedEnumTable<Models.EnumModels.TransactionType, Enums.TransactionType>(builder, enums);
-            //SeedEnumTable<Models.EnumModels.OrderSessionStatus, Enums.OrderSessionStatus>(builder, enums);
-            //SeedEnumTable<Models.EnumModels.DishComboDetailStatus, Enums.DishComboDetailStatus>(builder, enums);
-            //SeedEnumTable<Models.EnumModels.OrderAssignedStatus, Enums.OrderAssignedStatus>(builder, enums);
+            IConfiguration enums = GetVietnameseNames();
+            SeedEnumTable<Models.EnumModels.OrderStatus, Enums.OrderStatus>(builder, enums);
+            SeedEnumTable<Models.EnumModels.OTPType, Enums.OTPType>(builder, enums);
+            SeedEnumTable<Models.EnumModels.PaymentMethod, Enums.PaymentMethod>(builder, enums);
+            SeedEnumTable<Models.EnumModels.RatingPoint, Enums.RatingPoint>(builder, enums);
+            SeedEnumTable<Models.EnumModels.DishItemType, Enums.DishItemType>(builder, enums);
+            SeedEnumTable<Models.EnumModels.TableSize, Enums.TableSize>(builder, enums);
+            SeedEnumTable<Models.EnumModels.ComboCategory, Enums.ComboCategory>(builder, enums);
+            SeedEnumTable<Models.EnumModels.DishSize, Enums.DishSize>(builder, enums);
+            SeedEnumTable<Models.EnumModels.TransationStatus, Enums.TransationStatus>(builder, enums);
+            SeedEnumTable<Models.EnumModels.OrderDetailStatus, Enums.OrderDetailStatus>(builder, enums);
+            SeedEnumTable<Models.EnumModels.OrderType, Enums.OrderType>(builder, enums);
+            SeedEnumTable<Models.EnumModels.TransactionType, Enums.TransactionType>(builder, enums);
+            SeedEnumTable<Models.EnumModels.OrderSessionStatus, Enums.OrderSessionStatus>(builder, enums);
+            SeedEnumTable<Models.EnumModels.DishComboDetailStatus, Enums.DishComboDetailStatus>(builder, enums);
+            SeedEnumTable<Models.EnumModels.OrderAssignedStatus, Enums.OrderAssignedStatus>(builder, enums);
+            SeedEnumTable<Models.EnumModels.TableStatus, Enums.TableStatus>(builder, enums);
 
         }
 
@@ -150,7 +152,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
                 modelBuilder.Entity<TEntity>().HasData(entityInstance!);
             }
         }
-     /*   public static IConfigurationSection GetVietnameseNames()
+        public static IConfigurationSection GetVietnameseNames()
         {
             var configuration = new ConfigurationBuilder()
                      .SetBasePath(Directory.GetCurrentDirectory())
@@ -158,7 +160,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
                      .Build();
             return configuration.GetSection("VietnameseNames");
         }
-        */
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             //IConfiguration config = new ConfigurationBuilder()
