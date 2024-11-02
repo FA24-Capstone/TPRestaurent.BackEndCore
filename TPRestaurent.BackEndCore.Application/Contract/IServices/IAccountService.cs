@@ -47,7 +47,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> VerifyChangeEmail(string email, string accountId, string otpCode);
         Task<AppActionResult> UpRole(string accountId, string roleName);
         Task<AppActionResult> BanUser(string accountId);
-        Task<AppActionResult> CreateAccountRestaurentEmployee(EmployeeSignUpRequest signUpRequestDto, bool isGoogle);
+        Task<AppActionResult> CreateAccountForRestaurentEmployees(EmployeeSignUpRequest signUpRequestDto, bool isGoogle);
         Task DeleteOverdueOTP();
     }
 }
