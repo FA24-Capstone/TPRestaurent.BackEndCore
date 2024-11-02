@@ -513,7 +513,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
 
                               
-                                if (dishSizeDetail.QuantityLeft == 5)
+                                if (dishSizeDetail.QuantityLeft <= 5)
                                 {
                                     string message = $"{dishDb.Name} chỉ còn x{dishSizeDetail.QuantityLeft} món";
                                     await hubService!.SendAsync(SD.SignalMessages.LOAD_NOTIFICATION);
