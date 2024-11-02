@@ -36,24 +36,47 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _userRoleRepository = userRoleRepository;
         }
 
-        public async Task<AppActionResult> GetOrderStatusReport()
+        public async Task<AppActionResult> GetStatisticReportForDashboardReport(DateTime startDate, DateTime endDate)
         {
-            var orderRepository = Resolve<IGenericRepository<Order>>();
             var result = new AppActionResult();
+            var transactionRepository = Resolve<IGenericRepository<Transaction>>();
+            var orderRepository = Resolve<IGenericRepository<Order>>();
             var utility = Resolve<TPRestaurent.BackEndCore.Common.Utils.Utility>();
             var currentTime = utility.GetCurrentDateTimeInTimeZone();
+
             try
             {
+                StatisticReportDashboardResponse statisticReportDashboardResponse = new StatisticReportDashboardResponse(); 
+                var monthlyRevenue = new Dictionary<int, decimal>();
+                for (int month = 1; month <= 12; month++)
+                {
+                    var transactions = await transactionRepository.GetAllDataByExpression(
+                        p => p.Date.Month >= startDate.Month && p.Date.Month <= endDate.Month && p.TransationStatusId == TransationStatus.SUCCESSFUL,
+                        0,
+                        0,
+                        null,
+                        false,
+                        null
+                    );
+
+                    var totalRevenue = transactions.Items.Sum(t => t.Amount);
+                    monthlyRevenue[month] = (decimal)totalRevenue;
+                }
+
+                statisticReportDashboardResponse.MonthlyRevenue = monthlyRevenue;
+
                 OrderStatusReportResponse orderStatusReportResponse = new OrderStatusReportResponse();
-                var successfulOrderDb = await orderRepository.GetAllDataByExpression(p => p.StatusId == OrderStatus.Completed && p.OrderDate.Date == currentTime.Date, 0, 0, null, false, null);
-                var cancellingOrderDb = await orderRepository.GetAllDataByExpression(p => p.StatusId == OrderStatus.Cancelled && p.OrderDate.Date == currentTime.Date, 0, 0, null, false, null);
-                var pendingOrderDb = await orderRepository.GetAllDataByExpression(p => p.StatusId == OrderStatus.Pending && p.OrderDate.Date == currentTime.Date, 0, 0, null, false, null);
+                var successfulOrderDb = await orderRepository.GetAllDataByExpression(p => p.StatusId == OrderStatus.Completed && p.OrderDate >= startDate && p.OrderDate <= endDate, 0, 0, null, false, null);
+                var cancellingOrderDb = await orderRepository.GetAllDataByExpression(p => p.StatusId == OrderStatus.Cancelled && p.OrderDate >= startDate && p.OrderDate <= endDate, 0, 0, null, false, null);
+                var pendingOrderDb = await orderRepository.GetAllDataByExpression(p => p.StatusId == OrderStatus.Pending && p.OrderDate >= startDate && p.OrderDate <= endDate, 0, 0, null, false, null);
 
                 orderStatusReportResponse.SuccessfullyOrderNumber = successfulOrderDb.Items.Count();
                 orderStatusReportResponse.CancellingOrderNumber = cancellingOrderDb.Items.Count();
                 orderStatusReportResponse.PendingOrderNumber = cancellingOrderDb.Items.Count();
 
-                result.Result = orderStatusReportResponse;      
+                statisticReportDashboardResponse.OrderStatusReportResponse = orderStatusReportResponse; 
+
+                result.Result = statisticReportDashboardResponse;       
             }
             catch (Exception ex)
             {
@@ -62,23 +85,61 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetProfitReport()
+        public async Task<AppActionResult> GetStatisticReportForNumberReport(DateTime startDate, DateTime endDate)
         {
-            var result = new AppActionResult();
+            var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
             var utility = Resolve<TPRestaurent.BackEndCore.Common.Utils.Utility>();
             var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+            var orderRepository = Resolve<IGenericRepository<Order>>();
+            var result = new AppActionResult();
             var transactionRepository = Resolve<IGenericRepository<Transaction>>();
-
             try
             {
+                StatisticReportNumberResponse statisticReportNumberResponse = new StatisticReportNumberResponse();      
+
+                ShipperStatisticResponse shipperStatisticResponse = new ShipperStatisticResponse();
+                var shipperDb = await _userManager.GetUsersInRoleAsync(SD.RoleName.ROLE_SHIPPER);
+                shipperStatisticResponse.NumberOfShipperIsWorking = shipperDb.Where(p => p.IsDelivering).Count();
+                shipperStatisticResponse.NumberOfShipper = shipperDb.Count;
+
+                statisticReportNumberResponse.ShipperStatisticResponse = shipperStatisticResponse;
+
+                var reservationOrderDb = await orderRepository!.GetAllDataByExpression(
+                                                                       p => p.OrderDate >= startDate && p.OrderDate <= endDate && p.OrderTypeId == OrderType.Reservation,
+                                                                       0, 0, null, false, null);
+                statisticReportNumberResponse.TotalReservationNumber = reservationOrderDb!.Items!.Count();
+
+                var deliveringOrderDb = await orderRepository!.GetAllDataByExpression(
+                                                                    p => p.OrderDate >= startDate && p.OrderDate <= endDate && p.OrderTypeId == OrderType.Delivery,
+                                                                    0, 0, null, false, null);
+
+                statisticReportNumberResponse.TotalDeliveringOrderNumber = deliveringOrderDb!.Items!.Count();
+
+                CustomerStasticResponse customerStasticResponse = new CustomerStasticResponse();
+                var customerDb = await _userManager.GetUsersInRoleAsync(SD.RoleName.ROLE_CUSTOMER);
+                var customerLastWeek = customerDb.Where(p => p.RegisteredDate.Date >= startDate.AddDays(-7).Date);
+                var lastWeekCount = customerLastWeek.Count();
+                var customerCount = customerDb.Count();
+
+                customerStasticResponse.NumberOfCustomer = customerCount;
+                customerStasticResponse.PercentIncrease = lastWeekCount == 0 ? 0 : Math.Round(
+                    (double)customerCount / lastWeekCount
+                );
+
+                statisticReportNumberResponse.CustomerStasticResponse = customerStasticResponse;
+
+                var chefDb = await _userManager.GetUsersInRoleAsync(SD.RoleName.ROLE_CHEF);
+                statisticReportNumberResponse.TotalChefNumber = chefDb.Count();
+
+                var profitReportResponse = new ProfitReportResponse();
                 var todayStart = currentTime.Date;
                 var todayEnd = todayStart.AddDays(1).AddTicks(-1);
-                var yesterdayStart = todayStart.AddDays(-1);
-                var yesterdayEnd = todayStart.AddTicks(-1);
+                var yesterdayStart = startDate.AddDays(-1);
+                var yesterdayEnd = endDate.AddTicks(-1);
 
                 var presentTransactionDb = await transactionRepository!.GetAllDataByExpression(
-                    p => p.Date >= todayStart &&
-                         p.Date <= todayEnd &&
+                    p => p.Date >= startDate &&
+                         p.Date <= endDate &&
                          p.TransationStatusId == TransationStatus.SUCCESSFUL,
                     0, 0, null, false, null);
 
@@ -90,172 +151,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var presentProfitNumber = presentTransactionDb.Items?.Sum(t => t.Amount) ?? 0;
                 var yesterdayProfitNumber = yesterdayTransactionDb.Items?.Sum(t => t.Amount) ?? 0;
-
-                var profitReportResponse = new ProfitReportResponse
+                var percentProfit = yesterdayProfitNumber != 0
+                        ? Math.Round((presentProfitNumber / yesterdayProfitNumber), 2)
+                        : 0;
+                if (presentProfitNumber < yesterdayProfitNumber)
                 {
-                    Profit = presentProfitNumber,
-                    PercentProfit = yesterdayProfitNumber != 0
-                        ? Math.Round((presentProfitNumber / yesterdayProfitNumber) * 100, 2)
-                        : 0 
-                };
-
-                result.Result = profitReportResponse;
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-
-            return result;
-        }
-
-        public async Task<AppActionResult> GetRevenueReportMonthly()
-        {
-            var result = new AppActionResult();
-            var transactionRepository = Resolve<IGenericRepository<Transaction>>();
-            var monthlyRevenue = new Dictionary<int, decimal>();
-
-            try
-            {
-                for (int month = 1; month <= 12; month++)
-                {
-                    var transactions = await transactionRepository.GetAllDataByExpression(
-                        p => p.Date.Month == month && p.TransationStatusId == TransationStatus.SUCCESSFUL,
-                        0,
-                        0,
-                        null,
-                        false,
-                        null
-                    );
-
-                    var totalRevenue = transactions.Items.Sum(t => t.Amount); 
-                    monthlyRevenue[month] = (decimal)totalRevenue;
-                }
-
-                result.Result = monthlyRevenue;
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-
-            return result;
-        }
-
-        public async Task<AppActionResult> GetTotalChef()
-        {
-            var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
-            var result = new AppActionResult();
-            try
-            {
-                var chefDb = await _userManager.GetUsersInRoleAsync(SD.RoleName.ROLE_CHEF);
-                if (chefDb == null)
-                {
-                    result.Result = 0;
+                    profitReportResponse.PercentProfitCompareToYesterday = -percentProfit;
                 }
                 else
                 {
-                    result.Result = chefDb.Count();
+                    profitReportResponse.PercentProfitCompareToYesterday = percentProfit;
                 }
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
-        }
 
-        public async Task<AppActionResult> GetTotalCustomer()
-        {
-            var utility = Resolve<TPRestaurent.BackEndCore.Common.Utils.Utility>();
-            var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-            var result = new AppActionResult();
-            var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
-            CustomerStasticResponse customerStasticResponse = new CustomerStasticResponse();
-            try
-            {
-                var roleDb = await roleRepository!.GetByExpression(p => p.Name == SD.RoleName.ROLE_CUSTOMER);
-                var customerDb = await _userManager.GetUsersInRoleAsync(SD.RoleName.ROLE_CUSTOMER);
-                var customerLastWeekDb = await _userManager.GetUsersInRoleAsync(SD.RoleName.ROLE_CUSTOMER);
+                profitReportResponse.Profit = presentProfitNumber;  
 
-                var customerLastWeek = customerLastWeekDb.Where(p => p.RegisteredDate.Date == currentTime.AddDays(-7).Date);
-                var lastWeekCount = customerLastWeek.Count();
-                var customerCount = customerDb.Count();
+                statisticReportNumberResponse.ProfitReportResponse = profitReportResponse;
 
-                customerStasticResponse.NumberOfCustomer = customerCount;
-                customerStasticResponse.PercentIncrease = lastWeekCount == 0 ? 0 : Math.Round(
-                    (double)customerCount / lastWeekCount
-                );
-                result.Result = customerStasticResponse;
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
-        }
-
-        public async Task<AppActionResult> GetTotalDeliveringOrder()
-        {
-            var result = new AppActionResult();
-            var utility = Resolve<TPRestaurent.BackEndCore.Common.Utils.Utility>();
-            var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-            var orderRepository = Resolve<IGenericRepository<Order>>();
-            try
-            {
-                var orderDb = await orderRepository!.GetAllDataByExpression(p => p.OrderDate.Day.Equals(currentTime.Day) && p.OrderTypeId == OrderType.Delivery, 0, 0, null, false, null);
-                if (orderDb.Items.Count > 0 && orderDb.Items != null)
-                {
-                    result.Result = orderDb.Items!.Count();
-                }
-                else
-                {
-                    result.Result = 0;
-                }
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
-        }
-
-        public async Task<AppActionResult> GetTotalReservation()
-        {
-            var result = new AppActionResult();
-            var utility = Resolve<TPRestaurent.BackEndCore.Common.Utils.Utility>();
-            var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-            var orderRepository = Resolve<IGenericRepository<Order>>();
-            try
-            {
-                var orderDb = await orderRepository!.GetAllDataByExpression(p => p.OrderDate.Date == currentTime.Date && p.OrderTypeId == OrderType.Reservation, 0, 0, null, false, null);
-                if (orderDb.Items.Count > 0 && orderDb.Items != null)
-                {
-                    result.Result = orderDb.Items!.Count();
-                }
-                else
-                {
-                    result.Result = 0;
-                }
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
-        }
-
-        public async Task<AppActionResult> GetTotalShipper()
-        {
-            var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
-            var result = new AppActionResult();
-            try
-            {
-                ShipperStatisticResponse shipperStatisticResponse = new ShipperStatisticResponse();
-                var shipperDb = await _userManager.GetUsersInRoleAsync(SD.RoleName.ROLE_SHIPPER);
-                shipperStatisticResponse.NumberOfShipperIsWorking = shipperDb.Where(p => p.IsDelivering).Count();
-                shipperStatisticResponse.NumberOfShipper = shipperDb.Count;
-                result.Result = shipperStatisticResponse;
+                result.Result = statisticReportNumberResponse;
             }
             catch (Exception ex)
             {

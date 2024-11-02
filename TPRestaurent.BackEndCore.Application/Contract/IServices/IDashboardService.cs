@@ -9,13 +9,8 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
     public interface IDashboardService
     {
-        Task<AppActionResult> GetTotalCustomer();
-        Task<AppActionResult> GetTotalDeliveringOrder();
-        Task<AppActionResult> GetTotalReservation();
-        Task<AppActionResult> GetTotalChef();
-        Task<AppActionResult> GetTotalShipper();
-        Task<AppActionResult> GetProfitReport();
-        Task<AppActionResult> GetRevenueReportMonthly();
-        Task<AppActionResult> GetOrderStatusReport();  
+        Task<AppActionResult> GetStatisticReportForNumberReport(DateTime startDate, DateTime endDate);
+        Task<AppActionResult> GetStatisticReportForDashboardReport(DateTime startDate, DateTime endDate);
+
     }
 }
