@@ -576,6 +576,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var storeCreditService = Resolve<IStoreCreditService>();
+                var orderRepository = Resolve<IGenericRepository<Order>>();
+                var orderService = Resolve<IOrderService>();
                 var transactionDb = await _repository.GetById(transactionId);
                 if(transactionDb.TransationStatusId == TransationStatus.PENDING && transactionStatus != TransationStatus.APPLIED)
                 {
@@ -592,8 +594,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         if (transactionDb.OrderId.HasValue)
                         {
-                            var orderRepository = Resolve<IGenericRepository<Order>>();
-                            var orderService = Resolve<IOrderService>();
                             await orderService.ChangeOrderStatus(transactionDb.OrderId.Value, transactionStatus == TransationStatus.SUCCESSFUL);
 
                             var orderDb = await orderRepository.GetById(transactionDb.OrderId);
@@ -606,6 +606,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             await storeCreditService.AddStoreCredit(transactionId);
                         }
+                    }
+                    else if(transactionStatus == TransationStatus.FAILED)
+                    {
+                        await orderService.ChangeOrderStatus(transactionDb.OrderId.Value, false, OrderStatus.Cancelled);
                     }
                 } else
                 {

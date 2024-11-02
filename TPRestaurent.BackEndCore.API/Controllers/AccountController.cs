@@ -190,5 +190,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _accountService.UpRole(accountId, roleName);   
         }
+
+        [HttpPost("create-account-restaurent-employee")]
+        public async Task<AppActionResult> CreateAccountRestaurentEmployee(EmployeeSignUpRequest request)
+        {
+            return await _accountService.CreateAccountRestaurentEmployee(request, false);
+        }
     }
 }
