@@ -28,6 +28,5 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public int? QuantityLeft { get; set; }
         public int DailyCountdown { get; set; }
         public int? PreparationTime { get; set; }
-
     }
 }

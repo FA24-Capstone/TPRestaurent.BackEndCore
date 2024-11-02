@@ -19,5 +19,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public DateTime EndDate { get; set; }
         public List<DishComboDto> DishComboDtos { get; set; } = new List<DishComboDto>();
         public List<Guid> TagIds { get; set; } = new List<Guid>();
+        public int? PreparationTime { get; set; }
     }
 }

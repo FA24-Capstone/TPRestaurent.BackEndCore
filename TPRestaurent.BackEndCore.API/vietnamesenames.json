@@ -80,6 +80,9 @@
     "Refund": "Hoàn tiền",
     "Reserved": "Đặt trước",
     "Unchecked": "Chờ xử lý",
-    "ReadyToServe": "Đã hoàn thành"
+    "ReadyToServe": "Đã hoàn thành",
+    "NEW": "Vừa tạo",
+    "AVAILABLE":  "Trống",
+    "CURRENTLYUSED": "Đang dùng"
   }
 }
