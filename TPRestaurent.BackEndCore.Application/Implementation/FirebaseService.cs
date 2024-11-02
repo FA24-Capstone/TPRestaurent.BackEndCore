@@ -172,7 +172,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return string.Empty;
         }
 
-        public async Task<AppActionResult> UploadFileToFirebase(IFormFile file, string pathFileName)
+        public async Task<AppActionResult> UploadFileToFirebase(IFormFile file, string pathFileName, bool? isPng = true)
         {
             var _result = new AppActionResult();
             bool isValid = true;
@@ -191,8 +191,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var stream = new MemoryStream(memoryStream.ToArray());
                     var auth = new FirebaseAuthProvider(new FirebaseConfig(_firebaseConfiguration.ApiKey));
                     var account = await auth.SignInWithEmailAndPasswordAsync(_firebaseConfiguration.AuthEmail, _firebaseConfiguration.AuthPassword);
-                    string destinationPath = $"{pathFileName}.png"; // Add .png extension
-
+                    string destinationPath = ""; // Add .png extension
+                    if (isPng.HasValue && !isPng.Value)
+                    {
+                        destinationPath = $"{pathFileName}.pdf";
+                    }
+                    else
+                    {
+                        destinationPath = $"{pathFileName}.png";
+                    }
                     // Since Firebase.Storage doesn't support metadata directly, use a workaround
                     // You could encode metadata in the file path or handle it separately
                     var task = new FirebaseStorage(

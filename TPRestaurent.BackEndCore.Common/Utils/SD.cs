@@ -202,6 +202,7 @@ public class SD
         public static string COMBO_PREFIX = "combo/";
         public static string COUPON_PREFIX = "coupon/";
         public static string ORDER_PREFIX = "order/";
+        public static string INVOICE_PREFIX = "invoice/";
     }
 
     public class SignalMessages

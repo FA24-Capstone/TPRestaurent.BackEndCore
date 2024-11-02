@@ -3473,5 +3473,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             return result;
         }
+
+        public Task GenerateInvoice()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
