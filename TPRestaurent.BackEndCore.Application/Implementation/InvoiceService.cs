@@ -182,7 +182,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
       }
       .header {
         display: flex;
-        align-items: center;
         justify-content: space-between;
         align-items: center;
         background-color: #A1011A;
@@ -192,9 +191,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
       .logo {
         max-width: 100px;
       }
-      .restaurant-info {
-        text-align: right;
-      }
       .restaurant-info h1 {
         margin: 0;
         font-size: 26px;
@@ -203,7 +199,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
       .restaurant-info p {
         margin: 4px 0;
         font-size: 14px;
-        color: #fff;
       }
       .mainBody {
         padding: 20px;
