@@ -97,88 +97,116 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             int i = 1;
             string customerDetails = response.Order.Account != null
                 ? @"
-        <table class='info-table'>
-          <tr><th>Tên khách hàng: </th><td>" + response.Order.Account.FirstName + " " + response.Order.Account.LastName + @"</td></tr>
-          <tr><th>Số điện thoại: </th><td>" + response.Order.Account.PhoneNumber + @"</td></tr>
-          <tr><th>Email: </th><td>" + response.Order.Account.Email + @"</td></tr>
-          <tr><th>Địa chỉ: </th><td>" + response.Order.CustomerInfoAddress?.CustomerInfoAddressName + @"</td></tr>
-        </table>"
-                : "<p>Không có thông tin khách hàng trong hệ thống</p>";
+    <table class='info-table'>
+      <tr><th>Tên khách hàng:</th><td>" + response.Order.Account.FirstName + " " + response.Order.Account.LastName + @"</td></tr>
+      <tr><th>Số điện thoại:</th><td>" + response.Order.Account.PhoneNumber + @"</td></tr>
+      <tr><th>Email:</th><td>" + response.Order.Account.Email + @"</td></tr>
+      <tr><th>Địa chỉ:</th><td>" + response.Order.CustomerInfoAddress?.CustomerInfoAddressName + @"</td></tr>
+    </table>"
+                : "<p class='no-info'>Không có thông tin khách hàng trong hệ thống</p>";
 
             return @"
 <html>
   <head>
     <style>
       body {
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f4;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f9f9f9;
+        margin: 0;
+        padding: 20px;
       }
       .container {
+        background-color: #fff;
         max-width: 900px;
         margin: 20px auto;
-        border-radius: 5px;
-        box-shadow: 0px 0px 5px 2px #ccc;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
       }
       .header {
         display: flex;
-        align-items: center;
         justify-content: space-between;
-        background-color: #ffba00;
+        align-items: center;
+        background-color: #ff9800;
         padding: 20px;
+        color: white;
       }
       .logo {
-        max-width: 120px;
+        max-width: 100px;
       }
       .restaurant-info {
         text-align: right;
       }
       .restaurant-info h1 {
         margin: 0;
-        font-size: 24px;
-        color: white;
+        font-size: 26px;
+        font-weight: bold;
       }
       .restaurant-info p {
-        margin: 2px 0;
+        margin: 4px 0;
         font-size: 14px;
         color: #fff;
       }
-      .order-info, .customer-info, .dish-info, .total-info {
-        margin-bottom: 20px;
+      .mainBody {
+        padding: 20px;
       }
       .section-title {
-        font-size: 18px;
+        font-size: 20px;
         margin-bottom: 10px;
         color: #333;
+        border-bottom: 2px solid #ff9800;
+        padding-bottom: 5px;
       }
       .info-table, .dish-table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
       }
       .info-table th, .info-table td, .dish-table th, .dish-table td {
-        padding: 10px;
+        padding: 12px;
         border: 1px solid #ddd;
         text-align: left;
       }
       .info-table th, .dish-table th {
-        background-color: #f2f2f2;
+        background-color: #f5f5f5;
+        font-weight: 600;
       }
       .info-table td, .dish-table td {
-        background-color: #f9f9f9;
+        background-color: #fcfcfc;
       }
       .total-info {
         text-align: right;
-        font-size: 16px;
+        font-size: 18px;
+        margin-top: 20px;
       }
       .total-info p {
         margin: 5px 0;
       }
       .order-summary {
-        background-color: #ffba00;
-        padding: 10px;
+        background-color: #ff9800;
+        padding: 15px;
         text-align: center;
+        color: #fff;
         font-weight: 600;
-        color: white;
+        border-radius: 0 0 8px 8px;
+      }
+      .no-info {
+        color: #b30000;
+        font-style: italic;
+      }
+      @media (max-width: 768px) {
+        .header, .mainBody {
+          padding: 15px;
+        }
+        .logo {
+          max-width: 80px;
+        }
+        .section-title {
+          font-size: 18px;
+        }
+        .info-table th, .info-table td, .dish-table th, .dish-table td {
+          padding: 8px;
+        }
       }
     </style>
   </head>
@@ -189,26 +217,25 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         <div class='restaurant-info'>
           <h1>Nhà hàng Thiên Phú</h1>
           <p>Số điện thoại: 091 978 24 44</p>
-          <p>Địa chỉ: 78 Đường Lý Tự Trọng, Phường 2, thành phố Đà Lạt, Tỉnh Lâm Đồng, Đà Lạt, Vietnam</p>
+          <p>Địa chỉ: 78 Đường Lý Tự Trọng, Phường 2, Đà Lạt, Vietnam</p>
         </div>
       </div>
       <div class='mainBody'>
-        <h2 class='section-title'>Order Details</h2>
+        <h2 class='section-title'>Thông tin đơn hàng</h2>
         <table class='info-table'>
-          <tr><th>Order ID:</th><td>" + response.Order.OrderId.ToString().Substring(0, 6) + @"</td></tr>
-          <tr><th>Status:</th><td>" + response.Order.Status?.VietnameseName + @"</td></tr>
-          <tr><th>Order Date:</th><td>" + response.Order.OrderDate.ToString("yyyy-MM-dd") + @"</td></tr>
-          <tr><th>Payment Method:</th><td>" + transaction.TransactionType.VietnameseName + @"</td></tr>
-          <tr><th>Payment Time:</th><td>" + transaction.PaidDate.Value.ToString("yyyy-MM-dd HH:mm")  + @"</td></tr>
-          <tr><th>Total Amount:</th><td>" + response.Order.TotalAmount + @" VND</td></tr>
-          <tr><th>Order Type:</th><td>" + response.Order.OrderType.VietnameseName + @"</td></tr>
-          <tr><th>Note:</th><td>" + (string.IsNullOrEmpty(response.Order.Note) ? "No notes" : response.Order.Note) + @"</td></tr>
+          <tr><th>Mã đơn:</th><td>" + response.Order.OrderId.ToString().Substring(0, 6) + @"</td></tr>
+          <tr><th>Ngày đặt/dùng bữa:</th><td>" + response.Order.OrderDate.ToString("yyyy-MM-dd") + @"</td></tr>
+          <tr><th>Phương thức thanh toán:</th><td>" + transaction.PaymentMethod.VietnameseName + @"</td></tr>
+          <tr><th>Thời gian thanh toán:</th><td>" + transaction.PaidDate.Value.ToString("yyyy-MM-dd HH:mm") + @"</td></tr>
+          <tr><th>Tổng đơn:</th><td>" + response.Order.TotalAmount.ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td></tr>
+          <tr><th>Loại đơn hàng:</th><td>" + response.Order.OrderType.VietnameseName + @"</td></tr>
+          <tr><th>Ghi chú:</th><td>" + (string.IsNullOrEmpty(response.Order.Note) ? "No notes" : response.Order.Note) + @"</td></tr>
         </table>
 
-        <h2 class='section-title'>Customer Details</h2>
+        <h2 class='section-title'>Thông tin khách hàng(Nếu có)</h2>
         " + customerDetails + @"
 
-        <h2 class='section-title'>Dishes Ordered</h2>
+        <h2 class='section-title'>Danh sách món</h2>
         <table class='dish-table'>
           <thead>
             <tr>
@@ -217,24 +244,45 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
               <th>Kích thước</th>
               <th>Số lượng</th>
               <th>Giá (VND)</th>
-              <th>Giảm giá (%)</th>
+              <th>Giảm giá (%)</th>              
+              <th>Thành tiền</th>
+
             </tr>
           </thead>
           <tbody>
-            " + string.Join("", response.OrderDishes.Select(o => @"
-            <tr>
-              <td>" + (i++) + @"</td>
-              <td>" + o.DishSizeDetail.Dish.Name + @"</td>
-              <td>" + o.DishSizeDetail.DishSize.VietnameseName + @"</td>
-              <td>" + o.Quantity + @"</td>
-              <td>" + o.DishSizeDetail.Price + @"</td>
-              <td>" + o.DishSizeDetail.Discount + @"</td>
-            </tr>")) + @"
+            " + string.Join("", response.OrderDishes.Select(o =>
+            {
+                if (o.ComboDish != null)
+                {
+                    var comboDetail = string.Join("<br>", o.ComboDish.DishCombos.Select(d => "<i>- " + d.DishSizeDetail.Dish.Name + " x " + d.Quantity + "</i>"));
+                    return @"
+                    <tr>
+                      <td>" + (i++) + @"</td>
+                      <td>" + o.ComboDish.Combo.Name + "<br>" + comboDetail + @"</td>
+                      <td>N/A</td>
+                      <td>" + o.Quantity + @"</td>
+                      <td>" + o.ComboDish.Combo.Price + @"</td>
+                      <td>" + o.ComboDish.Combo.Discount + @"%</td>
+                      <td>" + (Math.Ceiling((1 - o.ComboDish.Combo.Discount) * o.ComboDish.Combo.Price * o.Quantity / 1000) * 1000).ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td>
+
+                    </tr>";
+                }
+                return @"
+                <tr>
+                  <td>" + (i++) + @"</td>
+                  <td>" + o.DishSizeDetail.Dish.Name + @"</td>
+                  <td>" + o.DishSizeDetail.DishSize.VietnameseName + @"</td>
+                  <td>" + o.Quantity + @"</td>
+                  <td>" + o.DishSizeDetail.Price + @"</td>
+                  <td>" + o.DishSizeDetail.Discount + @"%</td>
+                  <td>" + (Math.Ceiling((1 - o.DishSizeDetail.Discount) * o.DishSizeDetail.Price * o.Quantity / 1000) * 1000).ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"%</td>
+                </tr>";
+            })) + @"
           </tbody>
         </table>
 
         <div class='total-info'>
-          <p><strong>Tổng (đã bao gồm thế và các loại phí):</strong> " + response.Order.TotalAmount + @" VND</p>
+          <p><strong>Tổng (đã bao gồm thuế và phí):</strong> " + response.Order.TotalAmount.ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @" </p>
           <p>Số tiền này đã bao gồm tất cả các loại thuế và phí bổ sung.</p>
         </div>
       </div>
