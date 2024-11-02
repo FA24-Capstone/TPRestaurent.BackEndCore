@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241102075347_AddAccountBannedColumn")]
+    partial class AddAccountBannedColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1416,43 +1418,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         });
                 });
 
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.TableStatus", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("VietnameseName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TableStatuses");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 0,
-                            Name = "NEW",
-                            VietnameseName = "Vừa tạo"
-                        },
-                        new
-                        {
-                            Id = 1,
-                            Name = "AVAILABLE",
-                            VietnameseName = "Trống"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = "CURRENTLYUSED",
-                            VietnameseName = "Đang dùng"
-                        });
-                });
-
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.TransactionType", b =>
                 {
                     b.Property<int>("Id")
@@ -2029,16 +1994,11 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<int>("TableSizeId")
                         .HasColumnType("int");
 
-                    b.Property<int>("TableStatusId")
-                        .HasColumnType("int");
-
                     b.HasKey("TableId");
 
                     b.HasIndex("RoomId");
 
                     b.HasIndex("TableSizeId");
-
-                    b.HasIndex("TableStatusId");
 
                     b.ToTable("Tables");
                 });
@@ -2624,17 +2584,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.TableStatus", "TableStatus")
-                        .WithMany()
-                        .HasForeignKey("TableStatusId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Room");
 
                     b.Navigation("TableSize");
-
-                    b.Navigation("TableStatus");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.TableDetail", b =>

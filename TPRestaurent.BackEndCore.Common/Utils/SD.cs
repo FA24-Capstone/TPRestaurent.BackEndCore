@@ -105,6 +105,9 @@ public class SD
         public static string TIME_FOR_REFUND = "TIME_FOR_REFUND";
         public static string REFUND_PERCENTAGE = "REFUND_PERCENTAGE";
         public static string TABLE_IS_SET_UP = "TABLE_IS_SET_UP";
+        public static string NEW = "NEW";
+        public static string IS_SET_UP = "IS_SET_UP";
+        public static string INITIAL = "INITIAL";
     }
 
     public class SubjectMail
@@ -210,6 +213,8 @@ public class SD
         public static string LOAD_ORDER_DELIVERY = "LOAD_ORDER_DELIVERY";
         public static string LOAD_RE_DELIVERING_REQUEST = "LOAD_RE_DELIVERING_REQUEST";
         public static string LOAD_ASSIGNED_ORDER = "LOAD_ASSIGNED_ORDER";
+        public static string LOAD_NOTIFICATION = "LOAD_NOTIFICATION";
+        public static string LOAD_USER_ORDER = "LOAD_USER_ORDER";
 
 
     }
@@ -223,8 +228,8 @@ public class SD
     {
         public static string ROLE_CHEF = "CHEF";
         public static string ROLE_ADMIN = "ADMIN";
-        public static string ROLE_SHIPPER = "ADMIN";
-
+        public static string ROLE_SHIPPER = "SHIPPER";
+        public static string ROLE_CUSTOMER = "CUSTOMER";
 
     }
 

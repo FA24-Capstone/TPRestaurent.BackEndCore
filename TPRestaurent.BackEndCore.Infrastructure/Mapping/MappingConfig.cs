@@ -86,6 +86,8 @@ public class MappingConfig
             .ForMember(dest => dest.EndDate, act => act.MapFrom(src => src.EndDate))
             .ForMember(dest => dest.IsAvailable, act => act.MapFrom(src => src.IsAvailable))
             .ForMember(dest => dest.IsDeleted, act => act.MapFrom(src => src.IsDeleted))
+            .ForMember(dest => dest.IsDeleted, act => act.MapFrom(src => src.IsDeleted))
+            .ForMember(dest => dest.IsDeleted, act => act.MapFrom(src => src.IsDeleted))
             .ForMember(dest => dest.PreparationTime, act => act.MapFrom(src => src.PreparationTime));
 
             config.CreateMap<Dish, DishReponse>()
@@ -205,6 +207,7 @@ public class MappingConfig
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TableId))
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.TableName))
             .ForMember(dest => dest.TableSizeId, opt => opt.MapFrom(src => src.TableSizeId))
+            .ForMember(dest => dest.TableStatusId, opt => opt.MapFrom(src => src.TableStatusId))
             .ReverseMap();
         });
 
