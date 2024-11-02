@@ -36,13 +36,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _userRoleRepository = userRoleRepository;
         }
 
-        public async Task<AppActionResult> GetStatisticReportForDashboardReport(DateTime startDate, DateTime endDate)
+        public async Task<AppActionResult> GetStatisticReportForDashboardReport(DateTime? startDate, DateTime? endDate)
         {
             var result = new AppActionResult();
             var transactionRepository = Resolve<IGenericRepository<Transaction>>();
             var orderRepository = Resolve<IGenericRepository<Order>>();
             var utility = Resolve<TPRestaurent.BackEndCore.Common.Utils.Utility>();
             var currentTime = utility.GetCurrentDateTimeInTimeZone();
+            var vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+
+            if (startDate.Value == default(DateTime))
+            {
+                startDate = TimeZoneInfo.ConvertTime(
+                    new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, 0, 0, 0),
+                    vietnamTimeZone);
+            }
+            if (endDate.Value == default(DateTime))
+            {
+                endDate = TimeZoneInfo.ConvertTime(
+                    new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, 23, 59, 59),
+                    vietnamTimeZone);
+            }
 
             try
             {
@@ -51,7 +65,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 for (int month = 1; month <= 12; month++)
                 {
                     var transactions = await transactionRepository.GetAllDataByExpression(
-                        p => p.Date.Month >= startDate.Month && p.Date.Month <= endDate.Month && p.TransationStatusId == TransationStatus.SUCCESSFUL,
+                        p => p.Date.Month >= startDate.Value.Month && p.Date.Month <= endDate.Value.Month && p.TransationStatusId == TransationStatus.SUCCESSFUL,
                         0,
                         0,
                         null,
@@ -85,7 +99,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetStatisticReportForNumberReport(DateTime startDate, DateTime endDate)
+        public async Task<AppActionResult> GetStatisticReportForNumberReport(DateTime? startDate, DateTime? endDate)
         {
             var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
             var utility = Resolve<TPRestaurent.BackEndCore.Common.Utils.Utility>();
@@ -93,8 +107,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var orderRepository = Resolve<IGenericRepository<Order>>();
             var result = new AppActionResult();
             var transactionRepository = Resolve<IGenericRepository<Transaction>>();
+            var vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
             try
             {
+                if (startDate.Value == default(DateTime))
+                {
+                    startDate = TimeZoneInfo.ConvertTime(
+                        new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, 0, 0, 0),
+                        vietnamTimeZone);
+                }
+                if (endDate.Value == default(DateTime))
+                {
+                    endDate = TimeZoneInfo.ConvertTime(
+                        new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, 23, 59, 59),
+                        vietnamTimeZone);
+                }
+
                 StatisticReportNumberResponse statisticReportNumberResponse = new StatisticReportNumberResponse();      
 
                 ShipperStatisticResponse shipperStatisticResponse = new ShipperStatisticResponse();
@@ -117,7 +145,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 CustomerStasticResponse customerStasticResponse = new CustomerStasticResponse();
                 var customerDb = await _userManager.GetUsersInRoleAsync(SD.RoleName.ROLE_CUSTOMER);
-                var customerLastWeek = customerDb.Where(p => p.RegisteredDate.Date >= startDate.AddDays(-7).Date);
+                var customerLastWeek = customerDb.Where(p => p.RegisteredDate.Date >= startDate.Value.AddDays(-7).Date);
                 var lastWeekCount = customerLastWeek.Count();
                 var customerCount = customerDb.Count();
 
@@ -134,8 +162,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var profitReportResponse = new ProfitReportResponse();
                 var todayStart = currentTime.Date;
                 var todayEnd = todayStart.AddDays(1).AddTicks(-1);
-                var yesterdayStart = startDate.AddDays(-1);
-                var yesterdayEnd = endDate.AddTicks(-1);
+                var yesterdayStart = startDate.Value.AddDays(-1);
+                var yesterdayEnd = endDate.Value.AddTicks(-1);
 
                 var presentTransactionDb = await transactionRepository!.GetAllDataByExpression(
                     p => p.Date >= startDate &&
