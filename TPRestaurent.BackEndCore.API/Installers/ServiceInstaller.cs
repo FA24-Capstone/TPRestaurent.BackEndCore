@@ -43,6 +43,8 @@ public class ServiceInstaller : IInstaller
         services.AddScoped<IGroupedDishCraftService, GroupedDishCraftService>();
         services.AddScoped<ITableService, TableService>();
         services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IFileService, FileService>();
+        services.AddScoped<IInvoiceService, InvoiceService>();
 
     }
 }

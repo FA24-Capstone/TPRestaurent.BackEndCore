@@ -12,10 +12,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class TestController : ControllerBase
     {
         public IOrderService _orderService;
+        public IInvoiceService _invoiceService;
         private IHubServices _hubServices;
-        public TestController(IOrderService orderService, IHubServices hubServices)
+        public TestController(IOrderService orderService, IInvoiceService invoiceService, IHubServices hubServices)
         {
             _orderService = orderService;
+            _invoiceService = invoiceService;
             _hubServices = hubServices;
         }
 
@@ -30,6 +32,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             await _hubServices.SendAsync("Test");
             return Ok();
+        }
+
+        [HttpPost("test-pdf")]
+        public async Task Pdf()
+        {
+            await _invoiceService.GenerateInvoice();
         }
     }
 }
