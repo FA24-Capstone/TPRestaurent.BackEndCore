@@ -51,7 +51,6 @@ public class MappingConfig
 
             config.CreateMap<Table, TableDto>()
              .ForMember(desc => desc.TableName, act => act.MapFrom(src => src.TableName))
-             .ForMember(desc => desc.TableStatusId, act => act.MapFrom(src => src.TableStatusId))
              .ForMember(desc => desc.TableSizeId, act => act.MapFrom(src => src.TableSizeId))
              .ForMember(desc => desc.TableRatingId, act => act.MapFrom(src => src.RoomId))
              .ForMember(desc => desc.DeviceCode, act => act.MapFrom(src => src.DeviceCode))
@@ -209,7 +208,6 @@ public class MappingConfig
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.TableName))
             .ForMember(dest => dest.TableSizeId, opt => opt.MapFrom(src => src.TableSizeId))
             .ForMember(dest => dest.TableStatusId, opt => opt.MapFrom(src => src.TableStatusId))
-            //.ForMember(dest => dest.TableStatus, opt => opt.MapFrom(src => src.TableStatus))
             .ReverseMap();
         });
 

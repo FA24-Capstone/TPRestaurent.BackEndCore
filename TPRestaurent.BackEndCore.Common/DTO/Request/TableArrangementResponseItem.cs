@@ -14,7 +14,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public Position? Position { get; set; } = new Position();
         public TableSize TableSizeId { get; set; }
         public Domain.Enums.TableStatus TableStatusId { get; set; }
-        //public Domain.Models.EnumModels.TableStatus? TableStatus { get; set; }
     }
 
     public class Position
