@@ -191,10 +191,10 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.UpRole(accountId, roleName);   
         }
 
-        [HttpPost("create-account-for-restaurent-employees")]
-        public async Task<AppActionResult> CreateAccountForRestaurentEmployees(EmployeeSignUpRequest request)
+        [HttpPost("create-account-for-restaurant-employees")]
+        public async Task<AppActionResult> CreateAccountForRestaurantEmployees(EmployeeSignUpRequest request)
         {
-            return await _accountService.CreateAccountForRestaurentEmployees(request, false);
+            return await _accountService.CreateAccountForRestaurantEmployees(request, false);
         }
 
         [HttpPost("ban-user/{accountId}")]
