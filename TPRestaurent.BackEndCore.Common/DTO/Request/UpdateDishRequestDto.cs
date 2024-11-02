@@ -14,6 +14,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public string Name { get; set; } = null!;
         public bool IsAvailable { get; set; }
         public string Description { get; set; } = null!;
+        public int? PreparationTime { get; set; }
         public List<UpdateDishSizeDetailDto> UpdateDishSizeDetailDtos { get; set; } = new List<UpdateDishSizeDetailDto> { };
         public DishItemType DishItemType { get; set; }
     }

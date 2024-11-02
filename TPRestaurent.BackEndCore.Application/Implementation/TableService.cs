@@ -34,6 +34,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
+                var congfigurationRepository = Resolve<IGenericRepository<Configuration>>();
                 //Name validation (if needed)
                 if (string.IsNullOrEmpty(dto.TableName)) {
                     result = BuildAppActionResultError(result, "Tên bàn không được để trống");
@@ -56,7 +57,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var newTable = _mapper.Map<Table>(dto);
                 newTable.TableId = Guid.NewGuid();
                 newTable.IsDeleted = false;
+                newTable.TableStatusId = TableStatus.NEW;
+                newTable.Coordinates = "(0,0)";
                 await _repository.Insert(newTable);
+
+                var tableSetUpConfig = await congfigurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TABLE_IS_SET_UP), null);
+                if (tableSetUpConfig != null)
+                {
+                    tableSetUpConfig.CurrentValue = SD.DefaultValue.NEW;
+                    await congfigurationRepository.Update(tableSetUpConfig);
+                }
+
                 await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
@@ -72,31 +83,78 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var orderService = Resolve<IOrderService>();
-                var data = new List<TableArrangementResponseItem>();
                 var availableTables = await GetAvailableTable(dto.StartTime, dto.EndTime, dto.IsPrivate, dto.NumOfPeople, 0, 0);
                 if (availableTables.Count == 0)
                 {
                     result.Messages.Add("Không tìm thấy bàn cho yêu cầu đặt bàn");
                     return result;
                 }
-                int[] sizes = { 2, 4, 6, 9, 11 }; // Possible sizes
+                var bestCaseFindTableResult = await FindTableWithCase(dto, availableTables, false);
+                if(bestCaseFindTableResult.IsSuccess && bestCaseFindTableResult.Result != null)
+                {
+                    result.Result = bestCaseFindTableResult.Result as List<TableArrangementResponseItem>;
+                    return result;
+                }
+
+                var badCaseFindTableResult = await FindTableWithCase(dto, availableTables, true);
+                if (badCaseFindTableResult.IsSuccess && badCaseFindTableResult.Result != null)
+                {
+                    result.Result = badCaseFindTableResult.Result as List<TableArrangementResponseItem>;
+                    if(badCaseFindTableResult.Messages.Count > 0)
+                    {
+                        result.Messages.AddRange(badCaseFindTableResult.Messages);
+                    }
+                    return result;
+                }
+                result.Messages.Add($"Nhà hàng không xếp bàn cho quý khách. Xin lỗi và xin hẹn quý khách lần sau");
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message );
+            }
+            return result;
+        }
+
+        private async Task<AppActionResult> FindTableWithCase(FindTableDto dto, List<Table> availableTables, bool allowAddChair)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var data = new List<TableArrangementResponseItem>();
+                int[] sizes = null;
+                if (allowAddChair)
+                {
+                   sizes = new int[]{ 2, 4, 6, 9, 11 }; // Possible sizes
+                }
+                else
+                {
+                    sizes = new int[]{ 2, 4, 6, 8, 10 }; // Possible sizes
+                }
                 int target = dto.NumOfPeople + 2;
                 List<List<int>> possibleTableSet = new List<List<int>>();
                 await Backtrack(possibleTableSet, new List<int>(), sizes, dto.NumOfPeople, 0, target);
 
                 // Filter out subsets that are not optimal
-                possibleTableSet = await FilterOptimalSubsets(possibleTableSet);
+                possibleTableSet = await FilterOptimalSubsets(possibleTableSet, dto.NumOfPeople);
                 var tableSizeDictionary = availableTables.GroupBy(a => (int)a.TableSizeId).ToDictionary(a => a.Key, a => a.Count());
                 var adjustedTableSizeDictionary = new Dictionary<int, int>();
-                foreach(var table in tableSizeDictionary)
+                if (allowAddChair)
                 {
-                    if(table.Key == 8 || table.Key == 10)
+                    foreach (var table in tableSizeDictionary)
                     {
-                        adjustedTableSizeDictionary.Add(table.Key + 1, table.Value);
-                    } else
-                    {
-                        adjustedTableSizeDictionary.Add(table.Key, table.Value);
+                        if (table.Key == 8 || table.Key == 10)
+                        {
+                            adjustedTableSizeDictionary.Add(table.Key + 1, table.Value);
+                        }
+                        else
+                        {
+                            adjustedTableSizeDictionary.Add(table.Key, table.Value);
+                        }
                     }
+                }
+                else
+                {
+                    adjustedTableSizeDictionary = tableSizeDictionary;
                 }
                 possibleTableSet = await FilterAvailableQuantity(possibleTableSet, adjustedTableSizeDictionary);
                 foreach (var possibleTable in possibleTableSet)
@@ -113,14 +171,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                     }
                     var tableList = await FindBestTables(new List<Table>(availableTables), possibleTable);
-                    if(tableList != null && tableList.Count > 0)
+                    if (tableList != null && tableList.Count > 0)
                     {
                         int tableSizeCheck = 0;
                         foreach (var table in tableList)
                         {
                             var tableResponse = _mapper.Map<TableArrangementResponseItem>(table);
                             List<(int, int)> tableCoordinates = DeserializeList(table.Coordinates);
-                            if(tableCoordinates.Count > 0)
+                            if (tableCoordinates.Count > 0)
                             {
                                 tableResponse.Position.X = tableCoordinates.FirstOrDefault().Item1;
                                 tableResponse.Position.Y = tableCoordinates.FirstOrDefault().Item2;
@@ -129,7 +187,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             tableSizeCheck += (int)table.TableSizeId;
                         }
                         result.Result = data;
-                        if(tableSizeCheck > dto.NumOfPeople)
+                        if (tableSizeCheck < dto.NumOfPeople)
                         {
                             result.Messages.Add("Lịch đặt bàn hiện tại đang khá dày nên nhà hàng sẽ phải kê thêm ghế cho quý khách");
                         }
@@ -140,11 +198,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
-                result = BuildAppActionResultError(result, ex.Message );
+                result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
-
         private async Task<List<List<int>>> FilterAvailableQuantity(List<List<int>> possibleTableSet, Dictionary<int, int> dictionary)
         {
             List<List<int>> reducedList = new List<List<int>>();
@@ -205,7 +262,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
         }
 
-        private async Task<List<List<int>>> FilterOptimalSubsets(List<List<int>> subsets)
+        private async Task<List<List<int>>> FilterOptimalSubsets(List<List<int>> subsets, int NumOfPeople)
         {
             List<List<int>> optimalSubsets = new List<List<int>>();
 
@@ -233,7 +290,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
             }
 
-            return optimalSubsets.OrderBy(o => o.Sum(i => i)).ThenBy(o => o.Count()).ThenBy(o =>
+            return optimalSubsets.OrderBy(o => Math.Abs(o.Sum(i => i) - NumOfPeople)).ThenBy(o => o.Count()).ThenBy(o =>
             {
                 double mean = o.Average();
                 return o.Average(or => Math.Pow(or - mean, 2));
@@ -387,6 +444,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (tableDb.Items.Count > 0)
                 {
                     var data = new List<TableArrangementResponseItem>();
+                    var unavailableTableIds = await GetUnavailableTableIds();
                     foreach (var item in tableDb.Items)
                     {
                         var tableResponse = _mapper.Map<TableArrangementResponseItem>(item);
@@ -396,8 +454,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             tableResponse.Position.X = tableCoordinates.FirstOrDefault().Item1;
                             tableResponse.Position.Y = tableCoordinates.FirstOrDefault().Item2;
                         }
+
+                        if (unavailableTableIds.Contains(tableResponse.Id))
+                        {
+                            tableResponse.TableStatusId = TableStatus.CURRENTLYUSED;
+                        } else
+                        {
+                            tableResponse.TableStatusId = TableStatus.AVAILABLE;
+                        }
+
+
+
                         data.Add(tableResponse);
                     }
+
+
+
                     result.Result = new PagedResult<TableArrangementResponseItem>
                     {
                         Items = data,
@@ -417,13 +489,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
+                var congfigurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var tableSetUpConfig = await congfigurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TABLE_IS_SET_UP), null);
                 if(!isForce.HasValue || !isForce.Value)
                 {
-                    var congfigurationRepository = Resolve<IGenericRepository<Configuration>>();
-                    var tableSetUpConfig = await congfigurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TABLE_IS_SET_UP), null);
                     if (tableSetUpConfig != null)
                     {
-                        if (tableSetUpConfig.CurrentValue.Equals("1"))
+                        if (tableSetUpConfig.CurrentValue.Equals(SD.DefaultValue.IS_SET_UP))
                         {
                             return BuildAppActionResultError(result, $"Sơ đồ bàn đã được thiết lập từ trước. Nếu thay đổi có ảnh hưởng đến lịch đặt bàn sau này");
                         }
@@ -469,6 +541,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     table.TableSizeId = inputTable.TableSizeId; 
                     table.Coordinates = ParseListToString(coordinate);  
                 }
+                if(tableSetUpConfig != null)
+                {
+                    tableSetUpConfig.CurrentValue = SD.DefaultValue.IS_SET_UP;
+                    await congfigurationRepository.Update(tableSetUpConfig);
+                }
                 await _repository.UpdateRange(tableDb.Items);
                 await _unitOfWork.SaveChangesAsync();
             }
@@ -482,6 +559,32 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             // Convert the list of tuples to a string format "(x,y);(x,y);..."
             return string.Join(";", list.Select(tuple => $"({tuple.Item1},{tuple.Item2})"));
+        }
+
+        public async Task<List<Guid>> GetUnavailableTableIds()
+        {
+            List<Guid> result = new List<Guid>();
+            try
+            {
+                var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var utility = Resolve<Utility>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                var configurationDb = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.AVERAGE_MEAL_DURATION), null);
+                var averageTime = double.Parse(configurationDb.CurrentValue);
+                var unavailableDetailDb = await tableDetailRepository.GetAllDataByExpression(t => t.Order.OrderTypeId != OrderType.Delivery
+                                                                                                  && t.Order.MealTime <= currentTime
+                                                                                                  && (t.Order.EndTime.HasValue && t.Order.EndTime.Value >= currentTime
+                                                                                                      || !t.Order.EndTime.HasValue && t.Order.MealTime.Value.AddHours(averageTime) >= currentTime), 
+                                                                                                  0, 0, null, false, null);
+
+                result = unavailableDetailDb.Items.DistinctBy(u => u.TableId).Select(u => u.TableId).ToList();
+            }
+            catch (Exception ex)
+            {
+                result = new List<Guid>();
+            }
+            return result;
         }
 
     }
