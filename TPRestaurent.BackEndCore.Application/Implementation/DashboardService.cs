@@ -134,8 +134,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 ShipperStatisticResponse shipperStatisticResponse = new ShipperStatisticResponse();
                 var shipperDb = await _userManager.GetUsersInRoleAsync(SD.RoleName.ROLE_SHIPPER);
-                shipperStatisticResponse.NumberOfShipperIsWorking = shipperDb.Where(p => p.IsDelivering).Count();
-                shipperStatisticResponse.NumberOfShipper = shipperDb.Count;
+                var shipperList = shipperDb.Where(p => p.RegisteredDate >= startDate.Value && p.RegisteredDate <= endDate.Value);
+                shipperStatisticResponse.NumberOfShipperIsWorking = shipperList.Where(p => p.IsDelivering).Count();
+                shipperStatisticResponse.NumberOfShipper = shipperList.Count();
 
                 statisticReportNumberResponse.ShipperStatisticResponse = shipperStatisticResponse;
 
@@ -152,9 +153,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 CustomerStasticResponse customerStasticResponse = new CustomerStasticResponse();
                 var customerDb = await _userManager.GetUsersInRoleAsync(SD.RoleName.ROLE_CUSTOMER);
+                var customerList =  customerDb.Where(p => p.RegisteredDate >= startDate.Value && p.RegisteredDate <= endDate.Value);
                 var customerLastWeek = customerDb.Where(p => p.RegisteredDate.Date >= startDate.Value.AddDays(-7).Date);
                 var lastWeekCount = customerLastWeek.Count();
-                var customerCount = customerDb.Count();
+                var customerCount = customerList.Count();
 
                 customerStasticResponse.NumberOfCustomer = customerCount;
                 customerStasticResponse.PercentIncrease = lastWeekCount == 0 ? 0 : Math.Round(
@@ -164,7 +166,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 statisticReportNumberResponse.CustomerStasticResponse = customerStasticResponse;
 
                 var chefDb = await _userManager.GetUsersInRoleAsync(SD.RoleName.ROLE_CHEF);
-                statisticReportNumberResponse.TotalChefNumber = chefDb.Count();
+                var chefList = chefDb.Where(p => p.RegisteredDate >= startDate.Value && p.RegisteredDate <= endDate.Value);
+                statisticReportNumberResponse.TotalChefNumber = chefList.Count();
 
                 var profitReportResponse = new ProfitReportResponse();
                 var todayStart = currentTime.Date;
