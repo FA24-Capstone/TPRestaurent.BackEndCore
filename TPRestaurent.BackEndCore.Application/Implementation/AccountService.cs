@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Castle.DynamicProxy.Generators;
 using Firebase.Auth;
 using FirebaseAdmin;
@@ -1981,120 +1981,134 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> CreateAccountRestaurentEmployee(EmployeeSignUpRequest signUpRequestDto, bool isGoogle)
+        public async Task<AppActionResult> CreateAccountForRestaurantEmployees(EmployeeSignUpRequest signUpRequestDto, bool isGoogle)
         {
             var result = new AppActionResult();
             var utility = Resolve<Utility>();
             var jwtService = Resolve<IJwtService>();
             var tokenRepository = Resolve<IGenericRepository<Token>>();
             var otpRepository = Resolve<IGenericRepository<OTP>>();
-            try
+            var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                if (await _accountRepository.GetByExpression(r => r!.PhoneNumber == signUpRequestDto.PhoneNumber) != null)
-                    result = BuildAppActionResultError(result, "Số điện thoại đã tồn tại!");
-                if (signUpRequestDto.RoleName == SD.RoleName.ROLE_CUSTOMER || signUpRequestDto.RoleName == SD.RoleName.ROLE_ADMIN)
+
+                try
                 {
-                    return BuildAppActionResultError(result, $"Bạn không có quyền hạn tạo tài khoản");
-                }
-
-                if (!BuildAppActionResultIsError(result))
-                {
-                    var emailService = Resolve<IEmailService>();
-                    var smsService = Resolve<ISmsService>();
-                    var currentTime = utility.GetCurrentDateTimeInTimeZone();
-
-                    var user = new Account
+                    if (await _accountRepository.GetByExpression(r => r!.PhoneNumber == signUpRequestDto.PhoneNumber) != null)
+                        result = BuildAppActionResultError(result, "Số điện thoại đã tồn tại!");
+                    if (signUpRequestDto.RoleName == SD.RoleName.ROLE_CUSTOMER || signUpRequestDto.RoleName == SD.RoleName.ROLE_ADMIN)
                     {
-                        Id = Guid.NewGuid().ToString(),
-                        Email = signUpRequestDto.Email,
-                        UserName = signUpRequestDto.PhoneNumber,
-                        FirstName = signUpRequestDto.FirstName,
-                        LastName = signUpRequestDto.LastName,
-                        PhoneNumber = signUpRequestDto.PhoneNumber,
-                        Gender = signUpRequestDto.Gender,
-                        LoyaltyPoint = 0,
-                        IsVerified = isGoogle ? true : false,
-                        IsManuallyCreated = true,
-                        RegisteredDate = utility.GetCurrentDateInTimeZone()
-                    };
+                        return BuildAppActionResultError(result, $"Bạn không có quyền hạn tạo tài khoản");
+                    }
 
-                    var resultCreateUser = await _userManager.CreateAsync(user);
-                    if (resultCreateUser.Succeeded)
+                    if (!BuildAppActionResultIsError(result))
                     {
-                        result.Result = user;
-                        if ((!string.IsNullOrEmpty(signUpRequestDto.Email) && !string.IsNullOrEmpty(signUpRequestDto.PhoneNumber) || (!string.IsNullOrEmpty(signUpRequestDto.Email))))
+                        var emailService = Resolve<IEmailService>();
+                        var smsService = Resolve<ISmsService>();
+                        var currentTime = utility.GetCurrentDateTimeInTimeZone();
+
+                        var user = new Account
                         {
-                            if (!isGoogle)
+                            Id = Guid.NewGuid().ToString(),
+                            Email = signUpRequestDto.Email,
+                            UserName = signUpRequestDto.PhoneNumber,
+                            FirstName = signUpRequestDto.FirstName,
+                            LastName = signUpRequestDto.LastName,
+                            PhoneNumber = signUpRequestDto.PhoneNumber,
+                            Gender = signUpRequestDto.Gender,
+                            LoyaltyPoint = 0,
+                            IsVerified = isGoogle ? true : false,
+                            IsManuallyCreated = true,
+                            RegisteredDate = utility.GetCurrentDateInTimeZone()
+                        };
+
+                        var resultCreateUser = await _userManager.CreateAsync(user);
+                        if (resultCreateUser.Succeeded)
+                        {
+                            result.Result = user;
+                            if ((!string.IsNullOrEmpty(signUpRequestDto.Email) && !string.IsNullOrEmpty(signUpRequestDto.PhoneNumber) || (!string.IsNullOrEmpty(signUpRequestDto.Email))))
                             {
-                                var random = new Random();
-                                var verifyCode = string.Empty;
-                                verifyCode = random.Next(100000, 999999).ToString();
-
-                                emailService!.SendEmail(user.Email, SD.SubjectMail.VERIFY_ACCOUNT,
-                                   TemplateMappingHelper.GetTemplateOTPEmail(
-                                       TemplateMappingHelper.ContentEmailType.VERIFICATION_CODE, verifyCode,
-                                       user.LastName));
-
-                                var otpsDb = new OTP
+                                if (!isGoogle)
                                 {
-                                    OTPId = Guid.NewGuid(),
-                                    Type = OTPType.Register,
-                                    AccountId = user.Id,
-                                    Code = verifyCode,
-                                    ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
-                                    IsUsed = false,
-                                };
-                                await _otpRepository.Insert(otpsDb);
-                                await _unitOfWork.SaveChangesAsync();
+                                    var random = new Random();
+                                    var verifyCode = string.Empty;
+                                    verifyCode = random.Next(100000, 999999).ToString();
+
+                                    emailService!.SendEmail(user.Email, SD.SubjectMail.VERIFY_ACCOUNT,
+                                       TemplateMappingHelper.GetTemplateOTPEmail(
+                                           TemplateMappingHelper.ContentEmailType.VERIFICATION_CODE, verifyCode,
+                                           user.LastName));
+
+                                    var otpsDb = new OTP
+                                    {
+                                        OTPId = Guid.NewGuid(),
+                                        Type = OTPType.Register,
+                                        AccountId = user.Id,
+                                        Code = verifyCode,
+                                        ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
+                                        IsUsed = false,
+                                    };
+                                    await _otpRepository.Insert(otpsDb);
+                                    await _unitOfWork.SaveChangesAsync();
+                                }
+                            }
+                            else
+                            {
+                                var availableOtp = await _otpRepository.GetAllDataByExpression(o => o.Account.PhoneNumber.
+                                Equals(user.PhoneNumber) && o.Type == OTPType.Register && o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && !o.IsUsed, 0, 0, null, false, null);
+                                if (availableOtp.Items.Count > 1)
+                                {
+                                    result = BuildAppActionResultError(result, "Xảy ra lỗi trong quá trình xử lí, có nhiều hơn 1 otp khả dụng. Vui lòng thử lại sau ít phút");
+                                    return result;
+                                }
+                                if (availableOtp.Items.Count == 1)
+                                {
+                                    result.Result = availableOtp.Items[0];
+                                    return result;
+                                }
+                                if (!BuildAppActionResultIsError(result))
+                                {
+                                    string code = await GenerateVerifyCodeSms(user.PhoneNumber, true); ;
+                                    var otpsDb = new OTP
+                                    {
+                                        OTPId = Guid.NewGuid(),
+                                        Type = OTPType.Register,
+                                        AccountId = user.Id,
+                                        Code = code,
+                                        ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
+                                        IsUsed = false,
+                                    };
+                                    await _otpRepository.Insert(otpsDb);
+                                    await _unitOfWork.SaveChangesAsync();
+                                }
                             }
                         }
                         else
                         {
-                            var availableOtp = await _otpRepository.GetAllDataByExpression(o => o.Account.PhoneNumber.
-                            Equals(user.PhoneNumber) && o.Type == OTPType.Register && o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && !o.IsUsed, 0, 0, null, false, null);
-                            if (availableOtp.Items.Count > 1)
-                            {
-                                result = BuildAppActionResultError(result, "Xảy ra lỗi trong quá trình xử lí, có nhiều hơn 1 otp khả dụng. Vui lòng thử lại sau ít phút");
-                                return result;
-                            }
-                            if (availableOtp.Items.Count == 1)
-                            {
-                                result.Result = availableOtp.Items[0];
-                                return result;
-                            }
-                            if (!BuildAppActionResultIsError(result))
-                            {
-                                string code = await GenerateVerifyCodeSms(user.PhoneNumber, true); ;
-                                var otpsDb = new OTP
-                                {
-                                    OTPId = Guid.NewGuid(),
-                                    Type = OTPType.Register,
-                                    AccountId = user.Id,
-                                    Code = code,
-                                    ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
-                                    IsUsed = false,
-                                };
-                                await _otpRepository.Insert(otpsDb);
-                                await _unitOfWork.SaveChangesAsync();
-                            }
+                            result = BuildAppActionResultError(result, $"Tạo tài khoản không thành công");
+                        }
+
+                        var roleDb = await roleRepository.GetByExpression(p => p.Name == signUpRequestDto.RoleName);
+                        if (roleDb == null)
+                        {
+                            return BuildAppActionResultError(result, $"Không tìm thấy vai trò với tên {signUpRequestDto.RoleName}");
+                        }
+                        var resultCreateRole = await _userManager.AddToRoleAsync(user, roleDb.Name);
+                        if (!resultCreateRole.Succeeded) result = BuildAppActionResultError(result, $"Cấp quyền khách hàng không thành công");
+
+                        if (!BuildAppActionResultIsError(result))
+                        {
+                            await _unitOfWork.SaveChangesAsync();
+                            scope.Complete();
                         }
                     }
-                    else
-                    {
-                        result = BuildAppActionResultError(result, $"Tạo tài khoản không thành công");
-                    }
-
-                    var roleDb = await _roleManager.FindByNameAsync(signUpRequestDto.RoleName);
-                    var resultCreateRole = await _userManager.AddToRoleAsync(user, roleDb.Name);
-                    if (!resultCreateRole.Succeeded) result = BuildAppActionResultError(result, $"Cấp quyền khách hàng không thành công");
-
-                    await _unitOfWork.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    result = BuildAppActionResultError(result, ex.Message);
                 }
             }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
+
             return result;
         }
     }
