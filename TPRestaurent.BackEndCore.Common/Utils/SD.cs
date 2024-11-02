@@ -213,6 +213,8 @@ public class SD
         public static string LOAD_ORDER_DELIVERY = "LOAD_ORDER_DELIVERY";
         public static string LOAD_RE_DELIVERING_REQUEST = "LOAD_RE_DELIVERING_REQUEST";
         public static string LOAD_ASSIGNED_ORDER = "LOAD_ASSIGNED_ORDER";
+        public static string LOAD_NOTIFICATION = "LOAD_NOTIFICATION";
+        public static string LOAD_USER_ORDER = "LOAD_USER_ORDER";
 
 
     }
@@ -226,8 +228,8 @@ public class SD
     {
         public static string ROLE_CHEF = "CHEF";
         public static string ROLE_ADMIN = "ADMIN";
-        public static string ROLE_SHIPPER = "ADMIN";
-
+        public static string ROLE_SHIPPER = "SHIPPER";
+        public static string ROLE_CUSTOMER = "CUSTOMER";
 
     }
 
