@@ -223,7 +223,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
           <tr><th>Ngày đặt/dùng bữa:</th><td>" + response.Order.OrderDate.ToString("yyyy-MM-dd") + @"</td></tr>
           <tr><th>Phương thức thanh toán:</th><td>" + transaction.PaymentMethod.VietnameseName + @"</td></tr>
           <tr><th>Thời gian thanh toán:</th><td>" + transaction.PaidDate.Value.ToString("yyyy-MM-dd HH:mm") + @"</td></tr>
-          <tr><th>Tổng đơn:</th><td>" + response.Order.TotalAmount + @" VND</td></tr>
+          <tr><th>Tổng đơn:</th><td>" + response.Order.TotalAmount.ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td></tr>
           <tr><th>Loại đơn hàng:</th><td>" + response.Order.OrderType.VietnameseName + @"</td></tr>
           <tr><th>Ghi chú:</th><td>" + (string.IsNullOrEmpty(response.Order.Note) ? "No notes" : response.Order.Note) + @"</td></tr>
         </table>
@@ -240,7 +240,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
               <th>Kích thước</th>
               <th>Số lượng</th>
               <th>Giá (VND)</th>
-              <th>Giảm giá (%)</th>
+              <th>Giảm giá (%)</th>              
+              <th>Thành tiền</th>
+
             </tr>
           </thead>
           <tbody>
@@ -257,6 +259,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                       <td>" + o.Quantity + @"</td>
                       <td>" + o.ComboDish.Combo.Price + @"</td>
                       <td>" + o.ComboDish.Combo.Discount + @"%</td>
+                      <td>" + (Math.Ceiling((1 - o.ComboDish.Combo.Discount) * o.ComboDish.Combo.Price * o.Quantity / 1000) * 1000).ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td>
+
                     </tr>";
                 }
                 return @"
@@ -267,13 +271,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                   <td>" + o.Quantity + @"</td>
                   <td>" + o.DishSizeDetail.Price + @"</td>
                   <td>" + o.DishSizeDetail.Discount + @"%</td>
+                  <td>" + (Math.Ceiling((1 - o.DishSizeDetail.Discount) * o.DishSizeDetail.Price * o.Quantity / 1000) * 1000).ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"%</td>
                 </tr>";
             })) + @"
           </tbody>
         </table>
 
         <div class='total-info'>
-          <p><strong>Tổng (đã bao gồm thuế và phí):</strong> " + response.Order.TotalAmount + @" VND</p>
+          <p><strong>Tổng (đã bao gồm thuế và phí):</strong> " + response.Order.TotalAmount.ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @" </p>
           <p>Số tiền này đã bao gồm tất cả các loại thuế và phí bổ sung.</p>
         </div>
       </div>
