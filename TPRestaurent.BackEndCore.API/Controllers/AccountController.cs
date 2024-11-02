@@ -196,5 +196,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _accountService.CreateAccountRestaurentEmployee(request, false);
         }
+
+        [HttpPost("ban-user/{accountId}")]
+        public async Task<AppActionResult> BanUser(string accountId)
+        {
+            return await _accountService.BanUser(accountId);
+        }
     }
 }
