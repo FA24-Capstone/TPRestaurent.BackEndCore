@@ -931,6 +931,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_CHEF, messageBody.ToString());
                                
                             }
+
+                            var createSuccessfulMessage = $"Đơn của bạn đã được đặt thành công";
+                            await hubService!.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
+                            await notificationService!.SendNotificationToAccountAsync(accountDb.Id, createSuccessfulMessage);
                         }
                     }
                     result.Result = orderWithPayment;

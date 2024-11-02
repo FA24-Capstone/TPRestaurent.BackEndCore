@@ -211,6 +211,8 @@ public class SD
         public static string LOAD_RE_DELIVERING_REQUEST = "LOAD_RE_DELIVERING_REQUEST";
         public static string LOAD_ASSIGNED_ORDER = "LOAD_ASSIGNED_ORDER";
         public static string LOAD_NOTIFICATION = "LOAD_NOTIFICATION";
+        public static string LOAD_USER_ORDER = "LOAD_USER_ORDER";
+
 
     }
 
