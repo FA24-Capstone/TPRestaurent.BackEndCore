@@ -62,17 +62,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 StatisticReportDashboardResponse statisticReportDashboardResponse = new StatisticReportDashboardResponse();
                 var monthlyRevenue = new Dictionary<int, decimal>();
-                for (int month = 1; month <= currentTime.Month; month++)
+
+                if (monthlyRevenue.Count() > 0)
                 {
-                    var transactions = await transactionRepository.GetAllDataByExpression(
-                        p => p.Date.Month == month && p.TransationStatusId == TransationStatus.SUCCESSFUL,
+                    monthlyRevenue.Clear();
+                }
+
+                for (int month = 1; month <= endDate.Value.Month; month++)
+                {
+                    var transactions = await transactionRepository!.GetAllDataByExpression(
+                        p => p.Date.Month == month &&
+                             p.Date.Year == endDate.Value.Year &&
+                             p.TransationStatusId == TransationStatus.SUCCESSFUL,
                         0,
                         0,
                         null,
                         false,
                         null
                     );
-
                     var totalRevenue = transactions.Items.Sum(t => t.Amount);
                     monthlyRevenue[month] = (decimal)totalRevenue;
                 }
