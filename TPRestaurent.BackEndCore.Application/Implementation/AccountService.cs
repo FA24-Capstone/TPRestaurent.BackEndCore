@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Castle.DynamicProxy.Generators;
 using Firebase.Auth;
 using FirebaseAdmin;
