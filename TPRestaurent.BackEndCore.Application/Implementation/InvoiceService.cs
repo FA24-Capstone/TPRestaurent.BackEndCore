@@ -153,18 +153,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             int i = 1;
             string customerDetails = response.Order.Account != null
                 ? @"
-    <table class='info-table'>
+        <table class='info-table'>
       <tr><th>Tên khách hàng:</th><td>" + response.Order.Account.FirstName + " " + response.Order.Account.LastName + @"</td></tr>
       <tr><th>Số điện thoại:</th><td>" + response.Order.Account.PhoneNumber + @"</td></tr>
       <tr><th>Email:</th><td>" + response.Order.Account.Email + @"</td></tr>
       <tr><th>Địa chỉ:</th><td>" + response.Order.CustomerInfoAddress?.CustomerInfoAddressName + @"</td></tr>
-    </table>"
+        </table>"
                 : "<p class='no-info'>Không có thông tin khách hàng trong hệ thống</p>";
 
             return @"
 <!DOCTYPE html>
 <html>
-    <head>
+  <head>
     <style>
       body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -182,6 +182,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
       }
       .header {
         display: flex;
+        align-items: center;
         justify-content: space-between;
         align-items: center;
         background-color: #A1011A;
@@ -326,7 +327,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         <div class='info-section'>
           <div>
             <h2 class='section-title'>Thông tin đơn hàng</h2>
-            <table class='info-table'>
+        <table class='info-table'>
               <tr><th>Mã đơn:</th><td>" + response.Order.OrderId.ToString().Substring(0, 6) + @"</td></tr>
               <tr><th>Ngày đặt/dùng bữa:</th><td>" + response.Order.OrderDate.ToString("yyyy-MM-dd") + @"</td></tr>
               <tr><th>Phương thức thanh toán:</th><td>" + transaction.PaymentMethod.VietnameseName + @"</td></tr>
@@ -334,11 +335,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
               <tr><th>Tổng đơn:</th><td>" + response.Order.TotalAmount.ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td></tr>
               <tr><th>Loại đơn hàng:</th><td>" + response.Order.OrderType.VietnameseName + @"</td></tr>
               <tr><th>Ghi chú:</th><td>" + (string.IsNullOrEmpty(response.Order.Note) ? "No notes" : response.Order.Note) + @"</td></tr>
-            </table>
+        </table>
           </div>
           <div>
             <h2 class='section-title'>Thông tin khách hàng</h2>
-            " + customerDetails + @"
+        " + customerDetails + @"
           </div>
         </div>
 
@@ -373,11 +374,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     </tr>";
                 }
                 return @"
-                <tr>
-                  <td>" + (i++) + @"</td>
-                  <td>" + o.DishSizeDetail.Dish.Name + @"</td>
-                  <td>" + o.DishSizeDetail.DishSize.VietnameseName + @"</td>
-                  <td>" + o.Quantity + @"</td>
+            <tr>
+              <td>" + (i++) + @"</td>
+              <td>" + o.DishSizeDetail.Dish.Name + @"</td>
+              <td>" + o.DishSizeDetail.DishSize.VietnameseName + @"</td>
+              <td>" + o.Quantity + @"</td>
                   <td>" + o.DishSizeDetail.Price.ToString("#,0 VND") + @"</td>
                   <td>" + o.DishSizeDetail.Discount + @"%</td>
                   <td>" + (Math.Ceiling((1 - o.DishSizeDetail.Discount) * o.DishSizeDetail.Price * o.Quantity / 1000) * 1000).ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td>
