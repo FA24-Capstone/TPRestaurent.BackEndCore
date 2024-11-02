@@ -60,12 +60,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             try
             {
-                StatisticReportDashboardResponse statisticReportDashboardResponse = new StatisticReportDashboardResponse(); 
+                StatisticReportDashboardResponse statisticReportDashboardResponse = new StatisticReportDashboardResponse();
                 var monthlyRevenue = new Dictionary<int, decimal>();
-                for (int month = 1; month <= 12; month++)
+                for (int month = 1; month <= currentTime.Month; month++)
                 {
                     var transactions = await transactionRepository.GetAllDataByExpression(
-                        p => p.Date.Month >= startDate.Value.Month && p.Date.Month <= endDate.Value.Month && p.TransationStatusId == TransationStatus.SUCCESSFUL,
+                        p => p.Date.Month == month && p.TransationStatusId == TransationStatus.SUCCESSFUL,
                         0,
                         0,
                         null,
@@ -88,9 +88,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 orderStatusReportResponse.CancellingOrderNumber = cancellingOrderDb.Items.Count();
                 orderStatusReportResponse.PendingOrderNumber = cancellingOrderDb.Items.Count();
 
-                statisticReportDashboardResponse.OrderStatusReportResponse = orderStatusReportResponse; 
+                statisticReportDashboardResponse.OrderStatusReportResponse = orderStatusReportResponse;
 
-                result.Result = statisticReportDashboardResponse;       
+                result.Result = statisticReportDashboardResponse;
             }
             catch (Exception ex)
             {
