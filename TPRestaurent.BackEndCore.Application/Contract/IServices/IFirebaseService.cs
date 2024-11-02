@@ -10,7 +10,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
     public interface IFirebaseService
     {
-        Task<AppActionResult> UploadFileToFirebase(IFormFile file, string pathFileName);
+        Task<AppActionResult> UploadFileToFirebase(IFormFile file, string pathFileName, bool? isPng = true);
 
         public Task<string> GetUrlImageFromFirebase(string pathFileName);
 
