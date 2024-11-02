@@ -17,7 +17,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public Guid RoomId { get; set; }
         public Room? Room { get; set; } 
         public Domain.Enums.TableStatus TableStatusId { get; set; }
-        //public Domain.Models.EnumModels.TableStatus? TableStatus { get; set; }
     }
 
     public class Position
