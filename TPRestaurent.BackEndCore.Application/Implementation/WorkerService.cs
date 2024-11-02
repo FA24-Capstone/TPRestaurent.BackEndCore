@@ -60,6 +60,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             RecurringJob.AddOrUpdate(() => _groupedDishCraftService.InsertGroupedDish(), Cron.MinuteInterval((int)Math.Round(reloadGrouped)), vietnamTimeZone);
             //RecurringJob.AddOrUpdate(() => _orderService.RemindOrderReservation(), Cron.MinuteInterval(1), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _transactionService.CancelPendingTransaction(), Cron.DayInterval(1), vietnamTimeZone);
+            RecurringJob.AddOrUpdate(() => _configService.ChangeConfigurationJob(), Cron.MinuteInterval(30), vietnamTimeZone);
         }
     }
 }
