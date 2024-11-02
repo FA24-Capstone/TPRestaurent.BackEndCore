@@ -105,6 +105,9 @@ public class SD
         public static string TIME_FOR_REFUND = "TIME_FOR_REFUND";
         public static string REFUND_PERCENTAGE = "REFUND_PERCENTAGE";
         public static string TABLE_IS_SET_UP = "TABLE_IS_SET_UP";
+        public static string NEW = "NEW";
+        public static string IS_SET_UP = "IS_SET_UP";
+        public static string INITIAL = "INITIAL";
     }
 
     public class SubjectMail
