@@ -63,6 +63,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         IsMainItem = SD.EnumType.MainItemType.Contains(dto.DishItemType),
                         DishItemTypeId = dto.DishItemType,
                         isAvailable = true,
+                        PreparationTime = dto.PreparationTime,
                     };
 
                     List<DishTag> dishTags = new List<DishTag>();
