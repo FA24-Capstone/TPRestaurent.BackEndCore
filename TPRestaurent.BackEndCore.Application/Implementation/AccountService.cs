@@ -1981,7 +1981,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> CreateAccountForRestaurentEmployees(EmployeeSignUpRequest signUpRequestDto, bool isGoogle)
+        public async Task<AppActionResult> CreateAccountForRestauratEmployees(EmployeeSignUpRequest signUpRequestDto, bool isGoogle)
         {
             var result = new AppActionResult();
             var utility = Resolve<Utility>();
