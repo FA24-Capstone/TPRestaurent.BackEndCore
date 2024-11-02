@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TPRestaurent.BackEndCore.Domain.Enums;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
 {
@@ -18,6 +19,9 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Enums.TableSize TableSizeId { get; set; }
         [ForeignKey(nameof(TableSizeId))]
         public EnumModels.TableSize? TableSize { get; set; }
+        public TableStatus TableStatusId { get; set; }
+        [ForeignKey(nameof(TableStatusId))]
+        public EnumModels.TableStatus? TableStatus { get; set; }
         public string? Coordinates { get; set; }
         public bool IsDeleted { get; set; }
         public Guid RoomId { get; set; }

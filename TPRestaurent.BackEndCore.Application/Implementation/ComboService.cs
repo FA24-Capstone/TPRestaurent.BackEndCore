@@ -509,6 +509,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     comboDb.StartDate = comboDto.StartDate;
                     comboDb.EndDate = comboDto.EndDate;
                     comboDb.Price = comboDto.Price;
+                    comboDb.PreparationTime = comboDto.PreparationTime;
 
                     List<DishTag> dishTags = new List<DishTag>();
 
