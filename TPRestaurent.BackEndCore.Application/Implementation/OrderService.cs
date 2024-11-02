@@ -493,6 +493,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             if (item.DishSizeDetailId.HasValue)
                             {
                                 dishSizeDetail = await dishSizeDetailRepository.GetById(item.DishSizeDetailId.Value);
+                                var dishDb = await dishRepository!.GetById(dishSizeDetail.DishId);
 
                                 if (dishSizeDetail == null)
                                 {
@@ -502,14 +503,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 orderDetail.DishSizeDetailId = item.DishSizeDetailId.Value;
                                 orderDetail.Price = dishSizeDetail.Price;
 
-                                dishSizeDetail.QuantityLeft -= item.Quantity;
+                                if (dishSizeDetail.QuantityLeft > item.Quantity)
+                                {
+                                    dishSizeDetail.QuantityLeft -= item.Quantity;
+                                }
+                                else
+                                {
+                                    return BuildAppActionResultError(result, $"Món ăn {dishDb.Name} chỉ còn x{dishSizeDetail.QuantityLeft}");
+                                }
+
+                              
                                 if (dishSizeDetail.QuantityLeft == 5)
                                 {
-                                    var dishDb = await dishRepository!.GetById(dishSizeDetail.DishId);
                                     string message = $"{dishDb.Name} chỉ còn x{dishSizeDetail.QuantityLeft} món";
                                     await hubService!.SendAsync(SD.SignalMessages.LOAD_NOTIFICATION);
-                                    await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
+                                    await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);    
                                 }
+                               
                             }
                             else if (item.Combo != null)
                             {
