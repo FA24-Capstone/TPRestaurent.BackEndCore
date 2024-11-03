@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Domain.Enums;
+using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Common.DTO.Request
 {
@@ -13,6 +14,8 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public string Name { get; set; }
         public Position? Position { get; set; } = new Position();
         public TableSize TableSizeId { get; set; }
+        public Guid RoomId { get; set; }
+        public Room? Room { get; set; } 
         public Domain.Enums.TableStatus TableStatusId { get; set; }
     }
 
