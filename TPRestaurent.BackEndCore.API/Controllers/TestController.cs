@@ -39,5 +39,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             await _invoiceService.GenerateInvoice();
         }
+
+        [HttpGet("test-signalr")]
+        public async Task TestSignalR(string method)
+        {
+            await _hubServices.SendAsync(method);
+        }
     }
 }
