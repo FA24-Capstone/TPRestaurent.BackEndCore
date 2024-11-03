@@ -455,7 +455,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             tableResponse.Position.Y = tableCoordinates.FirstOrDefault().Item2;
                         }
 
-                        if (unavailableTableIds.Contains(tableResponse.Id))
+                        if(item.TableStatusId == TableStatus.NEW)
+                        {
+                            tableResponse.TableStatusId = TableStatus.NEW;
+                        }
+                        else if (unavailableTableIds.Contains(tableResponse.Id))
                         {
                             tableResponse.TableStatusId = TableStatus.CURRENTLYUSED;
                         } else
