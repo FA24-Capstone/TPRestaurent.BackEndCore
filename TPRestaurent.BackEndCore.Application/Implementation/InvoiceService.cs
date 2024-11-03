@@ -60,7 +60,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     foreach (var item in orderDb.Items)
                     {
                         var orderDetail = await orderService.GetAllOrderDetail(item.OrderId);
-                        var transactionInfo = await _transactionRepository.GetByExpression(o => o.OrderId == item.OrderId && o.TransactionTypeId == Domain.Enums.TransactionType.Order && o.TransationStatusId == Domain.Enums.TransationStatus.SUCCESSFUL, null);
+                        var transactionInfo = await _transactionRepository.GetByExpression(o => o.OrderId == item.OrderId && o.TransactionTypeId == Domain.Enums.TransactionType.Order && o.TransationStatusId == Domain.Enums.TransationStatus.SUCCESSFUL, o => o.PaymentMethod);
                         if (transactionInfo == null) {
                             continue;
                         }
