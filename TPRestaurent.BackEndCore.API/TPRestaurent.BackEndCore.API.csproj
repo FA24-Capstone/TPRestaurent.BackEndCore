@@ -40,6 +40,9 @@
     <Content Update="vietnamesenames.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+	  <Content Update="thienphu-app-firebase-adminsdk-g26ik-28f4c707bf.json">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
   </ItemGroup>
 
 
