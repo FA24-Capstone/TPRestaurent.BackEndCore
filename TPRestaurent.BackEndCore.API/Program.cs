@@ -126,7 +126,7 @@ using (var scope = app.Services.CreateScope())
 {
     var serviceProvider = scope.ServiceProvider;
     var workerService = serviceProvider.GetRequiredService<WorkerService>();
-    await workerService.Start();
+    //await workerService.Start();
 }
 app.Run();
 
