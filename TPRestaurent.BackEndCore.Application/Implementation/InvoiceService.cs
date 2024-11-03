@@ -1,4 +1,4 @@
-﻿using Castle.Core.Resource;
+using Castle.Core.Resource;
 using MailKit.Search;
 using MathNet.Numerics.Distributions;
 using Microsoft.VisualBasic;

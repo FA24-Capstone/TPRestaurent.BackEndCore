@@ -455,7 +455,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             tableResponse.Position.Y = tableCoordinates.FirstOrDefault().Item2;
                         }
 
-                        if (unavailableTableIds.Contains(tableResponse.Id))
+                        if(item.TableStatusId == TableStatus.NEW)
+                        {
+                            tableResponse.TableStatusId = TableStatus.NEW;
+                        }
+                        else if (unavailableTableIds.Contains(tableResponse.Id))
                         {
                             tableResponse.TableStatusId = TableStatus.CURRENTLYUSED;
                         } else
@@ -587,5 +591,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> GetAllTableRating(int pageNumber, int pageSize)
+        {
+            var result = new AppActionResult();
+            var tableRatingRepository = Resolve<IGenericRepository<Room>>();
+            try
+            {
+                result.Result = await tableRatingRepository!.GetAllDataByExpression(null, pageNumber, pageSize, null, false, null);
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
     }
 }
