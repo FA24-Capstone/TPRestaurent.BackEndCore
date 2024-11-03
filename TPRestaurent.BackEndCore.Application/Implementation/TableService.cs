@@ -587,5 +587,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> GetAllTableRating(int pageNumber, int pageSize)
+        {
+            var result = new AppActionResult();
+            var tableRatingRepository = Resolve<IGenericRepository<Room>>();
+            try
+            {
+                result.Result = await tableRatingRepository!.GetAllDataByExpression(null, pageNumber, pageSize, null, false, null);
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
     }
 }
