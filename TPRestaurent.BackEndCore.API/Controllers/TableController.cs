@@ -35,9 +35,15 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("update-table-coordinate")]
-        public async Task<AppActionResult> FindTable([FromBody] List<TableArrangementResponseItem> request, bool? isForce = false)
+        public async Task<AppActionResult> UpdateTableCoordinates([FromBody] List<TableArrangementResponseItem> request, bool? isForce = false)
         {
             return await _service.UpdateTableCoordinates(request, isForce);
+        }
+
+        [HttpGet("get-all-table-rating/{pageNumber}/{pageSize}")]
+        public async Task<AppActionResult> GetAllTableRating(int pageNumber = 1, int pageSize = 10)
+        {
+            return await _service.GetAllTableRating(pageNumber, pageSize);      
         }
     }
 }
