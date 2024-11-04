@@ -76,6 +76,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             };
 
                             var invoiceHtmlScript = GetInvoiceHtmlScript(orderDetail.Result as ReservationReponse, transactionInfo);
+                            Console.WriteLine(invoiceHtmlScript);
                             var invoiceContent = _fileService.ConvertHtmlToPdf(invoiceHtmlScript, $"{invoice.InvoiceId}.pdf");
                             var upload = await _firebaseService.UploadFileToFirebase(invoiceContent, $"{SD.FirebasePathName.INVOICE_PREFIX}{invoice.InvoiceId}", false);
                             invoice.pdfLink = Convert.ToString(upload.Result);
