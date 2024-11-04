@@ -546,7 +546,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             if (dishComboDto.OptionSetId.HasValue)
                             {
                                 var optionSetDb = await comboOptionSetRepository!.GetById(dishComboDto.OptionSetId.Value);
-                                if (optionSetDb != null)
+                                if (optionSetDb == null)
                                 {
                                     return BuildAppActionResultError(result, $"Không tìm thấy Set với id {dishComboDto.OptionSetId.Value}");
                                 }
@@ -622,12 +622,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         removeComboOptionSetList.AddRange(removeComboOptionSetDb.Items);
                         removeComboOptionSetList.ForEach(r => r.IsDeleted = true);
-                        var removeDishComboDb = await dishComboRepository.GetAllDataByExpression(c => removeComboOptionSetList
-                                                                                             .Select(u => u.ComboOptionSetId).ToList().Contains(c.ComboOptionSetId.Value)
-                                                                                             , 0, 0, null, false, null);
-                        removeDishComboList.AddRange(removeDishComboDb.Items);
-                        removeDishComboList.ForEach(r => r.IsDeleted = true);
                     }
+
+                    var insertedDishIds = comboDto.DishComboDtos.SelectMany(c => c.ListDishId.Where(l => l.DishSizeDetailId != null).Select(l => l.DishSizeDetailId)).ToList();
+                    var removeDishComboDb = await dishComboRepository.GetAllDataByExpression(c => !insertedDishIds.Contains(c.DishSizeDetailId.Value) && c.ComboOptionSet.ComboId == comboDto.ComboId 
+                                                                     , 0, 0, null, false, null);
+                    removeDishComboList.AddRange(removeDishComboDb.Items);
+                    removeDishComboList.ForEach(r => r.IsDeleted = true);
 
                     if (!BuildAppActionResultIsError(result))
                     {

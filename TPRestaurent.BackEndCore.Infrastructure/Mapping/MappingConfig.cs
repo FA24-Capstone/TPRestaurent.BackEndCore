@@ -54,7 +54,7 @@ public class MappingConfig
              .ForMember(desc => desc.TableSizeId, act => act.MapFrom(src => src.TableSizeId))
              .ForMember(desc => desc.TableRatingId, act => act.MapFrom(src => src.RoomId))
              .ForMember(desc => desc.DeviceCode, act => act.MapFrom(src => src.DeviceCode))
-            .ForMember(desc => desc.DevicePassword, act => act.MapFrom(src => src.DevicePassword))
+             .ForMember(desc => desc.DevicePassword, act => act.MapFrom(src => src.DevicePassword))
              .ReverseMap();
             ;
 
