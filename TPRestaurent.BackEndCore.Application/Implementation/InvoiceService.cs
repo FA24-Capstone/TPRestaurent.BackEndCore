@@ -24,6 +24,7 @@ using Twilio.TwiML.Messaging;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 using System.Diagnostics.Contracts;
 using Newtonsoft.Json;
+using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -43,6 +44,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _firebaseService = firebaseService;
         }
 
+        public async Task<AppActionResult> GenerateGeneralInvoice(InvoiceFilterRequest dto)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var invoiceDb = await _repository.GetAllDataByExpression(i => i.Date >= dto.StartTime.Date && i.Date <= dto.EndTime.Date
+                                                                              && (!dto.OrderType.HasValue || i.OrderTypeId == dto.OrderType.Value)
+                                                                              , dto.pageNumber, dto.pageSize, null, false, null);
+                var invoiceHtml = GenerateInvoiceSummaryHtml(invoiceDb.Items, dto.StartTime, dto.EndTime);
+                var random = new Random();
+                var invoiceContent = _fileService.ConvertHtmlToPdf(invoiceHtml, $"{dto.StartTime.ToString("dd-mm-yyyy")}-{dto.EndTime.ToString("dd-mm-yyyy")}.pdf");
+                var upload = await _firebaseService.UploadFileToFirebase(invoiceContent, $"{SD.FirebasePathName.INVOICE_PREFIX}{dto.StartTime.ToString("dd-mm-yyyy")}-{dto.EndTime.ToString("dd-mm-yyyy")}", false);
+                result.Result = Convert.ToString(upload.Result);
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
         public async Task GenerateInvoice()
         {
             try
@@ -54,7 +76,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var currentDate = utility.GetCurrentDateInTimeZone();
                 var orderHasCreatedInvoice = await _repository.GetAllDataByExpression(o => o.Date.AddDays(1) == currentDate, 0, 0, null, false, null);
                 var orderIds = orderHasCreatedInvoice.Items.Select(o => o.OrderId).ToList();
-                var orderDb = await orderRepository.GetAllDataByExpression(o => (o.OrderDate.Date.AddDays(1) == currentDate || o.MealTime.Value.Date.AddDays(1) == currentDate) && o.StatusId == Domain.Enums.OrderStatus.Completed && !orderIds.Contains(o.OrderId), 0, 0, null, false, null);
+                var orderDb = await orderRepository.GetAllDataByExpression(o => (o.OrderDate.Date.AddDays(1) == currentDate || o.MealTime.Value.Date.AddDays(1) == currentDate) 
+                                                                                //&& o.StatusId == Domain.Enums.OrderStatus.Completed 
+                                                                                && !orderIds.Contains(o.OrderId), 0, 0, null, false, null);
                 if (orderDb.Items.Count > 0)
                 {
                     foreach (var item in orderDb.Items)
@@ -76,6 +100,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             };
 
                             var invoiceHtmlScript = GetInvoiceHtmlScript(orderDetail.Result as ReservationReponse, transactionInfo);
+                            Console.WriteLine(invoiceHtmlScript);
                             var invoiceContent = _fileService.ConvertHtmlToPdf(invoiceHtmlScript, $"{invoice.InvoiceId}.pdf");
                             var upload = await _firebaseService.UploadFileToFirebase(invoiceContent, $"{SD.FirebasePathName.INVOICE_PREFIX}{invoice.InvoiceId}", false);
                             invoice.pdfLink = Convert.ToString(upload.Result);
@@ -92,6 +117,37 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
         }
 
+        public async Task<AppActionResult> GetAllInvoice(InvoiceFilterRequest dto)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var invoiceDb = await _repository.GetAllDataByExpression(i => i.Date >= dto.StartTime.Date && i.Date <= dto.EndTime.Date
+                                                                              && (!dto.OrderType.HasValue || i.OrderTypeId == dto.OrderType.Value)
+                                                                              , dto.pageNumber, dto.pageSize, null, false, null);
+                result.Result = invoiceDb;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetInvoiceById(Guid id)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var invoiceDb = await _repository.GetById(id);
+                result.Result = invoiceDb;
+            }
+            catch (Exception ex)
+            {
+            }
+            return result;
+        }
+
         private string GetInvoiceHtmlScript(ReservationReponse response, Transaction transaction)
         {
             int i = 1;
@@ -106,8 +162,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 : "<p class='no-info'>Không có thông tin khách hàng trong hệ thống</p>";
 
             return @"
+<!DOCTYPE html>
 <html>
-  <head>
+    <head>
     <style>
       body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -127,7 +184,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background-color: #ff9800;
+        background-color: #A1011A;
         padding: 20px;
         color: white;
       }
@@ -154,24 +211,53 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         font-size: 20px;
         margin-bottom: 10px;
         color: #333;
-        border-bottom: 2px solid #ff9800;
+        border-bottom: 2px solid #A1011A;
         padding-bottom: 5px;
       }
-      .info-table, .dish-table {
+      .info-section {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+      }
+      .info-table {
+        width: 48%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+      }
+      .info-table th, .info-table td {
+        padding: 8px;
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+      .info-table th {
+        background-color: #f5f5f5;
+        font-weight: 600;
+      }
+      .info-table td {
+        background-color: #fcfcfc;
+      }
+      .dish-table {
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 15px;
       }
-      .info-table th, .info-table td, .dish-table th, .dish-table td {
-        padding: 12px;
+      .dish-table th, .dish-table td {
+        padding: 10px;
         border: 1px solid #ddd;
-        text-align: left;
+        text-align: center;
       }
-      .info-table th, .dish-table th {
-        background-color: #f5f5f5;
+      .dish-table th {
+        background-color: #A1011A;
+        color: #fff;
         font-weight: 600;
       }
-      .info-table td, .dish-table td {
+      .dish-table tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+      .dish-table tr:hover {
+        background-color: #f1f1f1;
+      }
+      .dish-table td {
         background-color: #fcfcfc;
       }
       .total-info {
@@ -183,7 +269,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         margin: 5px 0;
       }
       .order-summary {
-        background-color: #ff9800;
+        background-color: #A1011A;
         padding: 15px;
         text-align: center;
         color: #fff;
@@ -194,6 +280,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         color: #b30000;
         font-style: italic;
       }
+      .info-table {
+          width: 100%;
+        }
       @media (max-width: 768px) {
         .header, .mainBody {
           padding: 15px;
@@ -204,8 +293,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         .section-title {
           font-size: 18px;
         }
-        .info-table th, .info-table td, .dish-table th, .dish-table td {
-          padding: 8px;
+        .info-table th, .info-table td,
+        .dish-table th, .dish-table td {
+          padding: 6px;
+        }
+        .info-section {
+          flex-direction: column;
+        }
+        .info-table {
+          width: 100%;
         }
       }
     </style>
@@ -221,19 +317,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         </div>
       </div>
       <div class='mainBody'>
-        <h2 class='section-title'>Thông tin đơn hàng</h2>
-        <table class='info-table'>
-          <tr><th>Mã đơn:</th><td>" + response.Order.OrderId.ToString().Substring(0, 6) + @"</td></tr>
-          <tr><th>Ngày đặt/dùng bữa:</th><td>" + response.Order.OrderDate.ToString("yyyy-MM-dd") + @"</td></tr>
-          <tr><th>Phương thức thanh toán:</th><td>" + transaction.PaymentMethod.VietnameseName + @"</td></tr>
-          <tr><th>Thời gian thanh toán:</th><td>" + transaction.PaidDate.Value.ToString("yyyy-MM-dd HH:mm") + @"</td></tr>
-          <tr><th>Tổng đơn:</th><td>" + response.Order.TotalAmount.ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td></tr>
-          <tr><th>Loại đơn hàng:</th><td>" + response.Order.OrderType.VietnameseName + @"</td></tr>
-          <tr><th>Ghi chú:</th><td>" + (string.IsNullOrEmpty(response.Order.Note) ? "No notes" : response.Order.Note) + @"</td></tr>
-        </table>
-
-        <h2 class='section-title'>Thông tin khách hàng(Nếu có)</h2>
-        " + customerDetails + @"
+        <div class='info-section'>
+          <div>
+            <h2 class='section-title'>Thông tin đơn hàng</h2>
+            <table class='info-table'>
+              <tr><th>Mã đơn:</th><td>" + response.Order.OrderId.ToString().Substring(0, 6) + @"</td></tr>
+              <tr><th>Ngày đặt/dùng bữa:</th><td>" + response.Order.OrderDate.ToString("yyyy-MM-dd") + @"</td></tr>
+              <tr><th>Phương thức thanh toán:</th><td>" + transaction.PaymentMethod.VietnameseName + @"</td></tr>
+              <tr><th>Thời gian thanh toán:</th><td>" + transaction.PaidDate.Value.ToString("yyyy-MM-dd HH:mm") + @"</td></tr>
+              <tr><th>Tổng đơn:</th><td>" + response.Order.TotalAmount.ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td></tr>
+              <tr><th>Loại đơn hàng:</th><td>" + response.Order.OrderType.VietnameseName + @"</td></tr>
+              <tr><th>Ghi chú:</th><td>" + (string.IsNullOrEmpty(response.Order.Note) ? "No notes" : response.Order.Note) + @"</td></tr>
+            </table>
+          </div>
+          <div>
+            <h2 class='section-title'>Thông tin khách hàng</h2>
+            " + customerDetails + @"
+          </div>
+        </div>
 
         <h2 class='section-title'>Danh sách món</h2>
         <table class='dish-table'>
@@ -244,9 +345,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
               <th>Kích thước</th>
               <th>Số lượng</th>
               <th>Giá (VND)</th>
-              <th>Giảm giá (%)</th>              
+              <th>Giảm giá (%)</th>
               <th>Thành tiền</th>
-
             </tr>
           </thead>
           <tbody>
@@ -261,10 +361,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                       <td>" + o.ComboDish.Combo.Name + "<br>" + comboDetail + @"</td>
                       <td>N/A</td>
                       <td>" + o.Quantity + @"</td>
-                      <td>" + o.ComboDish.Combo.Price + @"</td>
+                      <td>" + o.ComboDish.Combo.Price.ToString("#,0 VND") + @"</td>
                       <td>" + o.ComboDish.Combo.Discount + @"%</td>
-                      <td>" + (Math.Ceiling((1 - o.ComboDish.Combo.Discount) * o.ComboDish.Combo.Price * o.Quantity / 1000) * 1000).ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td>
-
+                      <td>" + (Math.Ceiling((1 - o.ComboDish.Combo.Discount / 100) * o.ComboDish.Combo.Price * o.Quantity / 1000) * 1000).ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td>
                     </tr>";
                 }
                 return @"
@@ -273,16 +372,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                   <td>" + o.DishSizeDetail.Dish.Name + @"</td>
                   <td>" + o.DishSizeDetail.DishSize.VietnameseName + @"</td>
                   <td>" + o.Quantity + @"</td>
-                  <td>" + o.DishSizeDetail.Price + @"</td>
+                  <td>" + o.DishSizeDetail.Price.ToString("#,0 VND") + @"</td>
                   <td>" + o.DishSizeDetail.Discount + @"%</td>
-                  <td>" + (Math.Ceiling((1 - o.DishSizeDetail.Discount) * o.DishSizeDetail.Price * o.Quantity / 1000) * 1000).ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"%</td>
+                  <td>" + (Math.Ceiling((1 - o.DishSizeDetail.Discount) * o.DishSizeDetail.Price * o.Quantity / 1000) * 1000).ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td>
                 </tr>";
             })) + @"
           </tbody>
         </table>
 
         <div class='total-info'>
-          <p><strong>Tổng (đã bao gồm thuế và phí):</strong> " + response.Order.TotalAmount.ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @" </p>
+          <p><strong>Tổng (đã bao gồm thuế và phí):</strong> " + response.Order.TotalAmount.ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</p>
           <p>Số tiền này đã bao gồm tất cả các loại thuế và phí bổ sung.</p>
         </div>
       </div>
@@ -293,6 +392,168 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
   </body>
 </html>";
         }
+        public string GenerateInvoiceSummaryHtml(List<Invoice> invoices, DateTime startDate, DateTime endDate)
+        {
+            var totalRevenue = invoices.Sum(i => i.TotalAmount);
+            var orderCount = invoices.Count;
+            var groupedByDate = invoices
+                .GroupBy(i => i.Date.Date)
+                .Select(g => new { Date = g.Key, Revenue = g.Sum(i => i.TotalAmount) })
+                .OrderBy(g => g.Date)
+                .ToList();
+
+            // Calculate maximum revenue for Y-axis scaling
+            var maxRevenue = groupedByDate.Any() ? groupedByDate.Max(g => g.Revenue) : 0;
+            var chartHeight = 300; // Height of the chart area in pixels
+
+            // Generate bars for the chart
+            var bars = string.Join("\n", groupedByDate.Select((g, index) =>
+            {
+                double barHeight = (g.Revenue / maxRevenue) * chartHeight;
+                double xPosition = 60 + (index * 40); // 40 pixels between each bar
+                return $"<rect x='{xPosition}' y='{350 - barHeight}' width='30' height='{barHeight}' fill='#A1011A'></rect>" +
+                       $"<text x='{xPosition + 15}' y='370' font-size='12' text-anchor='middle'>{g.Date:MM-dd}</text>" +
+                       $"<text x='{xPosition + 15}' y='{350 - barHeight - 5}' font-size='12' text-anchor='middle'>{g.Revenue:#,0} VND</text>";
+            }));
+
+            return $@"
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {{
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f9f9f9;
+        margin: 0;
+        padding: 20px;
+      }}
+      .container {{
+        background-color: #fff;
+        max-width: 900px;
+        margin: 20px auto;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }}
+      .header {{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #A1011A;
+        padding: 20px;
+        color: white;
+      }}
+      .logo {{
+        max-width: 100px;
+      }}
+      .restaurant-info {{
+        text-align: right;
+      }}
+      .restaurant-info h1 {{
+        margin: 0;
+        font-size: 26px;
+        font-weight: bold;
+      }}
+      .restaurant-info p {{
+        margin: 4px 0;
+        font-size: 14px;
+        color: #fff;
+      }}
+      .mainBody {{
+        padding: 20px;
+      }}
+      .section-title {{
+        font-size: 20px;
+        margin-bottom: 10px;
+        color: #333;
+        border-bottom: 2px solid #A1011A;
+        padding-bottom: 5px;
+      }}
+      .summary-table {{
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }}
+      .summary-table th, .summary-table td {{
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: left;
+      }}
+      .summary-table th {{
+        background-color: #f5f5f5;
+        font-weight: 600;
+      }}
+      .chart-container {{
+        margin-top: 20px;
+        text-align: center;
+      }}
+      .chart-svg {{
+        width: 100%;
+        max-width: 800px;
+        height: 400px;
+      }}
+      .chart-axis {{
+        stroke: #333;
+        stroke-width: 1;
+      }}
+      .chart-label {{
+        fill: #333;
+      }}
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='header'>
+        <img src='https://thienphurestaurant.vercel.app/icon.png' alt='Restaurant Logo' class='logo'>
+        <div class='restaurant-info'>
+          <h1>Nhà hàng Thiên Phú</h1>
+          <p>Số điện thoại: 091 978 24 44</p>
+          <p>Địa chỉ: 78 Đường Lý Tự Trọng, Phường 2, Đà Lạt, Vietnam</p>
+        </div>
+      </div>
+      <div class='mainBody'>
+        <h2 class='section-title'>Order Summary</h2>
+        <table class='summary-table'>
+          <tr>
+            <th>Order Type</th>
+            <td>{(invoices.FirstOrDefault()?.OrderTypeId.ToString() ?? "N/A")}</td>
+          </tr>
+          <tr>
+            <th>Total Revenue</th>
+            <td>{totalRevenue.ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture)}</td>
+          </tr>
+          <tr>
+            <th>Start Date</th>
+            <td>{startDate:yyyy-MM-dd}</td>
+          </tr>
+          <tr>
+            <th>End Date</th>
+            <td>{endDate:yyyy-MM-dd}</td>
+          </tr>
+          <tr>
+            <th>Quantity of Orders</th>
+            <td>{orderCount}</td>
+          </tr>
+        </table>
+        <div class='chart-container'>
+          <svg class='chart-svg' viewBox='0 0 800 400'>
+            <!-- Y-axis -->
+            <line x1='50' y1='50' x2='50' y2='350' class='chart-axis'></line>
+            <line x1='50' y1='350' x2='750' y2='350' class='chart-axis'></line>
+            <text x='20' y='350' font-size='12' class='chart-label'>0</text>
+            <!-- Bars -->
+            {bars}
+          </svg>
+        </div>
+      </div>
+      <div class='order-summary'>
+        <p>Cảm ơn bạn đã chọn Nhà hàng Thiên Phú! Mọi thắc mắc xin vui lòng liên hệ bộ phận hỗ trợ của chúng tôi.</p>
+      </div>
+    </div>
+  </body>
+</html>";
+        }
+
 
     }
 }

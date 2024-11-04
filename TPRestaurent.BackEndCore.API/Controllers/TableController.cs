@@ -28,6 +28,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.CreateTable(dto);
         }
 
+        [HttpPost("update-table")]
+        public async Task<AppActionResult> UpdateTable([FromBody] UpdateTableDto dto)
+        {
+            return await _service.UpdateTable(dto);
+        }
+
         [HttpPost("find-table")]
         public async Task<AppActionResult> FindTable([FromBody] FindTableDto dto)
         {

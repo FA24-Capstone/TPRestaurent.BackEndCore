@@ -2994,7 +2994,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                         }
 
-                        var username = orderReservation.Account.FirstName + "" + orderReservation.Account.LastName;
+                        var username = orderReservation.Account?.FirstName + "" + orderReservation.Account?.LastName;
                         emailService.SendEmail(orderReservation.Account.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateMailToCancelReservation(username, orderReservation));
                     }
                 }
