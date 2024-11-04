@@ -55,8 +55,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var newTable = _mapper.Map<Table>(dto);
+                string hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.DevicePassword);
                 newTable.TableId = Guid.NewGuid();
                 newTable.IsDeleted = false;
+                newTable.DeviceCode = dto.DeviceCode;
+                newTable.DevicePassword = hashedPassword;
                 newTable.TableStatusId = TableStatus.NEW;
                 newTable.Coordinates = "(0,0)";
                 await _repository.Insert(newTable);
@@ -602,6 +605,44 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 result.Result = await tableRatingRepository!.GetAllDataByExpression(null, pageNumber, pageSize, null, false, null);
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> UpdateTable(UpdateTableDto dto)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var congfigurationRepository = Resolve<IGenericRepository<Configuration>>();
+                //Name validation (if needed)
+                if (string.IsNullOrEmpty(dto.TableName) || string.IsNullOrEmpty(dto.DeviceCode) || string.IsNullOrEmpty(dto.DevicePassword))
+                {
+                    result = BuildAppActionResultError(result, "Thông tin không được để trống");
+                    return result;
+                }
+
+                var tableDb = await _repository.GetById(dto.TableId);
+                if(tableDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy bàn với id {dto.TableId}");
+                }
+
+                tableDb.TableName = dto.TableName;
+                tableDb.DeviceCode = dto.DeviceCode;
+
+                if (dto.DevicePassword.Length > 0)
+                {
+                    string hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.DevicePassword);
+                    tableDb.DevicePassword = hashedPassword;
+                }
+                await _repository.Update(tableDb);
+
+                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {

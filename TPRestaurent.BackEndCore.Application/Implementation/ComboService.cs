@@ -359,7 +359,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var dishTagDb = await dishTagRepository!.GetAllDataByExpression(d => d.ComboId == comboId, 0, 0, null, false, d => d.Tag);
                 comboResponse.DishTags = dishTagDb.Items.DistinctBy(t => t.TagId).ToList();
 
-                var dishComboDb = await dishComboRepository!.GetAllDataByExpression(p => p.ComboOptionSet.ComboId == comboId, 0, 0, null, false, p => p.DishSizeDetail.Dish!, p => p.DishSizeDetail.DishSize, p => p.ComboOptionSet.DishItemType);
+                var dishComboDb = await dishComboRepository!.GetAllDataByExpression(p => p.ComboOptionSet.ComboId == comboId && !p.IsDeleted && !p.ComboOptionSet.IsDeleted, 0, 0, null, false, p => p.DishSizeDetail.Dish!, p => p.DishSizeDetail.DishSize, p => p.ComboOptionSet.DishItemType);
                 var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.ComboId == comboId, 0, 0, null, false, null);
 
                 var optionSetDictionary = dishComboDb.Items.GroupBy(d => d.ComboOptionSetId).ToDictionary(g => g.Key, g => g.ToList());
@@ -535,8 +535,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     List<ComboOptionSet> comboOptionSetList = new List<ComboOptionSet>();
                     List<ComboOptionSet> updateComboOptionSetList = new List<ComboOptionSet>();
+                    List<ComboOptionSet> removeComboOptionSetList = new List<ComboOptionSet>();
                     List<DishCombo> dishComboList = new List<DishCombo>();
                     List<DishCombo> upateDishComboList = new List<DishCombo>();
+                    List<DishCombo> removeDishComboList = new List<DishCombo>();
                     if (comboDto.DishComboDtos.Count > 0)
                     {                       
                         foreach (var dishComboDto in comboDto.DishComboDtos)
@@ -544,7 +546,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             if (dishComboDto.OptionSetId.HasValue)
                             {
                                 var optionSetDb = await comboOptionSetRepository!.GetById(dishComboDto.OptionSetId.Value);
-                                if (optionSetDb != null)
+                                if (optionSetDb == null)
                                 {
                                     return BuildAppActionResultError(result, $"Không tìm thấy Set với id {dishComboDto.OptionSetId.Value}");
                                 }
@@ -612,14 +614,32 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                         }
                     }
+
+                    var removeComboOptionSetDb = await comboOptionSetRepository.GetAllDataByExpression(c => !updateComboOptionSetList
+                                                                                                        .Select(u => u.ComboOptionSetId).Contains(c.ComboOptionSetId)
+                                                                                                        && c.ComboId == comboDto.ComboId, 0, 0, null, false, null);
+                    if(removeComboOptionSetDb.Items.Count > 0)
+                    {
+                        removeComboOptionSetList.AddRange(removeComboOptionSetDb.Items);
+                        removeComboOptionSetList.ForEach(r => r.IsDeleted = true);
+                    }
+
+                    var insertedDishIds = comboDto.DishComboDtos.SelectMany(c => c.ListDishId.Where(l => l.DishSizeDetailId != null).Select(l => l.DishSizeDetailId)).ToList();
+                    var removeDishComboDb = await dishComboRepository.GetAllDataByExpression(c => !insertedDishIds.Contains(c.DishSizeDetailId.Value) && c.ComboOptionSet.ComboId == comboDto.ComboId 
+                                                                     , 0, 0, null, false, null);
+                    removeDishComboList.AddRange(removeDishComboDb.Items);
+                    removeDishComboList.ForEach(r => r.IsDeleted = true);
+
                     if (!BuildAppActionResultIsError(result))
                     {
                         await _comboRepository.Update(comboDb);
                         await dishTagRepository.InsertRange(dishTags);
                         await comboOptionSetRepository!.InsertRange(comboOptionSetList);
                         await comboOptionSetRepository!.UpdateRange(updateComboOptionSetList);
+                        await comboOptionSetRepository!.UpdateRange(removeComboOptionSetList);
                         await dishComboRepository!.InsertRange(dishComboList);
                         await dishComboRepository!.UpdateRange(upateDishComboList);
+                        await dishComboRepository!.UpdateRange(removeDishComboList);
                         await _unitOfWork.SaveChangesAsync();
                         scope.Complete();
                     }

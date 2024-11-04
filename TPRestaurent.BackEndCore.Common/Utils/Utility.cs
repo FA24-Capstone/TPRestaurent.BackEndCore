@@ -9,6 +9,8 @@ using Formatting = System.Xml.Formatting;
 namespace TPRestaurent.BackEndCore.Common.Utils;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text.RegularExpressions;
+
 public class Utility
 {
     private static readonly HashSet<int> generatedNumbers = new();
@@ -39,6 +41,14 @@ public class Utility
 
         return vietnamTime;
     }
+
+    public bool IsValidPhoneNumberInput(string phoneNumber)
+    {
+        phoneNumber = phoneNumber.Trim();
+        string regex = "^[1-9]\\d{8,9}$";
+        return Regex.IsMatch(phoneNumber, regex);
+    }
+
 
     public string FormatMoney(double money)
     {
@@ -254,8 +264,6 @@ public class Utility
             string[] excelExtensions = { ".xls", ".xlsx" };
             return Array.Exists(excelExtensions, ext => ext.Equals(fileExtension));
         }
-
-        
 
     }
 }

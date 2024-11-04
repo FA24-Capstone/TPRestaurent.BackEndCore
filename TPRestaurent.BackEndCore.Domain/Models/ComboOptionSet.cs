@@ -14,6 +14,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid ComboOptionSetId {  get; set; }
         public int OptionSetNumber { get; set; }
         public int NumOfChoice { get; set; }
+        public bool IsDeleted { get; set; }
         public Enums.DishItemType DishItemTypeId { get; set; }
         [ForeignKey(nameof(DishItemTypeId))]
         public EnumModels.DishItemType DishItemType { get; set; }
