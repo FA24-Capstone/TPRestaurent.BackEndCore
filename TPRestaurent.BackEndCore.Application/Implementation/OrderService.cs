@@ -659,6 +659,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     orderSession.PreparationTime = await dishManagementService.CalculatePreparationTime(estimatedPreparationTime);
 
+                    orderSession.PreparationTime = await dishManagementService.CalculatePreparationTime(estimatedPreparationTime);
+
                     if (orderDetails.Count > 0)
                     {
                         order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
