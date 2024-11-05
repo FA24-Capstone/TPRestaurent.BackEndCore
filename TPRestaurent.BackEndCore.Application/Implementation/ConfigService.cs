@@ -170,23 +170,33 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var configurationDb = await _repository.GetById(dto.ConfigurationId);
-                var configurationVersionRepository = Resolve<IGenericRepository<ConfigurationVersion>>();
-                var configurationVersionDb = new ConfigurationVersion
-                {
-                    ConfigurationId = configurationDb.ConfigurationId,
-                };
                 if (configurationDb == null)
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy cấu hình với id {dto.ConfigurationId}");
                 }
-            
-                configurationDb.Name = dto.Name;    
-                configurationDb.VietnameseName = dto.VietnameseName;    
-                configurationDb.Unit = dto.Unit;    
-                configurationDb.CurrentValue = dto.CurrentValue;
+
+                if (!string.IsNullOrEmpty(dto.CurrentValue))
+                {
+                    configurationDb.CurrentValue = dto.CurrentValue;
+                }
+
+                if (!string.IsNullOrEmpty(dto.Name))
+                {
+                    configurationDb.Name = dto.Name;
+                }
+
+                if (!string.IsNullOrEmpty(dto.VietnameseName))
+                {
+                    configurationDb.VietnameseName = dto.VietnameseName;
+                }
+
+                if (!string.IsNullOrEmpty(dto.Unit))
+                {
+                    configurationDb.Unit = dto.Unit;
+                }
+
                 await _repository.Update(configurationDb);
                 await _unitOfWork.SaveChangesAsync();
-
             }
             catch (Exception ex)
             {
