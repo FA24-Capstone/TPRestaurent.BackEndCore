@@ -19,6 +19,8 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
     public class KitchenGroupedDishItemResponse
     {
         public DishQuantityResponse Dish { get; set; }
+        public bool IsLate {  get; set; } = false;
+        public double PreparationTime { get; set; }
         public List<DishFromTableOrder> UncheckedDishFromTableOrders { get; set; } = new List<DishFromTableOrder>();
         public List<DishFromTableOrder> ProcessingDishFromTableOrders { get; set; } = new List<DishFromTableOrder>();
     }

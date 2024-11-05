@@ -70,6 +70,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var comboRepository = Resolve<IGenericRepository<Combo>>();
                     var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
                     var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
+                    var dishManagementService = Resolve<IDishManagementService>();
                     var orderDb = await _repository.GetById(dto.OrderId);
                     var utility = Resolve<Utility>();
                     if (orderDb == null)
@@ -90,7 +91,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(o => o.OrderId == dto.OrderId, 0, 0, null, false, null);
                     var orderDetails = new List<OrderDetail>();
                     List<ComboOrderDetail> comboOrderDetails = new List<ComboOrderDetail>();
-
+                    List<CalculatePreparationTime> estimatedPreparationTime = new List<CalculatePreparationTime>();
                     foreach (var o in dto.OrderDetailsDtos)
                     {
                         var orderDetail = new OrderDetail
@@ -119,21 +120,33 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             orderDetail.OrderTime = utility!.GetCurrentDateTimeInTimeZone();
                             orderDetail.Quantity = o.Quantity;
                             orderDetail.Note = o.Note;
+                            estimatedPreparationTime.Add(new CalculatePreparationTime
+                            {
+                                PreparationTime = combo.PreparationTime.Value,
+                                Quantity = orderDetail.Quantity
+                            });
                         }
                         else
                         {
-                            var dish = await dishRepository!.GetById(o.DishSizeDetailId!);
+                            var dish = await dishRepository!.GetByExpression(d => d.DishSizeDetailId == o.DishSizeDetailId!, d => d.Dish);
                             orderDetail.Price = dish.Price;
                             orderDetail.DishSizeDetailId = o.DishSizeDetailId;
                             orderDetail.Quantity = o.Quantity;
                             orderDetail.OrderDetailStatusId = OrderDetailStatus.Unchecked;
                             orderDetail.OrderTime = utility!.GetCurrentDateTimeInTimeZone();
                             orderDetail.Note = o.Note;
+                            estimatedPreparationTime.Add(new CalculatePreparationTime
+                            {
+                                PreparationTime = dish.Dish.PreparationTime.Value,
+                                Quantity = orderDetail.Quantity
+                            });
                         }
 
                         orderDb.TotalAmount += orderDetail.Price * orderDetail.Quantity;
                         orderDetails.Add(orderDetail);
                     }
+
+                    orderSession.PreparationTime = await dishManagementService.CalculatePreparationTime(estimatedPreparationTime);
                     orderDb.TotalAmount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
                     await _repository.Update(orderDb);
                     await orderSessionRepository.Insert(orderSession);
@@ -408,6 +421,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var tokenRepostiory = Resolve<IGenericRepository<Token>>();
                     var hubService = Resolve<IHubServices.IHubServices>();
                     var tableService = Resolve<ITableService>();
+                    var dishManagementService = Resolve<IDishManagementService>();
                     var mapService = Resolve<IMapService>();
                     var createdOrderId = new Guid();
                     var dishSizeDetail = new DishSizeDetail();
@@ -462,6 +476,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     double money = 0;
                     var orderSessionDb = await orderSessionRepository!.GetAllDataByExpression(null, 0, 0, null, false, null);
                     var latestOrderSession = orderSessionDb.Items!.Count() + 1;
+                    var estimatedPreparationTime = new List<CalculatePreparationTime>();
                     var orderSession = new OrderSession()
                     {
                         OrderSessionId = Guid.NewGuid(),
@@ -469,6 +484,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         OrderSessionStatusId = orderRequestDto.OrderType == OrderType.Reservation ? OrderSessionStatus.PreOrder : OrderSessionStatus.Confirmed,
                         OrderSessionNumber = latestOrderSession
                     };
+
                     if (orderRequestDto.OrderDetailsDtos != null && orderRequestDto.OrderDetailsDtos.Count > 0)
                     {
                         DateTime orderTime = utility.GetCurrentDateTimeInTimeZone();
@@ -519,7 +535,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     await hubService!.SendAsync(SD.SignalMessages.LOAD_NOTIFICATION);
                                     await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);    
                                 }
-                               
+                                estimatedPreparationTime.Add(new CalculatePreparationTime
+                                {
+                                    PreparationTime = dishDb.PreparationTime.Value,
+                                    Quantity = orderDetail.Quantity
+                                });
                             }
                             else if (item.Combo != null)
                             {
@@ -547,6 +567,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         DishComboId = dishComboId
                                     });
                                 }
+                                estimatedPreparationTime.Add(new CalculatePreparationTime
+                                {
+                                    PreparationTime = combo.PreparationTime.Value,
+                                    Quantity = orderDetail.Quantity
+                                });
                             }
                             else
                             {
@@ -558,6 +583,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         money = orderDetails.Sum(o => o.Quantity * o.Price);
 
                     }
+
+                    orderSession.PreparationTime = await dishManagementService.CalculatePreparationTime(estimatedPreparationTime);
 
                     if (orderDetails.Count > 0)
                     {
@@ -2994,8 +3021,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                         }
 
-                        var username = orderReservation.Account?.FirstName + "" + orderReservation.Account?.LastName;
-                        emailService.SendEmail(orderReservation.Account.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateMailToCancelReservation(username, orderReservation));
+                        if (!string.IsNullOrEmpty(orderReservation.Account?.Email))
+                        {
+                            var username = orderReservation.Account?.FirstName + "" + orderReservation.Account?.LastName;
+                            emailService.SendEmail(orderReservation.Account?.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateMailToCancelReservation(username, orderReservation));
+                        }
                     }
                 }
 

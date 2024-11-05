@@ -1,5 +1,6 @@
 using AutoMapper;
 using Castle.Core.Internal;
+using NPOI.SS.Formula.Functions;
 using Org.BouncyCastle.Asn1.X509;
 using System;
 using System.Collections.Generic;
@@ -409,12 +410,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var reservationTableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
                     var reservedTableDb = await reservationTableDetailRepository!.GetAllDataByExpression(r => unavailableReservationIds.Contains(r.OrderId), 0, 0, null, false, r => r.Table.Room);
                     var reservedTableIds = reservedTableDb.Items!.Select(x => x.TableId);
-                    var availableTableDb = await _repository!.GetAllDataByExpression(t => !reservedTableIds.Contains(t.TableId) && t.Room.IsPrivate == isPrivate, 0, 0, null, false, t => t.Room);
+                    var availableTableDb = await _repository!.GetAllDataByExpression(t => !reservedTableIds.Contains(t.TableId) && t.Room.IsPrivate == isPrivate && !t.IsDeleted, 0, 0, null, false, t => t.Room);
                     result = availableTableDb.Items;
                 }
                 else
                 {
-                    result = (await _repository!.GetAllDataByExpression(t => t.Room.IsPrivate == isPrivate, 0, 0, null, false, r => r.Room)).Items;
+                    result = (await _repository!.GetAllDataByExpression(t => t.Room.IsPrivate == isPrivate && !t.IsDeleted, 0, 0, null, false, r => r.Room)).Items;
                 }
                 //result.Result = availableReservation.Items.Select(x => x.Table);
             }
@@ -443,7 +444,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var tableDb = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, null, false, t => t.Room, t => t.TableSize);
+                var tableDb = await _repository.GetAllDataByExpression(t => !t.IsDeleted, pageNumber, pageSize, null, false, t => t.Room, t => t.TableSize);
                 if (tableDb.Items.Count > 0)
                 {
                     var data = new List<TableArrangementResponseItem>();
@@ -509,7 +510,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                 }
                 var tableIds = request.Select(r => r.Id).ToList();
-                var tableDb = await _repository.GetAllDataByExpression(r => tableIds.Contains(r.TableId), 0, 0, null, false, null);
+                var tableDb = await _repository.GetAllDataByExpression(r => tableIds.Contains(r.TableId) && !r.IsDeleted, 0, 0, null, false, null);
                 if (tableIds.Count != tableDb.Items.Count)
                 {
                     return BuildAppActionResultError(result, $"Danh sách chứa id bàn không tồn tại");
@@ -649,6 +650,52 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
+        }
+
+        public async Task<AppActionResult> DeleteTable(Guid id)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var tableDb = await _repository.GetById(id);
+                if (tableDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy bàn với id {id}");
+                }
+                var tableHasCurrentOrUpcomingReservation = await TableHasCurrentOrUpcomingReservation(id);
+                if (tableHasCurrentOrUpcomingReservation)
+                {
+                    return BuildAppActionResultError(result, $"Bàn đang được sử dụng hoặc có lịch đặt trong tương lai nên không thề xoá");
+                }
+                tableDb.IsDeleted = true;
+                await _repository.Update(tableDb);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        private async Task<bool> TableHasCurrentOrUpcomingReservation(Guid id)
+        {
+            bool tableHasCurrentOrUpcomingReservation = false;
+            try
+            {
+                var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
+                var utility = Resolve<Utility>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                var tableDetailDb = await tableDetailRepository.GetAllDataByExpression(t => t.TableId == id &&
+                                                                                          t.Order.MealTime.Value >= currentTime,
+                                                                                          0, 0, null, false, null);
+                tableHasCurrentOrUpcomingReservation = tableDetailDb.Items.Count() > 0;
+            }
+            catch (Exception ex)
+            {
+                tableHasCurrentOrUpcomingReservation= true;
+            }
+            return tableHasCurrentOrUpcomingReservation;
         }
     }
 }
