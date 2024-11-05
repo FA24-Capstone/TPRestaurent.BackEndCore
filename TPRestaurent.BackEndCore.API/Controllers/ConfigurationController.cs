@@ -46,6 +46,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return _service.GetAll(pageNumber, pageSize);
         }
 
+        [HttpGet("get-all-configuration-version/{configId}/{pageNumber}/{pageSize}")]
+        public Task<AppActionResult> GetAllConfigurationVersion(Guid configId, int pageNumber = 1, int pageSize = 10)
+        {
+            return _service.GetAllConfigurationVersion(configId, pageNumber, pageSize);
+        }
+
         [HttpGet("get-config-by-name/{name}")]
         public Task<AppActionResult> GetByName(string name)
         {

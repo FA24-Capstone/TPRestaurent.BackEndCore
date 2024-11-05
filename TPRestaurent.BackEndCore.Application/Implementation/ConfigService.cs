@@ -133,7 +133,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                result.Result = await configurationServiceRepository.GetAllDataByExpression(null, pageNumber, pageSize, p => p.ActiveDate, false, p => p.Configuration!);
+                result.Result = await configurationServiceRepository!.GetAllDataByExpression(null, pageNumber, pageSize, p => p.ActiveDate, false, p => p.Configuration!);
             }
             catch (Exception ex)
             {
@@ -164,29 +164,54 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> GetAllConfigurationVersion(Guid configId, int pageNumber, int pageSize)
+        {
+            var result = new AppActionResult();
+            var configurationVersionRepository = Resolve<IGenericRepository<ConfigurationVersion>>();
+            try
+            {
+                result.Result = await configurationVersionRepository!.GetAllDataByExpression(p => p.ConfigurationId == configId, pageNumber, pageSize, p => p.ActiveDate, false, p => p.Configuration!);
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
         public async Task<AppActionResult> UpdateConfiguration(UpdateConfigurationDto dto)
         {
             AppActionResult result = new AppActionResult();
             try
             {
                 var configurationDb = await _repository.GetById(dto.ConfigurationId);
-                var configurationVersionRepository = Resolve<IGenericRepository<ConfigurationVersion>>();
-                var configurationVersionDb = new ConfigurationVersion
-                {
-                    ConfigurationId = configurationDb.ConfigurationId,
-                };
                 if (configurationDb == null)
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy cấu hình với id {dto.ConfigurationId}");
                 }
-            
-                configurationDb.Name = dto.Name;    
-                configurationDb.VietnameseName = dto.VietnameseName;    
-                configurationDb.Unit = dto.Unit;    
-                configurationDb.CurrentValue = dto.CurrentValue;
+
+                if (!string.IsNullOrEmpty(dto.CurrentValue))
+                {
+                    configurationDb.CurrentValue = dto.CurrentValue;
+                }
+
+                if (!string.IsNullOrEmpty(dto.Name))
+                {
+                    configurationDb.Name = dto.Name;
+                }
+
+                if (!string.IsNullOrEmpty(dto.VietnameseName))
+                {
+                    configurationDb.VietnameseName = dto.VietnameseName;
+                }
+
+                if (!string.IsNullOrEmpty(dto.Unit))
+                {
+                    configurationDb.Unit = dto.Unit;
+                }
+
                 await _repository.Update(configurationDb);
                 await _unitOfWork.SaveChangesAsync();
-
             }
             catch (Exception ex)
             {
