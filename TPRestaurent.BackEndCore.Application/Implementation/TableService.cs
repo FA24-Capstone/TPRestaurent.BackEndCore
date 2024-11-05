@@ -516,6 +516,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 foreach (var table in tableDb.Items)
                 {
+                    if(table.TableStatusId == TableStatus.NEW)
+                    {
+                        table.TableStatusId = TableStatus.AVAILABLE;
+                    }
                     var inputTable = request.FirstOrDefault(i => i.Id == table.TableId);
                     List<(int, int)> coordinate = new List<(int, int)>();
                     coordinate.Add((inputTable.Position.X, inputTable.Position.Y));
