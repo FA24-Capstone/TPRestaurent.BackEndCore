@@ -154,7 +154,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
         }
 
-        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful, OrderStatus? status)
+        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful, OrderStatus? status, bool? requireSignalR = true)
         {
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
@@ -337,7 +337,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
 
                         scope.Complete();
-                        if (orderDb.StatusId == OrderStatus.Processing || orderDb.StatusId == OrderStatus.ReadyForDelivery)
+                        if ((!requireSignalR.HasValue || requireSignalR.Value) && (orderDb.StatusId == OrderStatus.Processing || orderDb.StatusId == OrderStatus.ReadyForDelivery))
                         {
                             await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
                             await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
@@ -2339,6 +2339,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Completed, false);
                         orderSessionUpdated = true;
+                        if(orderDetailDb.Items.FirstOrDefault().Order.OrderTypeId == OrderType.Delivery)
+                        {
+                            await ChangeOrderStatus(orderDetailDb.Items.FirstOrDefault().OrderId, true, null, false);
+                        }
                     }
 
                     orderSessionSet.Add(session.OrderSessionId);
