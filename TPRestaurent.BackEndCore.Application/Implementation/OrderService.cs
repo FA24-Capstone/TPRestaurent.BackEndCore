@@ -503,7 +503,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 orderDetail.DishSizeDetailId = item.DishSizeDetailId.Value;
                                 orderDetail.Price = dishSizeDetail.Price;
 
-                                if (dishSizeDetail.QuantityLeft > item.Quantity)
+                                if (dishSizeDetail.QuantityLeft >= item.Quantity)
                                 {
                                     dishSizeDetail.QuantityLeft -= item.Quantity;
                                 }
