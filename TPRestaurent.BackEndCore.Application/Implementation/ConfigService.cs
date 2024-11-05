@@ -133,7 +133,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                result.Result = await configurationServiceRepository.GetAllDataByExpression(null, pageNumber, pageSize, p => p.ActiveDate, false, p => p.Configuration!);
+                result.Result = await configurationServiceRepository!.GetAllDataByExpression(null, pageNumber, pageSize, p => p.ActiveDate, false, p => p.Configuration!);
             }
             catch (Exception ex)
             {
@@ -156,6 +156,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     result = BuildAppActionResultError(result, $"Không tìm thấy thông số cấu hình với tên {name}");
                 }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetAllConfigurationVersion(Guid configId, int pageNumber, int pageSize)
+        {
+            var result = new AppActionResult();
+            var configurationVersionRepository = Resolve<IGenericRepository<ConfigurationVersion>>();
+            try
+            {
+                result.Result = await configurationVersionRepository!.GetAllDataByExpression(p => p.ConfigurationId == configId, pageNumber, pageSize, p => p.ActiveDate, false, p => p.Configuration!);
             }
             catch (Exception ex)
             {
