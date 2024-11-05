@@ -23,7 +23,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> CalculateDeliveryOrder(Guid customerInfoAddressId);
         public Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto);
         public Task<AppActionResult> MakeDineInOrderBill(OrderPaymentRequestDto orderRequestDto);
-        public Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful, OrderStatus? status = null);
+        public Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful, OrderStatus? status, bool? requireSignalR = true);
         public Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto);
         //public Task<AppActionResult> SuggestTable(SuggestTableDto dto);
         //public Task<AppActionResult> GetOrderTotal(CalculateOrderRequest orderRequestDto);

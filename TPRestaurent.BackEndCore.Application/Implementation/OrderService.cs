@@ -154,7 +154,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
         }
 
-        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful, OrderStatus? status)
+        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful, OrderStatus? status, bool? requireSignalR = true)
         {
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
@@ -337,7 +337,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
 
                         scope.Complete();
-                        if (orderDb.StatusId == OrderStatus.Processing || orderDb.StatusId == OrderStatus.ReadyForDelivery)
+                        if ((!requireSignalR.HasValue || requireSignalR.Value) && (orderDb.StatusId == OrderStatus.Processing || orderDb.StatusId == OrderStatus.ReadyForDelivery))
                         {
                             await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
                             await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
@@ -432,9 +432,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         order.AccountId = orderRequestDto.CustomerId.ToString();
 
-                        if(orderRequestDto.OrderType == OrderType.Reservation)
+                        if (orderRequestDto.OrderType == OrderType.Reservation)
                         {
-                            if(accountDb.Email.Contains("TPCustomer") || accountDb.LastName.ToLower().Contains("lastname") || accountDb.LastName.ToLower().Contains("firstname") || accountDb.DOB == new DateTime(1, 1, 1))
+                            if (accountDb.Email.Contains("TPCustomer") || accountDb.LastName.ToLower().Contains("lastname") || accountDb.LastName.ToLower().Contains("firstname") || accountDb.DOB == new DateTime(1, 1, 1))
                             {
                                 return BuildAppActionResultError(result, $"Quý khách chưa cập nhật thông tin tài khoản nên không thể tạo đặt bàn");
                             }
@@ -503,7 +503,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 orderDetail.DishSizeDetailId = item.DishSizeDetailId.Value;
                                 orderDetail.Price = dishSizeDetail.Price;
 
-                                if (dishSizeDetail.QuantityLeft >= item.Quantity)
+                                if (dishSizeDetail.QuantityLeft > item.Quantity)
                                 {
                                     dishSizeDetail.QuantityLeft -= item.Quantity;
                                 }
@@ -512,14 +512,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     return BuildAppActionResultError(result, $"Món ăn {dishDb.Name} chỉ còn x{dishSizeDetail.QuantityLeft}");
                                 }
 
-                              
+
                                 if (dishSizeDetail.QuantityLeft <= 5)
                                 {
                                     string message = $"{dishDb.Name} chỉ còn x{dishSizeDetail.QuantityLeft} món";
                                     await hubService!.SendAsync(SD.SignalMessages.LOAD_NOTIFICATION);
-                                    await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);    
+                                    await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
                                 }
-                               
+
                             }
                             else if (item.Combo != null)
                             {
@@ -939,7 +939,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 messageBody.Length -= 2;
 
                                 await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_CHEF, messageBody.ToString());
-                               
+
                             }
 
                             var createSuccessfulMessage = $"Đơn của bạn đã được đặt thành công";
@@ -2224,7 +2224,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (orderDetail.ComboId.HasValue)
                     {
                         var orderComboDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId
-                                                                                                            
+
                                                                                                                 && (c.StatusId != DishComboDetailStatus.Reserved
                                                                                                                     && c.StatusId != DishComboDetailStatus.ReadyToServe
                                                                                                                     && c.StatusId != DishComboDetailStatus.Cancelled),
@@ -2328,7 +2328,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Processing, false);
                         orderSessionUpdated = true;
                     }
-                    else if (orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled) 
+                    else if (orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled)
                              && sessionOrderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
                     {
                         await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Cancelled, false);
@@ -2339,6 +2339,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Completed, false);
                         orderSessionUpdated = true;
+                        if (orderDetailDb.Items.FirstOrDefault().Order.OrderTypeId == OrderType.Delivery)
+                        {
+                            await ChangeOrderStatus(orderDetailDb.Items.FirstOrDefault().OrderId, true, null, false);
+                        }
                     }
 
                     orderSessionSet.Add(session.OrderSessionId);
@@ -2822,7 +2826,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {confirmedOrderRequest.OrderId}");
                     }
-                    
+
                     if (!confirmedOrderRequest.IsSuccessful.HasValue || confirmedOrderRequest.IsSuccessful.Value)
                     {
                         var pathName = SD.FirebasePathName.ORDER_PREFIX + $"{confirmedOrderRequest.OrderId}{Guid.NewGuid()}.jpg";
