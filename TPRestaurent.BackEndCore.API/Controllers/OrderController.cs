@@ -162,9 +162,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-best-seller-dishes-and-combo")]
-        public async Task<AppActionResult> GetBestSellerDishesAndCombo(int topNumber)
+        public async Task<AppActionResult> GetBestSellerDishesAndCombo(int topNumber, DateTime? startTime, DateTime? endTime)
         {
-            return await _service.GetBestSellerDishesAndCombo(topNumber);
+            return await _service.GetBestSellerDishesAndCombo(topNumber, startTime, endTime);
         }
 
         //[HttpPut("over")]

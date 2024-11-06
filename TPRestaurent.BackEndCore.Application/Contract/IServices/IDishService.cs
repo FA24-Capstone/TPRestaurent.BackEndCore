@@ -22,5 +22,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> GetAllDishSize(int pageNumber, int pagesize);
         public Task<AppActionResult> UpdateInactiveDish(Guid dishId);
         public Task<AppActionResult> InsertDishTag();
+        public Task AutoRefillDish();
     }
 }
