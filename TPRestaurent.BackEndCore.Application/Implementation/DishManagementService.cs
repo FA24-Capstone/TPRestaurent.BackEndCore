@@ -35,6 +35,30 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _unitOfWork = unitOfWork;
         }
 
+        public async Task<double> CalculatePreparationTime(List<CalculatePreparationTime> dto)
+        {
+            double result = 0;
+            try
+            {
+                var utility = Resolve<Utility>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                double preparationTime = 0;
+               
+                foreach (var preparationRequest in dto)
+                {
+                    preparationTime += preparationRequest.PreparationTime * preparationRequest.Quantity;
+                }
+
+                //AddConfig time
+                result = preparationTime;
+            }
+            catch (Exception ex)
+            {
+                result = 0;
+            }
+            return result;
+        }
+
         public async Task<AppActionResult> LoadDishRequireManualInput()
         {
             AppActionResult result = new AppActionResult();

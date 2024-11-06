@@ -91,6 +91,7 @@ public class SD
         public static string EXPIRE_TIME_FOR_STORE_CREDIT = "EXPIRE_TIME_FOR_STORE_CREDIT";
         public static string REFUND_APPLYING_TIME_FOR_RESEVATION_CANCELATION = "REFUND_APPLYING_TIME_FOR_RESEVATION_CANCELATION";
         public static string TIME_TO_KEEP_RESERVATION = "TIME_TO_KEEP_RESERVATION";
+        public static string TIME_TO_KEEP_UNPAID_DELIVERY_ORDER = "TIME_TO_KEEP_UNPAID_DELIVERY_ORDER";
         public static string OPEN_TIME = "OPEN_TIME";
         public static string CLOSED_TIME = "CLOSED_TIME";
         public static string RESTAURANT_LATITUDE = "RESTAURANT_LATITUDE";

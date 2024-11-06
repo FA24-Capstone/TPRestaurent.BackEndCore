@@ -13,6 +13,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> UpdateDishQuantity(List<UpdateDishQuantityRequest> dto);
         public Task<AppActionResult> LoadDishRequireManualInput();
         public Task<AppActionResult> UpdateDishQuantity(List<Guid> orderSessionIds);
+        public Task<double> CalculatePreparationTime(List<CalculatePreparationTime> dto);
         public Task UpdateDishQuantity();
     }
 }
