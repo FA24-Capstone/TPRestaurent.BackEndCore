@@ -22,6 +22,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private IGroupedDishCraftService _groupedDishCraftService;
         private ITransactionService _transactionService;
         private IInvoiceService _invoiceService;
+        private IDishService _dishService;
+
 
         public WorkerService(IServiceProvider serviceProvider,
             BackEndLogger logger,
@@ -33,7 +35,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             IAccountService accountService,
             IGroupedDishCraftService groupedDishCraftService, 
             ITransactionService transactionService,
-            IInvoiceService invoiceService
+            IInvoiceService invoiceService,
+            IDishService dishService
             ) : base(serviceProvider)
         {
             _logger = logger;
@@ -46,6 +49,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _groupedDishCraftService = groupedDishCraftService;
             _transactionService = transactionService;   
             _invoiceService = invoiceService;
+            _dishService = dishService; 
         }
 
 
@@ -61,11 +65,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             RecurringJob.AddOrUpdate(() => _accountService.DeleteOverdueOTP(), Cron.DayInterval(1), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _orderService.CancelReservation(), Cron.HourInterval(2), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _groupedDishCraftService.InsertGroupedDish(), Cron.MinuteInterval((int)Math.Round(reloadGrouped)), vietnamTimeZone);
-            //RecurringJob.AddOrUpdate(() => _orderService.RemindOrderReservation(), Cron.MinuteInterval(1), vietnamTimeZone);
+            RecurringJob.AddOrUpdate(() => _orderService.RemindOrderReservation(), Cron.MinuteInterval(1), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _transactionService.CancelPendingTransaction(), Cron.DayInterval(1), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _configService.ChangeConfigurationJob(), Cron.MinuteInterval(30), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _invoiceService.GenerateInvoice(), "01 0 * * *", vietnamTimeZone);
-
+            RecurringJob.AddOrUpdate(() => _dishService.AutoRefillDish(), Cron.DayInterval(1), vietnamTimeZone);
         }
     }
 }
