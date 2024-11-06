@@ -183,15 +183,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetAllCombo(string? keyword, int pageNumber, int pageSize)
+        public async Task<AppActionResult> GetAllCombo(string? keyword, ComboCategory? category, int? startPrice, int? endPrice, int pageNumber, int pageSize)
         {
             var result = new AppActionResult();
             try
             {
                 var currentDateTime = Resolve<Utility>().GetCurrentDateTimeInTimeZone();
                 var comboDb = await _comboRepository.GetAllDataByExpression(
-                    p => (string.IsNullOrEmpty(keyword) || p.Name.Contains(keyword)) && p.EndDate > currentDateTime && !p.IsDeleted,
-                    pageNumber, pageSize, null, false, c => c.Category
+                    p => (string.IsNullOrEmpty(keyword) || p.Name.Contains(keyword)) || p.CategoryId == category || p.Price >= startPrice && p.Price <= endPrice && p.EndDate > currentDateTime && !p.IsDeleted,
+                    pageNumber, pageSize, p => p.Price, false, c => c.Category
                 );
 
                 if (comboDb.Items.Count > 0)

@@ -161,6 +161,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.CancelDeliveringOrder(cancelDeliveringOrderRequest);      
         }
 
+        [HttpGet("get-best-seller-dishes-and-combo")]
+        public async Task<AppActionResult> GetBestSellerDishesAndCombo(int topNumber)
+        {
+            return await _service.GetBestSellerDishesAndCombo(topNumber);
+        }
+
         //[HttpPut("over")]
         //public async Task CancelOverReservation()
         //{
