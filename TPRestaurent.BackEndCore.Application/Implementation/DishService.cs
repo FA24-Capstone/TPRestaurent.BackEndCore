@@ -651,5 +651,29 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+        public async Task AutoRefillDish()
+        {
+            var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
+            try
+            {
+                var dishSizeDetailsDb = await dishSizeDetailRepository!.GetAllDataByExpression(p => p.DailyCountdown != 0, 0, 0, null, false, p => p.Dish);
+                var dishSizeDetailsList = dishSizeDetailsDb.Items;
+                if (dishSizeDetailsList!.Count > 0 && dishSizeDetailsList != null)
+                {
+                    foreach (var dishSizeDetail in dishSizeDetailsDb!.Items!)
+                    {
+                        dishSizeDetail.QuantityLeft = dishSizeDetail.DailyCountdown;    
+                    }
+
+                    await dishSizeDetailRepository.UpdateRange(dishSizeDetailsList);
+                }
+                await _unitOfWork.SaveChangesAsync();   
+            }
+            catch (Exception ex)
+            {
+            }
+            Task.CompletedTask.Wait();
+        }
     }
 }
