@@ -3787,5 +3787,32 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             await _unitOfWork.SaveChangesAsync();
             Task.CompletedTask.Wait();
         }
+
+        private async Task<bool> UpdateDishQuantity(Guid orderId)
+        {
+            bool isSuccessful = false;
+            try
+            {
+                var orderDetailListDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == orderId, 0, 0, null, false, o => o.DishSizeDetail);
+                if(orderDetailListDb.Items.Count > 0)
+                {
+                    foreach(var item in orderDetailListDb.Items)
+                    {
+                        if (item.DishSizeDetailId.HasValue)
+                        {
+                            //item.DishSizeDetail 
+                        } else
+                        {
+
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return isSuccessful;
+        }
     }
 }
