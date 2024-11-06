@@ -208,7 +208,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-
         private async Task CalculatePreparationTime(List<KitchenGroupedDishItemResponse> data)
         {
             try
@@ -232,7 +231,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 
             }
         }
-
         private async Task<List<KitchenGroupedDishItemResponse>> RefineGroupDishData(List<KitchenGroupedDishItemResponse> data)
         {
             try
@@ -285,6 +283,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
          return kitchenGroupedDishItemResponse;
      })
      .Where(g => g.UncheckedDishFromTableOrders.Count + g.ProcessingDishFromTableOrders.Count > 0)
+     .OrderByDescending(g => g.IsLate)
      .ToList();
 
             }
@@ -537,7 +536,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-
         public async Task UpdateLateOrderSession()
         {
             try
