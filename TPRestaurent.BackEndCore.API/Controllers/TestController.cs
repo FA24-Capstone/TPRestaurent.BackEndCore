@@ -13,12 +13,17 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     {
         public IOrderService _orderService;
         public IInvoiceService _invoiceService;
+        public IGroupedDishCraftService _groupedDishCraftService;
+        public IOrderSessionService _orderSessionService;
         private IHubServices _hubServices;
-        public TestController(IOrderService orderService, IInvoiceService invoiceService, IHubServices hubServices)
+        public TestController(IOrderService orderService, IInvoiceService invoiceService, 
+                              IHubServices hubServices, IGroupedDishCraftService groupedDishCraftService, IOrderSessionService orderSessionService)
         {
             _orderService = orderService;
             _invoiceService = invoiceService;
             _hubServices = hubServices;
+            _groupedDishCraftService = groupedDishCraftService;
+            _orderSessionService = orderSessionService;
         }
 
         [HttpPut("update-order-status")]
@@ -44,6 +49,18 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         public async Task TestSignalR(string method)
         {
             await _hubServices.SendAsync(method);
+        }
+
+        [HttpPost("test-update-late-grouped")]
+        public async Task UpdateLateWarningGroupedDish()
+        {
+            await _groupedDishCraftService.UpdateLateWarningGroupedDish();
+        }
+
+        [HttpPost("test-update-late-session")]
+        public async Task UpdateLateOrderSession()
+        {
+            await _orderSessionService.UpdateLateOrderSession();
         }
     }
 }
