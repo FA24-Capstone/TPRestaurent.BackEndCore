@@ -19,12 +19,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-dish/{pageNumber}/{pageSize}")]
-        public async Task<AppActionResult> GetAllDish(string? keyword, DishItemType type, int pageNumber = 1, int pageSize = 10)
+        public async Task<AppActionResult> GetAllDish(string? keyword, int? startPrice, int? endPrice, DishItemType type, int pageNumber = 1, int pageSize = 10)
         {
-            return await _dishService.GetAllDish(keyword, type, pageNumber, pageSize);
+            return await _dishService.GetAllDish(keyword, type , pageNumber, pageSize, startPrice, endPrice);
         }
 
-
+            
         [HttpGet("get-dish-by-id/{dishId}")]
         public async Task<AppActionResult> GetDishbyId(Guid dishId)
         {
