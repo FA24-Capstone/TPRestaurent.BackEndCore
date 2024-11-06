@@ -23,13 +23,14 @@ RUN wget -P /src https://github.com/rdvojmoc/DinkToPdf/raw/master/v0.12.4/64%20b
 RUN dotnet restore "./TPRestaurent.BackEndCore.API/TPRestaurent.BackEndCore.API.csproj"
 COPY . .
 WORKDIR "/src/TPRestaurent.BackEndCore.API"
-RUN dotnet build "./TPRestaurent.BackEndCore.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./TPRestaurent.BackEndCore.API.csproj" -c Release  -o /app/build
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./TPRestaurent.BackEndCore.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./TPRestaurent.BackEndCore.API.csproj" -c Release  -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+
 ENTRYPOINT ["dotnet", "TPRestaurent.BackEndCore.API.dll"]
