@@ -3563,12 +3563,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetBestSellerDishesAndCombo(int topNumber)
+        public async Task<AppActionResult> GetBestSellerDishesAndCombo(int topNumber, DateTime? startTime, DateTime? endTime)
         {
             var result = new AppActionResult();
             var dishRepository = Resolve<IGenericRepository<Dish>>();
             var comboRepository = Resolve<IGenericRepository<Combo>>();
-
+            var utility = Resolve<Utility>();
+            var currentTime = utility.GetCurrentDateTimeInTimeZone();
             try
             {
                 var bestSellerDishDictionary = new Dictionary<Guid?, int>();
@@ -3578,16 +3579,32 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var listBestSellerDishes = new List<Dish>();
                 var listBestSellerCombo = new List<Combo>();
 
-                var orderDetailsDb = await _detailRepository.GetAllDataByExpression(null, 0, 0, p => p.OrderTime, false, p => p.DishSizeDetail.Dish,
+                PagedResult<OrderDetail> orderDetailsList = new PagedResult<OrderDetail>();
+                if (startTime.HasValue && endTime == null)
+                {
+                    orderDetailsList = await _detailRepository.GetAllDataByExpression(p => p.OrderTime >= startTime && p.OrderTime <= currentTime, 0, 0, p => p.OrderTime, false, p => p.DishSizeDetail.Dish,
                                                                                                                                           p => p.Combo
                     );
-                var bestSellerDishesList = orderDetailsDb.Items.Where(p => p.DishSizeDetailId.HasValue).GroupBy(p => p.DishSizeDetail.DishId).ToDictionary(p => p.Key, p => p.ToList());
+                }
+                else if (startTime.HasValue && endTime.HasValue)
+                {
+                    orderDetailsList = await _detailRepository.GetAllDataByExpression(p => p.OrderTime >= startTime && p.OrderTime <= endTime, 0, 0, p => p.OrderTime, false, p => p.DishSizeDetail.Dish,
+                                                                                                                                          p => p.Combo
+                    );
+                }
+                else
+                {
+                    orderDetailsList = await _detailRepository.GetAllDataByExpression(null, 0, 0, p => p.OrderTime, false, p => p.DishSizeDetail.Dish,
+                                                                                                                                          p => p.Combo
+                    );
+                }
+                var bestSellerDishesList = orderDetailsList.Items.Where(p => p.DishSizeDetailId.HasValue).GroupBy(p => p.DishSizeDetail.DishId).ToDictionary(p => p.Key, p => p.ToList());
                 foreach (var bestSellerDish in bestSellerDishesList)
                 {
                     bestSellerDishDictionary.Add(bestSellerDish.Key, bestSellerDish.Value.Sum(p => p.Quantity));
 
                 }
-                var bestSellerComboList = orderDetailsDb.Items.Where(p => p.ComboId.HasValue).GroupBy(p => p.ComboId).ToDictionary(p => p.Key, p => p.ToList());
+                var bestSellerComboList = orderDetailsList.Items.Where(p => p.ComboId.HasValue).GroupBy(p => p.ComboId).ToDictionary(p => p.Key, p => p.ToList());
                 foreach (var bestComboSeller in bestSellerComboList)
                 {
                     bestSellerComboDictionary.Add(bestComboSeller.Key, bestComboSeller.Value.Sum(p => p.Quantity));
