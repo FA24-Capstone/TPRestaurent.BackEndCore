@@ -11,6 +11,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
     public class ComboOrderDetail
     {
         public Guid ComboOrderDetailId { get; set; }
+        public double PreparationTime { get; set; }
         public Enums.DishComboDetailStatus StatusId { get; set; }
         [ForeignKey(nameof(StatusId))]
         public EnumModels.DishComboDetailStatus? DishComboDetailStatus { get; set; }
