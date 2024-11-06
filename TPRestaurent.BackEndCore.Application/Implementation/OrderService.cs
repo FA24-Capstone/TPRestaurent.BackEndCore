@@ -3585,7 +3585,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 foreach (var bestSellerDish in bestSellerDishesList)
                 {
                     bestSellerDishDictionary.Add(bestSellerDish.Key, bestSellerDish.Value.Sum(p => p.Quantity));
-                 
+
                 }
                 var bestSellerComboList = orderDetailsDb.Items.Where(p => p.ComboId.HasValue).GroupBy(p => p.ComboId).ToDictionary(p => p.Key, p => p.ToList());
                 foreach (var bestComboSeller in bestSellerComboList)
@@ -3624,6 +3624,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
+        }
         private async Task<bool> UpdateDishQuantity(Guid orderId)
         {
             bool isSuccessful = false;
