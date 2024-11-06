@@ -16,6 +16,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> UpdateTable(UpdateTableDto dto);
         public Task<AppActionResult> UpdateTableCoordinates(List<TableArrangementResponseItem> request, bool? isForce = false);
         public Task<AppActionResult> FindTable(FindTableDto dto);
+        public Task<AppActionResult> DeleteTable(Guid id);
 
         public Task<AppActionResult> GetAllTableRating(int pageNumber, int pageSize);
     }

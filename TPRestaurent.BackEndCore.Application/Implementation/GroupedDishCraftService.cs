@@ -202,5 +202,44 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return isSuccessful;
         }
+
+        public async Task UpdateLateWarningGroupedDish()
+        {
+            try
+            {
+                var utility = Resolve<Utility>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                var currentGroupedDishDb = await _repository.GetAllDataByExpression(g => !g.IsFinished, 0, 0, null, false, null);
+                if (currentGroupedDishDb.Items.Count > 0)
+                {
+                    foreach (var groupedDish in currentGroupedDishDb.Items)
+                    {
+                        var groupDishFromJson = JsonConvert.DeserializeObject<KitchenGroupedDishResponse>(groupedDish.GroupedDishJson);
+                        foreach(var groupedItem in groupDishFromJson.SingleOrderDishes)
+                        {
+                            if(!groupedItem.IsLate && groupedDish.EndTime.AddMinutes(groupedItem.PreparationTime) < currentTime)
+                            {
+                                groupedItem.IsLate = true;
+                            }
+                        }
+
+                        foreach (var groupedItem in groupDishFromJson.MutualOrderDishes)
+                        {
+                            if (!groupedItem.IsLate && groupedDish.EndTime.AddMinutes(groupedItem.PreparationTime) < currentTime)
+                            {
+                                groupedItem.IsLate = true;
+                            }
+                        }
+                        groupedDish.GroupedDishJson = JsonConvert.SerializeObject(groupDishFromJson);
+                    }
+                    await _repository.UpdateRange(currentGroupedDishDb.Items);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
     }
 }

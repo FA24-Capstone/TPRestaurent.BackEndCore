@@ -90,21 +90,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         }
 
         public async Task<string> SendNotificationAsync(string deviceToken, string title, string body, AppActionResult data = null)
-        {
-          
-            var message = new Message
-            {
-                Token = deviceToken,
-                Notification = new Notification
-                {
-                    Title = title,
-                    Body = body,
-                    ImageUrl = "https://firebasestorage.googleapis.com/v0/b/thienphu-app.appspot.com/o/icon.png?alt=media&token=5a819b51-28eb-4f22-b303-0a01bfc5638d"
-                },
-            };
-
+        { 
             try
             {
+                var message = new Message
+                {
+                    Token = deviceToken,
+                    Notification = new Notification
+                    {
+                        Title = title,
+                        Body = body,
+                        ImageUrl = "https://firebasestorage.googleapis.com/v0/b/thienphu-app.appspot.com/o/icon.png?alt=media&token=5a819b51-28eb-4f22-b303-0a01bfc5638d"
+                    }
+                };
                 string response = await _messaging.SendAsync(message);
                 return response; // Successfully sent message
             }

@@ -34,6 +34,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.UpdateTable(dto);
         }
 
+        [HttpPost("delete-table/{id}")]
+        public async Task<AppActionResult> DeleteTable(Guid id)
+        {
+            return await _service.DeleteTable(id);
+        }
+
         [HttpPost("find-table")]
         public async Task<AppActionResult> FindTable([FromBody] FindTableDto dto)
         {

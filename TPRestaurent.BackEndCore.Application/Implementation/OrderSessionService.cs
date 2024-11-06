@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IHubServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
+using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
@@ -19,7 +20,7 @@ using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
-    public class OrderSessionService : GenericBackendService , IOrderSessionService
+    public class OrderSessionService : GenericBackendService, IOrderSessionService
     {
         private readonly IGenericRepository<OrderSession> _orderSessionRepository;
         private readonly IGenericRepository<Order> _orderRepository;
@@ -182,6 +183,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     data.AddRange(dishQuantity);
                     data.AddRange(extractComboQuantity);
                     data = await RefineGroupDishData(data);
+                    await CalculatePreparationTime(data);
 
                     var groupedDish = new KitchenGroupedDishResponse();
                     groupedDish.OrderDetailIds = orderDetailDb.Items.DistinctBy(o => o.OrderDetailId).Select(o => o.OrderDetailId).ToList();
@@ -206,6 +208,31 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+        private async Task CalculatePreparationTime(List<KitchenGroupedDishItemResponse> data)
+        {
+            try
+            {
+                var dishManagementService = Resolve<IDishManagementService>();
+                foreach (var item in data)
+                {
+                    item.PreparationTime = await dishManagementService.CalculatePreparationTime(new List<CalculatePreparationTime>
+                    {
+                        new CalculatePreparationTime
+                        {
+                            PreparationTime = item.Dish.PreparationTime.Value,
+                            Quantity = item.ProcessingDishFromTableOrders.Sum(i => i.Quantity.Quantity)
+                                       + item.UncheckedDishFromTableOrders.Sum(i => i.Quantity.Quantity)
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                
+            }
+        }
+
         private async Task<List<KitchenGroupedDishItemResponse>> RefineGroupDishData(List<KitchenGroupedDishItemResponse> data)
         {
             try
@@ -259,6 +286,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
      })
      .Where(g => g.UncheckedDishFromTableOrders.Count + g.ProcessingDishFromTableOrders.Count > 0)
      .ToList();
+
             }
             catch (Exception ex)
             {
@@ -508,6 +536,34 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
+        }
+
+        public async Task UpdateLateOrderSession()
+        {
+            try
+            {
+                var unfinishedOrderSession = await _orderSessionRepository.GetAllDataByExpression(u => !u.ReadyToServeTime.HasValue 
+                                                                                                        && (u.OrderSessionStatusId == OrderSessionStatus.Confirmed 
+                                                                                                        || u.OrderSessionStatusId == OrderSessionStatus.Processing)
+                                                                                                        , 0, 0, null, false, null);
+                if (unfinishedOrderSession.Items.Count > 0)
+                {
+                    var utility = Resolve<Utility>();
+                    var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                    foreach(var orderSession in unfinishedOrderSession.Items)
+                    {
+                        if(orderSession.OrderSessionTime.AddMinutes(orderSession.PreparationTime) < currentTime)
+                        {
+                            orderSession.OrderSessionStatusId = OrderSessionStatus.LateWarning;
+                        }
+                    }
+                    await _orderSessionRepository.UpdateRange(unfinishedOrderSession.Items);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            } catch(Exception ex)
+            {
+
+            }
         }
     }
 }
