@@ -594,7 +594,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         if (transactionDb.OrderId.HasValue)
                         {
-                            await orderService.ChangeOrderStatus(transactionDb.OrderId.Value, transactionStatus == TransationStatus.SUCCESSFUL);
+                            await orderService.ChangeOrderStatus(transactionDb.OrderId.Value, transactionStatus == TransationStatus.SUCCESSFUL, null);
 
                             var orderDb = await orderRepository.GetById(transactionDb.OrderId);
                             if (orderDb != null && (orderDb.OrderTypeId == OrderType.Reservation || orderDb.OrderTypeId == OrderType.Delivery))
