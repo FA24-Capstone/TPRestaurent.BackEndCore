@@ -31,6 +31,7 @@ using TPRestaurent.BackEndCore.Domain.Models;
 using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
 using Transaction = TPRestaurent.BackEndCore.Domain.Models.Transaction;
 using Utility = TPRestaurent.BackEndCore.Common.Utils.Utility;
+using MathNet.Numerics.LinearAlgebra.Storage;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -3562,6 +3563,67 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> GetBestSellerDishesAndCombo(int topNumber)
+        {
+            var result = new AppActionResult();
+            var dishRepository = Resolve<IGenericRepository<Dish>>();
+            var comboRepository = Resolve<IGenericRepository<Combo>>();
+
+            try
+            {
+                var bestSellerDishDictionary = new Dictionary<Guid?, int>();
+                var bestSellerComboDictionary = new Dictionary<Guid?, int>();
+                BestSellerResponse bestSellerResponse = new BestSellerResponse();
+
+                var listBestSellerDishes = new List<Dish>();
+                var listBestSellerCombo = new List<Combo>();
+
+                var orderDetailsDb = await _detailRepository.GetAllDataByExpression(null, 0, 0, p => p.OrderTime, false, p => p.DishSizeDetail.Dish,
+                                                                                                                                          p => p.Combo
+                    );
+                var bestSellerDishesList = orderDetailsDb.Items.Where(p => p.DishSizeDetailId.HasValue).GroupBy(p => p.DishSizeDetail.DishId).ToDictionary(p => p.Key, p => p.ToList());
+                foreach (var bestSellerDish in bestSellerDishesList)
+                {
+                    bestSellerDishDictionary.Add(bestSellerDish.Key, bestSellerDish.Value.Sum(p => p.Quantity));
+                 
+                }
+                var bestSellerComboList = orderDetailsDb.Items.Where(p => p.ComboId.HasValue).GroupBy(p => p.ComboId).ToDictionary(p => p.Key, p => p.ToList());
+                foreach (var bestComboSeller in bestSellerComboList)
+                {
+                    bestSellerComboDictionary.Add(bestComboSeller.Key, bestComboSeller.Value.Sum(p => p.Quantity));
+                }
+
+                var topBestSellerDishes = bestSellerDishDictionary.OrderByDescending(p => p.Value).Select(p => p.Key).Take(topNumber);
+                var topBestSellerCombo = bestSellerComboDictionary.OrderByDescending(p => p.Value).Select(p => p.Key).Take(topNumber);
+
+                foreach (var dishItem in topBestSellerDishes)
+                {
+                    var dishDb = await dishRepository!.GetById(dishItem.Value);
+                    if (dishDb != null)
+                    {
+                        listBestSellerDishes.Add(dishDb);
+                    }
+                }
+
+                foreach (var comboItem in topBestSellerCombo)
+                {
+                    var comboDb = await comboRepository.GetById(comboItem.Value);
+                    if (comboDb != null)
+                    {
+                        listBestSellerCombo.Add(comboDb);
+                    }
+                }
+
+                bestSellerResponse.Dishes = listBestSellerDishes;
+                bestSellerResponse.Combos = listBestSellerCombo;
+
+                result.Result = bestSellerResponse;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         private async Task<bool> UpdateDishQuantity(Guid orderId)
         {
             bool isSuccessful = false;

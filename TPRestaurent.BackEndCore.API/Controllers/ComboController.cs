@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Domain.Enums;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
@@ -17,9 +18,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-combo/{pageNumber}/{pageSize}")]
-        public async Task<AppActionResult> GetAllCombo(string? keyword, int pageNumber = 1, int pageSize = 10)
+        public async Task<AppActionResult> GetAllCombo(string? keyword, ComboCategory? category, int? startPrice, int? endPrice, int pageNumber = 1, int pageSize = 10)
         {
-            return await _comboService.GetAllCombo(keyword, pageNumber, pageSize);
+            return await _comboService.GetAllCombo(keyword, category, startPrice, endPrice ,pageNumber, pageSize);
         }
 
         //[HttpGet("get-combo-by-id/{comboId}")]
