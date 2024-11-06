@@ -511,8 +511,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 OrderSessionId = orderSession.OrderSessionId
                             };
 
-
-
                             if (item.DishSizeDetailId.HasValue)
                             {
                                 var dishSizeDetail = await dishSizeDetailRepository.GetById(item.DishSizeDetailId.Value);
@@ -531,7 +529,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     return BuildAppActionResultError(result, $"Món ăn {dishDb.Name} chỉ còn x{dishSizeDetail.QuantityLeft}");
                                 }
 
-                                if(orderRequestDto.OrderType != OrderType.Delivery)
+                                if(orderRequestDto.OrderType != OrderType.Reservation)
                                 {
                                     dishSizeDetail.QuantityLeft -= item.Quantity;
                                     if(dishSizeDetail.QuantityLeft == 0)
@@ -581,7 +579,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         return BuildAppActionResultError(result, $"Món ăn {comboDetail.DishSizeDetail.Dish.Name} chỉ còn x{comboDetail.DishSizeDetail.QuantityLeft}");
                                     }
 
-                                    if (orderRequestDto.OrderType != OrderType.Delivery)
+                                    if (orderRequestDto.OrderType != OrderType.Reservation)
                                     {
                                         comboDetail.DishSizeDetail.QuantityLeft -= item.Quantity;
                                         if (comboDetail.DishSizeDetail.QuantityLeft == 0)
@@ -3307,8 +3305,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-
-
         private async Task<List<ReservationTableItemResponse>> GetReservationListDetailByOrder(List<Order> orders)
         {
             List<ReservationTableItemResponse> result = new List<ReservationTableItemResponse>();
@@ -3338,7 +3334,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-
         private async Task<ReservationTableItemResponse> GetReservationDetailByOrder(Order order)
         {
             ReservationTableItemResponse result = null;
@@ -3567,11 +3562,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public Task GenerateInvoice()
-        {
-            throw new NotImplementedException();
-        }
-
         private async Task<bool> UpdateDishQuantity(Guid orderId)
         {
             bool isSuccessful = false;
@@ -3584,7 +3574,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         if (item.DishSizeDetailId.HasValue)
                         {
-                            //item.DishSizeDetail 
+                            if(item.Quantity < item.DishSizeDetail.QuantityLeft)
+                            {
+                                
+                            }
                         } else
                         {
 
@@ -3597,6 +3590,81 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             }
             return isSuccessful;
+        }
+        [Hangfire.Queue("cancel-delivery")]
+        public async Task CancelUnpaidDeliveryOrder()
+        {
+            var emailService = Resolve<IEmailService>();
+            var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+            var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
+            var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
+            var utility = Resolve<Utility>();
+            var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+            var timeToKeepUnpaidDeliveryOrderConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_KEEP_UNPAID_DELIVERY_ORDER).Result;
+            if(timeToKeepUnpaidDeliveryOrderConfig == null)
+            {
+                return;
+            }
+            List<DishSizeDetail> updateDishSizeDetailList = new List<DishSizeDetail>();
+            var currentTime = utility.GetCurrentDateTimeInTimeZone();
+            double keepTime = double.Parse(timeToKeepUnpaidDeliveryOrderConfig.CurrentValue);
+            var unpaidDeliveryOrder = await _repository.GetAllDataByExpression(o => o.OrderTypeId == OrderType.Delivery 
+                                                                                    && o.StatusId == OrderStatus.Pending 
+                                                                                    && o.OrderDate.AddMinutes(keepTime) < currentTime
+                                                                                    , 0, 0, null, false, null);     
+            foreach(var order in unpaidDeliveryOrder.Items)
+            {
+                order.StatusId = OrderStatus.Cancelled;
+                var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail);
+                foreach(var orderDetail in orderDetailDb.Items.Where(o => o.DishSizeDetailId.HasValue))
+                {
+                    orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
+                    var existedDishSizeDetail = updateDishSizeDetailList.FirstOrDefault(u => u.DishSizeDetailId == orderDetail.DishSizeDetailId);
+                    if (existedDishSizeDetail != null)
+                    {
+                        existedDishSizeDetail.QuantityLeft += orderDetail.Quantity;
+                    } else
+                    {
+                        var dishSizeDetailDb = await dishSizeDetailRepository.GetById(orderDetail.DishSizeDetailId);
+                        dishSizeDetailDb.QuantityLeft += orderDetail.Quantity;
+                        updateDishSizeDetailList.Add(dishSizeDetailDb);
+                    }
+                }
+                
+                foreach(var orderDetail in orderDetailDb.Items.Where(o => o.ComboId.HasValue))
+                {
+                    orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
+                    var comboOrderDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId, 0, 0, null, false, o => o.OrderDetail, o => o.DishCombo);
+                    comboOrderDetailDb.Items.ForEach(c => c.StatusId = DishComboDetailStatus.Cancelled);
+                    foreach(var comboOrderDetail in comboOrderDetailDb.Items)
+                    {
+                        var existedDishSizeDetail = updateDishSizeDetailList.FirstOrDefault(u => u.DishSizeDetailId == comboOrderDetail.DishCombo.DishSizeDetailId);
+                        if (existedDishSizeDetail != null)
+                        {
+                            existedDishSizeDetail.QuantityLeft += orderDetail.Quantity * comboOrderDetail.DishCombo.Quantity;
+                        }
+                        else
+                        {
+                            var dishSizeDetailDb = await dishSizeDetailRepository.GetById(comboOrderDetail.DishCombo.DishSizeDetailId);
+                            dishSizeDetailDb.QuantityLeft += orderDetail.Quantity * comboOrderDetail.DishCombo.Quantity;
+                            updateDishSizeDetailList.Add(dishSizeDetailDb);
+                        }
+                    }
+                    await comboOrderDetailRepository.UpdateRange(comboOrderDetailDb.Items);
+                }
+
+                var orderSessionDb = await orderSessionRepository.GetById(orderDetailDb.Items.FirstOrDefault().OrderSessionId);
+                orderSessionDb.OrderSessionStatusId = OrderSessionStatus.Cancelled;
+                orderSessionDb.CancelTime = currentTime;
+
+                await orderSessionRepository.Update(orderSessionDb);
+                await _detailRepository.UpdateRange(orderDetailDb.Items);
+            }
+
+            await dishSizeDetailRepository.UpdateRange(updateDishSizeDetailList);
+            await _repository.UpdateRange(unpaidDeliveryOrder.Items);
+            await _unitOfWork.SaveChangesAsync();
+            Task.CompletedTask.Wait();
         }
     }
 }

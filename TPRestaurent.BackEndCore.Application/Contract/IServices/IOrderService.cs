@@ -47,8 +47,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task RemindOrderReservation();
         public Task<AppActionResult> GetNumberOfOrderByStatus(OrderFilterRequest request);
         public Task<AppActionResult> CancelDeliveringOrder(CancelDeliveringOrderRequest cancelDeliveringOrderRequest);
-        public Task GenerateInvoice();
-
-
+        public Task CancelUnpaidDeliveryOrder();
     }
 }
