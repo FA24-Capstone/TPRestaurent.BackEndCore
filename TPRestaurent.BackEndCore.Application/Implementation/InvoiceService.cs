@@ -77,7 +77,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderHasCreatedInvoice = await _repository.GetAllDataByExpression(o => o.Date.AddDays(1) == currentDate, 0, 0, null, false, null);
                 var orderIds = orderHasCreatedInvoice.Items.Select(o => o.OrderId).ToList();
                 var orderDb = await orderRepository.GetAllDataByExpression(o => (o.OrderDate.Date.AddDays(1) == currentDate || o.MealTime.Value.Date.AddDays(1) == currentDate) 
-                                                                                //&& o.StatusId == Domain.Enums.OrderStatus.Completed 
+                                                                                && o.StatusId == Domain.Enums.OrderStatus.Completed 
                                                                                 && !orderIds.Contains(o.OrderId), 0, 0, null, false, null);
                 if (orderDb.Items.Count > 0)
                 {

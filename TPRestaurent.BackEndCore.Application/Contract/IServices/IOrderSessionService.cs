@@ -16,5 +16,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> UpdateOrderSessionStatus(Guid orderSessionId, OrderSessionStatus orderSessionStatus, bool sendSignalR);
         Task<AppActionResult> GetGroupedDish(DateTime?[]? groupeTime);
         Task DeleteOrderSession();
+        Task UpdateLateOrderSession();
     }
 }
