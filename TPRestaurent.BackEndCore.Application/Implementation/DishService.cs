@@ -181,7 +181,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetAllDish(string? keyword, DishItemType? type, int pageNumber, int pageSize)
+        public async Task<AppActionResult> GetAllDish(string? keyword, DishItemType? type, int pageNumber, int pageSize, int? startPrice, int? endPrice)
         {
             var result = new AppActionResult();
             try
@@ -190,10 +190,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var dishDetailsRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                 var dishList = await _dishRepository
                    .GetAllDataByExpression(p => (p.Name.Contains(keyword) && !string.IsNullOrEmpty(keyword) || string.IsNullOrEmpty(keyword))
-                                             && (type > 0 && p.DishItemTypeId == type || type == 0 && p.IsMainItem) && !p.IsDeleted && p.isAvailable, pageNumber, pageSize, null, false, p => p.DishItemType!);
+                                             && (type > 0 && p.DishItemTypeId == type || type == 0 && p.IsMainItem) && !p.IsDeleted && p.isAvailable , pageNumber, pageSize, null, false, p => p.DishItemType!);
                 foreach (var item in dishList.Items!)
                 {
-                    var dishDetailsListDb = await dishDetailsRepository!.GetAllDataByExpression(p => p.DishId == item.DishId , 0, 0, null, false, p => p.DishSize!);
+                    var dishDetailsListDb = await dishDetailsRepository!.GetAllDataByExpression(p => p.DishId == item.DishId || p.Price >= startPrice && p.Price <= endPrice, 0, 0, p => p.Price, false, p => p.DishSize!);
                     var dishSizeResponse = new DishSizeResponse();
                     dishSizeResponse.Dish = _mapper.Map<DishReponse>(item);
                     dishSizeResponse.DishSizeDetails = dishDetailsListDb.Items!.OrderBy(d => d.DishSizeId).ToList();
