@@ -77,7 +77,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderHasCreatedInvoice = await _repository.GetAllDataByExpression(o => o.Date.AddDays(1) == currentDate, 0, 0, null, false, null);
                 var orderIds = orderHasCreatedInvoice.Items.Select(o => o.OrderId).ToList();
                 var orderDb = await orderRepository.GetAllDataByExpression(o => (o.OrderDate.Date.AddDays(1) == currentDate || o.MealTime.Value.Date.AddDays(1) == currentDate) 
-                                                                                //&& o.StatusId == Domain.Enums.OrderStatus.Completed 
+                                                                                && o.StatusId == Domain.Enums.OrderStatus.Completed 
                                                                                 && !orderIds.Contains(o.OrderId), 0, 0, null, false, null);
                 if (orderDb.Items.Count > 0)
                 {
@@ -296,6 +296,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         .info-table th, .info-table td,
         .dish-table th, .dish-table td {
           padding: 6px;
+        }
+        .info-section {
+          flex-direction: column;
+        }
+        .info-table {
+          width: 100%;
         }
         .info-section {
           flex-direction: column;
@@ -562,7 +568,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 .Select(g => new { Date = g.Key, Revenue = g.Sum(i => i.TotalAmount) })
                 .OrderBy(g => g.Date)
                 .ToList();
-
+            var orderTypeVietnameseName = "N/A";
+            if(invoices.All(i => i.OrderTypeId == Domain.Enums.OrderType.Delivery))
+            {
+                orderTypeVietnameseName = "Giao hàng tận nơi";
+            } else if(invoices.All(i => i.OrderTypeId == Domain.Enums.OrderType.MealWithoutReservation))
+            {
+                orderTypeVietnameseName = "Dùng tại quán";
+            } else if(invoices.All(i => i.OrderTypeId == Domain.Enums.OrderType.Reservation))
+            {
+                orderTypeVietnameseName = "Dùng tại quán có đặt bàn trước";
+            } else
+            {
+                orderTypeVietnameseName = "Giao hàng tận nơi, Dùng tại quán, Dùng tại quán có đặt bàn trước";
+            }
             // Calculate maximum revenue for Y-axis scaling
             var maxRevenue = groupedByDate.Any() ? groupedByDate.Max(g => g.Revenue) : 0;
             var chartHeight = 300; // Height of the chart area in pixels
@@ -673,26 +692,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         </div>
       </div>
       <div class='mainBody'>
-        <h2 class='section-title'>Order Summary</h2>
+        <h2 class='section-title'>Tổng quan đơn hàng</h2>
         <table class='summary-table'>
           <tr>
-            <th>Order Type</th>
-            <td>{(invoices.FirstOrDefault()?.OrderTypeId.ToString() ?? "N/A")}</td>
+            <th>Loại đơn</th>
+            <td>{orderTypeVietnameseName}</td>
           </tr>
           <tr>
-            <th>Total Revenue</th>
+            <th>Tổng doanh thu</th>
             <td>{totalRevenue.ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture)}</td>
           </tr>
           <tr>
-            <th>Start Date</th>
+            <th>Ngày bắt đầu</th>
             <td>{startDate:yyyy-MM-dd}</td>
           </tr>
           <tr>
-            <th>End Date</th>
+            <th>Ngày kết thúc</th>
             <td>{endDate:yyyy-MM-dd}</td>
           </tr>
           <tr>
-            <th>Quantity of Orders</th>
+            <th>Số lượng đơn</th>
             <td>{orderCount}</td>
           </tr>
         </table>
