@@ -93,23 +93,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result.Messages.Add("Không tìm thấy bàn cho yêu cầu đặt bàn");
                     return result;
                 }
-                var bestCaseFindTableResult = await FindTableWithCase(dto, availableTables, false);
-                if(bestCaseFindTableResult.IsSuccess && bestCaseFindTableResult.Result != null)
-                {
-                    result.Result = bestCaseFindTableResult.Result as List<TableArrangementResponseItem>;
-                    return result;
-                }
-
-                var badCaseFindTableResult = await FindTableWithCase(dto, availableTables, true);
-                if (badCaseFindTableResult.IsSuccess && badCaseFindTableResult.Result != null)
-                {
-                    result.Result = badCaseFindTableResult.Result as List<TableArrangementResponseItem>;
-                    if(badCaseFindTableResult.Messages.Count > 0)
-                    {
-                        result.Messages.AddRange(badCaseFindTableResult.Messages);
-                    }
-                    return result;
-                }
+                
                 var bestCaseFindTableResult = await FindTableWithCase(dto, availableTables, false);
                 if(bestCaseFindTableResult.IsSuccess && bestCaseFindTableResult.Result != null)
                 {

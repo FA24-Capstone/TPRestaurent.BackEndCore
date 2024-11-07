@@ -32,6 +32,7 @@ using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
 using Transaction = TPRestaurent.BackEndCore.Domain.Models.Transaction;
 using Utility = TPRestaurent.BackEndCore.Common.Utils.Utility;
 using MathNet.Numerics.LinearAlgebra.Storage;
+using TPRestaurent.BackEndCore.Application.IHubServices;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -67,12 +68,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 try
                 {
                     var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-                    var dishRepository = Resolve<IGenericRepository<DishSizeDetail>>();
+                    var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                     var comboRepository = Resolve<IGenericRepository<Combo>>();
                     var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
                     var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
                     var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
-                    var dishManagementService = Resolve<IDishManagementService>();
+                    var notificationService = Resolve<INotificationMessageService>();
+                    var dishManagementService = Resolve<IDishManagementService>(); 
+                    var hubService = Resolve<IHubServices.IHubServices>();
+
                     var orderDb = await _repository.GetById(dto.OrderId);
                     var utility = Resolve<Utility>();
                     if (orderDb == null)
@@ -92,8 +96,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(o => o.OrderId == dto.OrderId, 0, 0, null, false, null);
                     var orderDetails = new List<OrderDetail>();
+                     
                     List<ComboOrderDetail> comboOrderDetails = new List<ComboOrderDetail>();
                     List<CalculatePreparationTime> estimatedPreparationTime = new List<CalculatePreparationTime>();
+                    List<DishSizeDetail> dishSizeDetails = new List<DishSizeDetail>();
                     foreach (var o in dto.OrderDetailsDtos)
                     {
                         var orderDetail = new OrderDetail
@@ -110,21 +116,44 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                             foreach (var dishComboId in o.Combo.DishComboIds)
                             {
-                                var dishCombo = await dishComboRepository.GetByExpression(d => d.DishComboId == dishComboId, d => d.DishSizeDetail.Dish);
+                                var dishCombo = await dishComboRepository.GetByExpression(d => d.DishComboId == dishComboId, null);
+                                var dishSizeDetail = dishSizeDetails.FirstOrDefault(d => d.DishSizeDetailId == dishCombo.DishSizeDetailId);
+                                if(dishSizeDetail == null)
+                                {
+                                    dishSizeDetail = await dishSizeDetailRepository.GetByExpression(d => d.DishSizeDetailId == dishCombo.DishSizeDetailId, d => d.Dish);
+                                    dishSizeDetails.Add(dishSizeDetail);
+                                }
+
                                 comboOrderDetails.Add(new ComboOrderDetail
                                 {
                                     ComboOrderDetailId = Guid.NewGuid(),
                                     DishComboId = dishComboId,
                                     OrderDetailId = orderDetail.OrderDetailId,
                                     PreparationTime = await dishManagementService.CalculatePreparationTime(new List<CalculatePreparationTime>
-                            {
-                                new CalculatePreparationTime
-                                {
-                                    PreparationTime = dishCombo.DishSizeDetail.Dish.PreparationTime.Value,
-                                    Quantity = orderDetail.Quantity
-                                }
-                            })
+                                                        {
+                                                            new CalculatePreparationTime
+                                                            {
+                                                                PreparationTime = dishSizeDetail.Dish.PreparationTime.Value,
+                                                                Quantity = orderDetail.Quantity
+                                                            }
+                                                        })
                                 });
+                                if (dishSizeDetail.QuantityLeft < o.Quantity * dishCombo.Quantity)
+                                {
+                                    return BuildAppActionResultError(result, $"Món ăn {dishSizeDetail.Dish.Name} chỉ còn x{dishSizeDetail.QuantityLeft}");
+                                }
+                                dishSizeDetail.QuantityLeft -= o.Quantity * dishCombo.Quantity;
+                                if (dishSizeDetail.QuantityLeft == 0)
+                                {
+                                    dishSizeDetail.IsAvailable = false;
+                                }
+                                if (dishSizeDetail.QuantityLeft <= 5)
+                                {
+                                    string message = $"{dishSizeDetail.Dish.Name} chỉ còn x{dishSizeDetail.QuantityLeft} món";
+                                    await hubService!.SendAsync(SD.SignalMessages.LOAD_NOTIFICATION);
+                                    await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
+                                }
+
                             }
 
                             orderDetail.OrderDetailStatusId = OrderDetailStatus.Unchecked;
@@ -139,8 +168,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                         else
                         {
-                            var dish = await dishRepository!.GetByExpression(d => d.DishSizeDetailId == o.DishSizeDetailId!, d => d.Dish);
-                            orderDetail.Price = dish.Price;
+                            var dishSizeDetail = dishSizeDetails.FirstOrDefault(d => d.DishSizeDetailId == o.DishSizeDetailId);
+                            if(dishSizeDetail == null)
+                            {
+                                dishSizeDetail = await dishSizeDetailRepository.GetByExpression(d => d.DishSizeDetailId == o.DishSizeDetailId, d => d.Dish);
+                                dishSizeDetails.Add(dishSizeDetail);
+                            }
+                            orderDetail.Price = dishSizeDetail.Price;
                             orderDetail.DishSizeDetailId = o.DishSizeDetailId;
                             orderDetail.Quantity = o.Quantity;
                             orderDetail.OrderDetailStatusId = OrderDetailStatus.Unchecked;
@@ -150,13 +184,31 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 new CalculatePreparationTime
                                 {
-                                    PreparationTime = dish.Dish.PreparationTime.Value,
+                                    PreparationTime = dishSizeDetail.Dish.PreparationTime.Value,
                                     Quantity = orderDetail.Quantity
                                 }
                             });
+
+                            if (dishSizeDetail.QuantityLeft < o.Quantity)
+                            {
+                                return BuildAppActionResultError(result, $"Món ăn {dishSizeDetail.Dish.Name} chỉ còn x{dishSizeDetail.QuantityLeft}");
+                            }
+
+                            dishSizeDetail.QuantityLeft -= o.Quantity;
+                            if (dishSizeDetail.QuantityLeft == 0)
+                            {
+                                dishSizeDetail.IsAvailable = false;
+                            }
+                            if (dishSizeDetail.QuantityLeft <= 5)
+                            {
+                                string message = $"{dishSizeDetail.Dish.Name} chỉ còn x{dishSizeDetail.QuantityLeft} món";
+                                await hubService!.SendAsync(SD.SignalMessages.LOAD_NOTIFICATION);
+                                await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
+                            }
+
                             estimatedPreparationTime.Add(new CalculatePreparationTime
                             {
-                                PreparationTime = dish.Dish.PreparationTime.Value,
+                                PreparationTime = dishSizeDetail.Dish.PreparationTime.Value,
                                 Quantity = orderDetail.Quantity
                             });
                         }
@@ -171,6 +223,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await orderSessionRepository.Insert(orderSession);
                     await orderDetailRepository.InsertRange(orderDetails);
                     await comboOrderDetailRepository!.InsertRange(comboOrderDetails);
+                    await dishSizeDetailRepository!.UpdateRange(dishSizeDetails);
                     await _unitOfWork.SaveChangesAsync();
                     scope.Complete();
 
@@ -196,6 +249,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                     var transactionService = Resolve<ITransactionService>();
                     var orderDb = await _repository.GetById(orderId);
+                    var updateDishSizeDetailList = new List<DishSizeDetail>();
+                    var utility = Resolve<Utility>();
+                    var currentTime = utility.GetCurrentDateTimeInTimeZone();
                     if (orderDb == null)
                     {
                         result = BuildAppActionResultError(result, $"Đơn hàng với id {orderId} không tồn tại");
@@ -215,8 +271,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch thành công cho đơn hàng với id {orderId}");
                                         return result;
                                     }
+                                    orderDb.StatusId = OrderStatus.DepositPaid;
                                 }
-                                orderDb.StatusId = IsSuccessful ? OrderStatus.DepositPaid : OrderStatus.Cancelled;
+                                else
+                                {
+                                    await UpdateCancelledOrderDishQuantity(orderDb, updateDishSizeDetailList, currentTime);
+                                }
                             }
                             else if (orderDb.StatusId == OrderStatus.DepositPaid)
                             {
@@ -226,7 +286,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
                                 else if (!IsSuccessful)
                                 {
-                                    orderDb.StatusId = OrderStatus.Cancelled;
+                                    await UpdateCancelledOrderDishQuantity(orderDb, updateDishSizeDetailList, currentTime);
                                 }
                             }
                             else if (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing)
@@ -264,13 +324,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                             if (orderDb.StatusId == OrderStatus.Cancelled)
                             {
-                                var utility = Resolve<Utility>();
-                                orderDb.CancelledTime = utility.GetCurrentDateTimeInTimeZone();
+                                orderDb.CancelledTime = currentTime;
                             }
                         }
                         else if (orderDb.OrderTypeId == OrderType.Delivery)
                         {
-                            var utility = Resolve<Utility>();
                             if (orderDb.StatusId == OrderStatus.Pending)
                             {
                                 if (IsSuccessful)
@@ -292,7 +350,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
                                 else
                                 {
-                                    orderDb.StatusId = OrderStatus.Cancelled;
+                                    await UpdateCancelledOrderDishQuantity(orderDb, updateDishSizeDetailList, currentTime);
                                 }
                             }
                             else if (orderDb.StatusId == OrderStatus.Processing)
@@ -499,19 +557,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     List<OrderDetail> orderDetails = new List<OrderDetail>();
                     List<ComboOrderDetail> comboOrderDetails = new List<ComboOrderDetail>();
                     double money = 0;
-                    var orderSessionDb = await orderSessionRepository!.GetAllDataByExpression(null, 0, 0, null, false, null);
-                    var latestOrderSession = orderSessionDb.Items!.Count() + 1;
-                    var estimatedPreparationTime = new List<CalculatePreparationTime>();
-                    var orderSession = new OrderSession()
-                    {
-                        OrderSessionId = Guid.NewGuid(),
-                        OrderSessionTime = utility!.GetCurrentDateTimeInTimeZone(),
-                        OrderSessionStatusId = orderRequestDto.OrderType == OrderType.Reservation ? OrderSessionStatus.PreOrder : OrderSessionStatus.Confirmed,
-                        OrderSessionNumber = latestOrderSession
-                    };
 
                     if (orderRequestDto.OrderDetailsDtos != null && orderRequestDto.OrderDetailsDtos.Count > 0)
                     {
+                        List<DishSizeDetail> dishSizeDetails = new List<DishSizeDetail>();
+                        var orderSessionDb = await orderSessionRepository!.GetAllDataByExpression(null, 0, 0, null, false, null);
+                        var latestOrderSession = orderSessionDb.Items!.Count() + 1;
+                        var estimatedPreparationTime = new List<CalculatePreparationTime>();
+                        var orderSession = new OrderSession()
+                        {
+                            OrderSessionId = Guid.NewGuid(),
+                            OrderSessionTime = utility!.GetCurrentDateTimeInTimeZone(),
+                            OrderSessionStatusId = orderRequestDto.OrderType == OrderType.Reservation ? OrderSessionStatus.PreOrder : OrderSessionStatus.Confirmed,
+                            OrderSessionNumber = latestOrderSession
+                        };
                         DateTime orderTime = utility.GetCurrentDateTimeInTimeZone();
                         if (orderRequestDto.OrderType != OrderType.Reservation && orderRequestDto.ReservationOrder != null && orderRequestDto?.ReservationOrder?.MealTime > orderTime)
                         {
@@ -532,8 +591,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                             if (item.DishSizeDetailId.HasValue)
                             {
-                                var dishSizeDetail = await dishSizeDetailRepository.GetById(item.DishSizeDetailId.Value);
-                                var dishDb = await dishRepository!.GetById(dishSizeDetail.DishId);
+                                var dishSizeDetail = dishSizeDetails.FirstOrDefault(d => d.DishSizeDetailId == item.DishSizeDetailId);
+                                if (dishSizeDetail == null)
+                                {
+                                    dishSizeDetail = await dishSizeDetailRepository.GetByExpression(o => o.DishSizeDetailId == orderDetail.DishSizeDetailId, o => o.Dish);
+                                    dishSizeDetails.Add(dishSizeDetail);
+                                }
+
 
                                 if (dishSizeDetail == null)
                                 {
@@ -546,21 +610,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 new CalculatePreparationTime
                                 {
-                                    PreparationTime = dishDb.PreparationTime.Value,
+                                    PreparationTime = dishSizeDetail.Dish.PreparationTime.Value,
                                     Quantity = orderDetail.Quantity
                                 }
                             });
                                 estimatedPreparationTime.Add(new CalculatePreparationTime
                                 {
-                                    PreparationTime = dishDb.PreparationTime.Value,
+                                    PreparationTime = dishSizeDetail.Dish.PreparationTime.Value,
                                     Quantity = orderDetail.Quantity
                                 });
                                 if (dishSizeDetail.QuantityLeft < item.Quantity)
                                 {
-                                    return BuildAppActionResultError(result, $"Món ăn {dishDb.Name} chỉ còn x{dishSizeDetail.QuantityLeft}");
+                                    return BuildAppActionResultError(result, $"Món ăn {dishSizeDetail.Dish.Name} chỉ còn x{dishSizeDetail.QuantityLeft}");
                                 }
 
-                                if(orderRequestDto.OrderType != OrderType.Reservation)
+                                if(orderRequestDto.OrderType != OrderType.Reservation || orderRequestDto.ReservationOrder.MealTime.Date == orderTime.Date)
                                 {
                                     dishSizeDetail.QuantityLeft -= item.Quantity;
                                     if(dishSizeDetail.QuantityLeft == 0)
@@ -569,14 +633,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     }
                                     if (dishSizeDetail.QuantityLeft <= 5)
                                     {
-                                        string message = $"{dishDb.Name} chỉ còn x{dishSizeDetail.QuantityLeft} món";
+                                        string message = $"{dishSizeDetail.Dish.Name} chỉ còn x{dishSizeDetail.QuantityLeft} món";
                                         await hubService!.SendAsync(SD.SignalMessages.LOAD_NOTIFICATION);
                                         await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
                                     }
                                 }
                                 estimatedPreparationTime.Add(new CalculatePreparationTime
                                 {
-                                    PreparationTime = dishDb.PreparationTime.Value,
+                                    PreparationTime = dishSizeDetail.Dish.PreparationTime.Value,
                                     Quantity = orderDetail.Quantity
                                 });
                             }
@@ -610,16 +674,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         return BuildAppActionResultError(result, $"Món ăn {comboDetail.DishSizeDetail.Dish.Name} chỉ còn x{comboDetail.DishSizeDetail.QuantityLeft}");
                                     }
 
-                                    if (orderRequestDto.OrderType != OrderType.Reservation)
+                                    if (orderRequestDto.OrderType != OrderType.Reservation || orderRequestDto.ReservationOrder.MealTime.Date == orderTime.Date)
                                     {
-                                        comboDetail.DishSizeDetail.QuantityLeft -= item.Quantity;
-                                        if (comboDetail.DishSizeDetail.QuantityLeft == 0)
+                                        var dishSizeDetail = dishSizeDetails.FirstOrDefault(d => d.DishSizeDetailId == comboDetail.DishSizeDetailId);
+                                        if(dishSizeDetail == null)
                                         {
-                                            comboDetail.DishSizeDetail.IsAvailable = false;
+                                            dishSizeDetail = await dishSizeDetailRepository.GetByExpression(o => o.DishSizeDetailId == comboDetail.DishSizeDetailId, o => o.Dish);
+                                            dishSizeDetails.Add(dishSizeDetail);
                                         }
-                                        if (comboDetail.DishSizeDetail.QuantityLeft <= 5)
+                                        dishSizeDetail.QuantityLeft -= item.Quantity * comboDetail.Quantity;
+                                        if (dishSizeDetail.QuantityLeft == 0)
                                         {
-                                            string message = $"{comboDetail.DishSizeDetail.Dish.Name} chỉ còn x{comboDetail.DishSizeDetail.QuantityLeft} món";
+                                            dishSizeDetail.IsAvailable = false;
+                                        }
+                                        if (dishSizeDetail.QuantityLeft <= 5)
+                                        {
+                                            string message = $"{dishSizeDetail.Dish.Name} chỉ còn x{dishSizeDetail.QuantityLeft} món";
                                             await hubService!.SendAsync(SD.SignalMessages.LOAD_NOTIFICATION);
                                             await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
                                         }
@@ -655,11 +725,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             orderDetails.Add(orderDetail);
                         }
                         money = orderDetails.Sum(o => o.Quantity * o.Price);
+                        orderSession.PreparationTime = await dishManagementService.CalculatePreparationTime(estimatedPreparationTime);
+                        await orderSessionRepository.Insert(orderSession);
+                        await dishSizeDetailRepository.UpdateRange(dishSizeDetails);
                     }
 
-                    orderSession.PreparationTime = await dishManagementService.CalculatePreparationTime(estimatedPreparationTime);
-
-                    orderSession.PreparationTime = await dishManagementService.CalculatePreparationTime(estimatedPreparationTime);
 
                     if (orderDetails.Count > 0)
                     {
@@ -978,7 +1048,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     if (!BuildAppActionResultIsError(result))
                     {
-                        await orderSessionRepository.Insert(orderSession);
                         await _repository.Insert(order);
                         await _unitOfWork.SaveChangesAsync();
 
@@ -2066,27 +2135,28 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         }
 
         [Hangfire.Queue("update-order-status-before-meal-time")]
-        public async Task UpdateOrderStatusBeforeMealTime()
+        public async Task NotifyReservationDishToKitchen()
         {
-            var utility = Resolve<Utility>();
             try
             {
+                var utility = Resolve<Utility>();
                 var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+                var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
                 var orderListDb = await _repository.GetAllDataByExpression(p => p.MealTime!.Value.AddHours(-1) <= currentTime && p.StatusId == OrderStatus.DepositPaid, 0, 0, null, false, null);
                 if (orderListDb!.Items!.Count > 0 && orderListDb.Items != null)
                 {
-                    var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => orderListDb.Items.Select(or => or.OrderId).ToList().Contains(o.OrderId), 0, 0, null, false, null);
-                    foreach (var order in orderListDb.Items)
+                    var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => orderListDb.Items.Select(or => or.OrderId).ToList().Contains(o.OrderId), 0, 0, null, false, o => o.OrderSession);
+                    if(orderDetailDb.Items.Count > 0)
                     {
-                        var orderItems = orderDetailDb.Items.Where(o => o.OrderId == order.OrderId);
-                        if (orderItems.Count() > 0)
-                        {
-                            order.StatusId = OrderStatus.Processing;
-                        }
-                        await _repository.Update(order);
+                        orderDetailDb.Items.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
+                        var orderSessionDb = orderDetailDb.Items.Select(o => o.OrderSession).ToList();
+                        orderSessionDb.ForEach(o => o.OrderSessionStatusId = OrderSessionStatus.Confirmed);
+
+                        await _detailRepository.UpdateRange(orderDetailDb.Items);
+                        await orderSessionRepository.UpdateRange(orderSessionDb);
+                        await _unitOfWork.SaveChangesAsync();
                     }
                 }
-                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -2096,28 +2166,82 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         }
 
         [Hangfire.Queue("update-order-detail-status-before-dining")]
-        public async Task UpdateOrderDetailStatusBeforeDining()
+        public async Task AccountDailyReservationDish()
         {
-            var utility = Resolve<Utility>();
-            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
             try
             {
+                var utility = Resolve<Utility>();
+                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var emailService = Resolve<IEmailService>();
+                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+                var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
+                var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
                 var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-                var orderListDb = await _repository.GetAllDataByExpression(p => p.MealTime!.Value.AddMinutes(-30) <= currentTime && (p.StatusId == OrderStatus.DepositPaid), 0, 0, null, false, null);
-                if (orderListDb!.Items!.Count > 0 && orderListDb.Items != null)
+                //Order thats has mealdate > reservationDate And Deposit Paid && MealDate is today && deposit paid
+                var orderListDb = await _repository.GetAllDataByExpression(p => p.OrderTypeId == OrderType.Reservation 
+                                                                                && p.MealTime!.Value.Date > p.ReservationDate.Value.Date
+                                                                                && (p.StatusId == OrderStatus.DepositPaid), 0, 0, null, false, null);
+                List<DishSizeDetail> updateDishSizeDetailList = new List<DishSizeDetail>();
+
+                foreach (var order in orderListDb.Items)
                 {
-                    var orderIds = orderListDb.Items.Select(o => o.OrderId).ToList();
-                    var orderDetailsDb = await orderDetailRepository!.GetAllDataByExpression(p => orderIds.Contains(p.OrderId) && p.OrderDetailStatusId == OrderDetailStatus.Unchecked, 0, 0, null, false, null);
-                    if (orderDetailsDb!.Items!.Count > 0 && orderListDb.Items != null)
+                    var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail);
+                    foreach (var orderDetail in orderDetailDb.Items.Where(o => o.DishSizeDetailId.HasValue))
                     {
-                        foreach (var orderDetail in orderDetailsDb.Items)
+                        var existedDishSizeDetail = updateDishSizeDetailList.FirstOrDefault(u => u.DishSizeDetailId == orderDetail.DishSizeDetailId);
+                        if (existedDishSizeDetail != null)
                         {
-                            orderDetail.OrderDetailStatusId = OrderDetailStatus.Unchecked;
+                            existedDishSizeDetail.QuantityLeft -= orderDetail.Quantity;
+                            if(existedDishSizeDetail.QuantityLeft <= 0)
+                            {
+                                existedDishSizeDetail.IsAvailable = false;
+                            }
                         }
-                        await orderDetailRepository.UpdateRange(orderDetailsDb.Items);
+                        else
+                        {
+                            var dishSizeDetailDb = await dishSizeDetailRepository.GetById(orderDetail.DishSizeDetailId);
+                            dishSizeDetailDb.QuantityLeft -= orderDetail.Quantity;
+                            if (dishSizeDetailDb.QuantityLeft <= 0)
+                            {
+                                dishSizeDetailDb.IsAvailable = false;
+                            }
+                            updateDishSizeDetailList.Add(dishSizeDetailDb);
+                        }
+                    }
+
+                    foreach (var orderDetail in orderDetailDb.Items.Where(o => o.ComboId.HasValue))
+                    {
+                        var comboOrderDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId, 0, 0, null, false, o => o.OrderDetail, o => o.DishCombo);
+                        foreach (var comboOrderDetail in comboOrderDetailDb.Items)
+                        {
+                            var existedDishSizeDetail = updateDishSizeDetailList.FirstOrDefault(u => u.DishSizeDetailId == comboOrderDetail.DishCombo.DishSizeDetailId);
+                            if (existedDishSizeDetail != null)
+                            {
+                                existedDishSizeDetail.QuantityLeft -= orderDetail.Quantity * comboOrderDetail.DishCombo.Quantity;
+                                if (existedDishSizeDetail.QuantityLeft <= 0)
+                                {
+                                    existedDishSizeDetail.IsAvailable = false;
+                                }
+                            }
+                            else
+                            {
+                                var dishSizeDetailDb = await dishSizeDetailRepository.GetById(comboOrderDetail.DishCombo.DishSizeDetailId);
+                                dishSizeDetailDb.QuantityLeft -= orderDetail.Quantity * comboOrderDetail.DishCombo.Quantity;
+                                if (dishSizeDetailDb.QuantityLeft <= 0)
+                                {
+                                    dishSizeDetailDb.IsAvailable = false;
+                                }
+                                updateDishSizeDetailList.Add(dishSizeDetailDb);
+                            }
+                        }
                     }
                 }
+
+                await dishSizeDetailRepository.UpdateRange(updateDishSizeDetailList);
+                await _repository.UpdateRange(orderListDb.Items);
                 await _unitOfWork.SaveChangesAsync();
+
             }
             catch (Exception ex)
             {
@@ -3070,66 +3194,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        [Hangfire.Queue("cancel-reservation")]
-        public async Task CancelReservation()
-        {
-            var emailService = Resolve<IEmailService>();
-            var utility = Resolve<Utility>();
-            var configurationRepository = Resolve<IGenericRepository<Configuration>>();
-            var timeLastForReservationWithDishesConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_RESERVATION_WITH_DISHES_LAST).Result;
-            var timeLastForReservationConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_RESERVATION_LAST).Result;
-            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-            try
-            {
-                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-
-                var orderReservationDb = await _repository.GetAllDataByExpression(p => p.OrderTypeId == OrderType.Reservation && p.StatusId == OrderStatus.TableAssigned, 0, 0, p => p.OrderDate, false, null);
-                if (orderReservationDb.Items != null)
-                {
-                    foreach (var orderReservation in orderReservationDb.Items)
-                    {
-                        var orderReservationDetailDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderId == orderReservation.OrderId, 0, 0, null, false, null);
-                        if (orderReservationDb!.Items!.Count > 0 && orderReservationDb.Items != null)
-                        {
-                            if (orderReservation.ReservationDate!.Value.AddHours(int.Parse(timeLastForReservationWithDishesConfig!.CurrentValue)) <= currentTime)
-                            {
-                                var orderReservationDetailList = new List<OrderDetail>();
-                                foreach (var orderReservationDetail in orderReservationDetailDb.Items!)
-                                {
-                                    orderReservationDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
-                                    orderReservationDetailList.Add(orderReservationDetail);
-                                }
-                                orderReservation.StatusId = OrderStatus.Cancelled;
-
-                                await _repository.Update(orderReservation);
-                                await orderDetailRepository.UpdateRange(orderReservationDetailList);
-                            }
-                        }
-                        else
-                        {
-                            if (orderReservation.ReservationDate.Value.AddHours(int.Parse(timeLastForReservationConfig!.CurrentValue)) <= currentTime)
-                            {
-                                orderReservation.StatusId = OrderStatus.Cancelled;
-                                await _repository.Update(orderReservation);
-                            }
-                        }
-
-                        if (!string.IsNullOrEmpty(orderReservation.Account?.Email))
-                        {
-                            var username = orderReservation.Account?.FirstName + "" + orderReservation.Account?.LastName;
-                            emailService.SendEmail(orderReservation.Account?.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateMailToCancelReservation(username, orderReservation));
-                        }
-                    }
-                }
-
-                await _unitOfWork.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-
-            }
-            Task.CompletedTask.Wait();
-        }
 
         public async Task<AppActionResult> UpdateOrderStatus(Guid orderId, OrderStatus status)
         {
@@ -3683,37 +3747,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-        private async Task<bool> UpdateDishQuantity(Guid orderId)
-        {
-            bool isSuccessful = false;
-            try
-            {
-                var orderDetailListDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == orderId, 0, 0, null, false, o => o.DishSizeDetail);
-                if(orderDetailListDb.Items.Count > 0)
-                {
-                    foreach(var item in orderDetailListDb.Items)
-                    {
-                        if (item.DishSizeDetailId.HasValue)
-                        {
-                            if(item.Quantity < item.DishSizeDetail.QuantityLeft)
-                            {
-                                
-                            }
-                        } else
-                        {
-
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-
-            }
-            return isSuccessful;
-        }
-        [Hangfire.Queue("cancel-delivery")]
-        public async Task CancelUnpaidDeliveryOrder()
+    
+        [Hangfire.Queue("cancel-order")]
+        public async Task CancelOrder()
         {
             var emailService = Resolve<IEmailService>();
             var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
@@ -3722,52 +3758,101 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var utility = Resolve<Utility>();
             var configurationRepository = Resolve<IGenericRepository<Configuration>>();
             var timeToKeepUnpaidDeliveryOrderConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_KEEP_UNPAID_DELIVERY_ORDER).Result;
-            if(timeToKeepUnpaidDeliveryOrderConfig == null)
+            var timeToKeepReservationConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_KEEP_RESERVATION).Result;
+            if (timeToKeepUnpaidDeliveryOrderConfig == null)
             {
                 return;
             }
             List<DishSizeDetail> updateDishSizeDetailList = new List<DishSizeDetail>();
             var currentTime = utility.GetCurrentDateTimeInTimeZone();
             double keepTime = double.Parse(timeToKeepUnpaidDeliveryOrderConfig.CurrentValue);
-            var unpaidDeliveryOrder = await _repository.GetAllDataByExpression(o => o.OrderTypeId == OrderType.Delivery 
+            double keepReservationTime = double.Parse(timeToKeepReservationConfig.CurrentValue);
+            var unpaidDeliveryOrder = await _repository.GetAllDataByExpression(o => (o.OrderTypeId == OrderType.Delivery 
                                                                                     && o.StatusId == OrderStatus.Pending 
-                                                                                    && o.OrderDate.AddMinutes(keepTime) < currentTime
-                                                                                    , 0, 0, null, false, null);     
+                                                                                    && o.OrderDate.AddMinutes(keepTime) < currentTime) //Does not pay total on time
+                                                                                    ||
+                                                                                    (o.OrderTypeId == OrderType.Reservation
+                                                                                        && 
+                                                                                        (
+                                                                                            (o.StatusId == OrderStatus.DepositPaid
+                                                                                            && o.MealTime.Value.AddMinutes(keepReservationTime) < currentTime) //Does not show up on time
+                                                                                            ||
+                                                                                            (o.StatusId == OrderStatus.TableAssigned
+                                                                                            && o.MealTime.Value.AddMinutes(keepTime) < currentTime
+                                                                                            && o.MealTime.Value == o.ReservationDate.Value.Date) //Reservation for today, Depisit Unpaid
+                                                                                        )
+                                                                                    )
+                                                                                    , 0, 0, null, false, o => o.Account);     
             foreach(var order in unpaidDeliveryOrder.Items)
             {
+                await UpdateCancelledOrderDishQuantity(order, updateDishSizeDetailList, currentTime);
+            }
+
+            await dishSizeDetailRepository.UpdateRange(updateDishSizeDetailList);
+            await _repository.UpdateRange(unpaidDeliveryOrder.Items);
+            await _unitOfWork.SaveChangesAsync();
+            Task.CompletedTask.Wait();
+        }
+
+        private async Task<AppActionResult> UpdateCancelledOrderDishQuantity(Order order, List<DishSizeDetail> updateDishSizeDetailList, DateTime currentTime)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
+                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+                var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
+                var emailService = Resolve<IEmailService>();
                 order.StatusId = OrderStatus.Cancelled;
                 var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail);
-                foreach(var orderDetail in orderDetailDb.Items.Where(o => o.DishSizeDetailId.HasValue))
+                foreach (var orderDetail in orderDetailDb.Items.Where(o => o.DishSizeDetailId.HasValue))
                 {
                     orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
                     var existedDishSizeDetail = updateDishSizeDetailList.FirstOrDefault(u => u.DishSizeDetailId == orderDetail.DishSizeDetailId);
                     if (existedDishSizeDetail != null)
                     {
                         existedDishSizeDetail.QuantityLeft += orderDetail.Quantity;
-                    } else
+                        if (!existedDishSizeDetail.IsAvailable && existedDishSizeDetail.QuantityLeft > 0)
+                        {
+                            existedDishSizeDetail.IsAvailable = true;
+                        }
+                    }
+                    else
                     {
                         var dishSizeDetailDb = await dishSizeDetailRepository.GetById(orderDetail.DishSizeDetailId);
                         dishSizeDetailDb.QuantityLeft += orderDetail.Quantity;
+                        if (!dishSizeDetailDb.IsAvailable && dishSizeDetailDb.QuantityLeft > 0)
+                        {
+                            dishSizeDetailDb.IsAvailable = true;
+                        }
                         updateDishSizeDetailList.Add(dishSizeDetailDb);
                     }
                 }
-                
-                foreach(var orderDetail in orderDetailDb.Items.Where(o => o.ComboId.HasValue))
+
+                foreach (var orderDetail in orderDetailDb.Items.Where(o => o.ComboId.HasValue))
                 {
                     orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
                     var comboOrderDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId, 0, 0, null, false, o => o.OrderDetail, o => o.DishCombo);
                     comboOrderDetailDb.Items.ForEach(c => c.StatusId = DishComboDetailStatus.Cancelled);
-                    foreach(var comboOrderDetail in comboOrderDetailDb.Items)
+                    foreach (var comboOrderDetail in comboOrderDetailDb.Items)
                     {
                         var existedDishSizeDetail = updateDishSizeDetailList.FirstOrDefault(u => u.DishSizeDetailId == comboOrderDetail.DishCombo.DishSizeDetailId);
                         if (existedDishSizeDetail != null)
                         {
                             existedDishSizeDetail.QuantityLeft += orderDetail.Quantity * comboOrderDetail.DishCombo.Quantity;
+                            if (!existedDishSizeDetail.IsAvailable && existedDishSizeDetail.QuantityLeft > 0)
+                            {
+                                existedDishSizeDetail.IsAvailable = true;
+                            }
                         }
                         else
                         {
                             var dishSizeDetailDb = await dishSizeDetailRepository.GetById(comboOrderDetail.DishCombo.DishSizeDetailId);
                             dishSizeDetailDb.QuantityLeft += orderDetail.Quantity * comboOrderDetail.DishCombo.Quantity;
+                            if(!dishSizeDetailDb.IsAvailable && dishSizeDetailDb.QuantityLeft > 0)
+                            {
+                                dishSizeDetailDb.IsAvailable = true;
+                            }
                             updateDishSizeDetailList.Add(dishSizeDetailDb);
                         }
                     }
@@ -3780,117 +3865,78 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 await orderSessionRepository.Update(orderSessionDb);
                 await _detailRepository.UpdateRange(orderDetailDb.Items);
-            }
 
-            await dishSizeDetailRepository.UpdateRange(updateDishSizeDetailList);
-            await _repository.UpdateRange(unpaidDeliveryOrder.Items);
-            await _unitOfWork.SaveChangesAsync();
-            Task.CompletedTask.Wait();
-        }
-
-        private async Task<bool> UpdateDishQuantity(Guid orderId)
-        {
-            bool isSuccessful = false;
-            try
-            {
-                var orderDetailListDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == orderId, 0, 0, null, false, o => o.DishSizeDetail);
-                if(orderDetailListDb.Items.Count > 0)
+                if (!string.IsNullOrEmpty(order.Account?.Email))
                 {
-                    foreach(var item in orderDetailListDb.Items)
-                    {
-                        if (item.DishSizeDetailId.HasValue)
-                        {
-                            if(item.Quantity < item.DishSizeDetail.QuantityLeft)
-                            {
-                                
-                            }
-                        } else
-                        {
-
-                        }
-                    }
+                    var username = order.Account?.FirstName + "" + order.Account?.LastName;
+                    emailService.SendEmail(order.Account?.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateMailToCancelReservation(username, order));
                 }
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
-
+                result = BuildAppActionResultError(result, ex.Message);
             }
-            return isSuccessful;
+            return result;
         }
-        [Hangfire.Queue("cancel-delivery")]
-        public async Task CancelUnpaidDeliveryOrder()
-        {
-            var emailService = Resolve<IEmailService>();
-            var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
-            var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
-            var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
-            var utility = Resolve<Utility>();
-            var configurationRepository = Resolve<IGenericRepository<Configuration>>();
-            var timeToKeepUnpaidDeliveryOrderConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_KEEP_UNPAID_DELIVERY_ORDER).Result;
-            if(timeToKeepUnpaidDeliveryOrderConfig == null)
-            {
-                return;
-            }
-            List<DishSizeDetail> updateDishSizeDetailList = new List<DishSizeDetail>();
-            var currentTime = utility.GetCurrentDateTimeInTimeZone();
-            double keepTime = double.Parse(timeToKeepUnpaidDeliveryOrderConfig.CurrentValue);
-            var unpaidDeliveryOrder = await _repository.GetAllDataByExpression(o => o.OrderTypeId == OrderType.Delivery 
-                                                                                    && o.StatusId == OrderStatus.Pending 
-                                                                                    && o.OrderDate.AddMinutes(keepTime) < currentTime
-                                                                                    , 0, 0, null, false, null);     
-            foreach(var order in unpaidDeliveryOrder.Items)
-            {
-                order.StatusId = OrderStatus.Cancelled;
-                var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId, 0, 0, null, false, o => o.DishSizeDetail);
-                foreach(var orderDetail in orderDetailDb.Items.Where(o => o.DishSizeDetailId.HasValue))
-                {
-                    orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
-                    var existedDishSizeDetail = updateDishSizeDetailList.FirstOrDefault(u => u.DishSizeDetailId == orderDetail.DishSizeDetailId);
-                    if (existedDishSizeDetail != null)
-                    {
-                        existedDishSizeDetail.QuantityLeft += orderDetail.Quantity;
-                    } else
-                    {
-                        var dishSizeDetailDb = await dishSizeDetailRepository.GetById(orderDetail.DishSizeDetailId);
-                        dishSizeDetailDb.QuantityLeft += orderDetail.Quantity;
-                        updateDishSizeDetailList.Add(dishSizeDetailDb);
-                    }
-                }
-                
-                foreach(var orderDetail in orderDetailDb.Items.Where(o => o.ComboId.HasValue))
-                {
-                    orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
-                    var comboOrderDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId, 0, 0, null, false, o => o.OrderDetail, o => o.DishCombo);
-                    comboOrderDetailDb.Items.ForEach(c => c.StatusId = DishComboDetailStatus.Cancelled);
-                    foreach(var comboOrderDetail in comboOrderDetailDb.Items)
-                    {
-                        var existedDishSizeDetail = updateDishSizeDetailList.FirstOrDefault(u => u.DishSizeDetailId == comboOrderDetail.DishCombo.DishSizeDetailId);
-                        if (existedDishSizeDetail != null)
-                        {
-                            existedDishSizeDetail.QuantityLeft += orderDetail.Quantity * comboOrderDetail.DishCombo.Quantity;
-                        }
-                        else
-                        {
-                            var dishSizeDetailDb = await dishSizeDetailRepository.GetById(comboOrderDetail.DishCombo.DishSizeDetailId);
-                            dishSizeDetailDb.QuantityLeft += orderDetail.Quantity * comboOrderDetail.DishCombo.Quantity;
-                            updateDishSizeDetailList.Add(dishSizeDetailDb);
-                        }
-                    }
-                    await comboOrderDetailRepository.UpdateRange(comboOrderDetailDb.Items);
-                }
+        //[Hangfire.Queue("cancel-reservation")]
+        //public async Task CancelReservation()
+        //{
+        //    var emailService = Resolve<IEmailService>();
+        //    var utility = Resolve<Utility>();
+        //    var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+        //    var timeLastForReservationWithDishesConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_RESERVATION_WITH_DISHES_LAST).Result;
+        //    var timeLastForReservationConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_RESERVATION_LAST).Result;
+        //    var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+        //    try
+        //    {
+        //        var currentTime = utility!.GetCurrentDateTimeInTimeZone();
 
-                var orderSessionDb = await orderSessionRepository.GetById(orderDetailDb.Items.FirstOrDefault().OrderSessionId);
-                orderSessionDb.OrderSessionStatusId = OrderSessionStatus.Cancelled;
-                orderSessionDb.CancelTime = currentTime;
+        //        var orderReservationDb = await _repository.GetAllDataByExpression(p => p.OrderTypeId == OrderType.Reservation && p.StatusId == OrderStatus.TableAssigned, 0, 0, p => p.OrderDate, false, null);
+        //        if (orderReservationDb.Items != null)
+        //        {
+        //            foreach (var orderReservation in orderReservationDb.Items)
+        //            {
+        //                var orderReservationDetailDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderId == orderReservation.OrderId, 0, 0, null, false, null);
+        //                if (orderReservationDb!.Items!.Count > 0 && orderReservationDb.Items != null)
+        //                {
+        //                    if (orderReservation.ReservationDate!.Value.AddHours(int.Parse(timeLastForReservationWithDishesConfig!.CurrentValue)) <= currentTime)
+        //                    {
+        //                        var orderReservationDetailList = new List<OrderDetail>();
+        //                        foreach (var orderReservationDetail in orderReservationDetailDb.Items!)
+        //                        {
+        //                            orderReservationDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
+        //                            orderReservationDetailList.Add(orderReservationDetail);
+        //                        }
+        //                        orderReservation.StatusId = OrderStatus.Cancelled;
 
-                await orderSessionRepository.Update(orderSessionDb);
-                await _detailRepository.UpdateRange(orderDetailDb.Items);
-            }
+        //                        await _repository.Update(orderReservation);
+        //                        await orderDetailRepository.UpdateRange(orderReservationDetailList);
+        //                    }
+        //                }
+        //                else
+        //                {
+        //                    if (orderReservation.ReservationDate.Value.AddHours(int.Parse(timeLastForReservationConfig!.CurrentValue)) <= currentTime)
+        //                    {
+        //                        orderReservation.StatusId = OrderStatus.Cancelled;
+        //                        await _repository.Update(orderReservation);
+        //                    }
+        //                }
 
-            await dishSizeDetailRepository.UpdateRange(updateDishSizeDetailList);
-            await _repository.UpdateRange(unpaidDeliveryOrder.Items);
-            await _unitOfWork.SaveChangesAsync();
-            Task.CompletedTask.Wait();
-        }
+        //                if (!string.IsNullOrEmpty(orderReservation.Account?.Email))
+        //                {
+        //                    var username = orderReservation.Account?.FirstName + "" + orderReservation.Account?.LastName;
+        //                    emailService.SendEmail(orderReservation.Account?.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateMailToCancelReservation(username, orderReservation));
+        //                }
+        //            }
+        //        }
+
+        //        await _unitOfWork.SaveChangesAsync();
+        //    }
+        //    catch (Exception ex)
+        //    {
+
+        //    }
+        //    Task.CompletedTask.Wait();
+        //}
     }
 }

@@ -13,7 +13,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public string DevicePassword { get; set; }
         public Domain.Enums.TableSize? TableSizeId { get; set; }
         public Domain.Enums.TableStatus TableStatusId { get; set; }
-        public Domain.Enums.TableSize TableSizeId { get; set; }
         public Guid? TableRatingId { get; set; }
     }
 }
