@@ -1,4 +1,5 @@
 using Castle.DynamicProxy.Generators;
+using FirebaseAdmin.Messaging;
 using Microsoft.AspNetCore.Identity;
 using System.Transactions;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
@@ -35,12 +36,12 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
         return result;
     }
 
-    public async Task<AppActionResult> GetNotificationMessageById(Guid notifiId)
+    public async Task<AppActionResult> GetNotificationMessageById(Guid notificationId)
     {
         var result = new AppActionResult();
         try
         {
-            var notificationMessageDb = await _repository.GetByExpression(p => p.NotificationId == notifiId);
+            var notificationMessageDb = await _repository.GetByExpression(p => p.NotificationId == notificationId);
             if (notificationMessageDb == null)
             {
                 return BuildAppActionResultError(result, $"Không tim thấy thông báo");
@@ -55,20 +56,44 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
         return result;
     }
 
-    public async Task<AppActionResult> MarkMessageAsRead(List<Guid> messageIds)
+    public async Task<AppActionResult> MarkAllMessageAsRead(string accountId)
     {
         var result = new AppActionResult();
         try
         {
-            var notificationDb = await _repository.GetAllDataByExpression(r => messageIds.Contains(r.NotificationId), 0, 0, null, false, null);
-            if (messageIds.Count != notificationDb.Items.Count)
+            var notificationMessageDb = await _repository.GetAllDataByExpression(p => !p.IsRead && p.AccountId.Equals(accountId), 0, 0, null, false, null);
+            if (notificationMessageDb.Items.Count > 0)
             {
-                return BuildAppActionResultError(result, $"Danh sách chứa id thông báo không tồn tại");
+                notificationMessageDb.Items.ForEach(n => n.IsRead = true);
+                await _repository.UpdateRange(notificationMessageDb.Items);
+                await _unitOfWork.SaveChangesAsync();
             }
 
-            notificationDb.Items.ForEach(n => n.IsRead = true);
-            await _repository.UpdateRange(notificationDb.Items);
-            await _unitOfWork.SaveChangesAsync();
+            result.Result = notificationMessageDb;
+        }
+        catch (Exception ex)
+        {
+            result = BuildAppActionResultError(result, $"Có lỗi xảy ra khi sử dụng API với GoongMap {ex.Message} ");
+        }
+        return result;
+    }
+
+    public async Task<AppActionResult> MarkMessageAsRead(Guid notificationId)
+    {
+        var result = new AppActionResult();
+        try
+        {
+            var notificationDb = await _repository.GetByExpression(n => n.NotificationId == notificationId && !n.IsRead, null);
+            if(notificationDb == null)
+            {
+                return BuildAppActionResultError(result, $"Không tìm thấy thông báo chưa đọc với id {notificationId}");
+            }
+            if (!notificationDb.IsRead)
+            {
+                notificationDb.IsRead = true;
+                await _repository.Update(notificationDb);
+                await _unitOfWork.SaveChangesAsync();
+            }
         }
         catch (Exception ex)
         {
