@@ -10,7 +10,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
 {
     public class ConfigurationVersionDto
     {
-        public Guid ConfigurationVersionId { get; set; }
         public string ActiveValue { get; set; } = null!;
         public DateTime ActiveDate { get; set; }
         public Guid ConfigurationId { get; set; }
