@@ -166,6 +166,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var orderSessionService = Resolve<IOrderSessionService>();
+                var utility = Resolve<Utility>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
                 DateTime?[] groupedTime = new DateTime?[2]
                 {
                     groupedDishDb.StartTime,
@@ -181,6 +183,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var groupedDishData = groupedDishResult.Result as KitchenGroupedDishResponse;
                 if(groupedDishData != null)
                 {
+                    CheckAndSetLateStatus(groupedDishData.SingleOrderDishes, groupedDishDb, currentTime);
+                    CheckAndSetLateStatus(groupedDishData.MutualOrderDishes, groupedDishDb, currentTime);
                     groupedDishDb.GroupedDishJson = JsonConvert.SerializeObject(groupedDishData);
                     groupedDishDb.OrderDetailidList = string.Join(",", groupedDishData.OrderDetailIds);
                     if (groupedDishData.SingleOrderDishes.Count == 0 && groupedDishData.MutualOrderDishes.Count == 0)
@@ -210,36 +214,56 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var utility = Resolve<Utility>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
                 var currentGroupedDishDb = await _repository.GetAllDataByExpression(g => !g.IsFinished, 0, 0, null, false, null);
+
                 if (currentGroupedDishDb.Items.Count > 0)
                 {
                     foreach (var groupedDish in currentGroupedDishDb.Items)
                     {
                         var groupDishFromJson = JsonConvert.DeserializeObject<KitchenGroupedDishResponse>(groupedDish.GroupedDishJson);
-                        foreach(var groupedItem in groupDishFromJson.SingleOrderDishes)
-                        {
-                            if(!groupedItem.IsLate && groupedDish.EndTime.AddMinutes(groupedItem.PreparationTime) < currentTime)
-                            {
-                                groupedItem.IsLate = true;
-                            }
-                        }
 
-                        foreach (var groupedItem in groupDishFromJson.MutualOrderDishes)
-                        {
-                            if (!groupedItem.IsLate && groupedDish.EndTime.AddMinutes(groupedItem.PreparationTime) < currentTime)
-                            {
-                                groupedItem.IsLate = true;
-                            }
-                        }
+                        // Check late status for both SingleOrderDishes and MutualOrderDishes
+                        CheckAndSetLateStatus(groupDishFromJson.SingleOrderDishes, groupedDish, currentTime);
+                        CheckAndSetLateStatus(groupDishFromJson.MutualOrderDishes, groupedDish, currentTime);
+
                         groupedDish.GroupedDishJson = JsonConvert.SerializeObject(groupDishFromJson);
                     }
+
                     await _repository.UpdateRange(currentGroupedDishDb.Items);
                     await _unitOfWork.SaveChangesAsync();
                 }
             }
             catch (Exception ex)
             {
-
             }
+        }
+
+        private void CheckAndSetLateStatus(IEnumerable<KitchenGroupedDishItemResponse> orderDishes, GroupedDishCraft groupedDish, DateTime currentTime)
+        {
+            foreach (var groupedItem in orderDishes)
+            {
+                if (groupedItem.IsLate)
+                    continue; // Skip if already marked as late
+
+                if (IsLateConditionMet(groupedItem.UncheckedDishFromTableOrders, groupedDish, currentTime) ||
+                    IsLateConditionMet(groupedItem.ProcessingDishFromTableOrders, groupedDish, currentTime))
+                {
+                    groupedItem.IsLate = true;
+                }
+            }
+        }
+
+        private bool IsLateConditionMet(IEnumerable<DishFromTableOrder> dishOrders, GroupedDishCraft groupedDish, DateTime currentTime)
+        {
+            foreach (var dish in dishOrders)
+            {
+                var preparationTime = dish.ComboOrderDetail?.PreparationTime ?? dish.OrderDetail?.PreparationTime;
+
+                if (preparationTime.HasValue && groupedDish.EndTime.AddMinutes(preparationTime.Value) < currentTime)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

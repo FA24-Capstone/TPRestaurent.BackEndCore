@@ -69,6 +69,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                     var dishRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                     var comboRepository = Resolve<IGenericRepository<Combo>>();
+                    var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
                     var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
                     var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
                     var dishManagementService = Resolve<IDishManagementService>();
@@ -109,11 +110,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                             foreach (var dishComboId in o.Combo.DishComboIds)
                             {
+                                var dishCombo = await dishComboRepository.GetByExpression(d => d.DishComboId == dishComboId, d => d.DishSizeDetail.Dish);
                                 comboOrderDetails.Add(new ComboOrderDetail
                                 {
                                     ComboOrderDetailId = Guid.NewGuid(),
                                     DishComboId = dishComboId,
-                                    OrderDetailId = orderDetail.OrderDetailId
+                                    OrderDetailId = orderDetail.OrderDetailId,
+                                    PreparationTime = await dishManagementService.CalculatePreparationTime(new List<CalculatePreparationTime>
+                            {
+                                new CalculatePreparationTime
+                                {
+                                    PreparationTime = dishCombo.DishSizeDetail.Dish.PreparationTime.Value,
+                                    Quantity = orderDetail.Quantity
+                                }
+                            })
                                 });
                             }
 
@@ -136,6 +146,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             orderDetail.OrderDetailStatusId = OrderDetailStatus.Unchecked;
                             orderDetail.OrderTime = utility!.GetCurrentDateTimeInTimeZone();
                             orderDetail.Note = o.Note;
+                            orderDetail.PreparationTime = await dishManagementService.CalculatePreparationTime(new List<CalculatePreparationTime>
+                            {
+                                new CalculatePreparationTime
+                                {
+                                    PreparationTime = dish.Dish.PreparationTime.Value,
+                                    Quantity = orderDetail.Quantity
+                                }
+                            });
                             estimatedPreparationTime.Add(new CalculatePreparationTime
                             {
                                 PreparationTime = dish.Dish.PreparationTime.Value,
@@ -524,7 +542,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 orderDetail.DishSizeDetailId = item.DishSizeDetailId.Value;
                                 orderDetail.Price = dishSizeDetail.Price;
-
+                                orderDetail.PreparationTime = await dishManagementService.CalculatePreparationTime(new List<CalculatePreparationTime>
+                            {
+                                new CalculatePreparationTime
+                                {
+                                    PreparationTime = dishDb.PreparationTime.Value,
+                                    Quantity = orderDetail.Quantity
+                                }
+                            });
+                                estimatedPreparationTime.Add(new CalculatePreparationTime
+                                {
+                                    PreparationTime = dishDb.PreparationTime.Value,
+                                    Quantity = orderDetail.Quantity
+                                });
                                 if (dishSizeDetail.QuantityLeft < item.Quantity)
                                 {
                                     return BuildAppActionResultError(result, $"Món ăn {dishDb.Name} chỉ còn x{dishSizeDetail.QuantityLeft}");
@@ -599,8 +629,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     {
                                         ComboOrderDetailId = Guid.NewGuid(),
                                         OrderDetailId = orderDetail.OrderDetailId,
-                                        DishComboId = dishComboId
+                                        DishComboId = dishComboId,
+                                        PreparationTime = await dishManagementService.CalculatePreparationTime(new List<CalculatePreparationTime>
+                                        {
+                                            new CalculatePreparationTime
+                                            {
+                                                PreparationTime = comboDetail.DishSizeDetail.Dish.PreparationTime.Value,
+                                                Quantity = orderDetail.Quantity
+                                            }
+                                        })
                                     });
+                                    
                                 }
                                 estimatedPreparationTime.Add(new CalculatePreparationTime
                                 {
@@ -3563,12 +3602,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetBestSellerDishesAndCombo(int topNumber)
+        public async Task<AppActionResult> GetBestSellerDishesAndCombo(int topNumber, DateTime? startTime, DateTime? endTime)
         {
             var result = new AppActionResult();
             var dishRepository = Resolve<IGenericRepository<Dish>>();
             var comboRepository = Resolve<IGenericRepository<Combo>>();
-
+            var utility = Resolve<Utility>();
+            var currentTime = utility.GetCurrentDateTimeInTimeZone();
             try
             {
                 var bestSellerDishDictionary = new Dictionary<Guid?, int>();
@@ -3578,16 +3618,32 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var listBestSellerDishes = new List<Dish>();
                 var listBestSellerCombo = new List<Combo>();
 
-                var orderDetailsDb = await _detailRepository.GetAllDataByExpression(null, 0, 0, p => p.OrderTime, false, p => p.DishSizeDetail.Dish,
+                PagedResult<OrderDetail> orderDetailsList = new PagedResult<OrderDetail>();
+                if (startTime.HasValue && endTime == null)
+                {
+                    orderDetailsList = await _detailRepository.GetAllDataByExpression(p => p.OrderTime >= startTime && p.OrderTime <= currentTime, 0, 0, p => p.OrderTime, false, p => p.DishSizeDetail.Dish,
                                                                                                                                           p => p.Combo
                     );
-                var bestSellerDishesList = orderDetailsDb.Items.Where(p => p.DishSizeDetailId.HasValue).GroupBy(p => p.DishSizeDetail.DishId).ToDictionary(p => p.Key, p => p.ToList());
+                }
+                else if (startTime.HasValue && endTime.HasValue)
+                {
+                    orderDetailsList = await _detailRepository.GetAllDataByExpression(p => p.OrderTime >= startTime && p.OrderTime <= endTime, 0, 0, p => p.OrderTime, false, p => p.DishSizeDetail.Dish,
+                                                                                                                                          p => p.Combo
+                    );
+                }
+                else
+                {
+                    orderDetailsList = await _detailRepository.GetAllDataByExpression(null, 0, 0, p => p.OrderTime, false, p => p.DishSizeDetail.Dish,
+                                                                                                                                          p => p.Combo
+                    );
+                }
+                var bestSellerDishesList = orderDetailsList.Items.Where(p => p.DishSizeDetailId.HasValue).GroupBy(p => p.DishSizeDetail.DishId).ToDictionary(p => p.Key, p => p.ToList());
                 foreach (var bestSellerDish in bestSellerDishesList)
                 {
                     bestSellerDishDictionary.Add(bestSellerDish.Key, bestSellerDish.Value.Sum(p => p.Quantity));
 
                 }
-                var bestSellerComboList = orderDetailsDb.Items.Where(p => p.ComboId.HasValue).GroupBy(p => p.ComboId).ToDictionary(p => p.Key, p => p.ToList());
+                var bestSellerComboList = orderDetailsList.Items.Where(p => p.ComboId.HasValue).GroupBy(p => p.ComboId).ToDictionary(p => p.Key, p => p.ToList());
                 foreach (var bestComboSeller in bestSellerComboList)
                 {
                     bestSellerComboDictionary.Add(bestComboSeller.Key, bestComboSeller.Value.Sum(p => p.Quantity));
