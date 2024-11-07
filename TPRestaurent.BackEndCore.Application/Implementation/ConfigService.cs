@@ -44,9 +44,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             var closestConfig = configVersionDb!.Items!
                                    .OrderByDescending(p => p.ActiveDate)
                                    .FirstOrDefault();
-                            if (closestConfig != null)
+
+                            if (closestConfig != null && !closestConfig.IsApplied)
                             {
+                                closestConfig.IsApplied = true;
                                 config.CurrentValue = closestConfig!.ActiveValue;
+                                await configurationServiceRepository.Update(closestConfig);
                                 await _repository.Update(config);
                             }
                         }
@@ -77,7 +80,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     Name = dto.Name,
                     CurrentValue = dto.CurrentValue,
                     VietnameseName = dto.VietnameseName,    
-                    Unit = dto.Unit,    
+                    Unit = dto.Unit
                 };
 
                 await _repository.Insert(configuration);
@@ -100,7 +103,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     ConfigurationVersionId = Guid.NewGuid(),    
                     ActiveDate = configurationVersionDto.ActiveDate,
                     ActiveValue = configurationVersionDto.ActiveValue,
-                    ConfigurationId = configurationVersionDto.ConfigurationId,  
+                    ConfigurationId = configurationVersionDto.ConfigurationId, 
+                    IsApplied = false
                 };
 
                 await configurationServiceRepository!.Insert(configurationVersion);
