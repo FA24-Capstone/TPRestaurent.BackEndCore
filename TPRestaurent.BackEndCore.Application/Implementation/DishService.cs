@@ -356,7 +356,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     dishDb.Name = dto.Name;
                     dishDb.Description = dto.Description;
                     dishDb.DishItemTypeId = dto.DishItemType;
-                    if(SD.EnumType.MainItemType.Contains(dto.DishItemType) != dishDb.IsMainItem)
+                    dishDb.PreparationTime = dto.PreparationTime;
+                    if (SD.EnumType.MainItemType.Contains(dto.DishItemType) != dishDb.IsMainItem)
                     {
                         dishDb.IsMainItem = !dishDb.IsMainItem;
                     }
