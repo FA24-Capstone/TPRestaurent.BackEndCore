@@ -70,6 +70,8 @@ public class MappingConfig
             config.CreateMap<ConfigurationDto, Configuration>()
             .ForMember(desc => desc.Name, act => act.MapFrom(src => src.Name))
             .ForMember(desc => desc.CurrentValue, act => act.MapFrom(src => src.CurrentValue))
+            .ForMember(desc => desc.VietnameseName, act => act.MapFrom(src => src.VietnameseName))
+            .ForMember(desc => desc.Unit, act => act.MapFrom(src => src.Unit))
             .ReverseMap();
             ;
 

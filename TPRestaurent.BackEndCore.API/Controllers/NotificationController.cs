@@ -64,10 +64,16 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             }
         }
 
-        [HttpPost("mark-as-read")]
-        public async Task<AppActionResult> SendMulticastAsync([FromBody] List<Guid> messageIds)
+        [HttpPost("mark-all-as-read/{accountId}")]
+        public async Task<AppActionResult> MarkAllMessageAsRead(string accountId)
         {
-            return await _notificationMessageService.MarkMessageAsRead(messageIds);
+            return await _notificationMessageService.MarkAllMessageAsRead(accountId);
+        }
+
+        [HttpPost("mark-as-read/{notificationId}")]
+        public async Task<AppActionResult> MarkMessageAsRead(Guid notificationId)
+        {
+            return await _notificationMessageService.MarkMessageAsRead(notificationId);
         }
     }
 }
