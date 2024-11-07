@@ -76,6 +76,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             RecurringJob.AddOrUpdate(() => _orderService.CancelUnpaidDeliveryOrder(), Cron.MinuteInterval(3), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _invoiceService.GenerateInvoice(), "01 0 * * *", vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _dishService.AutoRefillDish(), Cron.DayInterval(1), vietnamTimeZone);
+            RecurringJob.AddOrUpdate(() => _orderSessionService.ClearOrderSessionDaily(), Cron.DayInterval(1), vietnamTimeZone);
+
         }
     }
 }

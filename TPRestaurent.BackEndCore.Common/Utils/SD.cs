@@ -239,4 +239,5 @@ public class SD
     {
         public static string CANCELLED_BY_SYSTEM = "Đơn hàng được hủy bởi hệ thống";
     }
+
 }

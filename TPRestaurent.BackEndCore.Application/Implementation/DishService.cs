@@ -653,6 +653,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        [Hangfire.Queue("auto-refill-dish")]
         public async Task AutoRefillDish()
         {
             var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
@@ -665,6 +666,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     foreach (var dishSizeDetail in dishSizeDetailsDb!.Items!)
                     {
                         dishSizeDetail.QuantityLeft = dishSizeDetail.DailyCountdown;    
+                        dishSizeDetail.IsAvailable = true;  
                     }
 
                     await dishSizeDetailRepository.UpdateRange(dishSizeDetailsList);
