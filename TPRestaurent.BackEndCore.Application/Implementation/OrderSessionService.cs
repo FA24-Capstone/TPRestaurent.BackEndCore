@@ -536,6 +536,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+        [Hangfire.Queue("update-late-order-session")]
         public async Task UpdateLateOrderSession()
         {
             try
@@ -560,8 +562,43 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
             } catch(Exception ex)
             {
-
             }
+            Task.CompletedTask.Wait();
+        }
+
+        public async Task ClearOrderSessionDaily()
+        {
+            var utility = Resolve<Utility>();
+            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+            var orderRepository = Resolve<IGenericRepository<Order>>();
+            var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+            try
+            {
+                var orderDetailList = new List<OrderDetail>();
+                var orderList = new List<Order>();
+                var orderSessionDailyDb = await _orderSessionRepository.GetAllDataByExpression(p => p.OrderSessionTime.Date == currentTime.Date, 0, 0, null, false, null);
+                if (orderSessionDailyDb!.Items!.Count > 0 && orderSessionDailyDb.Items != null)
+                {
+                    var orderSessionDaily = orderSessionDailyDb.Items;
+                    foreach (var orderSession in orderSessionDaily)
+                    {
+                        var orderDetailDb = await orderDetailRepository!.GetByExpression(p => p.OrderSessionId == orderSession.OrderSessionId);
+                        if (orderDetailDb != null)
+                        {
+                            orderDetailDb.OrderSessionId = null;
+                            orderDetailList.Add(orderDetailDb);
+                        }
+                        await orderDetailRepository.UpdateRange(orderDetailList);
+                    }
+                   
+                    await _orderSessionRepository.DeleteRange(orderSessionDaily);
+                }
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+            }
+            Task.CompletedTask.Wait();
         }
     }
 }
