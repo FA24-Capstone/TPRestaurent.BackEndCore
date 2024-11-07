@@ -996,7 +996,7 @@ public class TemplateMappingHelper
 
         <p class=""emailBody"">
           Mã đơn hàng: <b>{order.OrderId}</b><br>
-          Ngày đặt hàng: <b>{order.ReservationDate}</b><br>
+          Ngày đặt hàng: <b>{order.OrderDate}</b><br>
           Tổng số tiền: <b>{order.TotalAmount:C}</b>
         </p>
 
