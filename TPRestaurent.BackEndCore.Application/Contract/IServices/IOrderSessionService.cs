@@ -17,5 +17,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GetGroupedDish(DateTime?[]? groupeTime);
         Task DeleteOrderSession();
         Task UpdateLateOrderSession();
+        Task ClearOrderSessionDaily();
     }
 }

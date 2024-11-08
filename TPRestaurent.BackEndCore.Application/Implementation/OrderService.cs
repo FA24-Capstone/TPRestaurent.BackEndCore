@@ -507,6 +507,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var tableService = Resolve<ITableService>();
                     var dishManagementService = Resolve<IDishManagementService>();
                     var mapService = Resolve<IMapService>();
+                    var smsService = Resolve<ISmsService>();
+                    var emailService = Resolve<IEmailService>();
                     var createdOrderId = new Guid();
                     var combo = new Combo();
                     var orderWithPayment = new OrderWithPaymentResponse();
@@ -874,6 +876,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                             await tableDetailRepository.InsertRange(tableDetails);
                             orderWithPayment.Order = order;
+
+                            //var smsMessage = $"[NHÀ HÀNG THIÊN PHÚ] Đơn đặt bàn của bạn vào lúc {order.ReservationDate} đã thành công. " +
+                            //                 $"Vui lòng thanh toán {order.TotalAmount} VND" +
+                            //                 $"Xin chân trọng cảm ơn quý khách.";
+                            //await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
+
+                            var username = accountDb.FirstName + " " + accountDb.LastName;
+                            emailService.SendEmail(accountDb.Email, SD.SubjectMail.NOTIFY_RESERVATION,
+                                                         TemplateMappingHelper.GetTemplateOrderConfirmation(
+                                                         username, order)
+                                );
                         }
                         else
                         {
@@ -1034,7 +1047,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         await orderDetailRepository.InsertRange(orderDetails);
 
+                        //var smsMessage = $"[NHÀ HÀNG THIÊN PHÚ] Đơn hàng của bạn vào lúc {order.OrderDate} đã thành công. " +
+                        //                 $"Vui lòng thanh toán {order.TotalAmount} VND" +
+                        //                 $"Xin chân trọng cảm ơn quý khách.";
+                        //await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
 
+                        var username = accountDb.FirstName + " " + accountDb.LastName;
+                        emailService.SendEmail(accountDb.Email, SD.SubjectMail.NOTIFY_RESERVATION,
+                                                     TemplateMappingHelper.GetTemplateOrderConfirmation(
+                                                     username, order)
+                            );
 
                         if (!BuildAppActionResultIsError(result))
                         {

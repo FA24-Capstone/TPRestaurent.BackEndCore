@@ -11,6 +11,7 @@ public class TemplateMappingHelper
         FORGOTPASSWORD,
         CONTRACT_CODE,
         TOURGUIDE_ACCOUNT_CREATION
+       
     }
 
     public static string GetTemplateOTPEmail(ContentEmailType type, string body, string name)
@@ -925,5 +926,207 @@ public class TemplateMappingHelper
         return content;
     }
 
+    public static string GetTemplateOrderConfirmation(string username, Order order)
+    {
+        var content = $@"
+<html>
+  <head>
+    <style>
+      * {{
+        margin: 0;
+        padding: 0;
+      }}
+
+      body {{
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4; /* Background color for the entire email */
+      }}
+
+      .container {{
+        max-width: 900px;
+        margin: 20px auto;
+        border-radius: 5px;
+        box-shadow: 0px 0px 5px 2px #ccc; /* Shadow for content */
+      }}
+
+      .header {{
+        text-align: center;
+        background-color: #ffba00; /* Header background color */
+        padding: 20px;
+      }}
+
+      .mainBody {{
+        background-color: #ffffff; /* Main content background */
+        padding: 20px;
+      }}
+
+      .emailBody {{
+        margin: 5px 5px;
+      }}
+
+      .support {{
+        font-size: 15px;
+        font-style: italic;
+        margin: 5px 5px;
+      }}
+
+      .footer {{
+        font-size: 14px;
+        text-align: center;
+        background-color: #ffba00; /* Footer background color */
+        padding: 10px;
+      }}
+
+      .signature {{
+        text-align: right;
+        font-size: 16px;
+        margin: 5px 5px;
+      }}
+    </style>
+  </head>
+  <body>
+    <div class=""container"">
+      <div class=""header"">
+        <h1 style=""color: #515151;"">Nhà hàng Thiên Phú</h1>
+      </div>
+      <div class=""mainBody"">
+        <h2 class=""emailBody"">Xin chào {username},</h2>
+        
+        <p class=""emailBody"">
+          Chúng tôi vui mừng thông báo rằng đơn hàng của bạn tại <b><i>Nhà hàng Thiên Phú</i></b> đã được tạo thành công!
+        </p>
+
+        <p class=""emailBody"">
+          Mã đơn hàng: <b>{order.OrderId}</b><br>
+          Ngày đặt hàng: <b>{order.OrderDate}</b><br>
+          Tổng số tiền: <b>{order.TotalAmount:C}</b>
+        </p>
+
+        <p class=""emailBody"">
+          Vui lòng chuẩn bị thanh toán số tiền trên khi bạn đến nhà hàng. Chúng tôi mong rằng bạn sẽ có một trải nghiệm tuyệt vời tại Nhà hàng Thiên Phú.
+        </p>
+
+        <p class=""emailBody"">
+          Nếu bạn cần hỗ trợ hoặc thay đổi đơn hàng, vui lòng liên hệ chúng tôi qua email <u><i>qk.backend@gmail.com</i></u>.
+        </p>
+
+        <p class=""support"">
+          Cảm ơn bạn đã chọn <b><i>Nhà hàng Thiên Phú</i></b>!
+        </p>
+        <div class=""signature"">
+          <p>Trân trọng,</p>
+          <p>
+            <b><i>Đội ngũ Nhà hàng Thiên Phú</i></b>
+          </p>
+        </div>
+      </div>
+      <div style=""height: 100px""></div>
+    </div>
+  </body>
+</html>";
+        return content;
+    }
+
+    public static string GetTemplateReservationConfirmation(string username, Order order)
+    {
+        var content = $@"
+<html>
+  <head>
+    <style>
+      * {{
+        margin: 0;
+        padding: 0;
+      }}
+
+      body {{
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4; /* Background color for the entire email */
+      }}
+
+      .container {{
+        max-width: 900px;
+        margin: 20px auto;
+        border-radius: 5px;
+        box-shadow: 0px 0px 5px 2px #ccc; /* Shadow for content */
+      }}
+
+      .header {{
+        text-align: center;
+        background-color: #ffba00; /* Header background color */
+        padding: 20px;
+      }}
+
+      .mainBody {{
+        background-color: #ffffff; /* Main content background */
+        padding: 20px;
+      }}
+
+      .emailBody {{
+        margin: 5px 5px;
+      }}
+
+      .support {{
+        font-size: 15px;
+        font-style: italic;
+        margin: 5px 5px;
+      }}
+
+      .footer {{
+        font-size: 14px;
+        text-align: center;
+        background-color: #ffba00; /* Footer background color */
+        padding: 10px;
+      }}
+
+      .signature {{
+        text-align: right;
+        font-size: 16px;
+        margin: 5px 5px;
+      }}
+    </style>
+  </head>
+  <body>
+    <div class=""container"">
+      <div class=""header"">
+        <h1 style=""color: #515151;"">Nhà hàng Thiên Phú</h1>
+      </div>
+      <div class=""mainBody"">
+        <h2 class=""emailBody"">Xin chào {username},</h2>
+        
+        <p class=""emailBody"">
+          Chúng tôi vui mừng xác nhận rằng đặt chỗ của bạn tại <b><i>Nhà hàng Thiên Phú</i></b> đã được tạo thành công!
+        </p>
+
+        <p class=""emailBody"">
+          Mã đặt chỗ: <b>{order.OrderId}</b><br>
+          Thời gian đặt chỗ: <b>{order.OrderDate}</b><br>
+          Tổng số tiền: <b>{order.TotalAmount:C}</b>
+        </p>
+
+        <p class=""emailBody"">
+          Chúng tôi rất mong được chào đón bạn vào thời gian đã chọn. Nếu bạn cần thay đổi thông tin đặt chỗ, vui lòng liên hệ với chúng tôi qua website hoặc email.
+        </p>
+
+        <p class=""emailBody"">
+          Để biết thêm thông tin, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi qua 
+          <u><i>qk.backend@gmail.com</i></u>.
+        </p>
+
+        <p class=""support"">
+          Cảm ơn bạn đã chọn <b><i>Nhà hàng Thiên Phú</i></b>, và chúng tôi mong muốn mang đến cho bạn một trải nghiệm tuyệt vời.
+        </p>
+        <div class=""signature"">
+          <p>Trân trọng,</p>
+          <p>
+            <b><i>Đội ngũ Nhà hàng Thiên Phú</i></b>
+          </p>
+        </div>
+      </div>
+      <div style=""height: 100px""></div>
+    </div>
+  </body>
+</html>";
+        return content;
+    }
 
 }
