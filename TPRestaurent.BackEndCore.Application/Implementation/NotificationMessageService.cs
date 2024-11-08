@@ -132,7 +132,7 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
                         var notification = new NotificationMessage
                         {
                             NotificationId = Guid.NewGuid(),
-                            NotificationName = "Nhà hàng có thông báo mới",
+                            NotificationName = "Bạn có thông báo mới",
                             Messages = message,
                             NotifyTime = currentTime,
                             AccountId = accountDb.Id,
@@ -229,4 +229,61 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
         return result;
     }
 
+    public async Task<AppActionResult> SendNotificationToShipperAsync(string accountId, string message)
+    {
+        var result = new AppActionResult();
+        using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+        {
+            try
+            {
+                var utility = Resolve<Utility>();
+                var accountRepository = Resolve<IGenericRepository<Account>>();
+                var tokenRepository = Resolve<IGenericRepository<Token>>();
+                var fireBaseService = Resolve<IFirebaseService>();
+                var notificationMessageRepository = Resolve<IGenericRepository<NotificationMessage>>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+
+                var accountDb = await accountRepository!.GetById(accountId);
+                if (accountDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy tài khoản với id {accountId}");
+                }
+
+                var tokenDb = await tokenRepository!.GetAllDataByExpression(p => p.AccountId == accountId, 0, 0, null, false, p => p.Account);
+                if (tokenDb.Items!.Count > 0 && tokenDb.Items != null)
+                {
+                    var deviceTokenList = tokenDb.Items.Where(p => !string.IsNullOrEmpty(p.DeviceToken)).Select(p => p.DeviceToken);
+                    if (deviceTokenList != null)
+                    {
+
+                        var notification = new NotificationMessage
+                        {
+                            NotificationId = Guid.NewGuid(),
+                            NotificationName = "Bạn có thông báo mới từ nhà hàng",
+                            Messages = message,
+                            NotifyTime = currentTime,
+                            AccountId = accountDb.Id,
+                        };
+
+                        await notificationMessageRepository!.Insert(notification);
+                        if (deviceTokenList.Count() > 0)
+                        {
+                            await fireBaseService!.SendMulticastAsync(deviceTokenList.ToList(), "Bạn có thông báo mới từ nhà hàng", message, result);
+                        }
+                    }
+                }
+                if (!BuildAppActionResultIsError(result))
+                {
+                    await _unitOfWork.SaveChangesAsync();
+                }
+                scope.Complete();
+
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+        }
+        return result;
+    }
 }

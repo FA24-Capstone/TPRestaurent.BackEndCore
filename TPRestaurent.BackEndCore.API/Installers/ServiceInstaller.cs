@@ -45,6 +45,7 @@ public class ServiceInstaller : IInstaller
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IFileService, FileService>();
         services.AddScoped<IInvoiceService, InvoiceService>();
+        services.AddScoped<IRatingService, RatingService>();
 
     }
 }
