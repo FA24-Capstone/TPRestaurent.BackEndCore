@@ -586,6 +586,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var configurationDb = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.AVERAGE_MEAL_DURATION), null);
                 var averageTime = double.Parse(configurationDb.CurrentValue);
                 var unavailableDetailDb = await tableDetailRepository.GetAllDataByExpression(t => t.Order.OrderTypeId != OrderType.Delivery
+                                                                                                  && t.Order.StatusId != OrderStatus.Cancelled
                                                                                                   && t.Order.MealTime <= currentTime
                                                                                                   && (t.Order.EndTime.HasValue && t.Order.EndTime.Value >= currentTime
                                                                                                       || !t.Order.EndTime.HasValue && t.Order.MealTime.Value.AddHours(averageTime) >= currentTime), 
