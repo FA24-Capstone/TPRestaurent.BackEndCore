@@ -3627,15 +3627,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var listBestSellerCombo = new List<Combo>();
 
                 PagedResult<OrderDetail> orderDetailsList = new PagedResult<OrderDetail>();
+                if(startTime.HasValue && endTime.HasValue && startTime.Value > endTime.Value)
+                {
+                    return result;
+                }
                 if (startTime.HasValue && endTime == null)
                 {
-                    orderDetailsList = await _detailRepository.GetAllDataByExpression(p => p.OrderTime >= startTime && p.OrderTime <= currentTime, 0, 0, p => p.OrderTime, false, p => p.DishSizeDetail.Dish,
+                    orderDetailsList = await _detailRepository.GetAllDataByExpression(p => p.OrderTime.Date >= startTime.Value.Date && p.OrderTime.Date <= currentTime.Date, 0, 0, p => p.OrderTime, false, p => p.DishSizeDetail.Dish,
                                                                                                                                           p => p.Combo
                     );
                 }
                 else if (startTime.HasValue && endTime.HasValue)
                 {
-                    orderDetailsList = await _detailRepository.GetAllDataByExpression(p => p.OrderTime >= startTime && p.OrderTime <= endTime, 0, 0, p => p.OrderTime, false, p => p.DishSizeDetail.Dish,
+                    orderDetailsList = await _detailRepository.GetAllDataByExpression(p => p.OrderTime.Date >= startTime.Value.Date && p.OrderTime.Date <= endTime.Value.Date, 0, 0, p => p.OrderTime, false, p => p.DishSizeDetail.Dish,
                                                                                                                                           p => p.Combo
                     );
                 }
