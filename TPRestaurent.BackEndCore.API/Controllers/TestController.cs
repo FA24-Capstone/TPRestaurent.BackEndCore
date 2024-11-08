@@ -32,6 +32,18 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _orderService.UpdateOrderStatus(orderId, orderStatus);
         }
 
+        [HttpPut("cancel-order")]
+        public async Task CancelOrder()
+        {
+            await _orderService.CancelOrder();
+        }
+
+        [HttpPut("account-daily-reservation-dish")]
+        public async Task AccountDailyReservationDish()
+        {
+            await _orderService.AccountDailyReservationDish();
+        }
+
         [HttpPost("trigger")]
         public async Task<IActionResult> TriggerAction()
         {

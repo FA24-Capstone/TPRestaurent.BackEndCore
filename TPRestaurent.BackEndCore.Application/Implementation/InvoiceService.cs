@@ -154,12 +154,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             int i = 1;
             string customerDetails = response.Order.Account != null
                 ? @"
-    <table class='info-table'>
+        <table class='info-table'>
       <tr><th>Tên khách hàng:</th><td>" + response.Order.Account.FirstName + " " + response.Order.Account.LastName + @"</td></tr>
       <tr><th>Số điện thoại:</th><td>" + response.Order.Account.PhoneNumber + @"</td></tr>
       <tr><th>Email:</th><td>" + response.Order.Account.Email + @"</td></tr>
       <tr><th>Địa chỉ:</th><td>" + response.Order.CustomerInfoAddress?.CustomerInfoAddressName + @"</td></tr>
-    </table>"
+        </table>"
                 : "<p class='no-info'>Không có thông tin khách hàng trong hệ thống</p>";
 
             return @"
@@ -192,9 +192,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
       .logo {
         max-width: 100px;
       }
-      .restaurant-info {
-        text-align: right;
-      }
       .restaurant-info h1 {
         margin: 0;
         font-size: 26px;
@@ -203,7 +200,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
       .restaurant-info p {
         margin: 4px 0;
         font-size: 14px;
-        color: #fff;
       }
       .mainBody {
         padding: 20px;
@@ -232,6 +228,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
       }
       .info-table th {
         background-color: #f5f5f5;
+        font-weight: 600;
+      }
+      .info-table td {
+        background-color: #fcfcfc;
+      }
+      .dish-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+      }
+      .dish-table th, .dish-table td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: center;
+      }
+      .dish-table th {
+        background-color: #A1011A;
+        color: #fff;
         font-weight: 600;
       }
       .info-table td {
@@ -327,7 +341,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         <div class='info-section'>
           <div>
             <h2 class='section-title'>Thông tin đơn hàng</h2>
-            <table class='info-table'>
+        <table class='info-table'>
               <tr><th>Mã đơn:</th><td>" + response.Order.OrderId.ToString().Substring(0, 6) + @"</td></tr>
               <tr><th>Ngày đặt/dùng bữa:</th><td>" + response.Order.OrderDate.ToString("yyyy-MM-dd") + @"</td></tr>
               <tr><th>Phương thức thanh toán:</th><td>" + transaction.PaymentMethod.VietnameseName + @"</td></tr>
@@ -335,11 +349,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
               <tr><th>Tổng đơn:</th><td>" + response.Order.TotalAmount.ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td></tr>
               <tr><th>Loại đơn hàng:</th><td>" + response.Order.OrderType.VietnameseName + @"</td></tr>
               <tr><th>Ghi chú:</th><td>" + (string.IsNullOrEmpty(response.Order.Note) ? "No notes" : response.Order.Note) + @"</td></tr>
-            </table>
+        </table>
           </div>
           <div>
             <h2 class='section-title'>Thông tin khách hàng</h2>
-            " + customerDetails + @"
+        " + customerDetails + @"
           </div>
         </div>
 
@@ -374,11 +388,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     </tr>";
                 }
                 return @"
-                <tr>
-                  <td>" + (i++) + @"</td>
-                  <td>" + o.DishSizeDetail.Dish.Name + @"</td>
-                  <td>" + o.DishSizeDetail.DishSize.VietnameseName + @"</td>
-                  <td>" + o.Quantity + @"</td>
+            <tr>
+              <td>" + (i++) + @"</td>
+              <td>" + o.DishSizeDetail.Dish.Name + @"</td>
+              <td>" + o.DishSizeDetail.DishSize.VietnameseName + @"</td>
+              <td>" + o.Quantity + @"</td>
                   <td>" + o.DishSizeDetail.Price.ToString("#,0 VND") + @"</td>
                   <td>" + o.DishSizeDetail.Discount + @"%</td>
                   <td>" + (Math.Ceiling((1 - o.DishSizeDetail.Discount) * o.DishSizeDetail.Price * o.Quantity / 1000) * 1000).ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td>
@@ -399,6 +413,167 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
   </body>
 </html>";
         }
+//        public string GenerateInvoiceSummaryHtml(List<Invoice> invoices, DateTime startDate, DateTime endDate)
+//        {
+//            var totalRevenue = invoices.Sum(i => i.TotalAmount);
+//            var orderCount = invoices.Count;
+//            var groupedByDate = invoices
+//                .GroupBy(i => i.Date.Date)
+//                .Select(g => new { Date = g.Key, Revenue = g.Sum(i => i.TotalAmount) })
+//                .OrderBy(g => g.Date)
+//                .ToList();
+
+//            // Calculate maximum revenue for Y-axis scaling
+//            var maxRevenue = groupedByDate.Any() ? groupedByDate.Max(g => g.Revenue) : 0;
+//            var chartHeight = 300; // Height of the chart area in pixels
+
+//            // Generate bars for the chart
+//            var bars = string.Join("\n", groupedByDate.Select((g, index) =>
+//            {
+//                double barHeight = (g.Revenue / maxRevenue) * chartHeight;
+//                double xPosition = 60 + (index * 40); // 40 pixels between each bar
+//                return $"<rect x='{xPosition}' y='{350 - barHeight}' width='30' height='{barHeight}' fill='#A1011A'></rect>" +
+//                       $"<text x='{xPosition + 15}' y='370' font-size='12' text-anchor='middle'>{g.Date:MM-dd}</text>" +
+//                       $"<text x='{xPosition + 15}' y='{350 - barHeight - 5}' font-size='12' text-anchor='middle'>{g.Revenue:#,0} VND</text>";
+//            }));
+
+//            return $@"
+//<!DOCTYPE html>
+//<html>
+//  <head>
+//    <style>
+//      body {{
+//        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+//        background-color: #f9f9f9;
+//        margin: 0;
+//        padding: 20px;
+//      }}
+//      .container {{
+//        background-color: #fff;
+//        max-width: 900px;
+//        margin: 20px auto;
+//        border-radius: 8px;
+//        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+//        overflow: hidden;
+//      }}
+//      .header {{
+//        display: flex;
+//        justify-content: space-between;
+//        align-items: center;
+//        background-color: #A1011A;
+//        padding: 20px;
+//        color: white;
+//      }}
+//      .logo {{
+//        max-width: 100px;
+//      }}
+//      .restaurant-info {{
+//        text-align: right;
+//      }}
+//      .restaurant-info h1 {{
+//        margin: 0;
+//        font-size: 26px;
+//        font-weight: bold;
+//      }}
+//      .restaurant-info p {{
+//        margin: 4px 0;
+//        font-size: 14px;
+//        color: #fff;
+//      }}
+//      .mainBody {{
+//        padding: 20px;
+//      }}
+//      .section-title {{
+//        font-size: 20px;
+//        margin-bottom: 10px;
+//        color: #333;
+//        border-bottom: 2px solid #A1011A;
+//        padding-bottom: 5px;
+//      }}
+//      .summary-table {{
+//        width: 100%;
+//        border-collapse: collapse;
+//        margin-bottom: 20px;
+//      }}
+//      .summary-table th, .summary-table td {{
+//        padding: 10px;
+//        border: 1px solid #ddd;
+//        text-align: left;
+//      }}
+//      .summary-table th {{
+//        background-color: #f5f5f5;
+//        font-weight: 600;
+//      }}
+//      .chart-container {{
+//        margin-top: 20px;
+//        text-align: center;
+//      }}
+//      .chart-svg {{
+//        width: 100%;
+//        max-width: 800px;
+//        height: 400px;
+//      }}
+//      .chart-axis {{
+//        stroke: #333;
+//        stroke-width: 1;
+//      }}
+//      .chart-label {{
+//        fill: #333;
+//      }}
+//    </style>
+//  </head>
+//  <body>
+//    <div class='container'>
+//      <div class='header'>
+//        <img src='https://thienphurestaurant.vercel.app/icon.png' alt='Restaurant Logo' class='logo'>
+//        <div class='restaurant-info'>
+//          <h1>Nhà hàng Thiên Phú</h1>
+//          <p>Số điện thoại: 091 978 24 44</p>
+//          <p>Địa chỉ: 78 Đường Lý Tự Trọng, Phường 2, Đà Lạt, Vietnam</p>
+//        </div>
+//      </div>
+//      <div class='mainBody'>
+//        <h2 class='section-title'>Order Summary</h2>
+//        <table class='summary-table'>
+//          <tr>
+//            <th>Order Type</th>
+//            <td>{(invoices.FirstOrDefault()?.OrderTypeId.ToString() ?? "N/A")}</td>
+//          </tr>
+//          <tr>
+//            <th>Total Revenue</th>
+//            <td>{totalRevenue.ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture)}</td>
+//          </tr>
+//          <tr>
+//            <th>Start Date</th>
+//            <td>{startDate:yyyy-MM-dd}</td>
+//          </tr>
+//          <tr>
+//            <th>End Date</th>
+//            <td>{endDate:yyyy-MM-dd}</td>
+//          </tr>
+//          <tr>
+//            <th>Quantity of Orders</th>
+//            <td>{orderCount}</td>
+//          </tr>
+//        </table>
+//        <div class='chart-container'>
+//          <svg class='chart-svg' viewBox='0 0 800 400'>
+//            <!-- Y-axis -->
+//            <line x1='50' y1='50' x2='50' y2='350' class='chart-axis'></line>
+//            <line x1='50' y1='350' x2='750' y2='350' class='chart-axis'></line>
+//            <text x='20' y='350' font-size='12' class='chart-label'>0</text>
+//            <!-- Bars -->
+//            {bars}
+//          </svg>
+//        </div>
+//      </div>
+//      <div class='order-summary'>
+//        <p>Cảm ơn bạn đã chọn Nhà hàng Thiên Phú! Mọi thắc mắc xin vui lòng liên hệ bộ phận hỗ trợ của chúng tôi.</p>
+//      </div>
+//    </div>
+//  </body>
+//</html>";
+//        }
 
         public string GenerateInvoiceSummaryHtml(List<Invoice> invoices, DateTime startDate, DateTime endDate)
         {

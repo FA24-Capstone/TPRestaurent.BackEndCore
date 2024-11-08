@@ -30,8 +30,8 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         //public Task<AppActionResult> GetOrderJsonByTableSessionId(Guid TableSessionId);
         public Task<AppActionResult> GetTableReservationWithTime(Guid tableId, DateTime? time);
         public Task CancelOverReservation();
-        public Task UpdateOrderStatusBeforeMealTime();
-        public Task UpdateOrderDetailStatusBeforeDining();
+        public Task NotifyReservationDishToKitchen();
+        public Task AccountDailyReservationDish();
         public Task<AppActionResult> GetUpdateCartComboDto(ComboChoice cartComboJson);
         public Task<AppActionResult> GetUpdateCartDishDto(List<CartDishItem> cartDishJson);
         public Task<AppActionResult> UpdateOrderDetailStatus(List<UpdateOrderDetailItemRequest> orderDetailIds, bool isSuccessful);
@@ -43,12 +43,12 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> UpdateOrderStatus(Guid orderId, Domain.Enums.OrderStatus status);
         public Task<AppActionResult> UpdateOrderDetailStatusForce(List<Guid> orderDetailIds, OrderDetailStatus status);
         public Task<AppActionResult> GetOrderWithFilter(ReservationTableRequest request);
-        public Task CancelReservation();
+        //public Task CancelReservation();
         public Task RemindOrderReservation();
         public Task<AppActionResult> GetNumberOfOrderByStatus(OrderFilterRequest request);
         public Task<AppActionResult> CancelDeliveringOrder(CancelDeliveringOrderRequest cancelDeliveringOrderRequest);
         public Task<AppActionResult> GetBestSellerDishesAndCombo(int topNumber, DateTime? startTime, DateTime? endTime);
 
-        public Task CancelUnpaidDeliveryOrder();
+        public Task CancelOrder();
     }
 }
