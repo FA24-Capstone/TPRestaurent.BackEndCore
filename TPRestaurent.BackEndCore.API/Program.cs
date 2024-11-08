@@ -34,12 +34,12 @@ builder.Services.InstallerServicesInAssembly(builder.Configuration);
 //    options.WorkerCount = 1;
 //});
 
-//builder.Services.AddHangfireServer(options =>
-//{
-//    options.ServerName = $"{Environment.MachineName}:order";
-//    options.Queues = new[] { "account-daily-reservation-dish" };
-//    options.WorkerCount = 1;
-//});
+builder.Services.AddHangfireServer(options =>
+{
+    options.ServerName = $"{Environment.MachineName}:order";
+    options.Queues = new[] { "account-daily-reservation-dish" };
+    options.WorkerCount = 1;
+});
 
 builder.Services.AddHangfireServer(options =>
 {
@@ -48,12 +48,12 @@ builder.Services.AddHangfireServer(options =>
     options.WorkerCount = 1;
 });
 
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:order";
-    options.Queues = new[] { "update-order-detail-status-before-dining" };
-    options.WorkerCount = 1;
-});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:order";
+//    options.Queues = new[] { "update-order-detail-status-before-dining" };
+//    options.WorkerCount = 1;
+//});
 
 builder.Services.AddHangfireServer(options =>
 {
@@ -93,50 +93,50 @@ builder.Services.AddHangfireServer(options =>
 {
     options.ServerName = $"{Environment.MachineName}:transaction";
     options.Queues = new[] { "cancel-pending-transaction" };
-    options.WorkerCount = 5;
+    options.WorkerCount = 1;
 
 });
 builder.Services.AddHangfireServer(options =>
 {
     options.ServerName = $"{Environment.MachineName}:configuration";
     options.Queues = new[] { "change-configuration" };
-    options.WorkerCount = 5;
+    options.WorkerCount = 1;
 });
 builder.Services.AddHangfireServer(options =>
 {
     options.ServerName = $"{Environment.MachineName}:grouped-dish-craft";
     options.Queues = new[] { "update-late-warning-grouped-dish" };
-    options.WorkerCount = 5;
+    options.WorkerCount = 1;
 });
 builder.Services.AddHangfireServer(options =>
 {
     options.ServerName = $"{Environment.MachineName}:order-session";
     options.Queues = new[] { "update-late-order-session" };
-    options.WorkerCount = 5;
+    options.WorkerCount = 1;
 });
 builder.Services.AddHangfireServer(options =>
 {
     options.ServerName = $"{Environment.MachineName}:order";
     options.Queues = new[] { "cancel-delivery" };
-    options.WorkerCount = 5;
+    options.WorkerCount = 1;
 });
 builder.Services.AddHangfireServer(options =>
 {
     options.ServerName = $"{Environment.MachineName}:invoice";
     options.Queues = new[] { "generate-invoice" };
-    options.WorkerCount = 5;
+    options.WorkerCount = 1;
 });
 builder.Services.AddHangfireServer(options =>
 {
     options.ServerName = $"{Environment.MachineName}:dish";
     options.Queues = new[] { "auto-refill-dish" };
-    options.WorkerCount = 5;
+    options.WorkerCount = 1;
 });
 builder.Services.AddHangfireServer(options =>
 {
     options.ServerName = $"{Environment.MachineName}:order-session";
     options.Queues = new[] { "clear-order-session-daily" };
-    options.WorkerCount = 5;
+    options.WorkerCount = 1;
 });
 
 var app = builder.Build();
