@@ -879,20 +879,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             orderWithPayment.Order = order;
 
 
-                            if (!string.IsNullOrWhiteSpace(accountDb.Email))
+                            if (orderRequestDto.CustomerId.HasValue)
                             {
-                                var username = accountDb.FirstName + " " + accountDb.LastName;
-                                emailService.SendEmail(accountDb.Email, SD.SubjectMail.NOTIFY_RESERVATION,
-                                                             TemplateMappingHelper.GetTemplateOrderConfirmation(
-                                                             username, order)
-                                    );
-                            }
-                            else
-                            {
-                                var smsMessage = $"[NHÀ HÀNG THIÊN PHÚ] Đơn đặt bàn của bạn vào lúc {order.ReservationDate} đã thành công. " +
-                                                 $"Vui lòng thanh toán {order.TotalAmount} VND" +
-                                                 $"Xin chân trọng cảm ơn quý khách.";
-                                await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
+                                if (!string.IsNullOrWhiteSpace(accountDb.Email))
+                                {
+                                    var username = accountDb.FirstName + " " + accountDb.LastName;
+                                    emailService.SendEmail(accountDb.Email, SD.SubjectMail.NOTIFY_RESERVATION,
+                                                                 TemplateMappingHelper.GetTemplateOrderConfirmation(
+                                                                 username, order)
+                                        );
+                                }
+                                else
+                                {
+                                    var smsMessage = $"[NHÀ HÀNG THIÊN PHÚ] Đơn đặt bàn của bạn vào lúc {order.ReservationDate} đã thành công. " +
+                                                     $"Vui lòng thanh toán {order.TotalAmount} VND" +
+                                                     $"Xin chân trọng cảm ơn quý khách.";
+                                    await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
+                                }
                             }
                         }
                         else
@@ -1054,27 +1057,29 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         await orderDetailRepository.InsertRange(orderDetails);
 
-
-                        if (!string.IsNullOrEmpty(accountDb.Email))
+                        if (orderRequestDto.CustomerId.HasValue)
                         {
-                            var username = accountDb.FirstName + " " + accountDb.LastName;
-                            emailService.SendEmail(accountDb.Email, SD.SubjectMail.NOTIFY_RESERVATION,
-                                                         TemplateMappingHelper.GetTemplateOrderConfirmation(
-                                                         username, order)
-                                );
-                            string notificationEmailMessage = "Nhà hàng đã gửi thông báo mới tới email của bạn";
-                            await notificationService!.SendNotificationToAccountAsync(accountDb.Id, notificationEmailMessage);
+                            if (!string.IsNullOrEmpty(accountDb.Email))
+                            {
+                                var username = accountDb.FirstName + " " + accountDb.LastName;
+                                emailService.SendEmail(accountDb.Email, SD.SubjectMail.NOTIFY_RESERVATION,
+                                                             TemplateMappingHelper.GetTemplateOrderConfirmation(
+                                                             username, order)
+                                    );
+                                string notificationEmailMessage = "Nhà hàng đã gửi thông báo mới tới email của bạn";
+                                await notificationService!.SendNotificationToAccountAsync(accountDb.Id, notificationEmailMessage);
 
-                        }
-                        else
-                        {
-                            var smsMessage = $"[NHÀ HÀNG THIÊN PHÚ] Đơn hàng của bạn vào lúc {order.OrderDate} đã thành công. " +
-                                       $"Vui lòng thanh toán {order.TotalAmount} VND" +
-                                       $"Xin chân trọng cảm ơn quý khách.";
-                            //await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
-                            string notificationSmsMessage = "Nhà hàng đã gửi thông báo mới tới số điện thoại của bạn";
-                            await notificationService!.SendNotificationToAccountAsync(accountDb.Id, notificationSmsMessage);
+                            }
+                            else
+                            {
+                                var smsMessage = $"[NHÀ HÀNG THIÊN PHÚ] Đơn hàng của bạn vào lúc {order.OrderDate} đã thành công. " +
+                                           $"Vui lòng thanh toán {order.TotalAmount} VND" +
+                                           $"Xin chân trọng cảm ơn quý khách.";
+                                //await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
+                                string notificationSmsMessage = "Nhà hàng đã gửi thông báo mới tới số điện thoại của bạn";
+                                await notificationService!.SendNotificationToAccountAsync(accountDb.Id, notificationSmsMessage);
 
+                            }
                         }
 
 
