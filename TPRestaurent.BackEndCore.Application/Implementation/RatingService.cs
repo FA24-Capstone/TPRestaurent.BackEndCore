@@ -65,7 +65,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 StaticFileId = Guid.NewGuid(),
                                 RatingId = newRating.RatingId,
-                            };
+                                Path = upload.Result.ToString()
+                            };;
 
                             listStaticFile.Add(newStaticFileDb);
                             await staticFileRepository!.InsertRange(listStaticFile);
@@ -89,6 +90,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         public async Task<AppActionResult> DeleteRating(Guid ratingId)
         {
+            var staticFileRepository = Resolve<IGenericRepository<Image>>();
             var result = new AppActionResult();
             try
             {
@@ -96,6 +98,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (ratingDb == null)
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy đánh giá với id {ratingId}");
+                }
+                var ratingImage = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == ratingId, 0, 0, null, false, null);
+                if (ratingImage.Items.Count > 0 && ratingImage.Items != null)
+                {
+                    await staticFileRepository.DeleteRange(ratingImage.Items);
                 }
                 await _ratingRepository.DeleteById(ratingId);
                 await _unitOfWork.SaveChangesAsync();
@@ -148,6 +155,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             var firebaseService = Resolve<IFirebaseService>();
             var staticFileRepository = Resolve<IGenericRepository<Image>>();
+            var listStaticFile = new List<Image>();
 
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
@@ -174,20 +182,29 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             foreach (var oldImageDelete in oldImageList)
                             {
                                 await firebaseService!.DeleteFileFromFirebase(oldImageDelete.Path);
-                                foreach (var newImage in updateRatingRequestDto.ImageFiles)
-                                {
-                                    var pathName = SD.FirebasePathName.RATING_PREFIX + $"{ratingDb.RatingId}{Guid.NewGuid()}.jpg";
-                                    var upload = await firebaseService!.UploadFileToFirebase(newImage, pathName);
-
-                                    if (!upload.IsSuccess)
-                                    {
-                                        return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
-                                    }
-                                    oldImageDelete.Path = upload.Result!.ToString()!;
-                                }
                             }
 
-                            await staticFileRepository!.UpdateRange(oldImageList);
+                            await staticFileRepository.DeleteRange(oldImageList); 
+                        }
+                        foreach (var newImage in updateRatingRequestDto.ImageFiles)
+                        {
+                            var pathName = SD.FirebasePathName.RATING_PREFIX + $"{ratingDb.RatingId}{Guid.NewGuid()}.jpg";
+                            var upload = await firebaseService!.UploadFileToFirebase(newImage, pathName);
+
+                            if (!upload.IsSuccess)
+                            {
+                                return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
+                            }
+
+                            var newStaticFileDb = new Image
+                            {
+                                StaticFileId = Guid.NewGuid(),
+                                RatingId = ratingDb.RatingId,
+                                Path = upload.Result.ToString()
+                            }; ;
+
+                            listStaticFile.Add(newStaticFileDb);
+                            await staticFileRepository!.InsertRange(listStaticFile);
                         }
                     }
 
