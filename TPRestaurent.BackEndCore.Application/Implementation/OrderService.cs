@@ -2677,10 +2677,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var nearReservationDb = await reservationTableRepository.GetAllDataByExpression(r => r.TableId == tableId
                                                                 && r.Order!.MealTime <= time.Value.AddHours(double.Parse(configDb.CurrentValue))
                                                                 && r.Order.MealTime.Value.AddHours(double.Parse(configDb.CurrentValue)) >= time
-                                                                && r.Order.OrderTypeId == OrderType.Reservation, 0, 0, r => r.Order!.ReservationDate, true, null);
+                                                                && r.Order.OrderTypeId == OrderType.Reservation, 0, 0, r => r.Order!.ReservationDate, true, o => o.Order);
                 if (nearReservationDb.Items.Count > 0)
                 {
-                    result = await GetAllOrderDetail(nearReservationDb.Items[0].OrderId);
+                    result = await GetAllOrderDetail(nearReservationDb.Items.OrderBy(o => Math.Abs(o.Order.MealTime.Value.Ticks - time.Value.Ticks)).FirstOrDefault().OrderId);
                 }
             }
             catch (Exception ex)
