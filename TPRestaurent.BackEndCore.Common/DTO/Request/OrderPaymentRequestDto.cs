@@ -10,6 +10,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
     public class OrderPaymentRequestDto
     {
         public Guid OrderId { get; set; }
+        public string? AccountId { get; set; }
         public double? CashReceived { get; set; }
         public double? ChangeReturned { get; set; }
         public PaymentMethod PaymentMethod { get; set; }
