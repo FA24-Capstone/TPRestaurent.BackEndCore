@@ -2450,7 +2450,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var utility = Resolve<Utility>();
                 var time = utility.GetCurrentDateTimeInTimeZone();
                 bool orderSessionUpdated = false;
-
+                bool hasFinishedDish = false;
                 foreach (var orderDetail in orderDetailDb.Items.ToList())
                 {
                     if (orderDetail.ComboId.HasValue)
@@ -2485,6 +2485,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     if (isSuccessful)
                                     {
                                         orderComboDetail.StatusId = DishComboDetailStatus.ReadyToServe;
+                                        if (!hasFinishedDish) hasFinishedDish = true;
                                     }
                                     else
                                     {
@@ -2507,6 +2508,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                           .All(o => o.StatusId == DishComboDetailStatus.ReadyToServe))
                                 {
                                     orderDetail.OrderDetailStatusId = OrderDetailStatus.ReadyToServe;
+                                    if (!hasFinishedDish) hasFinishedDish = true;
                                 }
                             }
                             await comboOrderDetailRepository.Update(orderComboDetail);
@@ -2531,6 +2533,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             if (isSuccessful)
                             {
                                 orderDetail.OrderDetailStatusId = OrderDetailStatus.ReadyToServe;
+                                if (!hasFinishedDish) hasFinishedDish = true;
                             }
                             else
                             {
@@ -2605,6 +2608,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
                     await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
                     await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+                }
+
+                if (hasFinishedDish)
+                {
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_FINISHED_DISHES);
                 }
 
                 result.Result = orderDetailDb;
