@@ -6,7 +6,7 @@ public interface INotificationMessageService
 {
     Task<AppActionResult> GetNotificationMessageById(Guid notifiId);
     Task<AppActionResult> GetNotificationMessageByAccountId(string accountId);
-    Task<AppActionResult> SendNotificationToAccountAsync(string accountId, string message);
+    Task<AppActionResult> SendNotificationToAccountAsync(string accountId, string message, bool ignoreSaveChanges = false);
     Task<AppActionResult> SendNotificationToRoleAsync(string roleName, string message);
     Task<AppActionResult> SendNotificationToShipperAsync(string accountId, string message);
     Task<AppActionResult> MarkAllMessageAsRead(string accountId);
