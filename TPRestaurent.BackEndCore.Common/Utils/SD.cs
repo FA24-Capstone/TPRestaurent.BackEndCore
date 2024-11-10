@@ -219,8 +219,7 @@ public class SD
         public static string LOAD_ASSIGNED_ORDER = "LOAD_ASSIGNED_ORDER";
         public static string LOAD_NOTIFICATION = "LOAD_NOTIFICATION";
         public static string LOAD_USER_ORDER = "LOAD_USER_ORDER";
-
-
+        public static string LOAD_FINISHED_DISHES = "LOAD_FINISHED_DISHES ";
     }
 
     public class NotificationHeader
