@@ -2176,5 +2176,62 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             return result;
         }
+
+        public async Task<AppActionResult> GetAccountByPhoneNumberKeyword(string phoneNumber, int pageNumber, int pageSize)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var accountDb = await _accountRepository.GetAllDataByExpression(p => p.PhoneNumber.Contains(phoneNumber), pageNumber, pageSize, null, false, null);
+                var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
+                var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
+                var listRole = await roleRepository!.GetAllDataByExpression(null, 1, 100, null, false, null);
+                var listMap = _mapper.Map<List<AccountResponse>>(accountDb.Items);
+                foreach (var item in listMap)
+                {
+                    var userRole = new List<IdentityRole>();
+                    var role = await userRoleRepository!.GetAllDataByExpression(a => a.UserId == item.Id, 1, 100, null, false, null);
+                    foreach (var itemRole in role.Items!)
+                    {
+                        var roleUser = listRole.Items!.ToList().FirstOrDefault(a => a.Id == itemRole.RoleId);
+                        if (roleUser != null) userRole.Add(roleUser);
+                    }
+
+                    item.Roles = userRole;
+                    var roleNameList = userRole.DistinctBy(i => i.Id).Select(i => i.Name).ToList();
+
+                    if (roleNameList.Contains("ADMIN"))
+                    {
+                        item.MainRole = "ADMIN";
+                    }
+                    else if (roleNameList.Contains("SHIPPER"))
+                    {
+                        item.MainRole = "SHIPPER";
+                    }
+                    else if (roleNameList.Contains("CHEF") && !roleNameList.Contains("ADMIN"))
+                    {
+                        item.MainRole = "CHEF";
+                    }
+                    else if (roleNameList.Count > 1)
+                    {
+                        item.MainRole = roleNameList.FirstOrDefault(n => !n.Equals("CUSTOMER"));
+                    }
+                    else
+                    {
+                        item.MainRole = "CUSTOMER";
+                    }
+                }
+
+                result.Result =
+                    new PagedResult<AccountResponse>
+                    { Items = listMap, TotalPages = accountDb.TotalPages };
+                return result;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
     }
 }

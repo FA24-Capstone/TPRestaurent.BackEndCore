@@ -137,6 +137,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         //    return await _accountService.SendAccountOTP(phoneNumber, otpType);
         //}
 
+        [HttpGet("get-account-by-phone-number-keyword/{pageNumber}/{pageSize}")]
+        public async Task<AppActionResult> GetAccountByPhoneNumberKeyword(string phoneNumber, int pageNumber = 1, int pageSize = 10)
+        {
+            return await _accountService.GetAccountByPhoneNumberKeyword(phoneNumber, pageNumber, pageSize);
+        }
+
         [HttpGet("get-account-by-phone-number")]
         public async Task<AppActionResult> GetCustomerInfoByPhoneNumber(string phoneNumber)
         {
