@@ -102,7 +102,7 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
         return result;
     }
 
-    public async Task<AppActionResult> SendNotificationToAccountAsync(string accountId, string message, bool ignoreSaveChanges = true)
+    public async Task<AppActionResult> SendNotificationToAccountAsync(string accountId, string message, bool ignoreSaveChanges = false)
     {
         var result = new AppActionResult();
         using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
