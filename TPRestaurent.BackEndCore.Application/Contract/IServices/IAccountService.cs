@@ -48,6 +48,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> UpRole(string accountId, string roleName);
         Task<AppActionResult> BanUser(string accountId);
         Task<AppActionResult> CreateAccountForRestaurantEmployees(EmployeeSignUpRequest signUpRequestDto, bool isGoogle);
+        Task<AppActionResult> GetAccountByPhoneNumberKeyword(string phoneNumber, int pageNumber, int pageSize);
         Task DeleteOverdueOTP();
     }
 }
