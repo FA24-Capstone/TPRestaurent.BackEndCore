@@ -1052,7 +1052,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         orderWithPayment.Order = order;
 
-                        orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Reserved);
+                        orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
                         order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
 
                         await orderDetailRepository.InsertRange(orderDetails);
