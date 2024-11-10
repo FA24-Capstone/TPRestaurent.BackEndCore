@@ -2450,7 +2450,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var utility = Resolve<Utility>();
                 var time = utility.GetCurrentDateTimeInTimeZone();
                 bool orderSessionUpdated = false;
-
+                bool hasFinishedDish = false;
                 foreach (var orderDetail in orderDetailDb.Items.ToList())
                 {
                     if (orderDetail.ComboId.HasValue)
@@ -2485,6 +2485,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     if (isSuccessful)
                                     {
                                         orderComboDetail.StatusId = DishComboDetailStatus.ReadyToServe;
+                                        if (!hasFinishedDish) hasFinishedDish = true;
                                     }
                                     else
                                     {
@@ -2507,6 +2508,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                           .All(o => o.StatusId == DishComboDetailStatus.ReadyToServe))
                                 {
                                     orderDetail.OrderDetailStatusId = OrderDetailStatus.ReadyToServe;
+                                    if (!hasFinishedDish) hasFinishedDish = true;
                                 }
                             }
                             await comboOrderDetailRepository.Update(orderComboDetail);
@@ -2531,6 +2533,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             if (isSuccessful)
                             {
                                 orderDetail.OrderDetailStatusId = OrderDetailStatus.ReadyToServe;
+                                if (!hasFinishedDish) hasFinishedDish = true;
                             }
                             else
                             {
@@ -2607,6 +2610,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
                 }
 
+                if (hasFinishedDish)
+                {
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_FINISHED_DISHES);
+                }
+
                 result.Result = orderDetailDb;
 
             }
@@ -2677,7 +2685,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var nearReservationDb = await reservationTableRepository.GetAllDataByExpression(r => r.TableId == tableId
                                                                 && r.Order!.MealTime <= time.Value.AddHours(double.Parse(configDb.CurrentValue))
                                                                 && r.Order.MealTime.Value.AddHours(double.Parse(configDb.CurrentValue)) >= time
-                                                                && r.Order.OrderTypeId == OrderType.Reservation, 0, 0, r => r.Order!.ReservationDate, true, o => o.Order);
+                                                                && r.Order.OrderTypeId == OrderType.Reservation
+                                                                && r.Order.StatusId == OrderStatus.DepositPaid, 0, 0, r => r.Order!.ReservationDate, true, o => o.Order);
                 if (nearReservationDb.Items.Count > 0)
                 {
                     result = await GetAllOrderDetail(nearReservationDb.Items.OrderBy(o => Math.Abs(o.Order.MealTime.Value.Ticks - time.Value.Ticks)).FirstOrDefault().OrderId);
