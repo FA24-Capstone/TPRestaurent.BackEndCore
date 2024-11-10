@@ -102,7 +102,7 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
         return result;
     }
 
-    public async Task<AppActionResult> SendNotificationToAccountAsync(string accountId, string message)
+    public async Task<AppActionResult> SendNotificationToAccountAsync(string accountId, string message, bool ignoreSaveChanges = false)
     {
         var result = new AppActionResult();
         using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
@@ -145,7 +145,7 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
                         }
                     }
                 }
-                if (!BuildAppActionResultIsError(result))
+                if (!BuildAppActionResultIsError(result) && !ignoreSaveChanges)
                 {
                     await _unitOfWork.SaveChangesAsync();
                 }
