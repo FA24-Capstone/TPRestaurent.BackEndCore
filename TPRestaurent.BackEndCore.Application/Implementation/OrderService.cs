@@ -716,7 +716,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
                                 estimatedPreparationTime.Add(new CalculatePreparationTime
                                 {
-                                    PreparationTime = combo.PreparationTime.Value,
+                                    PreparationTime = combo.PreparationTime == null ? comboOrderDetails.Sum(c => c.PreparationTime) : combo.PreparationTime.Value,
                                     Quantity = orderDetail.Quantity
                                 });
                             }
@@ -936,7 +936,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ {accountDb.Address}");
                         }
 
-                        var customerAddressDb = customerInfoAddressListDb.Items.FirstOrDefault();
+                        var customerAddressDb = customerInfoAddressListDb.Items.FirstOrDefault(c => c.IsCurrentUsed && !c.IsDeleted);
 
                         order.AddressId = customerAddressDb.CustomerInfoAddressId;
 
@@ -1067,7 +1067,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                              username, order)
                                     );
                                 string notificationEmailMessage = "Nhà hàng đã gửi thông báo mới tới email của bạn";
-                                await notificationService!.SendNotificationToAccountAsync(accountDb.Id, notificationEmailMessage);
+                                await notificationService!.SendNotificationToAccountAsync(accountDb.Id, notificationEmailMessage, true);
 
                             }
                             else
@@ -1077,7 +1077,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                            $"Xin chân trọng cảm ơn quý khách.";
                                 //await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
                                 string notificationSmsMessage = "Nhà hàng đã gửi thông báo mới tới số điện thoại của bạn";
-                                await notificationService!.SendNotificationToAccountAsync(accountDb.Id, notificationSmsMessage);
+                                await notificationService!.SendNotificationToAccountAsync(accountDb.Id, notificationSmsMessage, true);
 
                             }
                         }
@@ -3595,7 +3595,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await loyalPointsHistoryRepository!.Insert(newLoyaltyPointHistory);
 
                     string message = $"Đơn hàng ID {order.OrderId} đã bị hủy và chúng tôi đã hoàn tiền {order.TotalAmount} cho bạn.";
-                    await notificationService!.SendNotificationToAccountAsync(accountDb.Id, message);
+                    await notificationService!.SendNotificationToAccountAsync(accountDb.Id, message, true);
                 }
                 else
                 {
