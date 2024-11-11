@@ -264,7 +264,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var dishTagDb = await dishTagRepository!.GetAllDataByExpression(d => d.DishId == dishId, 0, 0, null, false, d => d.Tag);
                 dishResponse.DishTags = dishTagDb.Items.DistinctBy(t => t.TagId).ToList();
-                var dishSizeDetailsDb = await dishSizeRepository.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.Dish!, p => p.DishSize!);
+                var dishSizeDetailsDb = await dishSizeRepository.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.DishSize!);
                 if (dishSizeDetailsDb!.Items!.Count < 0 && dishSizeDetailsDb.Items == null)
                 {
                     result = BuildAppActionResultError(result, $"size món ăn với id {dishId} không tồn tại");
@@ -280,10 +280,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     foreach (var orderDetail in orderDetailDb.Items)
                     {
-                        var ratingDb = await ratingRepository!.GetByExpression(p => p.OrderDetailId == orderDetail.OrderDetailId);
+                        var ratingDb = await ratingRepository!.GetAllDataByExpression(p => p.OrderDetailId == orderDetail.OrderDetailId, 0, 0, null, false, p => p.UpdateByAccount, p => p.CreateByAccount);
                         if (ratingDb != null)
                         {
-                            ratingListDb.Add(ratingDb);
+                            ratingListDb.AddRange(ratingDb.Items);
                         }
                     }
                 }
@@ -659,16 +659,30 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
             try
             {
-                var dishSizeDetailsDb = await dishSizeDetailRepository!.GetAllDataByExpression(p => p.DailyCountdown != 0, 0, 0, null, false, p => p.Dish);
+                var dishSizeDetailsDb = await dishSizeDetailRepository!.GetAllDataByExpression(p => p.DailyCountdown != 0 && !p.Dish.IsDeleted, 0, 0, null, false, null);
                 var dishSizeDetailsList = dishSizeDetailsDb.Items;
                 if (dishSizeDetailsList!.Count > 0 && dishSizeDetailsList != null)
                 {
                     foreach (var dishSizeDetail in dishSizeDetailsDb!.Items!)
                     {
                         dishSizeDetail.QuantityLeft = dishSizeDetail.DailyCountdown;    
-                        dishSizeDetail.IsAvailable = true;  
+                        if(dishSizeDetail.DailyCountdown == 0)
+                        {
+                            dishSizeDetail.IsAvailable = false;
+                        } else
+                        {
+                            dishSizeDetail.IsAvailable = true;
+                        }
                     }
-
+                    var listDish = new List<Dish>();
+                    var dishGroup = dishSizeDetailsDb.Items.GroupBy(d => d.DishId).ToDictionary(d => d.Key, d => d.ToList());
+                    foreach(var dish in dishGroup)
+                    {
+                        var dishDb = await _dishRepository.GetById(dish.Key);
+                        dishDb.isAvailable = !dish.Value.All(d => !d.IsAvailable);
+                        listDish.Add(dishDb);
+                    }
+                    await _dishRepository.UpdateRange(listDish);
                     await dishSizeDetailRepository.UpdateRange(dishSizeDetailsList);
                 }
                 await _unitOfWork.SaveChangesAsync();   
