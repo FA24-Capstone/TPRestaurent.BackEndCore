@@ -106,6 +106,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             OrderDetailId = Guid.NewGuid(),
                             OrderId = dto.OrderId,
+                            OrderSessionId = orderSession.OrderSessionId
                         };
 
                         if (o.Combo != null)
