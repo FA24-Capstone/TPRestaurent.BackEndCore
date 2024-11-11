@@ -67,6 +67,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public string Note { get; set; }    
         public DateTime OrderTime { get; set; }   
         public Domain.Enums.OrderDetailStatus StatusId { get; set; }
+        public bool IsRated { get; set; }
         public Domain.Models.EnumModels.OrderDetailStatus Status { get; set; }
 
     }
