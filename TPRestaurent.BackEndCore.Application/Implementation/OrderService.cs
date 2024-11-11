@@ -2894,7 +2894,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         StatusId = r.OrderDetailStatusId,
                         Status = r.OrderDetailStatus,
                         OrderTime = r.OrderTime,
-                        Note = r.Note
+                        Note = r.Note,
+                        IsRated = r.IsRated,
                     });
                 }
                 else
@@ -2908,7 +2909,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         StatusId = r.OrderDetailStatusId,
                         Status = r.OrderDetailStatus,
                         OrderTime = r.OrderTime,
-                        Note = r.Note
+                        Note = r.Note,
+                        IsRated = r.IsRated
                     });
                 }
             }
