@@ -38,6 +38,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 try
                 {
+                    var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                    var orderDetailDb = await orderDetailRepository.GetById(createRatingRequestDto.OrderDetailId);
+                    if (orderDetailDb == null)
+                    {
+                        return BuildAppActionResultError(result, $"Không tìm thấy chi tiết đơn hàng với id {createRatingRequestDto.OrderDetailId}");
+                    }
+
+                    orderDetailDb.IsRated = true;
+
                     var newRating = new Rating
                     {
                         RatingId = Guid.NewGuid(),
@@ -75,6 +84,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     if (!BuildAppActionResultIsError(result))
                     {
+                        await orderDetailRepository.Update(orderDetailDb);
                         await _ratingRepository.Insert(newRating);
                         await _unitOfWork.SaveChangesAsync();
                         scope.Complete();
@@ -169,7 +179,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     ratingDb.Title = updateRatingRequestDto.Title;
                     ratingDb.PointId = updateRatingRequestDto.PointId;
-                    ratingDb.UpdateBy = updateRatingRequestDto.AccountId;
                     ratingDb.Content = updateRatingRequestDto.Content;
                     ratingDb.UpdateDate = utility.GetCurrentDateInTimeZone();
 

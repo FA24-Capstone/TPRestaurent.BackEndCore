@@ -167,6 +167,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.GetBestSellerDishesAndCombo(topNumber, startTime, endTime);
         }
 
+        [HttpGet("get-all-order-detail-by-account-id/{accountId}/{feedbackStatus}/{pageNumber}/{pageSize}")]
+        public async Task<AppActionResult> GetAllOrderDetailByAccountId(string accountId, int feedbackStatus, int pageNumber = 1, int pageSize = 10)
+        {
+            return await _service.GetAllOrderDetailByAccountId(accountId, feedbackStatus, pageNumber, pageSize);
+        }
+
         //[HttpPut("over")]
         //public async Task CancelOverReservation()
         //{
