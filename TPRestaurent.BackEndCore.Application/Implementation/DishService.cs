@@ -292,7 +292,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     foreach (var rating in ratingListDb)
                     {
-                        var ratingStaticFileDb = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == rating.RatingId, 0, 0, null, false, null);
+                        var ratingStaticFileDb = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == rating.RatingId, 0, 0, null, false, r => r.Rating.UpdateByAccount, r => r.Rating.CreateByAccount);
                         var ratingDishResponse = new RatingResponse
                         {
                             Rating = rating,
