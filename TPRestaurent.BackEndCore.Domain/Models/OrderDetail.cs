@@ -31,6 +31,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public DateTime? ReadyToServeTime { get; set; }
         public DateTime? CancelTime { get; set; }
         public double PreparationTime { get; set; }
+        public bool IsRated { get; set; }
         public OrderDetailStatus OrderDetailStatusId { get; set; }
         [ForeignKey(nameof(OrderDetailStatusId))]
         public EnumModels.OrderDetailStatus? OrderDetailStatus { get; set; }     

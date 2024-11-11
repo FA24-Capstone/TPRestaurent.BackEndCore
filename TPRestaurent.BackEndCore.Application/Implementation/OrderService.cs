@@ -2856,17 +2856,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 return BuildAppActionResultError(new AppActionResult(), ex.Message);
             }
         }
-        private async Task<List<Common.DTO.Response.OrderDishDto>> GetReservationDishes2(Guid reservationId)
+        private async Task<List<Common.DTO.Response.OrderDishDto>> GetReservationDishes2(Guid reservationId, List<OrderDetail> orderDetails = null)
         {
-            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-            var reservationDishDb = await orderDetailRepository.GetAllDataByExpression(
-                o => o.OrderId == reservationId,
-                0, 0, null, false,
-                o => o.DishSizeDetail.Dish,
-                o => o.DishSizeDetail.DishSize,
-                o => o.Combo,
-                o => o.OrderDetailStatus
-            );
+            var reservationDishDb = new PagedResult<OrderDetail>();
+            if(orderDetails != null && orderDetails.Count > 0)
+            {
+                reservationDishDb = new PagedResult<OrderDetail>
+                {
+                    Items = orderDetails
+                };
+            } else
+            {
+                reservationDishDb = await _detailRepository.GetAllDataByExpression(
+                    o => o.OrderId == reservationId,
+                    0, 0, null, false,
+                    o => o.DishSizeDetail.Dish,
+                    o => o.DishSizeDetail.DishSize,
+                    o => o.Combo,
+                    o => o.OrderDetailStatus
+                );
+            }
 
             var reservationDishes = new List<Common.DTO.Response.OrderDishDto>();
             var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
@@ -3932,6 +3941,41 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var username = order.Account?.FirstName + "" + order.Account?.LastName;
                     emailService.SendEmail(order.Account?.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateMailToCancelReservation(username, order));
                 }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetAllOrderDetailByAccountId(string accountId, int feedbackStatus, int pageNumber, int pageSize)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var accountRepository = Resolve<IGenericRepository<Account>>();
+                var accountDb = await accountRepository.GetById(accountId);
+                if(accountDb == null)
+                {
+                    result = BuildAppActionResultError(result, $"Không tìm thấy tài khoản với id {accountId}");
+                }
+                var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => !string.IsNullOrEmpty(o.Order.AccountId)
+                                                                                        && o.Order.AccountId.Equals(accountId)
+                                                                                        && (feedbackStatus == 1) == o.IsRated
+                                                                                        && o.Order.StatusId == OrderStatus.Completed
+                                                                                        ,pageNumber, pageSize, o => o.OrderTime, false,
+                                                                                        o => o.DishSizeDetail.Dish.DishItemType,
+                                                                                        o => o.DishSizeDetail.DishSize,
+                                                                                        o => o.Combo.Category,
+                                                                                        o => o.OrderDetailStatus);
+                var data = await GetReservationDishes2(Guid.NewGuid(), orderDetailDb.Items);
+
+                result.Result = new PagedResult<OrderDishDto>
+                {
+                    Items = data,
+                    TotalPages = orderDetailDb.TotalPages
+                };
             }
             catch (Exception ex)
             {

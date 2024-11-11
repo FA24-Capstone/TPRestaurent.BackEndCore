@@ -14,6 +14,5 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public Domain.Enums.RatingPoint PointId { get; set; }
         public string? Content { get; set; } = null!;
         public List<IFormFile>? ImageFiles { get; set; } = new List<IFormFile>();
-        public string? AccountId = null!;
     }
 }
