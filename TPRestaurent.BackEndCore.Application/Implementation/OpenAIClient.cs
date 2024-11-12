@@ -22,7 +22,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                            .Build();
             string apiKey = config["OpenAI:Key"];
             _client = new ChatClient(
-                model: "gpt-4o-mini", 
+                model: "ft:gpt-4o-mini-2024-07-18:personal:thienphu-test2:ASpKqn1d", 
                 apiKey: apiKey
                 );
         }

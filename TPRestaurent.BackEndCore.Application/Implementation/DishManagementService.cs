@@ -16,7 +16,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 {
     public class DishManagementService : GenericBackendService, IDishManagementService
     {
-        private IGenericRepository<DishSizeDetail> _dishRepository;
+        private IGenericRepository<DishSizeDetail> _dishDetailRepository;
         private IGenericRepository<DishCombo> _dishComboRepository;
         private IGenericRepository<Combo> _comboRepository;
         private IMapper _mapper;
@@ -28,7 +28,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                      IGenericRepository<Combo> comboRepository,
                                      IMapper mapper, IUnitOfWork unitOfWork) : base(serviceProvider)
         {
-            _dishRepository = dishRepository;
+            _dishDetailRepository = dishRepository;
             _dishComboRepository = dishComboRepository;
             _comboRepository = comboRepository;
             _mapper = mapper;
@@ -68,7 +68,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var utility = Resolve<Utility>();
                 var dishRepository = Resolve<IGenericRepository<Dish>>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
-                var dishDb = await _dishRepository.GetAllDataByExpression(d => !d.Dish.IsDeleted, 0, 0, null, false, null); 
+                var dishDb = await _dishDetailRepository.GetAllDataByExpression(d => !d.Dish.IsDeleted, 0, 0, null, false, null); 
                 var comboDb = await _comboRepository.GetAllDataByExpression(d => !d.IsDeleted && d.StartDate <= currentTime && d.EndDate >= currentTime
                                                                                  , 0, 0, null, false, null);
 
@@ -98,6 +98,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             try
             {
+                var dishRepository = Resolve<IGenericRepository<Dish>>();
                 var dishComboDb = await _dishComboRepository.GetAllDataByExpression(d => !d.IsDeleted && !d.ComboOptionSet.Combo.IsDeleted, 0, 0, null, false, o => o.DishSizeDetail, o => o.ComboOptionSet);
                 if (dishComboDb.Items.Count > 0)
                 {
@@ -107,6 +108,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             dishCombo.IsAvailable = true;
                             dishCombo.QuantityLeft = dishCombo.DishSizeDetail.QuantityLeft / dishCombo.Quantity;
+                        } else
+                        {
+                            dishCombo.IsAvailable = false;
                         }
                     }
                     var comboDictionary = dishComboDb.Items.GroupBy(c => c.ComboOptionSet.ComboId)
@@ -125,9 +129,44 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             comboDb.IsAvailable = false;
                         }
                         comboList.Add(comboDb);
-                    }
+                    }                   
                     await _dishComboRepository.UpdateRange(dishComboDb.Items);
                     await _comboRepository.UpdateRange(comboList);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
+        public async Task UpdateDishAvailability(List<Guid> dishSizeDetailIds = null)
+        {
+            try
+            {
+                var dishRepository = Resolve<IGenericRepository<Dish>>();
+                var dishDetailDb = await _dishDetailRepository.GetAllDataByExpression(d => !d.Dish.IsDeleted && (dishSizeDetailIds == null 
+                                                                                            || dishSizeDetailIds.Contains(d.DishSizeDetailId)), 0, 0, null, false, null);
+                if(dishDetailDb.Items.Count > 0)
+                {
+                    var dishDictionary = dishDetailDb.Items.GroupBy(c => c.DishId)
+                                      .ToDictionary(c => c.Key, c => c.ToList());
+                    List<Dish> dishList = new List<Dish>();
+                    foreach (var dish in dishDictionary)
+                    {
+                        var dishDb = await dishRepository.GetById(dish.Key);
+                        if (dish.Value.Any(d => d.IsAvailable))
+                        {
+                            dishDb.isAvailable = true;
+                        }
+                        else
+                        {
+                            dishDb.isAvailable = false;
+                        }
+                        dishList.Add(dishDb);
+                    }
+
+                    await dishRepository.UpdateRange(dishList);
                     await _unitOfWork.SaveChangesAsync();
                 }
             }
@@ -143,7 +182,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 foreach (var item in dto)
                 {
-                    var dishSizeDetailDb = await _dishRepository.GetById(item.DishSizeDetailId);
+                    var dishSizeDetailDb = await _dishDetailRepository.GetById(item.DishSizeDetailId);
                     if (item.QuantityLeft.HasValue)
                     {
                         dishSizeDetailDb.QuantityLeft = item.QuantityLeft.Value;
@@ -166,12 +205,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         dishSizeDetailDb.IsAvailable = true;
                     }
 
-                    await _dishRepository.Update(dishSizeDetailDb);
+                    await _dishDetailRepository.Update(dishSizeDetailDb);
                 }
                 if(!BuildAppActionResultIsError(result))
                 {
                     await _unitOfWork.SaveChangesAsync();
                     await UpdateComboAvailability();
+                    await UpdateDishAvailability(dto.Select(d => d.DishSizeDetailId).ToList());
                 }
             }
             catch (Exception ex)
