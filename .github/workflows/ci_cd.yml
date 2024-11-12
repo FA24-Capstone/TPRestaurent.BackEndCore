@@ -9,9 +9,10 @@ on:
 env:
   AZURE_WEBAPP_PACKAGE_PATH: '.'
   DOTNET_VERSION: '6.0.x'
-  DOCKER_IMAGE_NAME: hongquan0312/restaurant
-  AZURE_CONTAINER_APP_NAME: thienphurestaurant
-  AZURE_RESOURCE_GROUP: TPRestaurentResourceGroup
+  ACR_NAME: 'thienphurestaurant'  # Replace with your ACR name
+  ACR_IMAGE_NAME: 'restaurant'
+  AZURE_CONTAINER_APP_NAME: 'thienphurestaurant'
+  AZURE_RESOURCE_GROUP: 'TPRestaurentResourceGroup'
 
 jobs:
   build:
@@ -26,9 +27,6 @@ jobs:
                 "content": "@everyone \n\n=============================== \n\n🚀 **CI/CD Pipeline Started** \n**Start Time:** '"$START_TIME"' (Vietnam Time) \n**Branch:** '"${{ github.ref }}"' \n=============================== \n\n🔧 **Initializing the build process...**"
               }' \
           ${{ secrets.DISCORD_WEBHOOK }}
-
-      - name: Checkout Code
-        run: echo "Checking out the code..."  # You can leave this for context or remove it if not needed
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -96,8 +94,10 @@ jobs:
               }' \
           ${{ secrets.DISCORD_WEBHOOK }}
 
-      - name: Checkout Code
-        run: echo "Checking out the code for Docker..."  # You can leave this for context or remove it if not needed
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Build Docker image
         run: |
@@ -106,24 +106,22 @@ jobs:
                 "content": "🐳 **Building Docker image...**"
               }' \
           ${{ secrets.DISCORD_WEBHOOK }}
-          docker build -t ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} -f TPRestaurent.BackEndCore.API/Dockerfile .
+          docker build -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.ACR_IMAGE_NAME }}:${{ github.sha }} -f TPRestaurent.BackEndCore.API/Dockerfile .
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: Push Docker image to Docker Hub
+      - name: Push Docker image to ACR
         run: |
           curl -H "Content-Type: application/json" \
           -d '{
-                "content": "📤 **Pushing Docker image to Docker Hub...**"
+                "content": "📤 **Pushing Docker image to ACR...**"
               }' \
           ${{ secrets.DISCORD_WEBHOOK }}
-          docker push ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
-          docker tag ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} ${{ env.DOCKER_IMAGE_NAME }}:latest
-          docker push ${{ env.DOCKER_IMAGE_NAME }}:latest
+          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.ACR_IMAGE_NAME }}:${{ github.sha }}
+          docker tag ${{ env.ACR_NAME }}.azurecr.io/${{ env.ACR_IMAGE_NAME }}:${{ github.sha }} ${{ env.ACR_NAME }}.azurecr.io/${{ env.ACR_IMAGE_NAME }}:latest
+          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.ACR_IMAGE_NAME }}:latest
+
+      - name: Azure logout
+        run: az logout
+        if: always()
 
       # Notify about Docker success/failure
       - name: Notify Discord - Docker Success
@@ -131,7 +129,7 @@ jobs:
         run: |
           curl -H "Content-Type: application/json" \
           -d '{
-                "content": "✅ **Docker image built and pushed successfully!**\n\n🔗 Available on Docker Hub as: **'"${{ env.DOCKER_IMAGE_NAME }}"'**.\n**Commit:** '"${{ github.sha }}"' \n\n"
+                "content": "✅ **Docker image built and pushed successfully!**\n\n🔗 Available on ACR as: **'"${{ env.ACR_NAME }}.azurecr.io/${{ env.ACR_IMAGE_NAME }}"'**.\n**Commit:** '"${{ github.sha }}"' \n\n"
               }' \
           ${{ secrets.DISCORD_WEBHOOK }}
 
@@ -153,12 +151,9 @@ jobs:
         run: |
           curl -H "Content-Type: application/json" \
           -d '{
-                "content": "📦 Proceeding to deployment...\n\n 🚀 **Starting deployment to Azure Container Apps...**\n\n🔄 Deploying the latest Docker image.\n**Image:** '"${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}"' \n"
+                "content": "📦 Proceeding to deployment...\n\n 🚀 **Starting deployment to Azure Container Apps...**\n\n🔄 Deploying the latest Docker image.\n**Image:** '"${{ env.ACR_NAME }}.azurecr.io/${{ env.ACR_IMAGE_NAME }}:${{ github.sha }}"' \n"
               }' \
           ${{ secrets.DISCORD_WEBHOOK }}
-
-      - name: Checkout Code
-        run: echo "Checking out the code for deployment..."  # You can leave this for context or remove it if not needed
 
       - name: Azure Login
         uses: azure/login@v1
@@ -170,10 +165,10 @@ jobs:
         with:
           containerAppName: ${{ env.AZURE_CONTAINER_APP_NAME }}
           resourceGroup: ${{ env.AZURE_RESOURCE_GROUP }}
-          imageToDeploy: ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
-          registryUrl: docker.io
-          registryUsername: ${{ secrets.DOCKER_HUB_USERNAME }}
-          registryPassword: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          imageToDeploy: ${{ env.ACR_NAME }}.azurecr.io/${{ env.ACR_IMAGE_NAME }}:${{ github.sha }}
+          registryUrl: ${{ env.ACR_NAME }}.azurecr.io
+          registryUsername: ${{ secrets.AZURE_CREDENTIALS_USERNAME }}
+          registryPassword: ${{ secrets.AZURE_CREDENTIALS_PASSWORD }}
           location: 'southeastasia'
 
       - name: Azure logout
@@ -187,7 +182,7 @@ jobs:
           END_TIME=$(TZ="Asia/Ho_Chi_Minh" date)
           curl -H "Content-Type: application/json" \
           -d '{
-                "content": "@everyone \n\n=============================== \n\n🎉 **Deployment Successful!** \n**End Time:** '"$END_TIME"' (Vietnam Time) \n**Branch:** '"${{ github.ref }}"' \n**Image Deployed:** '"${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}"' \n=============================== \n\n🚀 The deployment to Azure Container Apps was successful!"
+                "content": "@everyone \n\n=============================== \n\n🎉 **Deployment Successful!** \n**End Time:** '"$END_TIME"' (Vietnam Time) \n**Branch:** '"${{ github.ref }}"' \n**Image Deployed:** '"${{ env.ACR_NAME }}.azurecr.io/${{ env.ACR_IMAGE_NAME }}:${{ github.sha }}"' \n=============================== \n\n🚀 The deployment to Azure Container Apps was successful!"
               }' \
           ${{ secrets.DISCORD_WEBHOOK }}
 
