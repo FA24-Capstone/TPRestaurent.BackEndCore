@@ -17,6 +17,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private IConfigService _configService; 
         private IOrderService _orderService; 
         private IOrderSessionService _orderSessionService;
+        private IDishManagementService _dishManagementService;
         private IUnitOfWork _unitOfWork;
         private IStoreCreditService _storeCreditService;  
         private IAccountService _accountService;
@@ -31,7 +32,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             IUnitOfWork unitOfWork,
             IOrderService orderService,
             IOrderSessionService orderSessionService,
-            //IReservationService reservationService,
+            IDishManagementService dishManagementService,
             IConfigService configService,
             IStoreCreditService storeCreditService,
             IAccountService accountService,
@@ -52,7 +53,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _groupedDishCraftService = groupedDishCraftService;
             _transactionService = transactionService;   
             _invoiceService = invoiceService;
-            _dishService = dishService; 
+            _dishService = dishService;
+            _dishManagementService = dishManagementService;
+
         }
 
 
@@ -83,7 +86,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             RecurringJob.AddOrUpdate(() => _orderSessionService.UpdateLateOrderSession(), Cron.MinuteInterval(3), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _orderService.CancelOrder(), Cron.MinuteInterval(10), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _invoiceService.GenerateInvoice(), "01 0 * * *", vietnamTimeZone);
-            RecurringJob.AddOrUpdate(() => _dishService.AutoRefillDish(), Cron.DayInterval(1), vietnamTimeZone);
+            RecurringJob.AddOrUpdate(() => _dishService.AutoRefillDish(), "01 0 * * *", vietnamTimeZone);
+            RecurringJob.AddOrUpdate(() => _dishManagementService.UpdateComboAvailability(), "03 0 * * *", vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _orderSessionService.ClearOrderSessionDaily(), Cron.DayInterval(1), vietnamTimeZone);
 
 

@@ -219,10 +219,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var dishIds = dishSizeResponses.Select(d => d.Dish.DishId).ToList();
                 var ratingRepository = Resolve<IGenericRepository<Rating>>();
-                var ratingDb = await ratingRepository.GetAllDataByExpression(o => o.OrderDetailId.HasValue && o.OrderDetail.DishSizeDetailId != null && dishIds.Contains(o.OrderDetail.DishSizeDetail.DishId.Value), 0, 0, null, false, null);
+                var ratingDb = await ratingRepository.GetAllDataByExpression(o => o.OrderDetailId.HasValue && o.OrderDetail.DishSizeDetailId != null && dishIds.Contains(o.OrderDetail.DishSizeDetail.DishId.Value), 0, 0, null, false, r => r.OrderDetail.DishSizeDetail);
                 if (ratingDb.Items.Count > 0)
                 {
-                    var dishRating = ratingDb.Items.GroupBy(r => r.OrderDetail.DishSizeDetail.DishId).ToDictionary(r => r.Key, r => r.ToList());
+                    var dishRating = ratingDb.Items.Where(r => r.OrderDetail.DishSizeDetailId.HasValue).GroupBy(r => r.OrderDetail.DishSizeDetail.DishId).ToDictionary(r => r.Key, r => r.ToList());
                     foreach (var response in responses)
                     {
                         response.Dish.NumberOfRating = dishRating[response.Dish.DishId].Count();
@@ -234,7 +234,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             if (r.PointId == RatingPoint.Four) return 4;
                             return 5;
                         });
-                    }
+                    }                   
                 }
             }
             catch (Exception ex)
