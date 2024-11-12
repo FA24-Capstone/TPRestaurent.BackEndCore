@@ -167,7 +167,7 @@ jobs:
           resourceGroup: ${{ env.AZURE_RESOURCE_GROUP }}
           imageToDeploy: ${{ env.ACR_NAME }}.azurecr.io/${{ env.ACR_IMAGE_NAME }}:${{ github.sha }}
           registryUrl: ${{ env.ACR_NAME }}.azurecr.io
-          registryUsername: ${{ secrets.AZURE_CREDENTIALS_USERNAME }}
+          registryUsername: ${{ env.ACR_NAME }}
           registryPassword: ${{ secrets.AZURE_CREDENTIALS_PASSWORD }}
           location: 'southeastasia'
 
