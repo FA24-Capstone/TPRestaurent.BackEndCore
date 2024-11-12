@@ -93,11 +93,7 @@ jobs:
                 "content": "🔄 Proceeding to Docker image build...🔄\n\n **Starting Docker image build...**\n\n🔍 Building the image from the Dockerfile. Please wait...\n**Branch:** '"${{ github.ref }}"' \n**Commit:** '"${{ github.sha }}"' \n"
               }' \
           ${{ secrets.DISCORD_WEBHOOK }}
-
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+  
 
       - name: Build Docker image
         run: |
@@ -107,7 +103,14 @@ jobs:
               }' \
           ${{ secrets.DISCORD_WEBHOOK }}
           docker build -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.ACR_IMAGE_NAME }}:${{ github.sha }} -f TPRestaurent.BackEndCore.API/Dockerfile .
-
+      
+      - name: Log in to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.AZURE_REGISTRY_NAME }}.azurecr.io
+          username: ${{ secrets.AZURE_CLIENT_ID }}
+          password: ${{ secrets.AZURE_CLIENT_SECRET }}
+          
       - name: Push Docker image to ACR
         run: |
           curl -H "Content-Type: application/json" \
