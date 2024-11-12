@@ -259,7 +259,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (replacements.TryGetValue(placeholder, out DateTime dateValue))
                 {
                     return dateValue.ToString("yyyy-MM-dd");
-                }
+            }
                 return placeholder; // Leave unchanged if not found
             });
 
