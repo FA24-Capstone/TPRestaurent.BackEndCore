@@ -37,7 +37,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
-                response = "Xảy ra lỗi. Vui lòng thử lại";
+                response = ex.Message;
             }
             return response;
         }
