@@ -27,5 +27,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _service.UpdateDishQuantity(dto);
         }
+
+        [HttpPut("update-combo-availability")]
+        public async Task UpdateComboAvailability()
+        {
+           await _service.UpdateComboAvailability();
+        }
     }
 }

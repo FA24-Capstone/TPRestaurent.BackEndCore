@@ -190,7 +190,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var currentDateTime = Resolve<Utility>().GetCurrentDateTimeInTimeZone();
                 var comboDb = await _comboRepository.GetAllDataByExpression(
-                    p => (string.IsNullOrEmpty(keyword) || p.Name.Contains(keyword)) || p.CategoryId == category || p.Price >= startPrice && p.Price <= endPrice && p.EndDate > currentDateTime && !p.IsDeleted,
+                    p => (string.IsNullOrEmpty(keyword) || p.Name.Contains(keyword)) 
+                    && (!category.HasValue || category.HasValue && p.CategoryId == category.Value)
+                    && (!startPrice.HasValue || p.Price >= startPrice.Value)
+                    && (!endPrice.HasValue || p.Price <= endPrice.Value)
+                    && p.EndDate > currentDateTime && !p.IsDeleted,
                     pageNumber, pageSize, p => p.Price, false, c => c.Category
                 );
 
@@ -221,7 +225,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var ratingRepository = Resolve<IGenericRepository<Rating>>();
                 var ratingDb = await ratingRepository.GetAllDataByExpression(
                     o => o.OrderDetailId.HasValue && o.OrderDetail.ComboId.HasValue && comboIds.Contains(o.OrderDetail.ComboId.Value),
-                    0, 0, null, false, null
+                    0, 0, null, false, r => r.OrderDetail
                 );
 
                 if (ratingDb.Items.Count > 0)

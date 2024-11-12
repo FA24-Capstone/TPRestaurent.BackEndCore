@@ -46,6 +46,8 @@ public class ServiceInstaller : IInstaller
         services.AddScoped<IFileService, FileService>();
         services.AddScoped<IInvoiceService, InvoiceService>();
         services.AddScoped<IRatingService, RatingService>();
+        services.AddScoped<IOpenAIClient, OpenAIClient>();
+        services.AddScoped<IChatBotService, ChatBotService>();
 
     }
 }

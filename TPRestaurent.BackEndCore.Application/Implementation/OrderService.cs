@@ -79,6 +79,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     var orderDb = await _repository.GetById(dto.OrderId);
                     var utility = Resolve<Utility>();
+                    var orderCombo = false;
                     if (orderDb == null)
                     {
                         result = BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {dto.OrderId}");
@@ -112,6 +113,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (o.Combo != null)
                         {
                             var combo = await comboRepository!.GetById(o.Combo.ComboId);
+                            orderCombo = true;
                             orderDetail.Price = combo.Price;
                             orderDetail.ComboId = combo.ComboId;
 
@@ -226,8 +228,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await comboOrderDetailRepository!.InsertRange(comboOrderDetails);
                     await dishSizeDetailRepository!.UpdateRange(dishSizeDetails);
                     await _unitOfWork.SaveChangesAsync();
+                    if (orderCombo)
+                    {
+                        await dishManagementService.UpdateComboAvailability();
+                    }
                     scope.Complete();
-
                     await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
                     await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
                     //AddOrderMessageToChef
@@ -249,6 +254,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                     var transactionService = Resolve<ITransactionService>();
+                    var dishManagementService = Resolve<IDishManagementService>();
                     var orderDb = await _repository.GetById(orderId);
                     var updateDishSizeDetailList = new List<DishSizeDetail>();
                     var utility = Resolve<Utility>();
@@ -433,7 +439,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 return BuildAppActionResultError(result, $"Thực hiện hoàn tiền thất bại");
                             }
                         }
-
+                        await dishManagementService.UpdateComboAvailability();
                         scope.Complete();
                         if ((!requireSignalR.HasValue || requireSignalR.Value) && (orderDb.StatusId == OrderStatus.Processing || orderDb.StatusId == OrderStatus.ReadyForDelivery))
                         {
@@ -514,7 +520,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var createdOrderId = new Guid();
                     var combo = new Combo();
                     var orderWithPayment = new OrderWithPaymentResponse();
-
+                    var orderCombo = false;
                     var order = new Order()
                     {
                         OrderId = Guid.NewGuid(),
@@ -650,6 +656,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                             else if (item.Combo != null)
                             {
+                                orderCombo = true;
                                 combo = await comboRepository.GetById(item.Combo.ComboId);
 
                                 if (combo == null)
@@ -1098,7 +1105,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         await _repository.Insert(order);
                         await _unitOfWork.SaveChangesAsync();
-
+                        if (orderCombo)
+                        {
+                            await dishManagementService.UpdateComboAvailability();
+                        }
                         if (order.OrderTypeId == OrderType.MealWithoutReservation)
                         {
 
@@ -3754,6 +3764,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
             var utility = Resolve<Utility>();
             var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+            var dishManagementService = Resolve<IDishManagementService>();
             var timeToKeepUnpaidDeliveryOrderConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_KEEP_UNPAID_DELIVERY_ORDER).Result;
             var timeToKeepReservationConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_KEEP_RESERVATION).Result;
             if (timeToKeepUnpaidDeliveryOrderConfig == null)
@@ -3784,7 +3795,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 await UpdateCancelledOrderDishQuantity(order, updateDishSizeDetailList, currentTime);
             }
-
+            await dishManagementService.UpdateComboAvailability();
             await dishSizeDetailRepository.UpdateRange(updateDishSizeDetailList);
             await _repository.UpdateRange(unpaidDeliveryOrder.Items);
             await _unitOfWork.SaveChangesAsync();

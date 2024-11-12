@@ -59,6 +59,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+
         public async Task<AppActionResult> LoadDishRequireManualInput()
         {
             AppActionResult result = new AppActionResult();
@@ -93,6 +94,48 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task UpdateComboAvailability()
+        {
+            try
+            {
+                var dishComboDb = await _dishComboRepository.GetAllDataByExpression(d => !d.IsDeleted && !d.ComboOptionSet.Combo.IsDeleted, 0, 0, null, false, o => o.DishSizeDetail, o => o.ComboOptionSet);
+                if (dishComboDb.Items.Count > 0)
+                {
+                    foreach (var dishCombo in dishComboDb.Items)
+                    {
+                        if (dishCombo.DishSizeDetail.IsAvailable && dishCombo.Quantity <= dishCombo.DishSizeDetail.QuantityLeft)
+                        {
+                            dishCombo.IsAvailable = true;
+                            dishCombo.QuantityLeft = dishCombo.DishSizeDetail.QuantityLeft / dishCombo.Quantity;
+                        }
+                    }
+                    var comboDictionary = dishComboDb.Items.GroupBy(c => c.ComboOptionSet.ComboId)
+                                                    .ToDictionary(c => c.Key, c => c.GroupBy(co => co.ComboOptionSetId)
+                                                                                    .ToDictionary(co => co.Key, co => co.ToList()));
+                    List<Combo> comboList = new List<Combo>();
+                    foreach (var combo in comboDictionary)
+                    {
+                        var comboDb = await _comboRepository.GetById(combo.Key);
+                        if (combo.Value.All(c => c.Value.Any(co => co.IsAvailable)))
+                        {
+                            comboDb.IsAvailable = true;
+                        }
+                        else
+                        {
+                            comboDb.IsAvailable = false;
+                        }
+                        comboList.Add(comboDb);
+                    }
+                    await _dishComboRepository.UpdateRange(dishComboDb.Items);
+                    await _comboRepository.UpdateRange(comboList);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
         public async Task<AppActionResult> UpdateDishQuantity(List<UpdateDishQuantityRequest> dto)
         {
             AppActionResult result = new AppActionResult();
@@ -100,58 +143,35 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 foreach (var item in dto)
                 {
-                    if (item.DishSizeDetailId.HasValue)
+                    var dishSizeDetailDb = await _dishRepository.GetById(item.DishSizeDetailId);
+                    if (item.QuantityLeft.HasValue)
                     {
-                        var dishSizeDetailDb = await _dishRepository.GetById(item.DishSizeDetailId.Value);
-                        if (item.QuantityLeft.HasValue)
-                        {
-                            dishSizeDetailDb.QuantityLeft = item.QuantityLeft.Value;
-                        }
-
-                        if (item.DailyCountdown.HasValue)
-                        {
-                            dishSizeDetailDb.DailyCountdown = item.DailyCountdown.Value;
-                            if (!item.QuantityLeft.HasValue)
-                            {
-                                dishSizeDetailDb.QuantityLeft = item.DailyCountdown.Value;
-                            }
-                        }
-
-                        if (dishSizeDetailDb.QuantityLeft == 0)
-                        {
-                            dishSizeDetailDb.IsAvailable = false;
-                        }
-
-                        await _dishRepository.Update(dishSizeDetailDb);
+                        dishSizeDetailDb.QuantityLeft = item.QuantityLeft.Value;
                     }
-                    else if (item.DishComboId.HasValue)
+
+                    if (item.DailyCountdown.HasValue)
                     {
-                        var comboDb = await _dishComboRepository.GetById(item.DishComboId.Value);
-                        if (item.QuantityLeft.HasValue)
+                        dishSizeDetailDb.DailyCountdown = item.DailyCountdown.Value;
+                        if (!item.QuantityLeft.HasValue)
                         {
-                            comboDb.QuantityLeft = item.QuantityLeft.Value;
+                            dishSizeDetailDb.QuantityLeft = item.DailyCountdown.Value;
                         }
-
-                        if (item.DailyCountdown.HasValue)
-                        {
-                            comboDb.DailyCountdown = item.DailyCountdown.Value;
-                            if (!item.QuantityLeft.HasValue)
-                            {
-                                comboDb.QuantityLeft = item.DailyCountdown.Value;
-                            }
-                        }
-
-                        if(comboDb.QuantityLeft == 0)
-                        {
-                            comboDb.IsAvailable = false;
-                        }
-
-                        await _dishComboRepository.Update(comboDb);
                     }
+
+                    if (dishSizeDetailDb.QuantityLeft <= 0)
+                    {
+                        dishSizeDetailDb.IsAvailable = false;
+                    } else
+                    {
+                        dishSizeDetailDb.IsAvailable = true;
+                    }
+
+                    await _dishRepository.Update(dishSizeDetailDb);
                 }
                 if(!BuildAppActionResultIsError(result))
                 {
                     await _unitOfWork.SaveChangesAsync();
+                    await UpdateComboAvailability();
                 }
             }
             catch (Exception ex)
@@ -161,79 +181,5 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task UpdateDishQuantity()
-        {
-            try
-            {
-                var dishSizeDetailDb = await _dishRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
-                var comboDb = await _dishComboRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
-                foreach (var dish in dishSizeDetailDb.Items)
-                {
-                    if(dish.DailyCountdown < 0)
-                    {
-                        dish.QuantityLeft = null;
-                    }else if(dish.DailyCountdown == 0)
-                    {
-                        dish.QuantityLeft = 0;
-                        if (dish.IsAvailable)
-                        {
-                            dish.IsAvailable = false;
-                        }
-                    } else
-                    {
-                        dish.QuantityLeft = dish.DailyCountdown;
-                        if (!dish.IsAvailable)
-                        {
-                            dish.IsAvailable = true;
-                        }
-                    }
-                }
-
-                foreach (var combo in comboDb.Items)
-                {
-                    if (combo.DailyCountdown < 0)
-                    {
-                        combo.QuantityLeft = null;
-                    }
-                    else if (combo.DailyCountdown == 0)
-                    {
-                        combo.QuantityLeft = 0;
-                        if (combo.IsAvailable)
-                        {
-                            combo.IsAvailable = false;
-                        }
-                    }
-                    else
-                    {
-                        combo.QuantityLeft = combo.DailyCountdown;
-                        if (!combo.IsAvailable)
-                        {
-                            combo.IsAvailable = true;
-                        }
-                    }
-                }
-
-                await _dishRepository.UpdateRange(dishSizeDetailDb.Items);
-                await _dishComboRepository.UpdateRange(comboDb.Items);
-                await _unitOfWork.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-            }
-        }
-
-        public async Task<AppActionResult> UpdateDishQuantity(List<Guid> orderSessionIds)
-        {
-            AppActionResult result = new AppActionResult();
-            try
-            {
-
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
-        }
     }
 }
