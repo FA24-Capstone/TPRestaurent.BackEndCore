@@ -15,7 +15,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             _service = service;
         }
 
-        [HttpGet("test-chat")]
+        [HttpPost("ai-response")]
         public async Task<AppActionResult> TestChat(string message)
         {
             return await _service.ResponseCustomer("", message);             

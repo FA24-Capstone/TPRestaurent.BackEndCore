@@ -59,6 +59,34 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> GetDishWithTag(List<string> tags, int batchSize)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var dishTagRepository = Resolve<IGenericRepository<DishTag>>();
+                var dishTagDb = await dishTagRepository.GetAllDataByExpression(d => tags.Contains(d.Tag.Name.ToLower())
+                                                                                    && (!d.DishId.HasValue || d.Dish.isAvailable && !d.Dish.IsDeleted)
+                                                                                    && (!d.ComboId.HasValue || d.Combo.IsAvailable && !d.Combo.IsDeleted)
+                                                                                    , 0, 0, null, false, d=> d.Combo, d => d.Dish);
+                if(dishTagDb.Items.Count > 0)
+                {
+                    var dishGroup = dishTagDb.Items.GroupBy(d =>
+                    {
+                        if (d.DishId.HasValue)
+                        {
+                            return d.Dish.Name;
+                        }
+                        return d.Combo.Name;
+                    }).ToDictionary(t => t.Key, t => t.Count());
+                    result.Result = dishGroup.OrderByDescending(d => d.Value).Take(batchSize).Select(d => d.Key);
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+            return result; 
+        }
 
         public async Task<AppActionResult> LoadDishRequireManualInput()
         {
