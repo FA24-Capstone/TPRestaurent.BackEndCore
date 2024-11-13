@@ -174,7 +174,7 @@ jobs:
           registryUrl: docker.io
           registryUsername: ${{ secrets.DOCKER_HUB_USERNAME }}
           registryPassword: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          location: 'eastasia'
+          location: 'southeastasia'
 
       - name: Azure logout
         run: az logout
