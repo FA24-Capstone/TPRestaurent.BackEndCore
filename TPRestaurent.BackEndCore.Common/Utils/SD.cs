@@ -241,4 +241,14 @@ public class SD
         public static string CANCELLED_BY_SYSTEM = "Đơn hàng được hủy bởi hệ thống";
     }
 
+    public class OpenAIPrompt
+    {
+        public static string HOT_FIX_PROMPT = "Nếu câu hỏi thuộc các dạng câu: Món nào có vị thanh mát? ->trigger_tags: thanh mát|, " +
+            "Có khai vị món nào giá từ 10000 đến 100000 không?->trigger_price=khai vị,10000-100000|, " +
+            "Có bò lúc lắc không? -> trigger_find_dish_name: bò lúc lắc, " +
+            "Tôi muốn đặt bàn cho 7 người vào 7h tối ngày mai.->trigger_find_table: startTime={{TODAY+1}}T19:00, endTime={{TODAY+1}}T20:00, numOfPeople=7|, " +
+            "Giao hàng tới Chợ Bến Thành ko?->trigger_distance: address=Chợ Bến Thành, Quận 1, TP. HCM|." +
+            "Nếu không, trả lời bình thường. Câu hỏi:";
+    }
+
 }

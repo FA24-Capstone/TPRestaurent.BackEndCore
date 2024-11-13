@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using MailKit;
+using Newtonsoft.Json;
 using NPOI.POIFS.Storage;
 using NPOI.SS.Formula.Functions;
 using RestSharp;
@@ -22,10 +23,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     public class MapService : GenericBackendService, IMapService
     {
         public const string APIKEY = "R382jltEEAp2bR56g03t70nCESuIv6x701OIntwu";
+        private IGenericRepository<Configuration> _configurationRepository;
         private IUnitOfWork _unitOfWork;
 
-        public MapService(IUnitOfWork unitOfWork, IServiceProvider serviceProvider) : base(serviceProvider)
+        public MapService(IGenericRepository<Configuration> configurationRepository, IUnitOfWork unitOfWork, IServiceProvider serviceProvider) : base(serviceProvider)
         {
+            _configurationRepository = configurationRepository;
             _unitOfWork = unitOfWork;
         }
 
@@ -71,6 +74,52 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             catch (Exception e)
             {
                 result = BuildAppActionResultError(result, $"Có lỗi xảy ra khi sử dụng API với GoongMap {e.Message} ");
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> CheckDistanceForChatBot(string address)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var destinationResult = await Geocode(address);
+                if(destinationResult.IsSuccess && destinationResult.Result != null)
+                {
+                    var destinationCoordinates = (destinationResult.Result as Root).Results[0].Geometry.Location;
+                    var restaurantLatConfig = await _configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LATITUDE);
+                    var restaurantLngConfig = await _configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LNG);
+                    var restaurantMaxDistanceToOrderConfig = await _configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DISTANCE_ORDER);
+
+                   
+                    var restaurantLat = Double.Parse(restaurantLatConfig.CurrentValue);
+                    var restaurantLng = Double.Parse(restaurantLngConfig.CurrentValue);
+                    var maxDistanceToOrder = double.Parse(restaurantMaxDistanceToOrderConfig!.CurrentValue);
+
+                    double[] restaurantAddress = new double[]
+                    {
+                            restaurantLat, restaurantLng
+                    };
+
+                    double[] customerAddress = new double[]
+                    {
+                            destinationCoordinates.Lat, destinationCoordinates.Lng
+                    };
+
+                    var distanceResponse = await GetEstimateDeliveryResponse(restaurantAddress, customerAddress);
+                    var element = distanceResponse.Result as EstimatedDeliveryTimeDto.Response;
+                    var distance = element!.TotalDistance;
+                    if (distance > maxDistanceToOrder)
+                    {
+                        result.Result = $"Địa chỉ của bạn cách nhà hàng hơn {maxDistanceToOrder}km nên chúng tôi không thể giao hàng tận nơi";
+                    } else {
+                        result.Result = $"Có chứ, địa chỉ của bạn nằm trong phạm vi giao của nhà hàng";
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                result.Result = e;
             }
             return result;
         }

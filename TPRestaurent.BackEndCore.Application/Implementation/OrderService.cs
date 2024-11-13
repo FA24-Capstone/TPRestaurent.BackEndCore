@@ -231,6 +231,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (orderCombo)
                     {
                         await dishManagementService.UpdateComboAvailability();
+                        await dishManagementService.UpdateDishAvailability();
                     }
                     scope.Complete();
                     await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
@@ -440,6 +441,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                         }
                         await dishManagementService.UpdateComboAvailability();
+                        await dishManagementService.UpdateDishAvailability();
                         scope.Complete();
                         if ((!requireSignalR.HasValue || requireSignalR.Value) && (orderDb.StatusId == OrderStatus.Processing || orderDb.StatusId == OrderStatus.ReadyForDelivery))
                         {
@@ -1108,6 +1110,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (orderCombo)
                         {
                             await dishManagementService.UpdateComboAvailability();
+                            await dishManagementService.UpdateDishAvailability();
                         }
                         if (order.OrderTypeId == OrderType.MealWithoutReservation)
                         {
@@ -3796,6 +3799,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 await UpdateCancelledOrderDishQuantity(order, updateDishSizeDetailList, currentTime);
             }
             await dishManagementService.UpdateComboAvailability();
+            await dishManagementService.UpdateDishAvailability();
             await dishSizeDetailRepository.UpdateRange(updateDishSizeDetailList);
             await _repository.UpdateRange(unpaidDeliveryOrder.Items);
             await _unitOfWork.SaveChangesAsync();
