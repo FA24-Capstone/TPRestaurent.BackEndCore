@@ -496,6 +496,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var groupedDishCraftService = Resolve<IGroupedDishCraftService>();
                 var orderSessionDb = await _orderSessionRepository.GetById(orderSessionId);
                 if (orderSessionId == null)
                 {
@@ -512,22 +513,55 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
                 }
 
-                if (orderSessionStatus == OrderSessionStatus.Completed)
+                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderSessionId == orderSessionId, 0, 0, null, false, null);
+                if (orderDetailDb.Items.Count > 0)
                 {
-                    var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderSessionId == orderSessionId, 0, 0, null, false, o => o.Order);
-                    if (orderDetailDb.Items.Count > 0)
+                    var orderService = Resolve<IOrderService>();
+                    var orderId = orderDetailDb.Items.FirstOrDefault().OrderId;
+                    if (sendSignalR)
                     {
-                        var orderService = Resolve<IOrderService>();
-                        var orderDb = orderDetailDb.Items.FirstOrDefault().Order;
-                        var allOrderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderDb.OrderId, 0, 0, null, false, null);
-                            if (sendSignalR)
-                            {
-                                await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
-                            }
-
-                        var orderDetailToCompleteId = orderDetailDb.Items.Where(o => o.OrderDetailStatusId != OrderDetailStatus.Reserved && o.OrderDetailStatusId == OrderDetailStatus.Cancelled).Select(o => o.OrderDetailId).ToList();
-                        await orderService.UpdateOrderDetailStatusForce(orderDetailToCompleteId, OrderDetailStatus.ReadyToServe);
+                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
                     }
+
+                    var orderDetailToCompleteId = orderDetailDb.Items.Where(o => o.OrderDetailStatusId != OrderDetailStatus.Reserved && o.OrderDetailStatusId == OrderDetailStatus.Cancelled).Select(o => o.OrderDetailId).ToList();
+                    if (orderSessionStatus == OrderSessionStatus.Processing)
+                    {
+                            await orderService.UpdateOrderDetailStatusForce(orderDetailToCompleteId, OrderDetailStatus.Processing);
+                    } else if (orderSessionStatus == OrderSessionStatus.Completed)
+                    {
+                            await orderService.UpdateOrderDetailStatusForce(orderDetailToCompleteId, OrderDetailStatus.ReadyToServe);
+                    } else if(orderSessionStatus == OrderSessionStatus.Cancelled)
+                    {
+                         await orderService.UpdateOrderDetailStatusForce(orderDetailToCompleteId, OrderDetailStatus.Cancelled);
+                    }
+
+                    var orderDb = await _orderRepository.GetById(orderId);
+                    if (orderDb.OrderTypeId == OrderType.Delivery)
+                    {
+                        if(orderSessionDb.OrderSessionStatusId == OrderSessionStatus.Completed)
+                        {
+                            orderDb.StatusId = OrderStatus.ReadyForDelivery;
+                            await _orderRepository.Update(orderDb);
+                        } else
+                        {
+                            await orderService.ChangeOrderStatus(orderId, false, null);
+                        }
+                    }
+                    else
+                    {
+                        var allOrderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderId, 0, 0, null, false, null);
+                        if(allOrderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled || o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe))
+                        {
+                            await orderService.ChangeOrderStatus(orderId, true, OrderStatus.TemporarilyCompleted);
+
+                        }
+                    }
+
+
+                    await groupedDishCraftService.UpdateGroupedDish(orderDetailDb.Items.Where(o => o.OrderDetailStatusId == OrderDetailStatus.Unchecked
+                                                                            || o.OrderDetailStatusId == OrderDetailStatus.Processing
+                                                                            || o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe)
+                                                                   .Select(o => o.OrderDetailId).ToList());
                 }
             }
             catch (Exception ex)

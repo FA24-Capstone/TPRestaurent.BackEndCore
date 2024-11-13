@@ -358,6 +358,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
                                 else
                                 {
+                                    orderDb.StatusId = OrderStatus.Cancelled;
                                     await UpdateCancelledOrderDishQuantity(orderDb, updateDishSizeDetailList, currentTime);
                                 }
                             }
