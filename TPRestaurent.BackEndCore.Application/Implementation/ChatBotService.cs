@@ -77,7 +77,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             DateTime startTime = DateTime.Parse(match.Groups[1].Value);
                             DateTime endTime = DateTime.Parse(match.Groups[2].Value);
                             if (double.Parse(openHour.CurrentValue) > startTime.Hour 
-                                || double.Parse(closedHour.CurrentValue) > endTime.Hour)
+                                || double.Parse(closedHour.CurrentValue) < endTime.Hour)
                             {
                                 result.Result = $"Nhà hàng chỉ hoạt động từ {openHour.CurrentValue}h đến {closedHour.CurrentValue}h";
                                 return result;
