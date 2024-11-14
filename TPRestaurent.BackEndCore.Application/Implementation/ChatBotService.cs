@@ -126,8 +126,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var dishResult = await _dishService.GetAllDish(dishName, null, 1, 3, null, null);
                         if (dishResult.IsSuccess && dishResult.Result != null)
                         {
-                            var dishDb = dishResult.Result as PagedResult<Dish>;
-                            response = $"Bạn có thể thử {string.Join(", ", dishDb.Items.Select(d => d.Name))} tại nhà hàng";
+                            var dishDb = dishResult.Result as PagedResult<DishSizeResponse>;
+                            if (dishDb != null && dishDb.Items.Count > 0)
+                            {
+                                response = $"Bạn có thể thử {string.Join(", ", dishDb.Items.Select(d => d.Dish.Name))} tại nhà hàng";
+                            }
+                            else
+                            {
+                                response = "Bạn có thể khám phá các món của nhà hàng ở Thực đơn và combo";
+                            }
                         }
                     }
                 }
