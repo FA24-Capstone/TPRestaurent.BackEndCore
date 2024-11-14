@@ -32,5 +32,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             await _service.InsertGroupedDish();
         }
+
+        [HttpDelete("remove-overdue-grouped-dish")]
+        public async Task RemoveOverdueGroupedDish()
+        {
+            await _service.RemoveOverdueGroupedDish();
+        }
     }
 }
