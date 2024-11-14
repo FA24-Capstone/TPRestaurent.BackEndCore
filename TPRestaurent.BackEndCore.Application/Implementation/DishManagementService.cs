@@ -59,7 +59,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetDishWithTag(List<string> tags, int batchSize)
+        public async Task<AppActionResult> GetDishWithTag(List<string> tags, int batchSize,decimal? low, decimal? high)
         {
             AppActionResult result = new AppActionResult();
             try
