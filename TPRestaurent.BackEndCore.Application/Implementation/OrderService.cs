@@ -2456,197 +2456,201 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         }
         public async Task<AppActionResult> UpdateOrderDetailStatus(List<UpdateOrderDetailItemRequest> orderDetailItems, bool isSuccessful)
         {
-            AppActionResult result = new AppActionResult();
-            try
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-                var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
-                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
-                var orderSessionService = Resolve<IOrderSessionService>();
-                var groupedDishCraftService = Resolve<IGroupedDishCraftService>();
-                var orderDetailIds = orderDetailItems.Select(o => o.OrderDetailId).ToList();
-                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => orderDetailIds.Contains(p.OrderDetailId) && !(p.OrderDetailStatusId == OrderDetailStatus.Reserved || p.OrderDetailStatusId == OrderDetailStatus.ReadyToServe || p.OrderDetailStatusId == OrderDetailStatus.Cancelled), 0, 0, null, false, null);
-                //if (orderDetailDb.Items.Count != orderDetailIds.Count)
-                //{
-                //    return BuildAppActionResultError(result, $"Tồn tại id gọi món không nằm trong hệ thống hoặc không thể ập nhập trạng thái được");
-                //}
-
-                var utility = Resolve<Utility>();
-                var time = utility.GetCurrentDateTimeInTimeZone();
-                bool orderSessionUpdated = false;
-                bool hasFinishedDish = false;
-                foreach (var orderDetail in orderDetailDb.Items.ToList())
+                AppActionResult result = new AppActionResult();
+                try
                 {
-                    if (orderDetail.ComboId.HasValue)
+                    var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                    var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
+                    var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+                    var orderSessionService = Resolve<IOrderSessionService>();
+                    var groupedDishCraftService = Resolve<IGroupedDishCraftService>();
+                    var orderDetailIds = orderDetailItems.Select(o => o.OrderDetailId).ToList();
+                    var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => orderDetailIds.Contains(p.OrderDetailId) && !(p.OrderDetailStatusId == OrderDetailStatus.Reserved || p.OrderDetailStatusId == OrderDetailStatus.ReadyToServe || p.OrderDetailStatusId == OrderDetailStatus.Cancelled), 0, 0, null, false, null);
+                    //if (orderDetailDb.Items.Count != orderDetailIds.Count)
+                    //{
+                    //    return BuildAppActionResultError(result, $"Tồn tại id gọi món không nằm trong hệ thống hoặc không thể ập nhập trạng thái được");
+                    //}
+
+                    var utility = Resolve<Utility>();
+                    var time = utility.GetCurrentDateTimeInTimeZone();
+                    bool orderSessionUpdated = false;
+                    bool hasFinishedDish = false;
+                    foreach (var orderDetail in orderDetailDb.Items.ToList())
                     {
-                        var orderComboDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId
-
-                                                                                                                && (c.StatusId != DishComboDetailStatus.Reserved
-                                                                                                                    && c.StatusId != DishComboDetailStatus.ReadyToServe
-                                                                                                                    && c.StatusId != DishComboDetailStatus.Cancelled),
-                                                                                                              0, 0, null, false, c => c.DishCombo.DishSizeDetail);
-
-                        if (orderComboDetailDb.Items.Count() > 0)
+                        if (orderDetail.ComboId.HasValue)
                         {
-                            var orderComboDetail = orderComboDetailDb.Items.FirstOrDefault(o => o.DishCombo.DishSizeDetail.DishId == orderDetailItems.FirstOrDefault(od => od.OrderDetailId == orderDetail.OrderDetailId
-                                                                                                                                                    && od.DishId == o.DishCombo.DishSizeDetail.DishId)?.DishId);
-                            if (orderComboDetail != null)
-                            {
-                                if (orderComboDetail.StatusId == DishComboDetailStatus.Unchecked)
-                                {
-                                    if (isSuccessful)
-                                    {
-                                        orderComboDetail.StatusId = DishComboDetailStatus.Processing;
-                                    }
-                                    else
-                                    {
-                                        orderComboDetail.StatusId = DishComboDetailStatus.Cancelled;
-                                    }
+                            var orderComboDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId
 
-                                }
-                                else if (orderComboDetail.StatusId == DishComboDetailStatus.Processing)
+                                                                                                                    && (c.StatusId != DishComboDetailStatus.Reserved
+                                                                                                                        && c.StatusId != DishComboDetailStatus.ReadyToServe
+                                                                                                                        && c.StatusId != DishComboDetailStatus.Cancelled),
+                                                                                                                  0, 0, null, false, c => c.DishCombo.DishSizeDetail);
+
+                            if (orderComboDetailDb.Items.Count() > 0)
+                            {
+                                var orderComboDetail = orderComboDetailDb.Items.FirstOrDefault(o => o.DishCombo.DishSizeDetail.DishId == orderDetailItems.FirstOrDefault(od => od.OrderDetailId == orderDetail.OrderDetailId
+                                                                                                                                                        && od.DishId == o.DishCombo.DishSizeDetail.DishId)?.DishId);
+                                if (orderComboDetail != null)
                                 {
-                                    if (isSuccessful)
+                                    if (orderComboDetail.StatusId == DishComboDetailStatus.Unchecked)
                                     {
-                                        orderComboDetail.StatusId = DishComboDetailStatus.ReadyToServe;
+                                        if (isSuccessful)
+                                        {
+                                            orderComboDetail.StatusId = DishComboDetailStatus.Processing;
+                                        }
+                                        else
+                                        {
+                                            orderComboDetail.StatusId = DishComboDetailStatus.Cancelled;
+                                        }
+
+                                    }
+                                    else if (orderComboDetail.StatusId == DishComboDetailStatus.Processing)
+                                    {
+                                        if (isSuccessful)
+                                        {
+                                            orderComboDetail.StatusId = DishComboDetailStatus.ReadyToServe;
+                                            if (!hasFinishedDish) hasFinishedDish = true;
+                                        }
+                                        else
+                                        {
+                                            return BuildAppActionResultError(result, $"Chi tiết đơn hàng đang ở trạng thái dang xử lí, không thể huỷ");
+                                        }
+                                    }
+                                }
+
+                                if (orderComboDetail.StatusId == DishComboDetailStatus.Processing)
+                                {
+                                    if (orderComboDetailDb.Items.Where(o => o.ComboOrderDetailId != orderComboDetail.ComboOrderDetailId)
+                                                               .All(o => o.StatusId == DishComboDetailStatus.Unchecked))
+                                    {
+                                        orderDetail.OrderDetailStatusId = OrderDetailStatus.Processing;
+                                    }
+                                }
+                                else if (orderComboDetail.StatusId == DishComboDetailStatus.ReadyToServe)
+                                {
+                                    if (orderComboDetailDb.Items.Where(o => o.ComboOrderDetailId != orderComboDetail.ComboOrderDetailId)
+                                                              .All(o => o.StatusId == DishComboDetailStatus.ReadyToServe))
+                                    {
+                                        orderDetail.OrderDetailStatusId = OrderDetailStatus.ReadyToServe;
                                         if (!hasFinishedDish) hasFinishedDish = true;
                                     }
-                                    else
-                                    {
-                                        return BuildAppActionResultError(result, $"Chi tiết đơn hàng đang ở trạng thái dang xử lí, không thể huỷ");
-                                    }
                                 }
+                                await comboOrderDetailRepository.Update(orderComboDetail);
                             }
-
-                            if (orderComboDetail.StatusId == DishComboDetailStatus.Processing)
+                        }
+                        else
+                        {
+                            if (orderDetail.OrderDetailStatusId == OrderDetailStatus.Unchecked)
                             {
-                                if (orderComboDetailDb.Items.Where(o => o.ComboOrderDetailId != orderComboDetail.ComboOrderDetailId)
-                                                           .All(o => o.StatusId == DishComboDetailStatus.Unchecked))
+                                if (isSuccessful)
                                 {
                                     orderDetail.OrderDetailStatusId = OrderDetailStatus.Processing;
                                 }
+                                else
+                                {
+                                    orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
+                                }
+
                             }
-                            else if (orderComboDetail.StatusId == DishComboDetailStatus.ReadyToServe)
+                            else if (orderDetail.OrderDetailStatusId == OrderDetailStatus.Processing)
                             {
-                                if (orderComboDetailDb.Items.Where(o => o.ComboOrderDetailId != orderComboDetail.ComboOrderDetailId)
-                                                          .All(o => o.StatusId == DishComboDetailStatus.ReadyToServe))
+                                if (isSuccessful)
                                 {
                                     orderDetail.OrderDetailStatusId = OrderDetailStatus.ReadyToServe;
                                     if (!hasFinishedDish) hasFinishedDish = true;
                                 }
-                            }
-                            await comboOrderDetailRepository.Update(orderComboDetail);
-                        }
-                    }
-                    else
-                    {
-                        if (orderDetail.OrderDetailStatusId == OrderDetailStatus.Unchecked)
-                        {
-                            if (isSuccessful)
-                            {
-                                orderDetail.OrderDetailStatusId = OrderDetailStatus.Processing;
-                            }
-                            else
-                            {
-                                orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
-                            }
-
-                        }
-                        else if (orderDetail.OrderDetailStatusId == OrderDetailStatus.Processing)
-                        {
-                            if (isSuccessful)
-                            {
-                                orderDetail.OrderDetailStatusId = OrderDetailStatus.ReadyToServe;
-                                if (!hasFinishedDish) hasFinishedDish = true;
-                            }
-                            else
-                            {
-                                return BuildAppActionResultError(result, $"Chi tiết đơn hàng đang ở trạng thái dang xử lí, không thể huỷ");
-                            }
-                        }
-                    }
-
-
-                }
-
-                await orderDetailRepository.UpdateRange(orderDetailDb.Items);
-                var orderSessionIds = orderDetailDb.Items.DistinctBy(o => o.OrderSessionId).Select(o => o.OrderSessionId).ToList();
-                var orderSessionDb = await orderSessionRepository.GetAllDataByExpression(o => orderSessionIds.Contains(o.OrderSessionId), 0, 0, null, false, null);
-                var orderSessionSet = new HashSet<Guid>();
-                foreach (var session in orderSessionDb.Items)
-                {
-                    if (orderSessionSet.Contains(session.OrderSessionId))
-                    {
-                        continue;
-                    }
-
-                    var sessionOrderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderSessionId == session.OrderSessionId && !orderDetailIds.Contains(o.OrderDetailId), 0, 0, null, false, null);
-
-                    if (session.OrderSessionStatusId == OrderSessionStatus.Confirmed)
-                    {
-                        await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Processing, false);
-                        orderSessionUpdated = true;
-                    }
-                    else if (orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled)
-                             && sessionOrderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
-                    {
-                        await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Cancelled, false);
-                        orderSessionUpdated = true;
-                    }
-                    else if (orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe)
-                             && sessionOrderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe))
-                    {
-                        await orderSessionService.UpdateOrderSessionStatus(session.OrderSessionId, OrderSessionStatus.Completed, false);
-                        orderSessionUpdated = true;
-                        if (orderDetailDb.Items.FirstOrDefault().Order.OrderTypeId == OrderType.Delivery)
-                        {
-                            await ChangeOrderStatus(orderDetailDb.Items.FirstOrDefault().OrderId, true, null, false);
-                        }
-                        else
-                        {
-                            if (orderDetailDb.Items.FirstOrDefault().Order.StatusId == OrderStatus.Processing)
-                            {
-                                //All OrderDetail in DB is ready to serve
-                                var allOrderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == orderDetailDb.Items.FirstOrDefault().OrderId, 0, 0, null, false, null);
-                                if (allOrderDetailDb.Items.All(a => a.OrderDetailStatusId == OrderDetailStatus.ReadyToServe || a.OrderDetailStatusId == OrderDetailStatus.Cancelled))
+                                else
                                 {
-                                    await ChangeOrderStatus(orderDetailDb.Items.FirstOrDefault().OrderId, true, OrderStatus.TemporarilyCompleted, false);
+                                    return BuildAppActionResultError(result, $"Chi tiết đơn hàng đang ở trạng thái dang xử lí, không thể huỷ");
                                 }
                             }
                         }
+
+
                     }
-                    orderSessionSet.Add(session.OrderSessionId);
+
+                    await orderDetailRepository.UpdateRange(orderDetailDb.Items);
+                    var orderSessionIds = orderDetailDb.Items.DistinctBy(o => o.OrderSessionId).Select(o => o.OrderSessionId).ToList();
+                    var orderSessionDb = await orderSessionRepository.GetAllDataByExpression(o => orderSessionIds.Contains(o.OrderSessionId), 0, 0, null, false, null);
+                    var orderSessionSet = new HashSet<Guid>();
+                    foreach (var session in orderSessionDb.Items)
+                    {
+                        if (orderSessionSet.Contains(session.OrderSessionId))
+                        {
+                            continue;
+                        }
+
+                        var sessionOrderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderSessionId == session.OrderSessionId && !orderDetailIds.Contains(o.OrderDetailId), 0, 0, null, false, null);
+
+                        if (session.OrderSessionStatusId == OrderSessionStatus.Confirmed)
+                        {
+                            session.OrderSessionStatusId = OrderSessionStatus.Processing;
+                            orderSessionUpdated = true;
+                        }
+                        else if (orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled)
+                                 && sessionOrderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
+                        {
+                            session.OrderSessionStatusId = OrderSessionStatus.Cancelled;
+                            orderSessionUpdated = true;
+                        }
+                        else if (orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe)
+                                 && sessionOrderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe))
+                        {
+                            session.OrderSessionStatusId = OrderSessionStatus.Completed;
+                            orderSessionUpdated = true;
+                            if (orderDetailDb.Items.FirstOrDefault().Order.OrderTypeId == OrderType.Delivery)
+                            {
+                                await ChangeOrderStatus(orderDetailDb.Items.FirstOrDefault().OrderId, true, null, false);
+                            }
+                            else
+                            {
+                                if (orderDetailDb.Items.FirstOrDefault().Order.StatusId == OrderStatus.Processing)
+                                {
+                                    //All OrderDetail in DB is ready to serve
+                                    var allOrderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == orderDetailDb.Items.FirstOrDefault().OrderId, 0, 0, null, false, null);
+                                    if (allOrderDetailDb.Items.All(a => a.OrderDetailStatusId == OrderDetailStatus.ReadyToServe || a.OrderDetailStatusId == OrderDetailStatus.Cancelled))
+                                    {
+                                        await ChangeOrderStatus(orderDetailDb.Items.FirstOrDefault().OrderId, true, OrderStatus.TemporarilyCompleted, false);
+                                    }
+                                }
+                            }
+                        }
+                        orderSessionSet.Add(session.OrderSessionId);
+                    }
+
+                    await orderSessionRepository.UpdateRange(orderSessionDb.Items);
+
+                    await _unitOfWork.SaveChangesAsync();
+
+                    await groupedDishCraftService.UpdateGroupedDish(orderDetailDb.Items.Where(o => o.OrderDetailStatusId == OrderDetailStatus.Unchecked
+                                                                                                || o.OrderDetailStatusId == OrderDetailStatus.Processing
+                                                                                                || o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe)
+                                                                                       .Select(o => o.OrderDetailId).ToList());
+
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
+                    if (orderSessionUpdated)
+                    {
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+                    }
+
+                    if (hasFinishedDish)
+                    {
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_FINISHED_DISHES);
+                    }
+                    result.Result = orderDetailDb;
+                    scope.Complete();
                 }
-
-
-                await _unitOfWork.SaveChangesAsync();
-
-                await groupedDishCraftService.UpdateGroupedDish(orderDetailDb.Items.Where(o => o.OrderDetailStatusId == OrderDetailStatus.Unchecked
-                                                                                            || o.OrderDetailStatusId == OrderDetailStatus.Processing
-                                                                                            || o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe)
-                                                                                   .Select(o => o.OrderDetailId).ToList());
-
-                await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
-                if (orderSessionUpdated)
+                catch (Exception ex)
                 {
-                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
-                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
-                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+                    result = BuildAppActionResultError(result, ex.Message);
                 }
-
-                if (hasFinishedDish)
-                {
-                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_FINISHED_DISHES);
-                }
-
-                result.Result = orderDetailDb;
-
+                return result;
             }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
+
         }
 
         public async Task<AppActionResult> GetCurrentTableSession()
