@@ -9,6 +9,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
     public interface IChatBotService
     {
-        Task<AppActionResult> ResponseCustomer(string customerId, string messageText);
+        Task<AppActionResult> ResponseCustomer(string customerId, string messageText, bool isFirstCalled);
     }
 }

@@ -662,7 +662,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> CreateRefund(Order order)
+        public async Task<AppActionResult> CreateRefund(Order order, bool asCustomer)
         {
             AppActionResult result = new AppActionResult();
             try
@@ -709,10 +709,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return result;
                 }
 
-                var percentageConfigurationDb = await configurationRepository.GetByExpression(t => t.Name.Equals(SD.DefaultValue.REFUND_PERCENTAGE));
-                if (timeConfigurationDb == null)
+                Configuration percentageConfigurationDb = null;
+                if (asCustomer)
                 {
-                    return BuildAppActionResultError(result, $"không tìm thấy cấu hình tên {SD.DefaultValue.TIME_FOR_REFUND}");
+                    percentageConfigurationDb = await configurationRepository.GetByExpression(t => t.Name.Equals(SD.DefaultValue.REFUND_PERCENTAGE_AS_CUSTOMER));
+                }
+                else
+                {
+                    percentageConfigurationDb = await configurationRepository.GetByExpression(t => t.Name.Equals(SD.DefaultValue.REFUND_PERCENTAGE_AS_ADMIN));
+                }
+                if (percentageConfigurationDb == null)
+                {
+                    return BuildAppActionResultError(result, $"không tìm thấy cấu hình tên {SD.DefaultValue.REFUND_PERCENTAGE_AS_ADMIN}");
                 }
 
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();

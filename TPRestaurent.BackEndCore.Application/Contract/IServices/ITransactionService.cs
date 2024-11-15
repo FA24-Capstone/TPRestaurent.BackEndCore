@@ -22,7 +22,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GetTransactionHistory(Guid customerId, TransactionType? type);
         Task<AppActionResult> GetStoreCreditTransactionHistory(Guid customerId);
         Task<AppActionResult> GetLoyaltyPointHistory(Guid customerId);
-        Task<AppActionResult> CreateRefund(Order order);
+        Task<AppActionResult> CreateRefund(Order order, bool asCustomer);
         Task<AppActionResult> CreateDepositRefund(DepositRefundRequest request);
         Task CancelPendingTransaction();
     }
