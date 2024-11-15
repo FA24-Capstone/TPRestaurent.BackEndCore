@@ -57,19 +57,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _client = client;
         }
 
-        public async Task<AppActionResult> ResponseCustomer(string customerId, string messageText, bool isFirstCalled)
+        public async Task<AppActionResult> ResponseCustomer(ChatbotRequestDto dto)
         {
             AppActionResult result = new AppActionResult();
             try
             {
                 StringBuilder request = new StringBuilder();
                 string customerGreeting = "bạn";
-                if (!string.IsNullOrEmpty(customerId))
+                if (!string.IsNullOrEmpty(dto.CustomerId))
                 {
-                    var accountDb = await _accountRepository.GetById(customerId);
+                    var accountDb = await _accountRepository.GetById(dto.CustomerId);
                     if (accountDb != null)
                     {
-                            var dishDb = await _ratingRepository.GetAllDataByExpression(r => r.OrderDetail.Order.AccountId.Equals(customerId), 1, 2, o => o.PointId, false, o => o.OrderDetail.DishSizeDetail.Dish, o => o.OrderDetail.Combo);
+                            var dishDb = await _ratingRepository.GetAllDataByExpression(r => r.OrderDetail.Order.AccountId.Equals(dto.CustomerId), 1, 2, o => o.PointId, false, o => o.OrderDetail.DishSizeDetail.Dish, o => o.OrderDetail.Combo);
                             var dishName = string.Join(", ", dishDb.Items.Select(c =>
                             {
                                 if (c.OrderDetail.DishSizeDetailId.HasValue)
@@ -82,8 +82,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
                             }));
 
-                        customerGreeting = SD.OpenAIPrompt.GetCustomerGreeting(accountDb, dishName, isFirstCalled);
-                        if (isFirstCalled)
+                        customerGreeting = SD.OpenAIPrompt.GetCustomerGreeting(accountDb, dishName, dto.IsFirstCall);
+                        if (dto.IsFirstCall)
                         {
                             result.Result = customerGreeting;
                             return result;
@@ -92,7 +92,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             request.Append($"Gọi khách là {customerGreeting}");
                         }
 
-                        var customerInfoAddress = await _addressRepository.GetByExpression(a => a.AccountId.Equals(customerId) && !a.IsDeleted && a.IsCurrentUsed);
+                        var customerInfoAddress = await _addressRepository.GetByExpression(a => a.AccountId.Equals(dto.CustomerId) && !a.IsDeleted && a.IsCurrentUsed);
                         if (customerInfoAddress != null)
                         {
                             request.Append($"Nếu khách hỏi có giao hàng không mà không nêu địa chỉ cụ thể hay chứa giao tới nhà tôi-> địa chỉ là {customerInfoAddress.CustomerInfoAddressName}.");
@@ -100,7 +100,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                 }
 
-                request.Append($"{SD.OpenAIPrompt.HOT_FIX_PROMPT}{messageText}");
+                request.Append($"{SD.OpenAIPrompt.HOT_FIX_PROMPT}{dto.Message}");
                 var response = await _client.CreateChatCompletion(request.ToString());
                 if (response.Contains("trigger"))
                 {
