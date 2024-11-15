@@ -84,6 +84,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 if (paymentRequest.OrderId.HasValue)
                                 {
                                     var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
+                                    if(orderDb.StatusId == OrderStatus.Completed || orderDb.StatusId == OrderStatus.Cancelled)
+                                    {
+                                        result = BuildAppActionResultError(result, $"Đơn hàng đã hủy hoặc đã được thanh toán thành công");
+                                        return result;
+                                    }
+
                                     if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
                                         || orderDb.StatusId == OrderStatus.Pending)
                                     {
