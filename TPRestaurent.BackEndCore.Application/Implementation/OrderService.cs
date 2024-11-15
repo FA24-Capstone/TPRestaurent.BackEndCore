@@ -1200,12 +1200,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 PagedResult<Order> data = new PagedResult<Order>();
+                
                 if (status.HasValue)
                 {
                     data = await _repository.GetAllDataByExpression((o => o.Account.Id.Equals(customerId) && (
                     o.StatusId == status && o.OrderTypeId == orderType) ||
                     (o.StatusId == status) ||
-                    (o.OrderTypeId == orderType)), pageNumber, pageSize, o => o.OrderDate, false,
+                    (o.OrderTypeId == orderType)), pageNumber, pageSize, o => o.OrderTypeId == OrderType.Delivery ? o.OrderDate : o.MealTime, false,
                      p => p.Status!,
                      p => p.Account!,
                      p => p.LoyalPointsHistory!,
@@ -1214,7 +1215,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else
                 {
-                    data = await _repository.GetAllDataByExpression(o => o.Account.Id.Equals(customerId), pageNumber, pageSize, o => o.OrderDate, false,
+                    data = await _repository.GetAllDataByExpression(o => o.Account.Id.Equals(customerId), pageNumber, pageSize, o => o.OrderTypeId == OrderType.Delivery ? o.OrderDate : o.MealTime, false,
                         p => p.Status!,
                         p => p.Account!,
                         p => p.LoyalPointsHistory!,
@@ -1235,7 +1236,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 result.Result = new PagedResult<OrderWithFirstDetailResponse>
                 {
-                    Items = mappedData,
+                    Items = mappedData.OrderByDescending(m => m.OrderTypeId == OrderType.Delivery? m.OrderDate : m.MealTime).ToList(),
                     TotalPages = data.TotalPages,
                 };
             }
@@ -1595,9 +1596,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 PagedResult<OrderWithFirstDetailResponse> orderList = new PagedResult<OrderWithFirstDetailResponse>();
+                
                 if (status.HasValue && status > 0 && orderType.HasValue && orderType > 0)
                 {
-                    var orderListDb = await _repository.GetAllDataByExpression(o => o.StatusId == status && o.OrderTypeId == orderType && o.Account.PhoneNumber.Equals(phoneNumber), pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                    var orderListDb = await _repository.GetAllDataByExpression(o => o.StatusId == status && o.OrderTypeId == orderType && o.Account.PhoneNumber.Equals(phoneNumber), pageNumber, pageSize, o => o.OrderTypeId == OrderType.Delivery ? o.OrderDate : o.MealTime, false, p => p.Account!,
                                                                      p => p.Status!,
                                                                      p => p.Account!,
                                                                      p => p.LoyalPointsHistory!,
@@ -1620,7 +1622,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else if (status.HasValue && status > 0)
                 {
-                    var orderListDb = await _repository.GetAllDataByExpression(o => o.StatusId == status && o.Account.PhoneNumber.Equals(phoneNumber), pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                    var orderListDb = await _repository.GetAllDataByExpression(o => o.StatusId == status && o.Account.PhoneNumber.Equals(phoneNumber), pageNumber, pageSize, o => o.OrderTypeId == OrderType.Delivery ? o.OrderDate : o.MealTime, false, p => p.Account!,
                                                                      p => p.Status!,
                                                                      p => p.Account!,
                                                                      p => p.LoyalPointsHistory!,
@@ -1644,7 +1646,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else if (orderType.HasValue && orderType > 0)
                 {
-                    var orderListDb = await _repository.GetAllDataByExpression(o => o.OrderTypeId == orderType && o.Account.PhoneNumber.Equals(phoneNumber), pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                    var orderListDb = await _repository.GetAllDataByExpression(o => o.OrderTypeId == orderType && o.Account.PhoneNumber.Equals(phoneNumber), pageNumber, pageSize, o => o.OrderTypeId == OrderType.Delivery ? o.OrderDate : o.MealTime, false, p => p.Account!,
                                                                      p => p.Status!,
                                                                      p => p.Account!,
                                                                      p => p.LoyalPointsHistory!,
@@ -1669,7 +1671,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
 
                     var orderListDb = await
-                        _repository.GetAllDataByExpression(p => p.Account!.PhoneNumber == phoneNumber, pageNumber, pageSize, p => p.OrderDate, false,
+                        _repository.GetAllDataByExpression(p => p.Account!.PhoneNumber == phoneNumber, pageNumber, pageSize, o => o.OrderTypeId == OrderType.Delivery ? o.OrderDate : o.MealTime, false,
                             p => p.Status!,
                             p => p.Account!,
                             p => p.LoyalPointsHistory!,
@@ -1691,6 +1693,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     orderList.Items = mappedData;
                     orderList.TotalPages = orderListDb.TotalPages;
                 }
+                orderList.Items = orderList.Items.OrderByDescending(m => m.OrderTypeId == OrderType.Delivery ? m.OrderDate : m.MealTime).ToList();
                 result.Result = orderList;
             }
             catch (Exception ex)
@@ -1706,9 +1709,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 PagedResult<Order> data = new PagedResult<Order>();
+                
+
                 if (status.HasValue && status > 0 && orderType.HasValue && orderType > 0)
                 {
-                    data = await _repository.GetAllDataByExpression(o => o.StatusId == status && o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                    data = await _repository.GetAllDataByExpression(o => o.StatusId == status && o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderTypeId == OrderType.Delivery ? o.OrderDate : o.MealTime
+                    , false, p => p.Account!,
                        p => p.Status!,
                        p => p.Account!,
                        p => p.LoyalPointsHistory!,
@@ -1719,7 +1725,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else if (status.HasValue && status > 0)
                 {
-                    data = await _repository.GetAllDataByExpression(o => o.StatusId == status, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                    data = await _repository.GetAllDataByExpression(o => o.StatusId == status, pageNumber, pageSize, o => o.OrderTypeId == OrderType.Delivery ? o.OrderDate : o.MealTime, false, p => p.Account!,
                        p => p.Status!,
                        p => p.Account!,
                        p => p.LoyalPointsHistory!,
@@ -1730,7 +1736,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else if (orderType.HasValue && orderType > 0)
                 {
-                    data = await _repository.GetAllDataByExpression(o => o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                    data = await _repository.GetAllDataByExpression(o => o.OrderTypeId == orderType, pageNumber, pageSize, o => o.OrderTypeId == OrderType.Delivery ? o.OrderDate : o.MealTime, false, p => p.Account!,
                        p => p.Status!,
                        p => p.Account!,
                        p => p.LoyalPointsHistory!,
@@ -1741,7 +1747,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else
                 {
-                    data = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, o => o.OrderDate, false, p => p.Account!,
+                    data = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, o => o.OrderTypeId == OrderType.Delivery ? o.OrderDate : o.MealTime, false, p => p.Account!,
                       p => p.Status!,
                       p => p.Account!,
                       p => p.LoyalPointsHistory!,
@@ -1764,7 +1770,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 result.Result = new PagedResult<OrderWithFirstDetailResponse>
                 {
-                    Items = mappedData,
+                    Items = mappedData.OrderByDescending(m => m.OrderTypeId == OrderType.Delivery ? m.OrderDate : m.MealTime).ToList(),
                     TotalPages = data.TotalPages,
                 };
             }
@@ -2714,7 +2720,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                 && r.Order!.MealTime <= time.Value.AddHours(double.Parse(configDb.CurrentValue))
                                                                 && r.Order.MealTime.Value.AddHours(double.Parse(configDb.CurrentValue)) >= time
                                                                 && r.Order.OrderTypeId == OrderType.Reservation
-                                                                && r.Order.StatusId == OrderStatus.DepositPaid, 0, 0, r => r.Order!.ReservationDate, true, o => o.Order);
+                                                                && (r.Order.StatusId == OrderStatus.DepositPaid || r.Order.StatusId == OrderStatus.Processing || r.Order.StatusId == OrderStatus.TemporarilyCompleted), 0, 0, r => r.Order!.ReservationDate, true, o => o.Order);
                 if (nearReservationDb.Items.Count > 0)
                 {
                     result = await GetAllOrderDetail(nearReservationDb.Items.OrderBy(o => Math.Abs(o.Order.MealTime.Value.Ticks - time.Value.Ticks)).FirstOrDefault().OrderId);
@@ -3369,8 +3375,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var orderDiningTableDb = await _tableDetailRepository.GetAllDataByExpression(
                                                                                       o => (
                                                                                             o.Order.MealTime.Value.Date >= request.StartDate.Date
-                                                                                            && o.Order.MealTime.Value.Date <= request.EndDate.Date)
-                                                                                            && o.Order.OrderTypeId == request.Type
+                                                                                            && o.Order.MealTime.Value.Date <= request.EndDate.Date
+                                                                                            ||
+                                                                                            o.Order.OrderDate.Date >= request.StartDate.Date
+                                                                                            && o.Order.OrderDate.Date <= request.EndDate.Date
+                                                                                            )
+                                                                                            && (
+                                                                                                request.Type == 0 
+                                                                                                || o.Order.OrderTypeId == request.Type
+                                                                                            )
                                                                                             &&
                                                                                             (
                                                                                                 !request.Status.HasValue
@@ -3427,11 +3440,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     if (orderDb.FirstOrDefault()!.OrderTypeId != OrderType.Delivery)
                     {
-                        orderDb = orderDb.OrderBy(o => o.MealTime).ToList();
+                        orderDb = orderDb.OrderByDescending(o => o.MealTime).ToList();
                     }
                     else
                     {
-                        orderDb = orderDb.OrderBy(o => o.OrderDate).ToList();
+                        orderDb = orderDb.OrderByDescending(o => o.OrderDate).ToList();
                     }
 
                     foreach (var item in orderDb)
@@ -3996,7 +4009,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                         && o.Order.AccountId.Equals(accountId)
                                                                                         && (feedbackStatus == 1) == o.IsRated
                                                                                         && o.Order.StatusId == OrderStatus.Completed
-                                                                                        ,pageNumber, pageSize, o => o.OrderTime, false,
+                                                                                        ,pageNumber, pageSize, o => o.Order.OrderTypeId == OrderType.Delivery ? o.Order.DeliveredTime : o.Order.MealTime, false,
                                                                                         o => o.DishSizeDetail.Dish.DishItemType,
                                                                                         o => o.DishSizeDetail.DishSize,
                                                                                         o => o.Combo.Category,
