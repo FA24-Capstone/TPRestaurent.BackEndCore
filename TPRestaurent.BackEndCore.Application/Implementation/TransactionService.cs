@@ -704,7 +704,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
 
-                if((order.MealTime - order.CancelledTime).Value.Hours > double.Parse(timeConfigurationDb.CurrentValue))
+                if(asCustomer && (order.MealTime - order.CancelledTime).Value.Hours > double.Parse(timeConfigurationDb.CurrentValue))
                 {
                     return result;
                 }
