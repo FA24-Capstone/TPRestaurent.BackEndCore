@@ -246,7 +246,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
         }
 
-        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful, OrderStatus? status, bool? requireSignalR = true)
+        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful, OrderStatus? status, bool? requireSignalR = true, bool? asCustomer = true)
         {
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
@@ -433,9 +433,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await _repository.Update(orderDb);
                         await _unitOfWork.SaveChangesAsync();
 
-                        if (orderDb.OrderTypeId == OrderType.Reservation && orderDb.StatusId == OrderStatus.Cancelled)
+                        if ((orderDb.OrderTypeId == OrderType.Reservation || orderDb.OrderTypeId == OrderType.Delivery && !asCustomer.Value) && orderDb.StatusId == OrderStatus.Cancelled)
                         {
-                            var refund = await transactionService.CreateRefund(orderDb);
+                            var refund = await transactionService.CreateRefund(orderDb, asCustomer.HasValue && asCustomer.Value);
                             if (!refund.IsSuccess)
                             {
                                 return BuildAppActionResultError(result, $"Thực hiện hoàn tiền thất bại");
