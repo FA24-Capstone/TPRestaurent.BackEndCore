@@ -3375,8 +3375,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var orderDiningTableDb = await _tableDetailRepository.GetAllDataByExpression(
                                                                                       o => (
                                                                                             o.Order.MealTime.Value.Date >= request.StartDate.Date
-                                                                                            && o.Order.MealTime.Value.Date <= request.EndDate.Date)
-                                                                                            && o.Order.OrderTypeId == request.Type
+                                                                                            && o.Order.MealTime.Value.Date <= request.EndDate.Date
+                                                                                            ||
+                                                                                            o.Order.OrderDate.Date >= request.StartDate.Date
+                                                                                            && o.Order.OrderDate.Date <= request.EndDate.Date
+                                                                                            )
+                                                                                            && (
+                                                                                                request.Type == 0 
+                                                                                                || o.Order.OrderTypeId == request.Type
+                                                                                            )
                                                                                             &&
                                                                                             (
                                                                                                 !request.Status.HasValue
