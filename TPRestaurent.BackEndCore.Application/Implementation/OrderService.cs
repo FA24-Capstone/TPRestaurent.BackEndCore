@@ -1166,8 +1166,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 orderWithPayment.PaymentLink = linkPaymentDb!.Result!.ToString();
                             }
+                        }
+                        scope.Complete();
 
-
+                        if(orderRequestDto.DeliveryOrder != null || orderRequestDto.ReservationOrder != null)
+                        {
                             StringBuilder messageBody = new StringBuilder();
                             if (orderDetails != null && orderDetails.Count > 0)
                             {
@@ -1191,12 +1194,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
 
                                 messageBody.Length -= 2;
-
-
                             }
-
                             var createSuccessfulMessage = $"Đơn của bạn đã được đặt thành công";
-                            scope.Complete();
                             if (orderDetails != null && orderDetails.Count > 0)
                             {
                                 await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_CHEF, messageBody.ToString());
