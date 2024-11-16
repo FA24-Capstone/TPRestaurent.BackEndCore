@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -59,7 +59,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetDishWithTag(List<string> tags, int batchSize,decimal? low, decimal? high)
+        public async Task<AppActionResult> GetDishWithTag(List<string> tags, int batchSize)
         {
             AppActionResult result = new AppActionResult();
             try
