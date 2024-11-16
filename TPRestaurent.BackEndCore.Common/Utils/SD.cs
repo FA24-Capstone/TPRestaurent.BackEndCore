@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Text;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
@@ -259,17 +259,19 @@ public class SD
             if (isFirstCall)
             {
                 response.Append("Nhà hàng Thiên Phú xin chào ");
-            } 
+            }
             if (customer.Gender.HasValue)
             {
                 if (customer.Gender.Value)
                 {
                     response.Append("Anh ");
-                } else
+                }
+                else
                 {
                     response.Append("Chị ");
                 }
-            } else
+            }
+            else
             {
                 response.Append("anh/chị ");
             }
@@ -281,18 +283,21 @@ public class SD
             }
             int greetingRandom = random.Next(0, 7);
 
-            if(greetingRandom == 1)
+            if (greetingRandom == 1)
             {
                 response.Append(", em có thể giúp gì cho mình ạ?");
-            } else if (greetingRandom == 2)
+            }
+            else if (greetingRandom == 2)
             {
                 response.Append(", hôm nay quý khách muốn dùng món nào ạ?");
-            } else
+            }
+            else
             {
                 if (!string.IsNullOrEmpty(dishName))
                 {
                     response.Append($", hôm nay em gợi ý cho mình dùng món {dishName} hôm trước quý khách rất thích ạ");
-                } else
+                }
+                else
                 {
                     response.Append(", hôm nay quý khách muốn dùng món nào ạ?");
                 }
