@@ -130,7 +130,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         vietnamTimeZone);
                 }
 
-                StatisticReportNumberResponse statisticReportNumberResponse = new StatisticReportNumberResponse();      
+                StatisticReportNumberResponse statisticReportNumberResponse = new StatisticReportNumberResponse();
 
                 ShipperStatisticResponse shipperStatisticResponse = new ShipperStatisticResponse();
                 var shipperDb = await _userManager.GetUsersInRoleAsync(SD.RoleName.ROLE_SHIPPER);
@@ -153,7 +153,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 CustomerStasticResponse customerStasticResponse = new CustomerStasticResponse();
                 var customerDb = await _userManager.GetUsersInRoleAsync(SD.RoleName.ROLE_CUSTOMER);
-                var customerList =  customerDb.Where(p => p.RegisteredDate >= startDate.Value && p.RegisteredDate <= endDate.Value);
+                var customerList = customerDb.Where(p => p.RegisteredDate >= startDate.Value && p.RegisteredDate <= endDate.Value);
                 var customerLastWeek = customerDb.Where(p => p.RegisteredDate.Date >= startDate.Value.AddDays(-7).Date);
                 var lastWeekCount = customerLastWeek.Count();
                 var customerCount = customerList.Count();
@@ -201,7 +201,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     profitReportResponse.PercentProfitCompareToYesterday = percentProfit;
                 }
 
-                profitReportResponse.Profit = presentProfitNumber;  
+                profitReportResponse.Profit = presentProfitNumber;
 
                 statisticReportNumberResponse.ProfitReportResponse = profitReportResponse;
 
