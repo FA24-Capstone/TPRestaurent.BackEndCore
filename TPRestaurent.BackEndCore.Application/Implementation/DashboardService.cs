@@ -175,20 +175,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var yesterdayStart = startDate.Value.AddDays(-1);
                 var yesterdayEnd = endDate.Value.AddTicks(-1);
 
-                var presentTransactionDb = await transactionRepository!.GetAllDataByExpression(
-                    p => p.Date >= startDate &&
-                         p.Date <= endDate &&
-                         p.TransationStatusId == TransationStatus.SUCCESSFUL,
+                var presentProfitDb = await orderRepository!.GetAllDataByExpression(
+                    p => p.OrderDate >= startDate &&
+                         p.OrderDate <= endDate &&
+                         p.StatusId == OrderStatus.Completed,
                     0, 0, null, false, null);
 
-                var yesterdayTransactionDb = await transactionRepository!.GetAllDataByExpression(
-                    p => p.Date >= yesterdayStart &&
-                         p.Date <= yesterdayEnd &&
-                         p.TransationStatusId == TransationStatus.SUCCESSFUL,
+                var yesterdayProfitDb = await orderRepository!.GetAllDataByExpression(
+                    p => p.OrderDate >= yesterdayStart &&
+                         p.OrderDate <= yesterdayEnd &&
+                         p.StatusId == OrderStatus.Completed,
                     0, 0, null, false, null);
 
-                var presentProfitNumber = presentTransactionDb.Items?.Sum(t => t.Amount) ?? 0;
-                var yesterdayProfitNumber = yesterdayTransactionDb.Items?.Sum(t => t.Amount) ?? 0;
+                var presentProfitNumber = presentProfitDb.Items?.Sum(t => t.TotalAmount) ?? 0;
+                var yesterdayProfitNumber = yesterdayProfitDb.Items?.Sum(t => t.TotalAmount) ?? 0;
                 var percentProfit = yesterdayProfitNumber != 0
                         ? Math.Round((presentProfitNumber / yesterdayProfitNumber), 2)
                         : 0;
