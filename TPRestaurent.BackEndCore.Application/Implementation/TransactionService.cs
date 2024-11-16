@@ -686,6 +686,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var configurationRepository = Resolve<IGenericRepository<Configuration>>();
                 var accountRepository = Resolve<IGenericRepository<Account>>();
                 var emailService = Resolve<IEmailService>();
+                var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
+
 
                 var paidDepositOrder = await _repository.GetAllDataByExpression(r => r.OrderId == order.OrderId && r.TransactionTypeId == TransactionType.Deposit
                                                                                     && r.TransationStatusId == TransationStatus.SUCCESSFUL, 0, 0, null, false, null);
@@ -761,7 +763,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 await accountRepository.Update(accountDb);
                 await _unitOfWork.SaveChangesAsync();
 
-                emailService.SendEmail(accountDb.Email, "THÔNG BÁO HUỶ ĐẶT BÀN TẠI NHÀ HÀNG THIÊN PHÚ", TemplateMappingHelper.GetTemplateMailToCancelReservation(accountDb.FirstName, order));
+                //var tableDetailDb = await tableDetailRepository.GetAllDataByExpression(p => p.OrderId == order.OrderId, 0, 0, null, false, p => p!.Table!, p => p.Table!.Room!, p => p.Table!.TableSize!);
+                //var tableDetail = tableDetailDb!.Items!.FirstOrDefault();
+                //emailService.SendEmail(accountDb.Email, "THÔNG BÁO HUỶ ĐẶT BÀN TẠI NHÀ HÀNG THIÊN PHÚ", TemplateMappingHelper.GetTemplateMailToCancelReservation(accountDb.FirstName, order, tableDetail));
 
                 result.Result = refundTransaction;
             }
