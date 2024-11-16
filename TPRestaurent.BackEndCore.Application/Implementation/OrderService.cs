@@ -1367,6 +1367,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         accountDb = await accountRepository.GetById(orderDb.AccountId);
                     }
+                    if(accountDb == null || orderRequestDto.CouponIds.Count > 0)
+                    {
+                        return BuildAppActionResultError(result, $"Coupon chỉ áp dụng được cho khách hàng có tài khoản trong hệ thống");
+                    }
 
                     var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderRequestDto.OrderId && o.OrderDetailStatusId != OrderDetailStatus.Cancelled, 0, 0, p => p.OrderTime, false, null);
                     double money = 0;
@@ -1505,7 +1509,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 var paymentRequest = new PaymentRequestDto
                                 {
                                     OrderId = orderDb.OrderId,
-                                    PaymentMethod = orderRequestDto.PaymentMethod
+                                    PaymentMethod = orderRequestDto.PaymentMethod,
+                                    AccountId = accountDb?.Id
                                 };
                                 var linkPaymentDb = await transactionService!.CreatePayment(paymentRequest);
                                 if (!linkPaymentDb.IsSuccess)
