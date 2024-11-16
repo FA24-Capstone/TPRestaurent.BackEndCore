@@ -170,6 +170,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         public async Task UpdateDishAvailability(List<Guid> dishSizeDetailIds = null)
         {
+            AppActionResult result = new AppActionResult();
             try
             {
                 var dishRepository = Resolve<IGenericRepository<Dish>>();
