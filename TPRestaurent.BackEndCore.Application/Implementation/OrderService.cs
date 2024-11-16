@@ -1367,7 +1367,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         accountDb = await accountRepository.GetById(orderDb.AccountId);
                     }
-                    if(accountDb == null || orderRequestDto.CouponIds.Count > 0)
+                    if(accountDb == null && orderRequestDto.CouponIds.Count > 0)
                     {
                         return BuildAppActionResultError(result, $"Coupon chỉ áp dụng được cho khách hàng có tài khoản trong hệ thống");
                     }
