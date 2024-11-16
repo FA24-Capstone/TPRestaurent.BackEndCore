@@ -1,4 +1,4 @@
-﻿using MailKit;
+using MailKit;
 using Newtonsoft.Json;
 using NPOI.POIFS.Storage;
 using NPOI.SS.Formula.Functions;

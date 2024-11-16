@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using TPRestaurent.BackEndCore.Domain.Enums;
 
 namespace TPRestaurent.BackEndCore.Common.Utils;

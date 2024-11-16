@@ -120,9 +120,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPut("update-order-status/{orderId}")]
-        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool isSuccessful, OrderStatus? status)
+        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool isSuccessful, OrderStatus? status, bool? asCustomer = true)
         {
-            return await _service.ChangeOrderStatus(orderId, isSuccessful, status);
+            return await _service.ChangeOrderStatus(orderId, isSuccessful, status, asCustomer);
         }
 
         [HttpGet("get-all-table-details/{pageNumber}/{pageSize}")]
