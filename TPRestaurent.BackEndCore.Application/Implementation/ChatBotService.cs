@@ -2,6 +2,7 @@ using Castle.DynamicProxy.Generators;
 using NPOI.SS.Formula.Functions;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -12,6 +13,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
+using TPRestaurent.BackEndCore.Domain.Migrations;
 using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
@@ -20,6 +22,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     {
         private IGenericRepository<Account> _accountRepository;
         private IGenericRepository<Dish> _dishRepository;
+        private IGenericRepository<Combo> _comboRepository;
+        private IGenericRepository<Rating> _ratingRepository;
+        private IGenericRepository<CustomerInfoAddress> _addressRepository;
+        private IGenericRepository<Domain.Models.Configuration> _configurationRepository;
         private IDishManagementService _dishManagementService;
         private IDishService _dishService;
         private IMapService _mapService;
@@ -27,6 +33,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private IOpenAIClient _client;
         public ChatBotService(IGenericRepository<Account> accountRepository,
                               IGenericRepository<Dish> dishRepository,
+                              IGenericRepository<Combo> comboRepository,
+                              IGenericRepository<Rating> ratingRepository,
+                              IGenericRepository<CustomerInfoAddress> addressRepository,
+        IGenericRepository<Domain.Models.Configuration> configurationRepository,
                               ITableService tableService,
                               IDishService dishService,
                               IMapService mapService,
@@ -36,6 +46,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             _accountRepository = accountRepository;
             _dishRepository = dishRepository;
+            _comboRepository = comboRepository;
+            _ratingRepository = ratingRepository;
+            _addressRepository = addressRepository;
+            _configurationRepository = configurationRepository;
             _dishService = dishService;
             _tableService = tableService;
             _mapService = mapService;
@@ -48,25 +62,76 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var response = await _client.CreateChatCompletion($"{SD.OpenAIPrompt.HOT_FIX_PROMPT}{dto.Message}");
+                StringBuilder request = new StringBuilder();
+                string customerGreeting = "bạn";
+                if (!string.IsNullOrEmpty(dto.CustomerId))
+                {
+                    var accountDb = await _accountRepository.GetById(dto.CustomerId);
+                    if (accountDb != null)
+                    {
+                        var dishDb = await _ratingRepository.GetAllDataByExpression(r => r.OrderDetail.Order.AccountId.Equals(dto.CustomerId), 1, 2, o => o.PointId, false, o => o.OrderDetail.DishSizeDetail.Dish, o => o.OrderDetail.Combo);
+                        var dishName = string.Join(", ", dishDb.Items.Select(c =>
+                        {
+                            if (c.OrderDetail.DishSizeDetailId.HasValue)
+                            {
+                                return c.OrderDetail.DishSizeDetail.Dish.Name;
+                            }
+                            else
+                            {
+                                return c.OrderDetail.Combo.Name;
+                            }
+                        }));
+
+                        customerGreeting = SD.OpenAIPrompt.GetCustomerGreeting(accountDb, dishName, dto.IsFirstCall);
+                        if (dto.IsFirstCall)
+                        {
+                            result.Result = customerGreeting;
+                            return result;
+                        }
+                        else
+                        {
+                            request.Append($"Gọi khách là {customerGreeting}");
+                        }
+
+                        var customerInfoAddress = await _addressRepository.GetByExpression(a => a.AccountId.Equals(dto.CustomerId) && !a.IsDeleted && a.IsCurrentUsed);
+                        if (customerInfoAddress != null)
+                        {
+                            request.Append($"Nếu khách hỏi có giao hàng không mà không nêu địa chỉ cụ thể hay chứa giao tới nhà tôi-> địa chỉ là {customerInfoAddress.CustomerInfoAddressName}.");
+                        }
+                    }
+                }
+
+                request.Append($"{SD.OpenAIPrompt.HOT_FIX_PROMPT}{dto.Message}");
+                var response = await _client.CreateChatCompletion(request.ToString());
                 if (response.Contains("trigger"))
                 {
-                    if (response.ToLower().Contains("table") 
-                        || response.ToLower().Contains("reservation") 
+                    if (response.ToLower().Contains("table")
+                        || response.ToLower().Contains("reservation")
                         || response.ToLower().Contains("booking")
                         || response.ToLower().Contains("event")
                         || response.ToLower().Contains("create")
                         || response.ToLower().Contains("make"))
                     {
                         string pattern = @"startTime=(\S+), endTime=(\S+), numOfPeople=(\d+)";
-                        System.Text.RegularExpressions.Match match = Regex.Match(response, pattern);
+                        System.Text.RegularExpressions.Match match = Regex.Match(ParseDateTimeString(response), pattern);
 
                         // Check if we have a match
                         if (match.Success)
                         {
+                            var openHour = await _configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.OPEN_TIME));
+                            var closedHour = await _configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.CLOSED_TIME));
                             DateTime startTime = DateTime.Parse(match.Groups[1].Value);
                             DateTime endTime = DateTime.Parse(match.Groups[2].Value);
+                            if (double.Parse(openHour.CurrentValue) > startTime.Hour
+                                || double.Parse(closedHour.CurrentValue) < endTime.Hour)
+                            {
+                                result.Result = $"Nhà hàng chỉ hoạt động từ {openHour.CurrentValue}h đến {closedHour.CurrentValue}h";
+                                return result;
+                            }
+
+
                             int numOfPeople = int.Parse(match.Groups[3].Value);
+
                             var findTable = await _tableService.FindTable(new Common.DTO.Request.FindTableDto
                             {
                                 StartTime = startTime,
@@ -76,30 +141,29 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             });
                             if (findTable.IsSuccess && findTable.Result != null)
                             {
-                                response = "Nhà hàng có bàn trống cho bạn vào khung giờ đó. Bạn hay truy cập https://thienphurestaurant.vercel.app/booking để đặt bàn nhé";
+                                response = $"Nhà hàng có bàn trống cho {customerGreeting} vào khung giờ đó. {customerGreeting} hay truy cập https://thienphurestaurant.vercel.app/booking để đặt bàn nhé";
                             }
                         }
                         else
                         {
-                            response = "Nhà hàng không có bàn trống vào khung giờ đó. Bạn hãy thử khung giờ khác nhé";
+                            response = $"Nhà hàng không có bàn trống vào khung giờ đó. {customerGreeting} hãy thử khung giờ khác nhé";
                         }
                     }
-                    else if (response.ToLower().Contains("tags") && !response.ToLower().Contains("price"))
+                    else if (response.ToLower().Contains("tags"))
                     {
-                        string[] split = response.Split(':');
-                        string[] tags = split[1].Split(", ");
-                        var suggestedDish = await _dishManagementService.GetDishWithTag(tags.ToList(), 3);
+                        var searchDish = ParseDishInfo(response);
+                        var suggestedDish = await _dishManagementService.GetDishWithTag(searchDish.Tags, 3, searchDish.PriceRange.Min, searchDish.PriceRange.Max);
                         if (suggestedDish.IsSuccess && suggestedDish.Result != null)
                         {
                             List<string> dishes = suggestedDish.Result as List<string>;
-                            response = $"Nhà hàng gợi ý cho bạn dùng thử: {string.Join(", ", dishes)}";
+                            response = $"Nhà hàng gợi ý cho {customerGreeting} dùng thử: {string.Join(", ", dishes)}";
                         }
                         else
                         {
-                            response = "Bạn có thể khám phá các món của nhà hàng ở Thực đơn và combo";
+                            response = $"{customerGreeting} có thể khám phá các món của nhà hàng ở Thực đơn và combo";
                         }
                     }
-                    else if (response.ToLower().Contains("distance") 
+                    else if (response.ToLower().Contains("distance")
                         || response.ToLower().Contains("calculate")
                         || response.ToLower().Contains("delivery")
                         || response.ToLower().Contains("location")
@@ -111,7 +175,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         string[] extract = response.Split(new char[] { ':', '=' }, StringSplitOptions.RemoveEmptyEntries);
                         // Extract the destination value
                         string destination = extract[extract.Length - 1];
-                        var distanceResult = await _mapService.CheckDistanceForChatBot(destination);
+                        var distanceResult = await _mapService.CheckDistanceForChatBot(destination, customerGreeting);
                         if (distanceResult.IsSuccess && distanceResult.Result != null)
                         {
                             response = distanceResult.Result as string;
@@ -121,20 +185,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             response = "Nhà hàng chỉ hỗ trợ cho đơn giao hàng trong bán kính 10km";
                         }
                     }
-                    else if (response.ToLower().Contains("name") || response.ToLower().Contains("price"))
+                    else if (response.ToLower().Contains("name"))
                     {
-                        string dishName = response.Split(", ")[0].Split(": ")[1];
-                        var dishResult = await _dishService.GetAllDish(dishName, null, 1, 3, null, null);
-                        if (dishResult.IsSuccess && dishResult.Result != null)
+                        var searchDish = ParseDishInfo(response);
+                        var dishList = await _dishRepository.GetAllDataByExpression(p => p.Name.ToLower().Contains(searchDish.Name.ToLower())
+                                             && p.IsMainItem && !p.IsDeleted && p.isAvailable, 1, 3, null, false, null);
+                        if (dishList.Items.Count > 0)
                         {
-                            var dishDb = dishResult.Result as PagedResult<DishSizeResponse>;
-                            if (dishDb != null && dishDb.Items.Count > 0)
+                            response = $"{customerGreeting} có thể thử {string.Join(", ", dishList.Items.Select(d => d.Name))} tại nhà hàng";
+                        }
+                        else
+                        {
+                            var comboList = await _comboRepository.GetAllDataByExpression(p => p.Name.ToLower().Contains(searchDish.Name.ToLower())
+                                            && !p.IsDeleted && p.IsAvailable, 1, 3, null, false, null);
+                            if (dishList.Items.Count > 0)
                             {
-                                response = $"Bạn có thể thử {string.Join(", ", dishDb.Items.Select(d => d.Dish.Name))} tại nhà hàng";
-                            }
-                            else
-                            {
-                                response = "Bạn có thể khám phá các món của nhà hàng ở Thực đơn và combo";
+                                response = $"{customerGreeting} có thể thử {string.Join(", ", comboList.Items.Select(d => d.Name))} tại nhà hàng";
                             }
                         }
                     }
@@ -162,7 +228,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             DateTime today = utility.GetCurrentDateTimeInTimeZone();
 
             // Dictionary to store pre-calculated dates for each placeholder
-        var replacements = new System.Collections.Generic.Dictionary<string, DateTime>
+            var replacements = new System.Collections.Generic.Dictionary<string, DateTime>
         {
             { "{{TODAY}}", today },
             { "{{TODAY+1}}", today.AddDays(1) },
@@ -195,7 +261,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (replacements.TryGetValue(placeholder, out DateTime dateValue))
                 {
                     return dateValue.ToString("yyyy-MM-dd");
-            }
+                }
                 return placeholder; // Leave unchanged if not found
             });
 
