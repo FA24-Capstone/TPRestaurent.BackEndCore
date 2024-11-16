@@ -1317,7 +1317,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var orderDb = await _repository.GetByExpression(o => o.OrderId == orderRequestDto.OrderId, null);
                     Transaction refundTransaction = null;
 
-                    if(orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse.Value < 0)
+                    if (orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse.Value < 0)
                     {
                         return BuildAppActionResultError(result, $"Số điểm thành viên sử dụng không được âm");
                     }
@@ -1335,7 +1335,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (!string.IsNullOrEmpty(orderRequestDto.AccountId))
                     {
                         accountDb = await accountRepository.GetById(orderRequestDto.AccountId);
-                    } else if (!string.IsNullOrEmpty(orderDb.AccountId))
+                    }
+                    else if (!string.IsNullOrEmpty(orderDb.AccountId))
                     {
                         accountDb = await accountRepository.GetById(orderDb.AccountId);
                     }
@@ -1454,7 +1455,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         result.Result = orderWithPayment;
                         if (refundTransaction == null)
                         {
-                            if(orderRequestDto.PaymentMethod == PaymentMethod.Cash)
+                            if (orderRequestDto.PaymentMethod == PaymentMethod.Cash)
                             {
                                 if (orderRequestDto.CashReceived.HasValue && orderRequestDto.ChangeReturned.HasValue)
                                 {
@@ -1469,7 +1470,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 orderDb.StatusId = OrderStatus.Completed;
                                 await _repository.Update(orderDb);
                                 await _unitOfWork.SaveChangesAsync();
-                            } else
+                            }
+                            else
                             {
                                 await _repository.Update(orderDb);
                                 await _unitOfWork.SaveChangesAsync();
@@ -1485,13 +1487,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
                                 orderWithPayment.PaymentLink = linkPaymentDb.Result.ToString();
                                 result.Result = orderWithPayment;
-                            }                      
-                        } else
+                            }
+                        }
+                        else
                         {
                             await _repository.Update(orderDb);
                             await _unitOfWork.SaveChangesAsync();
-                        }               
-                        scope.Complete();                       
+                        }
+                        scope.Complete();
                     }
 
                 }
@@ -2893,13 +2896,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private async Task<List<Common.DTO.Response.OrderDishDto>> GetReservationDishes2(Guid reservationId, List<OrderDetail> orderDetails = null)
         {
             var reservationDishDb = new PagedResult<OrderDetail>();
-            if(orderDetails != null && orderDetails.Count > 0)
+            if (orderDetails != null && orderDetails.Count > 0)
             {
                 reservationDishDb = new PagedResult<OrderDetail>
                 {
                     Items = orderDetails
                 };
-            } else
+            }
+            else
             {
                 reservationDishDb = await _detailRepository.GetAllDataByExpression(
                     o => o.OrderId == reservationId,
@@ -4001,7 +4005,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var accountRepository = Resolve<IGenericRepository<Account>>();
                 var accountDb = await accountRepository.GetById(accountId);
-                if(accountDb == null)
+                if (accountDb == null)
                 {
                     result = BuildAppActionResultError(result, $"Không tìm thấy tài khoản với id {accountId}");
                 }
