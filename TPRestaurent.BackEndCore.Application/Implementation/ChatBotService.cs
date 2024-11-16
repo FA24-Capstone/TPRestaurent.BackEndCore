@@ -1,4 +1,4 @@
-﻿using Castle.DynamicProxy.Generators;
+using Castle.DynamicProxy.Generators;
 using NPOI.SS.Formula.Functions;
 using System;
 using System.Collections.Generic;

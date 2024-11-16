@@ -93,6 +93,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 groupedTime[1] = currentTime;
 
 
+                
                 var groupedDishResult = await orderSessionService.GetGroupedDish(groupedTime);
                 if (!groupedDishResult.IsSuccess)
                 {
@@ -265,6 +266,53 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
             }
             return false;
+        }
+
+        public async Task RemoveOverdueGroupedDish()
+        {
+            try
+            {
+                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var utility = Resolve<Utility>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                var groupedDishDb = await _repository.GetAllDataByExpression(null, 0, 0, null, false, null);
+                if (groupedDishDb.Items.Count > 0)
+                {
+                    foreach (var groupedDish in groupedDishDb.Items)
+                    {
+                        if (groupedDish.StartTime.Date < currentTime.Date)
+                        {
+                            await _repository.DeleteById(groupedDish.GroupedDishCraftId);
+                        }
+                        else if (groupedDish.IsFinished)
+                        {
+                            await _repository.DeleteById(groupedDish.GroupedDishCraftId);
+                        }
+                        else if (string.IsNullOrEmpty(groupedDish.OrderDetailidList))
+                        {
+                            await _repository.DeleteById(groupedDish.GroupedDishCraftId);
+                        }
+                        else
+                        {
+                            List<Guid> orderDetailIds = JsonConvert.DeserializeObject<List<Guid>>(groupedDish.OrderDetailidList);
+                            var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => orderDetailIds.Contains(o.OrderDetailId), 0, 0, null, false, o => o.OrderSession, o => o.Order);
+                            if (orderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled
+                                                            || (o.Order.StatusId == OrderStatus.Cancelled)
+                                                            || (o.OrderSessionId.HasValue && o.OrderSession.OrderSessionStatusId == OrderSessionStatus.Cancelled)))
+                            {
+                                await _repository.DeleteById(groupedDish.GroupedDishCraftId);
+                            }
+                        }
+
+
+                    }
+
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+            }
         }
     }
 }

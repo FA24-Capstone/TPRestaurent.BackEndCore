@@ -74,7 +74,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
 
 
-            RecurringJob.AddOrUpdate(() => _orderService.NotifyReservationDishToKitchen(), Cron.MinuteInterval(5), vietnamTimeZone);
+            RecurringJob.AddOrUpdate(() => _orderService.NotifyReservationDishToKitchen(), Cron.MinuteInterval(2), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _orderService.AccountDailyReservationDish(), "01 0 * * *", vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _storeCreditService.ChangeOverdueStoreCredit(), Cron.DayInterval(1), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _accountService.DeleteOverdueOTP(), Cron.DayInterval(1), vietnamTimeZone);

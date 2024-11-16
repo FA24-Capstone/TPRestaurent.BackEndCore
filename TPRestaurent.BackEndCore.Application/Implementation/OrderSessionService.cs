@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using NPOI.POIFS.Crypt.Agile;
 using NPOI.SS.Formula.Functions;
 using System;
