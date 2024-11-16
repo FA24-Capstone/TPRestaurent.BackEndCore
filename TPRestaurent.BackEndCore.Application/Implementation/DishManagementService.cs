@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,9 +22,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private IMapper _mapper;
         private IUnitOfWork _unitOfWork;
 
-        public DishManagementService(IServiceProvider serviceProvider, 
-                                     IGenericRepository<DishSizeDetail> dishRepository, 
-                                     IGenericRepository<DishCombo> dishComboRepository, 
+        public DishManagementService(IServiceProvider serviceProvider,
+                                     IGenericRepository<DishSizeDetail> dishRepository,
+                                     IGenericRepository<DishCombo> dishComboRepository,
                                      IGenericRepository<Combo> comboRepository,
                                      IMapper mapper, IUnitOfWork unitOfWork) : base(serviceProvider)
         {
@@ -43,7 +43,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var utility = Resolve<Utility>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
                 double preparationTime = 0;
-               
+
                 foreach (var preparationRequest in dto)
                 {
                     preparationTime += preparationRequest.PreparationTime * preparationRequest.Quantity;
@@ -59,7 +59,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetDishWithTag(List<string> tags, int batchSize,decimal? low, decimal? high)
+        public async Task<AppActionResult> GetDishWithTag(List<string> tags, int batchSize, decimal? low, decimal? high)
         {
             AppActionResult result = new AppActionResult();
             try
@@ -68,8 +68,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var dishTagDb = await dishTagRepository.GetAllDataByExpression(d => tags.Contains(d.Tag.Name.ToLower())
                                                                                     && (!d.DishId.HasValue || d.Dish.isAvailable && !d.Dish.IsDeleted)
                                                                                     && (!d.ComboId.HasValue || d.Combo.IsAvailable && !d.Combo.IsDeleted)
-                                                                                    , 0, 0, null, false, d=> d.Combo, d => d.Dish);
-                if(dishTagDb.Items.Count > 0)
+                                                                                    , 0, 0, null, false, d => d.Combo, d => d.Dish);
+                if (dishTagDb.Items.Count > 0)
                 {
                     var dishGroup = dishTagDb.Items.GroupBy(d =>
                     {
@@ -85,7 +85,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             catch (Exception ex)
             {
             }
-            return result; 
+            return result;
         }
 
         public async Task<AppActionResult> LoadDishRequireManualInput()
@@ -96,7 +96,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var utility = Resolve<Utility>();
                 var dishRepository = Resolve<IGenericRepository<Dish>>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
-                var dishDb = await _dishDetailRepository.GetAllDataByExpression(d => !d.Dish.IsDeleted, 0, 0, null, false, null); 
+                var dishDb = await _dishDetailRepository.GetAllDataByExpression(d => !d.Dish.IsDeleted, 0, 0, null, false, null);
                 var comboDb = await _comboRepository.GetAllDataByExpression(d => !d.IsDeleted && d.StartDate <= currentTime && d.EndDate >= currentTime
                                                                                  , 0, 0, null, false, null);
 
@@ -136,7 +136,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             dishCombo.IsAvailable = true;
                             dishCombo.QuantityLeft = dishCombo.DishSizeDetail.QuantityLeft / dishCombo.Quantity;
-                        } else
+                        }
+                        else
                         {
                             dishCombo.IsAvailable = false;
                         }
@@ -157,7 +158,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             comboDb.IsAvailable = false;
                         }
                         comboList.Add(comboDb);
-                    }                   
+                    }
                     await _dishComboRepository.UpdateRange(dishComboDb.Items);
                     await _comboRepository.UpdateRange(comboList);
                     await _unitOfWork.SaveChangesAsync();
@@ -170,12 +171,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         public async Task UpdateDishAvailability(List<Guid> dishSizeDetailIds = null)
         {
+            AppActionResult result = new AppActionResult();
             try
             {
                 var dishRepository = Resolve<IGenericRepository<Dish>>();
-                var dishDetailDb = await _dishDetailRepository.GetAllDataByExpression(d => !d.Dish.IsDeleted && (dishSizeDetailIds == null 
+                var dishDetailDb = await _dishDetailRepository.GetAllDataByExpression(d => !d.Dish.IsDeleted && (dishSizeDetailIds == null
                                                                                             || dishSizeDetailIds.Contains(d.DishSizeDetailId)), 0, 0, null, false, null);
-                if(dishDetailDb.Items.Count > 0)
+                if (dishDetailDb.Items.Count > 0)
                 {
                     var dishDictionary = dishDetailDb.Items.GroupBy(c => c.DishId)
                                       .ToDictionary(c => c.Key, c => c.ToList());
@@ -228,14 +230,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (dishSizeDetailDb.QuantityLeft <= 0)
                     {
                         dishSizeDetailDb.IsAvailable = false;
-                    } else
+                    }
+                    else
                     {
                         dishSizeDetailDb.IsAvailable = true;
                     }
 
                     await _dishDetailRepository.Update(dishSizeDetailDb);
                 }
-                if(!BuildAppActionResultIsError(result))
+                if (!BuildAppActionResultIsError(result))
                 {
                     await _unitOfWork.SaveChangesAsync();
                     await UpdateComboAvailability();

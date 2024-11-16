@@ -1,4 +1,4 @@
-﻿using MailKit;
+using MailKit;
 using Newtonsoft.Json;
 using NPOI.POIFS.Storage;
 using NPOI.SS.Formula.Functions;
@@ -88,14 +88,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     customerName = "bạn";
                 }
                 var destinationResult = await Geocode(address);
-                if(destinationResult.IsSuccess && destinationResult.Result != null)
+                if (destinationResult.IsSuccess && destinationResult.Result != null)
                 {
                     var destinationCoordinates = (destinationResult.Result as Root).Results[0].Geometry.Location;
                     var restaurantLatConfig = await _configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LATITUDE);
                     var restaurantLngConfig = await _configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LNG);
                     var restaurantMaxDistanceToOrderConfig = await _configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DISTANCE_ORDER);
 
-                   
+
                     var restaurantLat = Double.Parse(restaurantLatConfig.CurrentValue);
                     var restaurantLng = Double.Parse(restaurantLngConfig.CurrentValue);
                     var maxDistanceToOrder = double.Parse(restaurantMaxDistanceToOrderConfig!.CurrentValue);
@@ -116,7 +116,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (distance > maxDistanceToOrder)
                     {
                         result.Result = $"Địa chỉ của {customerName} cách nhà hàng hơn {maxDistanceToOrder}km nên nhà hàng không thể giao hàng tận nơi";
-                    } else {
+                    }
+                    else
+                    {
                         result.Result = $"Có chứ, địa chỉ của {customerName} nằm trong phạm vi giao của nhà hàng";
                     }
                 }
@@ -210,15 +212,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var addressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
                     var orderRepository = Resolve<IGenericRepository<Order>>();
                     var orderDb = await orderRepository.GetByExpression(o => o.OrderId == orderId, o => o.Account);
-                    if(orderDb == null)
+                    if (orderDb == null)
                     {
                         return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {orderId}");
                     }
                     var addressDb = await addressRepository.GetAllDataByExpression(a => a.CustomerInfoAddressName.Equals(orderDb.Account.Address), 0, 0, null, false, null);
-                    if(addressDb.Items.Count() > 0)
+                    if (addressDb.Items.Count() > 0)
                     {
                         result.Result = $"{baseUrl}{addressDb.Items[0].Lat},{addressDb.Items[0].Lng}";
-                    } else
+                    }
+                    else
                     {
                         return BuildAppActionResultError(result, "Không tìm thấy địa chỉ trong hệ thống");
                     }
