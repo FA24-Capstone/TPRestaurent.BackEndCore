@@ -4042,30 +4042,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 await orderSessionRepository.UpdateRange(orderSessionDb.Items);
                 await _detailRepository.UpdateRange(orderDetailDb.Items);
-
-                if (!string.IsNullOrEmpty(order.Account?.Email))
-                {
-                    var username = order.Account?.FirstName + "" + order.Account?.LastName;
-                    var tableDetailDb = await tableDetailRepository!.GetAllDataByExpression(p => p.OrderId == order.OrderId, 0, 0, null, false, p => p!.Table!, p => p.Table!.Room!, p => p.Table!.TableSize!);
-                    var tableDetail = tableDetailDb!.Items!.FirstOrDefault();
-                    emailService.SendEmail(order.Account?.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateMailToCancelReservation(username, order, tableDetail));
-
-                    var message = $"Đơn đặt bàn của bạn vào lúc {order.MealTime} đã bị hủy, để biết thêm thông tin chi tiết vui lòng kiểm tra hộp thư mail của bạn";
-                    var notificationMessage = new NotificationMessage
-                    {
-                        NotificationId = Guid.NewGuid(),
-                        AccountId = order.AccountId,
-                        NotificationName = "Bạn có thông báo mới",
-                        Messages = message,
-                        NotifyTime = currentTime
-                    };
-
-                    await notificationMessageReposiory!.Insert(notificationMessage);
-
-                }
-
-
-
             }
             catch (Exception ex)
             {
