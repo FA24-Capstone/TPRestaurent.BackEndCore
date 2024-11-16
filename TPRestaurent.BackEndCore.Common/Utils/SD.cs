@@ -1,5 +1,7 @@
 using System.Globalization;
+using System.Text;
 using TPRestaurent.BackEndCore.Domain.Enums;
+using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Common.Utils;
 
@@ -249,7 +251,59 @@ public class SD
             "Có bò lúc lắc không? -> trigger_find_dish_name: bò lúc lắc, " +
             "Tôi muốn đặt bàn cho 7 người vào 7h tối ngày mai.->trigger_find_table: startTime={{TODAY+1}}T19:00, endTime={{TODAY+1}}T20:00, numOfPeople=7|, " +
             "Giao hàng tới Chợ Bến Thành ko?->trigger_distance: address=Chợ Bến Thành, Quận 1, TP. HCM|." +
-            "Nếu không, trả lời bình thường. Câu hỏi:";
+            "Nếu không thuộc các trigger trên, trả lời bình thường. Câu hỏi:";
+        public static string GetCustomerGreeting(Account customer, string dishName, bool isFirstCall)
+        {
+            StringBuilder response = new StringBuilder();
+            Random random = new Random();
+            if (isFirstCall)
+            {
+                response.Append("Nhà hàng Thiên Phú xin chào ");
+            }
+            if (customer.Gender.HasValue)
+            {
+                if (customer.Gender.Value)
+                {
+                    response.Append("Anh ");
+                }
+                else
+                {
+                    response.Append("Chị ");
+                }
+            }
+            else
+            {
+                response.Append("anh/chị ");
+            }
+
+            response.Append($"{customer.FirstName}");
+            if (!isFirstCall)
+            {
+                return response.ToString();
+            }
+            int greetingRandom = random.Next(0, 7);
+
+            if (greetingRandom == 1)
+            {
+                response.Append(", em có thể giúp gì cho mình ạ?");
+            }
+            else if (greetingRandom == 2)
+            {
+                response.Append(", hôm nay quý khách muốn dùng món nào ạ?");
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(dishName))
+                {
+                    response.Append($", hôm nay em gợi ý cho mình dùng món {dishName} hôm trước quý khách rất thích ạ");
+                }
+                else
+                {
+                    response.Append(", hôm nay quý khách muốn dùng món nào ạ?");
+                }
+            }
+            return response.ToString();
+        }
     }
 
 }
