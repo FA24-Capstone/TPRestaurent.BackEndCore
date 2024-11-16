@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
-using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
@@ -17,9 +16,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("ai-response")]
-        public async Task<AppActionResult> ResponseCustomer([FromBody] ChatbotRequestDto dto)
+        public async Task<AppActionResult> TestChat(string message)
         {
-            return await _service.ResponseCustomer(dto);             
+            return await _service.ResponseCustomer("", message);             
         }
     }
 }

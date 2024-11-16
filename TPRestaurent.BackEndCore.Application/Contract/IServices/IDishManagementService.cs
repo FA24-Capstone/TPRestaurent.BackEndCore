@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,6 +15,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<double> CalculatePreparationTime(List<CalculatePreparationTime> dto);
         public Task UpdateComboAvailability();
         public Task UpdateDishAvailability(List<Guid> dishSizeDetailIds = null);
-        public Task<AppActionResult> GetDishWithTag(List<string> tags, int batchSize, decimal? low, decimal? high);
+        public Task<AppActionResult> GetDishWithTag(List<string> tags, int batchSize);
     }
 }

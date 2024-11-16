@@ -1,4 +1,4 @@
-﻿using MailKit;
+using MailKit;
 using Newtonsoft.Json;
 using NPOI.POIFS.Storage;
 using NPOI.SS.Formula.Functions;
@@ -78,15 +78,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> CheckDistanceForChatBot(string address, string? customerName)
+        public async Task<AppActionResult> CheckDistanceForChatBot(string address)
         {
             AppActionResult result = new AppActionResult();
             try
             {
-                if (string.IsNullOrEmpty(customerName))
-                {
-                    customerName = "bạn";
-                }
                 var destinationResult = await Geocode(address);
                 if(destinationResult.IsSuccess && destinationResult.Result != null)
                 {
@@ -115,9 +111,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var distance = element!.TotalDistance;
                     if (distance > maxDistanceToOrder)
                     {
-                        result.Result = $"Địa chỉ của {customerName} cách nhà hàng hơn {maxDistanceToOrder}km nên nhà hàng không thể giao hàng tận nơi";
+                        result.Result = $"Địa chỉ của bạn cách nhà hàng hơn {maxDistanceToOrder}km nên chúng tôi không thể giao hàng tận nơi";
                     } else {
-                        result.Result = $"Có chứ, địa chỉ của {customerName} nằm trong phạm vi giao của nhà hàng";
+                        result.Result = $"Có chứ, địa chỉ của bạn nằm trong phạm vi giao của nhà hàng";
                     }
                 }
             }
