@@ -511,216 +511,159 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto)
         {
             var result = new AppActionResult();
-            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-            {
                 try
                 {
-                    var utility = Resolve<Utility>();
-                    var accountRepository = Resolve<IGenericRepository<Account>>();
-                    var notificationService = Resolve<INotificationMessageService>();
-                    var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
-                    var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
-                    var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
-                    var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-                    var comboRepository = Resolve<IGenericRepository<Combo>>();
-                    var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
-                    var couponProgramRepository = Resolve<IGenericRepository<CouponProgram>>();
-                    var fireBaseService = Resolve<IFirebaseService>();
-                    var dishRepository = Resolve<IGenericRepository<Dish>>();
-                    var orderAppliedCouponRepository = Resolve<IGenericRepository<OrderAppliedCoupon>>();
-                    var tableRepository = Resolve<IGenericRepository<Table>>();
-                    var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
-                    var transcationService = Resolve<ITransactionService>();
-                    var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
-                    var configurationRepository = Resolve<IGenericRepository<Configuration>>();
-                    var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
-                    var notificationMessageRepository = Resolve<IGenericRepository<NotificationMessage>>();
-                    var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
-                    var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
-                    var tokenRepostiory = Resolve<IGenericRepository<Token>>();
-                    var hubService = Resolve<IHubServices.IHubServices>();
-                    var tableService = Resolve<ITableService>();
-                    var dishManagementService = Resolve<IDishManagementService>();
-                    var mapService = Resolve<IMapService>();
-                    var smsService = Resolve<ISmsService>();
-                    var emailService = Resolve<IEmailService>();
-                    var createdOrderId = new Guid();
-                    var combo = new Combo();
-                    var orderWithPayment = new OrderWithPaymentResponse();
-                    var orderCombo = false;
-                    var order = new Order()
+                var utility = Resolve<Utility>();
+                var accountRepository = Resolve<IGenericRepository<Account>>();
+                var notificationService = Resolve<INotificationMessageService>();
+                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+                var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
+                var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
+                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var comboRepository = Resolve<IGenericRepository<Combo>>();
+                var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
+                var couponProgramRepository = Resolve<IGenericRepository<CouponProgram>>();
+                var fireBaseService = Resolve<IFirebaseService>();
+                var dishRepository = Resolve<IGenericRepository<Dish>>();
+                var orderAppliedCouponRepository = Resolve<IGenericRepository<OrderAppliedCoupon>>();
+                var tableRepository = Resolve<IGenericRepository<Table>>();
+                var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
+                var transcationService = Resolve<ITransactionService>();
+                var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+                var notificationMessageRepository = Resolve<IGenericRepository<NotificationMessage>>();
+                var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
+                var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
+                var tokenRepostiory = Resolve<IGenericRepository<Token>>();
+                var hubService = Resolve<IHubServices.IHubServices>();
+                var tableService = Resolve<ITableService>();
+                var dishManagementService = Resolve<IDishManagementService>();
+                var mapService = Resolve<IMapService>();
+                var smsService = Resolve<ISmsService>();
+                var emailService = Resolve<IEmailService>();
+                var createdOrderId = new Guid();
+                var combo = new Combo();
+                var orderWithPayment = new OrderWithPaymentResponse();
+                var orderCombo = false;
+                List<OrderDetail> orderDetails = new List<OrderDetail>();
+                List<ComboOrderDetail> comboOrderDetails = new List<ComboOrderDetail>();
+                double money = 0;
+                var order = new Order();
+                Account accountDb = null;
+                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
-                        OrderId = Guid.NewGuid(),
-                        OrderTypeId = orderRequestDto.OrderType,
-                        Note = orderRequestDto.Note,
-                    };
-
-                    Account accountDb = null;
-                    if (orderRequestDto.CustomerId.HasValue)
-                    {
-                        accountDb = await accountRepository.GetByExpression(c => c.Id == orderRequestDto.CustomerId.Value.ToString(), null);
-                        if (accountDb == null)
+                        order = new Order()
                         {
-                            return BuildAppActionResultError(result, $"Xảy ra lỗi");
-                        }
-
-                        order.AccountId = orderRequestDto.CustomerId.ToString();
-
-                        if (orderRequestDto.OrderType == OrderType.Reservation)
-                        {
-                            if (accountDb.Email.Contains("TPCustomer") || accountDb.LastName.ToLower().Contains("lastname") || accountDb.LastName.ToLower().Contains("firstname") || accountDb.DOB == new DateTime(1, 1, 1))
-                            {
-                                return BuildAppActionResultError(result, $"Quý khách chưa cập nhật thông tin tài khoản nên không thể tạo đặt bàn");
-                            }
-                        }
-
-                    }
-
-                    if ((orderRequestDto.OrderType < OrderType.Reservation && orderRequestDto.OrderType > OrderType.Delivery)
-                        || (orderRequestDto.OrderType == OrderType.Reservation && orderRequestDto.ReservationOrder == null)
-                        || (orderRequestDto.OrderType == OrderType.MealWithoutReservation && orderRequestDto.MealWithoutReservation == null)
-                        || (orderRequestDto.OrderType == OrderType.Delivery && orderRequestDto.DeliveryOrder == null))
-                    {
-                        return BuildAppActionResultError(result, $"Loại đơn hàng và dữ liệu không trùng khớp");
-                    }
-
-
-                    if (orderRequestDto.OrderType != OrderType.MealWithoutReservation && ((orderRequestDto!.ReservationOrder != null && orderRequestDto.ReservationOrder.PaymentMethod == 0)
-                        || (orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.PaymentMethod == 0)))
-                    {
-                        return BuildAppActionResultError(result, $"Yêu cầu phương thức thanh toán");
-                    }
-
-                    List<OrderDetail> orderDetails = new List<OrderDetail>();
-                    List<ComboOrderDetail> comboOrderDetails = new List<ComboOrderDetail>();
-                    double money = 0;
-
-                    if (orderRequestDto.OrderDetailsDtos != null && orderRequestDto.OrderDetailsDtos.Count > 0)
-                    {
-                        List<DishSizeDetail> dishSizeDetails = new List<DishSizeDetail>();
-                        var orderSessionDb = await orderSessionRepository!.GetAllDataByExpression(null, 0, 0, null, false, null);
-                        var latestOrderSession = orderSessionDb.Items!.Count() + 1;
-                        var estimatedPreparationTime = new List<CalculatePreparationTime>();
-                        var orderSession = new OrderSession()
-                        {
-                            OrderSessionId = Guid.NewGuid(),
-                            OrderSessionTime = utility!.GetCurrentDateTimeInTimeZone(),
-                            OrderSessionStatusId = orderRequestDto.OrderType == OrderType.Reservation ? OrderSessionStatus.PreOrder : OrderSessionStatus.Confirmed,
-                            OrderSessionNumber = latestOrderSession
+                            OrderId = Guid.NewGuid(),
+                            OrderTypeId = orderRequestDto.OrderType,
+                            Note = orderRequestDto.Note,
                         };
-                        DateTime orderTime = utility.GetCurrentDateTimeInTimeZone();
-                        if (orderRequestDto.OrderType != OrderType.Reservation && orderRequestDto.ReservationOrder != null && orderRequestDto?.ReservationOrder?.MealTime > orderTime)
+
+                        if (orderRequestDto.CustomerId.HasValue)
                         {
-                            orderTime = (DateTime)(orderRequestDto?.ReservationOrder?.MealTime);
+                            accountDb = await accountRepository.GetByExpression(c => c.Id == orderRequestDto.CustomerId.Value.ToString(), null);
+                            if (accountDb == null)
+                            {
+                                return BuildAppActionResultError(result, $"Xảy ra lỗi");
+                            }
+
+                            order.AccountId = orderRequestDto.CustomerId.ToString();
+
+                            if (orderRequestDto.OrderType == OrderType.Reservation)
+                            {
+                                if (accountDb.Email.Contains("TPCustomer") || accountDb.LastName.ToLower().Contains("lastname") || accountDb.LastName.ToLower().Contains("firstname") || accountDb.DOB == new DateTime(1, 1, 1))
+                                {
+                                    return BuildAppActionResultError(result, $"Quý khách chưa cập nhật thông tin tài khoản nên không thể tạo đặt bàn");
+                                }
+                            }
+
                         }
 
-                        foreach (var item in orderRequestDto.OrderDetailsDtos)
+                        if ((orderRequestDto.OrderType < OrderType.Reservation && orderRequestDto.OrderType > OrderType.Delivery)
+                            || (orderRequestDto.OrderType == OrderType.Reservation && orderRequestDto.ReservationOrder == null)
+                            || (orderRequestDto.OrderType == OrderType.MealWithoutReservation && orderRequestDto.MealWithoutReservation == null)
+                            || (orderRequestDto.OrderType == OrderType.Delivery && orderRequestDto.DeliveryOrder == null))
                         {
-                            var orderDetail = new OrderDetail()
+                            return BuildAppActionResultError(result, $"Loại đơn hàng và dữ liệu không trùng khớp");
+                        }
+
+
+                        if (orderRequestDto.OrderType != OrderType.MealWithoutReservation && ((orderRequestDto!.ReservationOrder != null && orderRequestDto.ReservationOrder.PaymentMethod == 0)
+                            || (orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.PaymentMethod == 0)))
+                        {
+                            return BuildAppActionResultError(result, $"Yêu cầu phương thức thanh toán");
+                        }
+
+                        if (orderRequestDto.OrderDetailsDtos != null && orderRequestDto.OrderDetailsDtos.Count > 0)
+                        {
+                            List<DishSizeDetail> dishSizeDetails = new List<DishSizeDetail>();
+                            var orderSessionDb = await orderSessionRepository!.GetAllDataByExpression(null, 0, 0, null, false, null);
+                            var latestOrderSession = orderSessionDb.Items!.Count() + 1;
+                            var estimatedPreparationTime = new List<CalculatePreparationTime>();
+                            var orderSession = new OrderSession()
                             {
-                                OrderDetailId = Guid.NewGuid(),
-                                Quantity = item.Quantity,
-                                Note = item.Note,
-                                OrderId = order.OrderId,
-                                OrderTime = orderTime,
-                                OrderSessionId = orderSession.OrderSessionId
+                                OrderSessionId = Guid.NewGuid(),
+                                OrderSessionTime = utility!.GetCurrentDateTimeInTimeZone(),
+                                OrderSessionStatusId = orderRequestDto.OrderType == OrderType.Reservation ? OrderSessionStatus.PreOrder : OrderSessionStatus.Confirmed,
+                                OrderSessionNumber = latestOrderSession
                             };
-
-                            if (item.DishSizeDetailId.HasValue)
+                            DateTime orderTime = utility.GetCurrentDateTimeInTimeZone();
+                            if (orderRequestDto.OrderType != OrderType.Reservation && orderRequestDto.ReservationOrder != null && orderRequestDto?.ReservationOrder?.MealTime > orderTime)
                             {
-                                var dishSizeDetail = dishSizeDetails.FirstOrDefault(d => d.DishSizeDetailId == item.DishSizeDetailId);
-                                if (dishSizeDetail == null)
-                                {
-                                    dishSizeDetail = await dishSizeDetailRepository.GetByExpression(o => o.DishSizeDetailId == item.DishSizeDetailId, o => o.Dish);
-                                    dishSizeDetails.Add(dishSizeDetail);
-                                }
-
-
-                                if (dishSizeDetail == null)
-                                {
-                                    return BuildAppActionResultError(result, $"Không tìm thấy món ăn có size với id {item.DishSizeDetailId.Value}");
-                                }
-
-                                orderDetail.DishSizeDetailId = item.DishSizeDetailId.Value;
-                                orderDetail.Price = dishSizeDetail.Price;
-                                orderDetail.PreparationTime = await dishManagementService.CalculatePreparationTime(new List<CalculatePreparationTime>
-                            {
-                                new CalculatePreparationTime
-                                {
-                                    PreparationTime = dishSizeDetail.Dish.PreparationTime.Value,
-                                    Quantity = orderDetail.Quantity
-                                }
-                            });
-                                estimatedPreparationTime.Add(new CalculatePreparationTime
-                                {
-                                    PreparationTime = dishSizeDetail.Dish.PreparationTime.Value,
-                                    Quantity = orderDetail.Quantity
-                                });
-                                if (dishSizeDetail.QuantityLeft < item.Quantity)
-                                {
-                                    return BuildAppActionResultError(result, $"Món ăn {dishSizeDetail.Dish.Name} chỉ còn x{dishSizeDetail.QuantityLeft}");
-                                }
-
-                                if (orderRequestDto.OrderType != OrderType.Reservation || orderRequestDto.ReservationOrder.MealTime.Date == orderTime.Date)
-                                {
-                                    dishSizeDetail.QuantityLeft -= item.Quantity;
-                                    if (dishSizeDetail.QuantityLeft == 0)
-                                    {
-                                        dishSizeDetail.IsAvailable = false;
-                                    }
-                                    if (dishSizeDetail.QuantityLeft <= 5)
-                                    {
-                                        string message = $"{dishSizeDetail.Dish.Name} chỉ còn x{dishSizeDetail.QuantityLeft} món";
-                                        await hubService!.SendAsync(SD.SignalMessages.LOAD_NOTIFICATION);
-                                        await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
-                                    }
-                                }
-                                estimatedPreparationTime.Add(new CalculatePreparationTime
-                                {
-                                    PreparationTime = dishSizeDetail.Dish.PreparationTime.Value,
-                                    Quantity = orderDetail.Quantity
-                                });
+                                orderTime = (DateTime)(orderRequestDto?.ReservationOrder?.MealTime);
                             }
-                            else if (item.Combo != null)
+
+                            foreach (var item in orderRequestDto.OrderDetailsDtos)
                             {
-                                orderCombo = true;
-                                combo = await comboRepository.GetById(item.Combo.ComboId);
-
-                                if (combo == null)
+                                var orderDetail = new OrderDetail()
                                 {
-                                    return BuildAppActionResultError(result, $"Không tìm thấy combo với id {item.Combo.ComboId}");
-                                }
+                                    OrderDetailId = Guid.NewGuid(),
+                                    Quantity = item.Quantity,
+                                    Note = item.Note,
+                                    OrderId = order.OrderId,
+                                    OrderTime = orderTime,
+                                    OrderSessionId = orderSession.OrderSessionId
+                                };
 
-                                orderDetail.ComboId = item.Combo.ComboId;
-                                orderDetail.Price = combo.Price;
-
-                                if (item.Combo.DishComboIds.Count == 0)
+                                if (item.DishSizeDetailId.HasValue)
                                 {
-                                    return BuildAppActionResultError(result, $"Không tìm thấy chi tiết cho combo {combo.Name}");
-                                }
-
-                                foreach (var dishComboId in item.Combo.DishComboIds)
-                                {
-                                    var comboDetail = await dishComboRepository.GetByExpression(d => d.DishComboId == dishComboId, d => d.DishSizeDetail.Dish);
-                                    if (comboDetail == null)
+                                    var dishSizeDetail = dishSizeDetails.FirstOrDefault(d => d.DishSizeDetailId == item.DishSizeDetailId);
+                                    if (dishSizeDetail == null)
                                     {
-                                        return BuildAppActionResultError(result, $"Không tìm thấy chi tiết combo với id {dishComboId}");
+                                        dishSizeDetail = await dishSizeDetailRepository.GetByExpression(o => o.DishSizeDetailId == item.DishSizeDetailId, o => o.Dish);
+                                        dishSizeDetails.Add(dishSizeDetail);
                                     }
 
-                                    if (comboDetail.DishSizeDetail.QuantityLeft < item.Quantity * comboDetail.Quantity)
+
+                                    if (dishSizeDetail == null)
                                     {
-                                        return BuildAppActionResultError(result, $"Món ăn {comboDetail.DishSizeDetail.Dish.Name} chỉ còn x{comboDetail.DishSizeDetail.QuantityLeft}");
+                                        return BuildAppActionResultError(result, $"Không tìm thấy món ăn có size với id {item.DishSizeDetailId.Value}");
+                                    }
+
+                                    orderDetail.DishSizeDetailId = item.DishSizeDetailId.Value;
+                                    orderDetail.Price = dishSizeDetail.Price;
+                                    orderDetail.PreparationTime = await dishManagementService.CalculatePreparationTime(new List<CalculatePreparationTime>
+            {
+                new CalculatePreparationTime
+                {
+                    PreparationTime = dishSizeDetail.Dish.PreparationTime.Value,
+                    Quantity = orderDetail.Quantity
+                }
+            });
+                                    estimatedPreparationTime.Add(new CalculatePreparationTime
+                                    {
+                                        PreparationTime = dishSizeDetail.Dish.PreparationTime.Value,
+                                        Quantity = orderDetail.Quantity
+                                    });
+                                    if (dishSizeDetail.QuantityLeft < item.Quantity)
+                                    {
+                                        return BuildAppActionResultError(result, $"Món ăn {dishSizeDetail.Dish.Name} chỉ còn x{dishSizeDetail.QuantityLeft}");
                                     }
 
                                     if (orderRequestDto.OrderType != OrderType.Reservation || orderRequestDto.ReservationOrder.MealTime.Date == orderTime.Date)
                                     {
-                                        var dishSizeDetail = dishSizeDetails.FirstOrDefault(d => d.DishSizeDetailId == comboDetail.DishSizeDetailId);
-                                        if (dishSizeDetail == null)
-                                        {
-                                            dishSizeDetail = await dishSizeDetailRepository.GetByExpression(o => o.DishSizeDetailId == comboDetail.DishSizeDetailId, o => o.Dish);
-                                            dishSizeDetails.Add(dishSizeDetail);
-                                        }
-                                        dishSizeDetail.QuantityLeft -= item.Quantity * comboDetail.Quantity;
+                                        dishSizeDetail.QuantityLeft -= item.Quantity;
                                         if (dishSizeDetail.QuantityLeft == 0)
                                         {
                                             dishSizeDetail.IsAvailable = false;
@@ -732,493 +675,553 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
                                         }
                                     }
-
-                                    comboOrderDetails.Add(new ComboOrderDetail
+                                    estimatedPreparationTime.Add(new CalculatePreparationTime
                                     {
-                                        ComboOrderDetailId = Guid.NewGuid(),
-                                        OrderDetailId = orderDetail.OrderDetailId,
-                                        DishComboId = dishComboId,
-                                        PreparationTime = await dishManagementService.CalculatePreparationTime(new List<CalculatePreparationTime>
-                                        {
-                                            new CalculatePreparationTime
-                                            {
-                                                PreparationTime = comboDetail.DishSizeDetail.Dish.PreparationTime.Value,
-                                                Quantity = orderDetail.Quantity
-                                            }
-                                        })
+                                        PreparationTime = dishSizeDetail.Dish.PreparationTime.Value,
+                                        Quantity = orderDetail.Quantity
                                     });
-
                                 }
-                                estimatedPreparationTime.Add(new CalculatePreparationTime
+                                else if (item.Combo != null)
                                 {
-                                    PreparationTime = combo.PreparationTime == null ? comboOrderDetails.Sum(c => c.PreparationTime) : combo.PreparationTime.Value,
-                                    Quantity = orderDetail.Quantity
-                                });
-                            }
-                            else
+                                    orderCombo = true;
+                                    combo = await comboRepository.GetById(item.Combo.ComboId);
+
+                                    if (combo == null)
+                                    {
+                                        return BuildAppActionResultError(result, $"Không tìm thấy combo với id {item.Combo.ComboId}");
+                                    }
+
+                                    orderDetail.ComboId = item.Combo.ComboId;
+                                    orderDetail.Price = combo.Price;
+
+                                    if (item.Combo.DishComboIds.Count == 0)
+                                    {
+                                        return BuildAppActionResultError(result, $"Không tìm thấy chi tiết cho combo {combo.Name}");
+                                    }
+
+                                    foreach (var dishComboId in item.Combo.DishComboIds)
+                                    {
+                                        var comboDetail = await dishComboRepository.GetByExpression(d => d.DishComboId == dishComboId, d => d.DishSizeDetail.Dish);
+                                        if (comboDetail == null)
+                                        {
+                                            return BuildAppActionResultError(result, $"Không tìm thấy chi tiết combo với id {dishComboId}");
+                                        }
+
+                                        if (comboDetail.DishSizeDetail.QuantityLeft < item.Quantity * comboDetail.Quantity)
+                                        {
+                                            return BuildAppActionResultError(result, $"Món ăn {comboDetail.DishSizeDetail.Dish.Name} chỉ còn x{comboDetail.DishSizeDetail.QuantityLeft}");
+                                        }
+
+                                        if (orderRequestDto.OrderType != OrderType.Reservation || orderRequestDto.ReservationOrder.MealTime.Date == orderTime.Date)
+                                        {
+                                            var dishSizeDetail = dishSizeDetails.FirstOrDefault(d => d.DishSizeDetailId == comboDetail.DishSizeDetailId);
+                                            if (dishSizeDetail == null)
+                                            {
+                                                dishSizeDetail = await dishSizeDetailRepository.GetByExpression(o => o.DishSizeDetailId == comboDetail.DishSizeDetailId, o => o.Dish);
+                                                dishSizeDetails.Add(dishSizeDetail);
+                                            }
+                                            dishSizeDetail.QuantityLeft -= item.Quantity * comboDetail.Quantity;
+                                            if (dishSizeDetail.QuantityLeft == 0)
+                                            {
+                                                dishSizeDetail.IsAvailable = false;
+                                            }
+                                            if (dishSizeDetail.QuantityLeft <= 5)
+                                            {
+                                                string message = $"{dishSizeDetail.Dish.Name} chỉ còn x{dishSizeDetail.QuantityLeft} món";
+                                                await hubService!.SendAsync(SD.SignalMessages.LOAD_NOTIFICATION);
+                                                await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
+                                            }
+                                        }
+
+                                        comboOrderDetails.Add(new ComboOrderDetail
+                                        {
+                                            ComboOrderDetailId = Guid.NewGuid(),
+                                            OrderDetailId = orderDetail.OrderDetailId,
+                                            DishComboId = dishComboId,
+                                            PreparationTime = await dishManagementService.CalculatePreparationTime(new List<CalculatePreparationTime>
+                        {
+                            new CalculatePreparationTime
                             {
-                                return BuildAppActionResultError(result, $"Không tìm thấy thông tin món ăn");
+                                PreparationTime = comboDetail.DishSizeDetail.Dish.PreparationTime.Value,
+                                Quantity = orderDetail.Quantity
                             }
+                        })
+                                        });
 
-                            orderDetails.Add(orderDetail);
-                        }
-                        money = orderDetails.Sum(o => o.Quantity * o.Price);
-                        orderSession.PreparationTime = await dishManagementService.CalculatePreparationTime(estimatedPreparationTime);
-                        await orderSessionRepository.Insert(orderSession);
-                        await dishSizeDetailRepository.UpdateRange(dishSizeDetails);
-                    }
+                                    }
+                                    estimatedPreparationTime.Add(new CalculatePreparationTime
+                                    {
+                                        PreparationTime = combo.PreparationTime == null ? comboOrderDetails.Sum(c => c.PreparationTime) : combo.PreparationTime.Value,
+                                        Quantity = orderDetail.Quantity
+                                    });
+                                }
+                                else
+                                {
+                                    return BuildAppActionResultError(result, $"Không tìm thấy thông tin món ăn");
+                                }
 
-
-                    if (orderDetails.Count > 0)
-                    {
-                        order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
-                        await orderDetailRepository.InsertRange(orderDetails);
-                        if (comboOrderDetails.Count > 0)
-                        {
-                            if (orderRequestDto.OrderType != OrderType.Reservation)
-                            {
-                                comboOrderDetails.ForEach(c => c.StatusId = DishComboDetailStatus.Unchecked);
+                                orderDetails.Add(orderDetail);
                             }
-                            await comboOrderDetailRepository.InsertRange(comboOrderDetails);
-                        }
-                    }
-
-
-                    List<TableDetail> tableDetails = new List<TableDetail>();
-
-                    if (orderRequestDto.OrderType == OrderType.Reservation)
-                    {
-                        if (orderRequestDto.ReservationOrder == null)
-                        {
-                            return BuildAppActionResultError(result, $"Thiếu thông tin để tạo đặt bàn");
+                            money = orderDetails.Sum(o => o.Quantity * o.Price);
+                            orderSession.PreparationTime = await dishManagementService.CalculatePreparationTime(estimatedPreparationTime);
+                            await orderSessionRepository.Insert(orderSession);
+                            await dishSizeDetailRepository.UpdateRange(dishSizeDetails);
                         }
 
-
-                        if (orderRequestDto.ReservationOrder.Deposit < 0)
-                        {
-                            result = BuildAppActionResultError(result, $"Số tiền cọc không hợp lệ");
-                            return result;
-                        }
-
-                        if (orderRequestDto.ReservationOrder == null)
-                        {
-                            return BuildAppActionResultError(result, $"Thiếu thông tin để tạo đặt bàn");
-                        }
-
-                        if (orderRequestDto.ReservationOrder == null)
-                        {
-                            return BuildAppActionResultError(result, $"Thiếu thông tin để tạo đặt bàn");
-                        }
-                        if (orderRequestDto.ReservationOrder.MealTime < utility!.GetCurrentDateTimeInTimeZone())
-                        {
-                            result = BuildAppActionResultError(result, "Thời gian đặt bàn không hợp lệ");
-                            return result;
-                        }
-
-                        order.StatusId = OrderStatus.TableAssigned;
-                        order.OrderTypeId = OrderType.Reservation;
-                        order.ReservationDate = utility.GetCurrentDateTimeInTimeZone();
-                        order.NumOfPeople = orderRequestDto.ReservationOrder.NumberOfPeople;
-                        order.MealTime = orderRequestDto.ReservationOrder.MealTime;
-                        order.EndTime = orderRequestDto.ReservationOrder.EndTime;
-                        order.IsPrivate = orderRequestDto.ReservationOrder.IsPrivate;
-                        order.Deposit = Math.Ceiling((double)orderRequestDto.ReservationOrder.Deposit / 1000) * 1000;
-
-                        var suggestTableDto = new FindTableDto
-                        {
-                            StartTime = orderRequestDto.ReservationOrder.MealTime,
-                            EndTime = orderRequestDto.ReservationOrder.EndTime,
-                            IsPrivate = orderRequestDto.ReservationOrder.IsPrivate,
-                            NumOfPeople = orderRequestDto.ReservationOrder.NumberOfPeople,
-                        };
-
-                        var suggestedTables = await tableService.FindTable(suggestTableDto);
-
-                        if (!suggestedTables.IsSuccess)
-                        {
-                            return BuildAppActionResultError(result, $"Xảy ra lỗi khi xếp bàn. Vui lòng thử lại");
-                        }
-
-                        if (suggestedTables.Result == null)
-                        {
-                            return BuildAppActionResultError(result, $"Không có bàn trống cho {orderRequestDto.ReservationOrder.NumberOfPeople} người " +
-                                                                       $"vào lúc {orderRequestDto.ReservationOrder.MealTime.Hour}h{orderRequestDto.ReservationOrder.MealTime.Minute}p " +
-                                                                       $"ngày {orderRequestDto.ReservationOrder.MealTime.Date}");
-                        }
-
-                        if (suggestedTables.Messages.Count > 0)
-                        {
-                            result.Messages.AddRange(suggestedTables.Messages);
-                        }
-
-                        //Add busniness rule for reservation time(if needed)
-                        List<TableDetail> reservationTableDetails = new List<TableDetail>();
-
-                        foreach (var suggestedTable in suggestedTables.Result as List<TableArrangementResponseItem>)
-                        {
-                            reservationTableDetails.Add(new TableDetail
-                            {
-                                TableDetailId = Guid.NewGuid(),
-                                OrderId = order.OrderId,
-                                TableId = suggestedTable.Id
-                            });
-                        }
-
-                        await tableDetailRepository.InsertRange(reservationTableDetails);
 
                         if (orderDetails.Count > 0)
                         {
-                            orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Reserved);
-                        }
-                        orderWithPayment.Order = order;
-                    }
-                    else if (orderRequestDto.OrderType == OrderType.MealWithoutReservation)
-                    {
-                        order.OrderTypeId = OrderType.MealWithoutReservation;
-                        order.StatusId = OrderStatus.Processing;
-                        order.MealTime = utility.GetCurrentDateTimeInTimeZone();
-                        order.NumOfPeople = 0;
-                        order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
-                        if (orderDetails.Count > 0)
-                        {
-                            orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
-                        }
-                        else
-                        {
-                            return BuildAppActionResultError(result, "Bàn không thực hiện gọi món.");
-                        }
-
-                        orderWithPayment.Order = order;
-
-                        if (orderRequestDto.MealWithoutReservation != null && orderRequestDto.MealWithoutReservation.TableIds.Count > 0)
-                        {
-                            var collidedTable = await GetCollidedTable(orderRequestDto.MealWithoutReservation.TableIds, (DateTime)order.MealTime, order.NumOfPeople);
-
-                            if (collidedTable.Count > 0)
+                            order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
+                            await orderDetailRepository.InsertRange(orderDetails);
+                            if (comboOrderDetails.Count > 0)
                             {
-                                // Tạo danh sách các tên bàn thành chuỗi phân cách bằng dấu phẩy
-                                var tableNames = string.Join(", ", collidedTable.Select(ct => ct.TableName));
+                                if (orderRequestDto.OrderType != OrderType.Reservation)
+                                {
+                                    comboOrderDetails.ForEach(c => c.StatusId = DishComboDetailStatus.Unchecked);
+                                }
+                                await comboOrderDetailRepository.InsertRange(comboOrderDetails);
+                            }
+                        }
 
-                                result = BuildAppActionResultError(result, $"Sắp xếp bàn chưa hợp lí. Trong danh sách nhập vào có các bàn đang hoặc đã được đặt từ trước, gồm: {tableNames}");
+
+                        List<TableDetail> tableDetails = new List<TableDetail>();
+
+                        if (orderRequestDto.OrderType == OrderType.Reservation)
+                        {
+                            if (orderRequestDto.ReservationOrder == null)
+                            {
+                                return BuildAppActionResultError(result, $"Thiếu thông tin để tạo đặt bàn");
+                            }
+
+
+                            if (orderRequestDto.ReservationOrder.Deposit < 0)
+                            {
+                                result = BuildAppActionResultError(result, $"Số tiền cọc không hợp lệ");
                                 return result;
                             }
 
-                            foreach (var tableId in orderRequestDto.MealWithoutReservation.TableIds)
+                            if (orderRequestDto.ReservationOrder == null)
                             {
-                                var reservationTableDetail = new TableDetail
+                                return BuildAppActionResultError(result, $"Thiếu thông tin để tạo đặt bàn");
+                            }
+
+                            if (orderRequestDto.ReservationOrder == null)
+                            {
+                                return BuildAppActionResultError(result, $"Thiếu thông tin để tạo đặt bàn");
+                            }
+                            if (orderRequestDto.ReservationOrder.MealTime < utility!.GetCurrentDateTimeInTimeZone())
+                            {
+                                result = BuildAppActionResultError(result, "Thời gian đặt bàn không hợp lệ");
+                                return result;
+                            }
+
+                            order.StatusId = OrderStatus.TableAssigned;
+                            order.OrderTypeId = OrderType.Reservation;
+                            order.ReservationDate = utility.GetCurrentDateTimeInTimeZone();
+                            order.NumOfPeople = orderRequestDto.ReservationOrder.NumberOfPeople;
+                            order.MealTime = orderRequestDto.ReservationOrder.MealTime;
+                            order.EndTime = orderRequestDto.ReservationOrder.EndTime;
+                            order.IsPrivate = orderRequestDto.ReservationOrder.IsPrivate;
+                            order.Deposit = Math.Ceiling((double)orderRequestDto.ReservationOrder.Deposit / 1000) * 1000;
+
+                            var suggestTableDto = new FindTableDto
+                            {
+                                StartTime = orderRequestDto.ReservationOrder.MealTime,
+                                EndTime = orderRequestDto.ReservationOrder.EndTime,
+                                IsPrivate = orderRequestDto.ReservationOrder.IsPrivate,
+                                NumOfPeople = orderRequestDto.ReservationOrder.NumberOfPeople,
+                            };
+
+                            var suggestedTables = await tableService.FindTable(suggestTableDto);
+
+                            if (!suggestedTables.IsSuccess)
+                            {
+                                return BuildAppActionResultError(result, $"Xảy ra lỗi khi xếp bàn. Vui lòng thử lại");
+                            }
+
+                            if (suggestedTables.Result == null)
+                            {
+                                return BuildAppActionResultError(result, $"Không có bàn trống cho {orderRequestDto.ReservationOrder.NumberOfPeople} người " +
+                                                                           $"vào lúc {orderRequestDto.ReservationOrder.MealTime.Hour}h{orderRequestDto.ReservationOrder.MealTime.Minute}p " +
+                                                                           $"ngày {orderRequestDto.ReservationOrder.MealTime.Date}");
+                            }
+
+                            if (suggestedTables.Messages.Count > 0)
+                            {
+                                result.Messages.AddRange(suggestedTables.Messages);
+                            }
+
+                            //Add busniness rule for reservation time(if needed)
+                            List<TableDetail> reservationTableDetails = new List<TableDetail>();
+
+                            foreach (var suggestedTable in suggestedTables.Result as List<TableArrangementResponseItem>)
+                            {
+                                reservationTableDetails.Add(new TableDetail
                                 {
                                     TableDetailId = Guid.NewGuid(),
                                     OrderId = order.OrderId,
-                                    TableId = tableId
-                                };
-                                tableDetails.Add(reservationTableDetail);
+                                    TableId = suggestedTable.Id
+                                });
                             }
 
-                            await tableDetailRepository.InsertRange(tableDetails);
+                            await tableDetailRepository.InsertRange(reservationTableDetails);
+
+                            if (orderDetails.Count > 0)
+                            {
+                                orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Reserved);
+                            }
+                            orderWithPayment.Order = order;
+                        }
+                        else if (orderRequestDto.OrderType == OrderType.MealWithoutReservation)
+                        {
+                            order.OrderTypeId = OrderType.MealWithoutReservation;
+                            order.StatusId = OrderStatus.Processing;
+                            order.MealTime = utility.GetCurrentDateTimeInTimeZone();
+                            order.NumOfPeople = 0;
+                            order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
+                            if (orderDetails.Count > 0)
+                            {
+                                orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
+                            }
+                            else
+                            {
+                                return BuildAppActionResultError(result, "Bàn không thực hiện gọi món.");
+                            }
+
                             orderWithPayment.Order = order;
 
+                            if (orderRequestDto.MealWithoutReservation != null && orderRequestDto.MealWithoutReservation.TableIds.Count > 0)
+                            {
+                                var collidedTable = await GetCollidedTable(orderRequestDto.MealWithoutReservation.TableIds, (DateTime)order.MealTime, order.NumOfPeople);
+
+                                if (collidedTable.Count > 0)
+                                {
+                                    // Tạo danh sách các tên bàn thành chuỗi phân cách bằng dấu phẩy
+                                    var tableNames = string.Join(", ", collidedTable.Select(ct => ct.TableName));
+
+                                    result = BuildAppActionResultError(result, $"Sắp xếp bàn chưa hợp lí. Trong danh sách nhập vào có các bàn đang hoặc đã được đặt từ trước, gồm: {tableNames}");
+                                    return result;
+                                }
+
+                                foreach (var tableId in orderRequestDto.MealWithoutReservation.TableIds)
+                                {
+                                    var reservationTableDetail = new TableDetail
+                                    {
+                                        TableDetailId = Guid.NewGuid(),
+                                        OrderId = order.OrderId,
+                                        TableId = tableId
+                                    };
+                                    tableDetails.Add(reservationTableDetail);
+                                }
+
+                                await tableDetailRepository.InsertRange(tableDetails);
+                                orderWithPayment.Order = order;
+
+
+                                if (orderRequestDto.CustomerId.HasValue)
+                                {
+                                    if (!string.IsNullOrWhiteSpace(accountDb.Email))
+                                    {
+                                        var username = accountDb.FirstName + " " + accountDb.LastName;
+                                        emailService.SendEmail(accountDb.Email, SD.SubjectMail.NOTIFY_RESERVATION,
+                                                                     TemplateMappingHelper.GetTemplateOrderConfirmation(
+                                                                     username, order)
+                                            );
+                                    }
+                                    else
+                                    {
+                                        var smsMessage = $"[NHÀ HÀNG THIÊN PHÚ] Đơn đặt bàn của bạn vào lúc {order.ReservationDate} đã thành công. " +
+                                                         $"Vui lòng thanh toán {order.TotalAmount} VND" +
+                                                         $"Xin chân trọng cảm ơn quý khách.";
+                                        await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                return BuildAppActionResultError(result, "Không có thông tin bàn");
+                            }
+                        }
+                        else if (orderRequestDto.OrderType == OrderType.Delivery)
+                        {
+                            order.OrderTypeId = OrderType.Delivery;
+                            order.StatusId = OrderStatus.Pending;
+                            order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
+                            order.OrderDate = utility.GetCurrentDateTimeInTimeZone();
+                            if (accountDb == null)
+                            {
+                                return BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng. Đặt hàng thất bại");
+                            }
+
+                            if (orderDetails.Count == 0)
+                            {
+                                return BuildAppActionResultError(result, "Đơn hàng không thực hiện đặt món.");
+                            }
+
+                            order.AccountId = accountDb.Id;
+
+                            if (string.IsNullOrEmpty(accountDb.Address))
+                            {
+                                return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ của bạn. Vui lòng cập nhật địa chỉ");
+                            }
+
+                            var restaurantLatConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LATITUDE);
+                            var restaurantLngConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LNG);
+                            var restaurantMaxDistanceToOrderConfig = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DISTANCE_ORDER);
+
+                            var customerInfoAddressListDb = await customerInfoAddressRepository!.GetAllDataByExpression(p => p.CustomerInfoAddressName == accountDb.Address, 0, 0, null, false, null);
+                            if (customerInfoAddressListDb.Items.Count == 0)
+                            {
+                                return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ {accountDb.Address}");
+                            }
+
+                            var customerAddressDb = customerInfoAddressListDb.Items.FirstOrDefault(c => c.IsCurrentUsed && !c.IsDeleted);
+
+                            order.AddressId = customerAddressDb.CustomerInfoAddressId;
+
+                            var restaurantLat = Double.Parse(restaurantLatConfig.CurrentValue);
+                            var restaurantLng = Double.Parse(restaurantLngConfig.CurrentValue);
+                            var maxDistanceToOrder = double.Parse(restaurantMaxDistanceToOrderConfig!.CurrentValue);
+
+                            double[] restaurantAddress = new double[]
+                            {
+            restaurantLat, restaurantLng
+                            };
+
+                            double[] customerAddress = new double[]
+                            {
+            customerAddressDb.Lat, customerAddressDb.Lng
+                            };
+
+                            var distanceResponse = await mapService!.GetEstimateDeliveryResponse(restaurantAddress, customerAddress);
+                            var element = distanceResponse.Result as EstimatedDeliveryTimeDto.Response;
+                            var distance = element!.TotalDistance;
+                            if (distance > maxDistanceToOrder)
+                            {
+                                return BuildAppActionResultError(result, $"Nhà hàng chỉ hỗ trợ cho đơn giao hàng trong bán kính 10km");
+                            }
+
+                            var shippingCost = await CalculateDeliveryOrder(customerAddressDb.CustomerInfoAddressId);
+                            if (shippingCost.Result == null)
+                            {
+                                return BuildAppActionResultError(result, $"Xảy ra lỗi khi tính phí giao hàng. Vui lòng kiểm tra lại thông tin địa chỉ");
+                            }
+                            money += double.Parse(shippingCost.Result.ToString());
+
+                            var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                            var couponDb = await couponProgramRepository!.GetAllDataByExpression(c => currentTime > c.StartDate && currentTime < c.ExpiryDate && c.MinimumAmount <= money && c.Quantity > 0, 0, 0, null, false, null);
+                            if (couponDb.Items!.Count > 0 && couponDb.Items != null
+                                && orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.CouponIds.Count > 0)
+                            {
+                                foreach (var couponId in orderRequestDto.DeliveryOrder.CouponIds)
+                                {
+                                    if (money <= 0)
+                                    {
+                                        break;
+                                    }
+
+                                    var coupon = couponDb.Items.FirstOrDefault(c => c.CouponProgramId == couponId);
+
+                                    if (coupon == null)
+                                    {
+                                        return BuildAppActionResultError(result, $"Không tìm thấy coupon với id {couponId}");
+                                    }
+
+                                    //var orderAppliedCoupon = new OrderAppliedCoupon
+                                    //{
+                                    //    OrderAppliedCouponId = Guid.NewGuid(),
+                                    //    CouponProgramId = couponId,
+                                    //    OrderId = order.OrderId
+                                    //};
+
+                                    double discountMoney = money * (coupon.DiscountPercent * 0.01);
+                                    money -= discountMoney;
+                                    money = Math.Max(0, money);
+
+                                    //await orderAppliedCouponRepository.Insert(orderAppliedCoupon);
+                                }
+                            }
+
+                            if (orderRequestDto.DeliveryOrder.LoyalPointToUse.HasValue && orderRequestDto.DeliveryOrder.LoyalPointToUse > 0)
+                            {
+                                // Check if the user has enough points
+                                if (accountDb!.LoyaltyPoint >= orderRequestDto.DeliveryOrder.LoyalPointToUse)
+                                {
+                                    // Calculate the discount (assuming 1 point = 1 currency unit)
+                                    double loyaltyDiscount = Math.Min(orderRequestDto.DeliveryOrder.LoyalPointToUse.Value, money);
+                                    money -= loyaltyDiscount;
+
+                                    // Ensure the total doesn't go below zero
+                                    money = Math.Max(0, money);
+
+                                    // Update the customer's loyalty points
+                                    accountDb.LoyaltyPoint -= (int)loyaltyDiscount;
+
+                                    // Create a new loyalty point history entry for the point usage
+                                    var loyalPointUsageHistory = new LoyalPointsHistory
+                                    {
+                                        LoyalPointsHistoryId = Guid.NewGuid(),
+                                        TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
+                                        OrderId = order.OrderId,
+                                        PointChanged = -(int)loyaltyDiscount,
+                                        NewBalance = accountDb.LoyaltyPoint
+                                    };
+
+                                    await loyalPointsHistoryRepository!.Insert(loyalPointUsageHistory);
+                                }
+                                else
+                                {
+                                    // Handle the case where the user doesn't have enough points
+                                    return BuildAppActionResultError(result, "Không đủ điểm tích lũy để sử dụng.");
+                                }
+                            }
+
+                            var newLoyalPointHistory = new LoyalPointsHistory
+                            {
+                                LoyalPointsHistoryId = Guid.NewGuid(),
+                                TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
+                                OrderId = order.OrderId,
+                                PointChanged = (int)money / 100,
+                                NewBalance = accountDb.LoyaltyPoint + (int)money / 100
+                            };
+
+                            await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
+
+                            accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
+
+                            orderWithPayment.Order = order;
+
+                            orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
+                            order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
+
+                            await orderDetailRepository.InsertRange(orderDetails);
 
                             if (orderRequestDto.CustomerId.HasValue)
                             {
-                                if (!string.IsNullOrWhiteSpace(accountDb.Email))
+                                if (!string.IsNullOrEmpty(accountDb.Email))
                                 {
                                     var username = accountDb.FirstName + " " + accountDb.LastName;
                                     emailService.SendEmail(accountDb.Email, SD.SubjectMail.NOTIFY_RESERVATION,
                                                                  TemplateMappingHelper.GetTemplateOrderConfirmation(
                                                                  username, order)
                                         );
+                                    string notificationEmailMessage = "Nhà hàng đã gửi thông báo mới tới email của bạn";
+                                    await notificationService!.SendNotificationToAccountAsync(accountDb.Id, notificationEmailMessage, true);
+
                                 }
                                 else
                                 {
-                                    var smsMessage = $"[NHÀ HÀNG THIÊN PHÚ] Đơn đặt bàn của bạn vào lúc {order.ReservationDate} đã thành công. " +
-                                                     $"Vui lòng thanh toán {order.TotalAmount} VND" +
-                                                     $"Xin chân trọng cảm ơn quý khách.";
-                                    await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
+                                    var smsMessage = $"[NHÀ HÀNG THIÊN PHÚ] Đơn hàng của bạn vào lúc {order.OrderDate} đã thành công. " +
+                                               $"Vui lòng thanh toán {order.TotalAmount} VND" +
+                                               $"Xin chân trọng cảm ơn quý khách.";
+                                    //await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
+                                    string notificationSmsMessage = "Nhà hàng đã gửi thông báo mới tới số điện thoại của bạn";
+                                    await notificationService!.SendNotificationToAccountAsync(accountDb.Id, notificationSmsMessage, true);
+
                                 }
+                            }
+
+
+                            if (!BuildAppActionResultIsError(result))
+                            {
+                                await accountRepository.Update(accountDb);
                             }
                         }
                         else
                         {
-                            return BuildAppActionResultError(result, "Không có thông tin bàn");
+                            return BuildAppActionResultError(result, $"Thiếu loại đơn hàng (orderType) trong yêu cầu tạo");
                         }
-                    }
-                    else if (orderRequestDto.OrderType == OrderType.Delivery)
-                    {
-                        order.OrderTypeId = OrderType.Delivery;
-                        order.StatusId = OrderStatus.Pending;
-                        order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
-                        order.OrderDate = utility.GetCurrentDateTimeInTimeZone();
-                        if (accountDb == null)
-                        {
-                            return BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng. Đặt hàng thất bại");
-                        }
-
-                        if (orderDetails.Count == 0)
-                        {
-                            return BuildAppActionResultError(result, "Đơn hàng không thực hiện đặt món.");
-                        }
-
-                        order.AccountId = accountDb.Id;
-
-                        if (string.IsNullOrEmpty(accountDb.Address))
-                        {
-                            return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ của bạn. Vui lòng cập nhật địa chỉ");
-                        }
-
-                        var restaurantLatConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LATITUDE);
-                        var restaurantLngConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LNG);
-                        var restaurantMaxDistanceToOrderConfig = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DISTANCE_ORDER);
-
-                        var customerInfoAddressListDb = await customerInfoAddressRepository!.GetAllDataByExpression(p => p.CustomerInfoAddressName == accountDb.Address, 0, 0, null, false, null);
-                        if (customerInfoAddressListDb.Items.Count == 0)
-                        {
-                            return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ {accountDb.Address}");
-                        }
-
-                        var customerAddressDb = customerInfoAddressListDb.Items.FirstOrDefault(c => c.IsCurrentUsed && !c.IsDeleted);
-
-                        order.AddressId = customerAddressDb.CustomerInfoAddressId;
-
-                        var restaurantLat = Double.Parse(restaurantLatConfig.CurrentValue);
-                        var restaurantLng = Double.Parse(restaurantLngConfig.CurrentValue);
-                        var maxDistanceToOrder = double.Parse(restaurantMaxDistanceToOrderConfig!.CurrentValue);
-
-                        double[] restaurantAddress = new double[]
-                        {
-                            restaurantLat, restaurantLng
-                        };
-
-                        double[] customerAddress = new double[]
-                        {
-                            customerAddressDb.Lat, customerAddressDb.Lng
-                        };
-
-                        var distanceResponse = await mapService!.GetEstimateDeliveryResponse(restaurantAddress, customerAddress);
-                        var element = distanceResponse.Result as EstimatedDeliveryTimeDto.Response;
-                        var distance = element!.TotalDistance;
-                        if (distance > maxDistanceToOrder)
-                        {
-                            return BuildAppActionResultError(result, $"Nhà hàng chỉ hỗ trợ cho đơn giao hàng trong bán kính 10km");
-                        }
-
-                        var shippingCost = await CalculateDeliveryOrder(customerAddressDb.CustomerInfoAddressId);
-                        if (shippingCost.Result == null)
-                        {
-                            return BuildAppActionResultError(result, $"Xảy ra lỗi khi tính phí giao hàng. Vui lòng kiểm tra lại thông tin địa chỉ");
-                        }
-                        money += double.Parse(shippingCost.Result.ToString());
-
-                        var currentTime = utility.GetCurrentDateTimeInTimeZone();
-                        var couponDb = await couponProgramRepository!.GetAllDataByExpression(c => currentTime > c.StartDate && currentTime < c.ExpiryDate && c.MinimumAmount <= money && c.Quantity > 0, 0, 0, null, false, null);
-                        if (couponDb.Items!.Count > 0 && couponDb.Items != null
-                            && orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.CouponIds.Count > 0)
-                        {
-                            foreach (var couponId in orderRequestDto.DeliveryOrder.CouponIds)
-                            {
-                                if (money <= 0)
-                                {
-                                    break;
-                                }
-
-                                var coupon = couponDb.Items.FirstOrDefault(c => c.CouponProgramId == couponId);
-
-                                if (coupon == null)
-                                {
-                                    return BuildAppActionResultError(result, $"Không tìm thấy coupon với id {couponId}");
-                                }
-
-                                //var orderAppliedCoupon = new OrderAppliedCoupon
-                                //{
-                                //    OrderAppliedCouponId = Guid.NewGuid(),
-                                //    CouponProgramId = couponId,
-                                //    OrderId = order.OrderId
-                                //};
-
-                                double discountMoney = money * (coupon.DiscountPercent * 0.01);
-                                money -= discountMoney;
-                                money = Math.Max(0, money);
-
-                                //await orderAppliedCouponRepository.Insert(orderAppliedCoupon);
-                            }
-                        }
-
-                        if (orderRequestDto.DeliveryOrder.LoyalPointToUse.HasValue && orderRequestDto.DeliveryOrder.LoyalPointToUse > 0)
-                        {
-                            // Check if the user has enough points
-                            if (accountDb!.LoyaltyPoint >= orderRequestDto.DeliveryOrder.LoyalPointToUse)
-                            {
-                                // Calculate the discount (assuming 1 point = 1 currency unit)
-                                double loyaltyDiscount = Math.Min(orderRequestDto.DeliveryOrder.LoyalPointToUse.Value, money);
-                                money -= loyaltyDiscount;
-
-                                // Ensure the total doesn't go below zero
-                                money = Math.Max(0, money);
-
-                                // Update the customer's loyalty points
-                                accountDb.LoyaltyPoint -= (int)loyaltyDiscount;
-
-                                // Create a new loyalty point history entry for the point usage
-                                var loyalPointUsageHistory = new LoyalPointsHistory
-                                {
-                                    LoyalPointsHistoryId = Guid.NewGuid(),
-                                    TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
-                                    OrderId = order.OrderId,
-                                    PointChanged = -(int)loyaltyDiscount,
-                                    NewBalance = accountDb.LoyaltyPoint
-                                };
-
-                                await loyalPointsHistoryRepository!.Insert(loyalPointUsageHistory);
-                            }
-                            else
-                            {
-                                // Handle the case where the user doesn't have enough points
-                                return BuildAppActionResultError(result, "Không đủ điểm tích lũy để sử dụng.");
-                            }
-                        }
-
-                        var newLoyalPointHistory = new LoyalPointsHistory
-                        {
-                            LoyalPointsHistoryId = Guid.NewGuid(),
-                            TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
-                            OrderId = order.OrderId,
-                            PointChanged = (int)money / 100,
-                            NewBalance = accountDb.LoyaltyPoint + (int)money / 100
-                        };
-
-                        await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
-
-                        accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
-
-                        orderWithPayment.Order = order;
-
-                        orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
-                        order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
-
-                        await orderDetailRepository.InsertRange(orderDetails);
-
-                        if (orderRequestDto.CustomerId.HasValue)
-                        {
-                            if (!string.IsNullOrEmpty(accountDb.Email))
-                            {
-                                var username = accountDb.FirstName + " " + accountDb.LastName;
-                                emailService.SendEmail(accountDb.Email, SD.SubjectMail.NOTIFY_RESERVATION,
-                                                             TemplateMappingHelper.GetTemplateOrderConfirmation(
-                                                             username, order)
-                                    );
-                                string notificationEmailMessage = "Nhà hàng đã gửi thông báo mới tới email của bạn";
-                                await notificationService!.SendNotificationToAccountAsync(accountDb.Id, notificationEmailMessage, true);
-
-                            }
-                            else
-                            {
-                                var smsMessage = $"[NHÀ HÀNG THIÊN PHÚ] Đơn hàng của bạn vào lúc {order.OrderDate} đã thành công. " +
-                                           $"Vui lòng thanh toán {order.TotalAmount} VND" +
-                                           $"Xin chân trọng cảm ơn quý khách.";
-                                //await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
-                                string notificationSmsMessage = "Nhà hàng đã gửi thông báo mới tới số điện thoại của bạn";
-                                await notificationService!.SendNotificationToAccountAsync(accountDb.Id, notificationSmsMessage, true);
-
-                            }
-                        }
-
 
                         if (!BuildAppActionResultIsError(result))
                         {
-                            await accountRepository.Update(accountDb);
-                        }
-                    }
-                    else
-                    {
-                        return BuildAppActionResultError(result, $"Thiếu loại đơn hàng (orderType) trong yêu cầu tạo");
-                    }
-
-                    if (!BuildAppActionResultIsError(result))
-                    {
-                        await _repository.Insert(order);
-                        await _unitOfWork.SaveChangesAsync();
-                        if (orderCombo)
-                        {
-                            await dishManagementService.UpdateComboAvailability();
-                            await dishManagementService.UpdateDishAvailability();
-                        }
-
-
-                        if (orderRequestDto.DeliveryOrder != null || orderRequestDto.ReservationOrder != null)
-                        {
-                            var paymentRequest = new PaymentRequestDto
+                            await _repository.Insert(order);
+                            await _unitOfWork.SaveChangesAsync();
+                            if (orderCombo)
                             {
-                                OrderId = order.OrderId,
-                                PaymentMethod = orderRequestDto.DeliveryOrder != null ? orderRequestDto.DeliveryOrder.PaymentMethod : orderRequestDto.ReservationOrder.PaymentMethod,
-                            };
-                            var linkPaymentDb = await transcationService!.CreatePayment(paymentRequest);
-                            if (!linkPaymentDb.IsSuccess)
-                            {
-                                return BuildAppActionResultError(result, String.Join(", ", linkPaymentDb.Messages));
+                                await dishManagementService.UpdateComboAvailability();
+                                await dishManagementService.UpdateDishAvailability();
                             }
 
-                            if ((orderRequestDto.DeliveryOrder?.PaymentMethod != null && orderRequestDto.DeliveryOrder?.PaymentMethod == PaymentMethod.STORE_CREDIT)
-                                || (orderRequestDto.ReservationOrder?.PaymentMethod != null && orderRequestDto.ReservationOrder?.PaymentMethod == PaymentMethod.STORE_CREDIT))
-                            {
-                                await ChangeOrderStatus(order.OrderId, true, null);
-                            }
 
-                            if (linkPaymentDb.Result != null && !string.IsNullOrEmpty(linkPaymentDb.Result.ToString()))
+                            if (orderRequestDto.DeliveryOrder != null || orderRequestDto.ReservationOrder != null)
                             {
-                                orderWithPayment.PaymentLink = linkPaymentDb!.Result!.ToString();
-                            }
-                        }
-                        scope.Complete();
-
-                        if (orderRequestDto.DeliveryOrder != null || orderRequestDto.ReservationOrder != null)
-                        {
-                            StringBuilder messageBody = new StringBuilder();
-                            if (orderDetails != null && orderDetails.Count > 0)
-                            {
-                                foreach (var orderDetail in orderDetails)
+                                var paymentRequest = new PaymentRequestDto
                                 {
-                                    if (orderDetail.DishSizeDetailId.HasValue)
-                                    {
-                                        var dishSizeDb = await dishSizeDetailRepository.GetByExpression(d => d.DishSizeDetailId == orderDetail.DishSizeDetailId.Value, d => d.Dish, d => d.DishSize);
-                                        messageBody.Append($"{dishSizeDb.Dish.Name}: {dishSizeDb.DishSize.VietnameseName} x {orderDetail.Quantity}, ");
-                                    }
-                                    else
-                                    {
-                                        var comboDishDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId, 0, 0, null, false, c => c.DishCombo.DishSizeDetail.Dish, c => c.DishCombo.DishSizeDetail.DishSize);
-                                        messageBody.Append($"{orderDetail.Combo.Name}: {orderDetail.Quantity} x [");
-                                        comboDishDetailDb.Items.ForEach(c =>
-                                            messageBody.Append($"{c.DishCombo.DishSizeDetail.Dish.Name}: {c.DishCombo.DishSizeDetail.DishSize.VietnameseName} x {c.DishCombo.Quantity}, ")
-                                        );
-                                        messageBody.Length -= 2;
-                                        messageBody.Append("], ");
-                                    }
+                                    OrderId = order.OrderId,
+                                    PaymentMethod = orderRequestDto.DeliveryOrder != null ? orderRequestDto.DeliveryOrder.PaymentMethod : orderRequestDto.ReservationOrder.PaymentMethod,
+                                };
+                                var linkPaymentDb = await transcationService!.CreatePayment(paymentRequest);
+                                if (!linkPaymentDb.IsSuccess)
+                                {
+                                    return BuildAppActionResultError(result, String.Join(", ", linkPaymentDb.Messages));
                                 }
 
-                                messageBody.Length -= 2;
-                            }
-                            var createSuccessfulMessage = $"Đơn của bạn đã được đặt thành công";
-                            if (orderDetails != null && orderDetails.Count > 0)
-                            {
-                                await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_CHEF, messageBody.ToString());
+                                if ((orderRequestDto.DeliveryOrder?.PaymentMethod != null && orderRequestDto.DeliveryOrder?.PaymentMethod == PaymentMethod.STORE_CREDIT)
+                                    || (orderRequestDto.ReservationOrder?.PaymentMethod != null && orderRequestDto.ReservationOrder?.PaymentMethod == PaymentMethod.STORE_CREDIT))
+                                {
+                                    await ChangeOrderStatus(order.OrderId, true, null);
+                                }
 
+                                if (linkPaymentDb.Result != null && !string.IsNullOrEmpty(linkPaymentDb.Result.ToString()))
+                                {
+                                    orderWithPayment.PaymentLink = linkPaymentDb!.Result!.ToString();
+                                }
                             }
-                            await notificationService!.SendNotificationToAccountAsync(accountDb.Id, createSuccessfulMessage);
-                            if (order.OrderTypeId != OrderType.MealWithoutReservation)
-                            {
-                                await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
-                                await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
-                                await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
-                            }
-                            await hubService!.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
+
                         }
+                        result.Result = orderWithPayment;
+                        scope.Complete();
+
                     }
-                    result.Result = orderWithPayment;
+                if (orderRequestDto.DeliveryOrder != null || orderRequestDto.ReservationOrder != null)
+                {
+                    StringBuilder messageBody = new StringBuilder();
+                    if (orderDetails != null && orderDetails.Count > 0)
+                    {
+                        foreach (var orderDetail in orderDetails)
+                        {
+                            if (orderDetail.DishSizeDetailId.HasValue)
+                            {
+                                var dishSizeDb = await dishSizeDetailRepository.GetByExpression(d => d.DishSizeDetailId == orderDetail.DishSizeDetailId.Value, d => d.Dish, d => d.DishSize);
+                                messageBody.Append($"{dishSizeDb.Dish.Name}: {dishSizeDb.DishSize.VietnameseName} x {orderDetail.Quantity}, ");
+                            }
+                            else
+                            {
+                                var comboDishDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId, 0, 0, null, false, c => c.DishCombo.DishSizeDetail.Dish, c => c.DishCombo.DishSizeDetail.DishSize);
+                                messageBody.Append($"{orderDetail.Combo.Name}: {orderDetail.Quantity} x [");
+                                comboDishDetailDb.Items.ForEach(c =>
+                                    messageBody.Append($"{c.DishCombo.DishSizeDetail.Dish.Name}: {c.DishCombo.DishSizeDetail.DishSize.VietnameseName} x {c.DishCombo.Quantity}, ")
+                                );
+                                messageBody.Length -= 2;
+                                messageBody.Append("], ");
+                            }
+                        }
+
+                        messageBody.Length -= 2;
+                    }
+                    var createSuccessfulMessage = $"Đơn của bạn đã được đặt thành công";
+                    if (orderDetails != null && orderDetails.Count > 0)
+                    {
+                        await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_CHEF, messageBody.ToString());
+
+                    }
+                    await notificationService!.SendNotificationToAccountAsync(accountDb.Id, createSuccessfulMessage);
+                    if (order.OrderTypeId != OrderType.MealWithoutReservation)
+                    {
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
+                    }
+                    await hubService!.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
                 }
-                catch (Exception ex)
+
+            }
+            catch (Exception ex)
                 {
                     result = BuildAppActionResultError(result, ex.Message);
                 }
                 return result;
-            }
+            
         }
 
         public async Task<AppActionResult> GetAllOrderByCustomertId(string customerId, OrderStatus? status, OrderType? orderType, int pageNumber, int pageSize)

@@ -7,6 +7,7 @@ using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Models;
+using static System.Formats.Asn1.AsnWriter;
 using Utility = TPRestaurent.BackEndCore.Common.Utils.Utility;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation;
@@ -104,9 +105,7 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
 
     public async Task<AppActionResult> SendNotificationToAccountAsync(string accountId, string message, bool ignoreSaveChanges = false)
     {
-        var result = new AppActionResult();
-        using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-        {
+        var result = new AppActionResult();       
             try
             {
                 var utility = Resolve<Utility>();
@@ -149,14 +148,11 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
                 {
                     await _unitOfWork.SaveChangesAsync();
                 }
-                scope.Complete();
-
             }
             catch (Exception ex)
             {
                 result = BuildAppActionResultError(result, ex.Message);
-            }
-        }
+            }        
         return result;
     }
 
@@ -170,61 +166,56 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
         var tokenRepository = Resolve<IGenericRepository<Token>>();
         var notificationMessageRepository = Resolve<IGenericRepository<NotificationMessage>>();
         var tokenList = new List<string>();
-        using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+        try
         {
-            try
+            var roleDb = await roleRepository!.GetByExpression(p => p.Name == roleName);
+            if (roleDb == null)
             {
-                var roleDb = await roleRepository!.GetByExpression(p => p.Name == roleName);
-                if (roleDb == null)
+                return BuildAppActionResultError(result, $"Không tìm thấy vai trò {roleName}");
+            }
+            var userRoleDb = await userRoleRepository!.GetAllDataByExpression(p => p.RoleId == roleDb!.Id, 0, 0, null, false, null);
+            if (userRoleDb == null)
+            {
+                return BuildAppActionResultError(result, $"Không tìm thấy danh sách user với role {roleDb.Id}");
+            }
+            foreach (var user in userRoleDb!.Items!)
+            {
+                var tokenDb = await tokenRepository!.GetAllDataByExpression(p => p.AccountId == user.UserId, 0, 0, null, false, p => p.Account);
+                foreach (var token in tokenDb.Items)
                 {
-                    return BuildAppActionResultError(result, $"Không tìm thấy vai trò {roleName}");
-                }
-                var userRoleDb = await userRoleRepository!.GetAllDataByExpression(p => p.RoleId == roleDb!.Id, 0, 0, null, false, null);
-                if (userRoleDb == null)
-                {
-                    return BuildAppActionResultError(result, $"Không tìm thấy danh sách user với role {roleDb.Id}");
-                }
-                foreach (var user in userRoleDb!.Items!)
-                {
-                    var tokenDb = await tokenRepository!.GetAllDataByExpression(p => p.AccountId == user.UserId, 0, 0, null, false, p => p.Account);
-                    foreach (var token in tokenDb.Items)
+                    if (!string.IsNullOrEmpty(token.DeviceToken))
                     {
-                        if (!string.IsNullOrEmpty(token.DeviceToken))
-                        {
-                            tokenList.Add(token.DeviceToken);
-                        }
-                    }
-
-                    var notificationList = new List<NotificationMessage>();
-                    var currentTime = utility.GetCurrentDateTimeInTimeZone();
-                    var notification = new NotificationMessage
-                    {
-                        NotificationId = Guid.NewGuid(),
-                        NotificationName = "Nhà hàng có thông báo mới",
-                        Messages = message,
-                        NotifyTime = currentTime,
-                        AccountId = user.UserId,
-                    };
-                    notificationList.Add(notification);
-
-                    await notificationMessageRepository!.InsertRange(notificationList);
-                    if (tokenList.Count() > 0)
-                    {
-                        await fireBaseService!.SendMulticastAsync(tokenList, "Nhà hàng có một thông báo mới", message, result);
+                        tokenList.Add(token.DeviceToken);
                     }
                 }
 
-                if (!BuildAppActionResultIsError(result))
+                var notificationList = new List<NotificationMessage>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                var notification = new NotificationMessage
                 {
-                    await _unitOfWork.SaveChangesAsync();
-                }
-                scope.Complete();
+                    NotificationId = Guid.NewGuid(),
+                    NotificationName = "Nhà hàng có thông báo mới",
+                    Messages = message,
+                    NotifyTime = currentTime,
+                    AccountId = user.UserId,
+                };
+                notificationList.Add(notification);
 
+                await notificationMessageRepository!.InsertRange(notificationList);
+                if (tokenList.Count() > 0)
+                {
+                    await fireBaseService!.SendMulticastAsync(tokenList, "Nhà hàng có một thông báo mới", message, result);
+                }
             }
-            catch (Exception ex)
+
+            if (!BuildAppActionResultIsError(result))
             {
-                result = BuildAppActionResultError(result, ex.Message);
+                await _unitOfWork.SaveChangesAsync();
             }
+        }
+        catch (Exception ex)
+        {
+            result = BuildAppActionResultError(result, ex.Message);
         }
         return result;
     }
