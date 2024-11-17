@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
+using TPRestaurent.BackEndCore.Application.IHubServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
@@ -81,6 +82,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var orderSessionService = Resolve<IOrderSessionService>();
+                var hubService = Resolve<IHubServices.IHubServices>();
                 var configurationRepository = Resolve<IGenericRepository<Configuration>>();
                 var utility = Resolve<Utility>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
@@ -118,6 +120,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 };
                 await _repository.Insert(newGroupDish);
                 await _unitOfWork.SaveChangesAsync();
+                await hubService.SendAsync(SD.SignalMessages.LOAD_ORDER);
             }
             catch (Exception ex)
             {

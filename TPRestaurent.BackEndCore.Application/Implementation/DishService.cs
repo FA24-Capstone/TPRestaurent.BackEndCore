@@ -100,7 +100,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 DailyCountdown = d.DailyCountdown,
                                 QuantityLeft = d.QuantityLeft.HasValue ? d.QuantityLeft.Value : d.DailyCountdown,
                                 IsAvailable = true,
-                                Price = d.Price
+                                Price = d.Price,
+                                IsDeleted = false
                             }));
                     }
 
@@ -195,6 +196,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 foreach (var item in dishList.Items!)
                 {
                     var dishDetailsListDb = await dishDetailsRepository!.GetAllDataByExpression(p => p.DishId == item.DishId 
+                                                                                                    && !p.IsDeleted
                                                                                                     && (!startPrice.HasValue ||p.Price >= startPrice) 
                                                                                                     && (!endPrice.HasValue ||p.Price <= endPrice), 
                                                                                                     0, 0, p => p.Price, false, p => p.DishSize!);
@@ -268,7 +270,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var dishTagDb = await dishTagRepository!.GetAllDataByExpression(d => d.DishId == dishId, 0, 0, null, false, d => d.Tag);
                 dishResponse.DishTags = dishTagDb.Items.DistinctBy(t => t.TagId).ToList();
-                var dishSizeDetailsDb = await dishSizeRepository.GetAllDataByExpression(p => p.DishId == dishId, 0, 0, null, false, p => p.DishSize!);
+                var dishSizeDetailsDb = await dishSizeRepository.GetAllDataByExpression(p => p.DishId == dishId && !p.IsDeleted, 0, 0, null, false, p => p.DishSize!);
                 if (dishSizeDetailsDb!.Items!.Count < 0 && dishSizeDetailsDb.Items == null)
                 {
                     result = BuildAppActionResultError(result, $"size món ăn với id {dishId} không tồn tại");
@@ -369,6 +371,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     List<DishSizeDetail> updateDishSizeDetails = new List<DishSizeDetail>();
                     List<DishSizeDetail> addDishSizeDetails = new List<DishSizeDetail>();
+                    PagedResult<DishSizeDetail> toDeleteDishSize = new PagedResult<DishSizeDetail>();
                     if (dto.UpdateDishSizeDetailDtos.Count > 0)
                     {
                         foreach(var dishSizeDetail in dto.UpdateDishSizeDetailDtos)
@@ -406,11 +409,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     DishId = dishDb.DishId,
                                     DishSizeId = dishSizeDetail.DishSize,
                                     Discount = dishSizeDetail.Discount,
-                                    IsAvailable = dishSizeDetail.IsAvailable,
+                                    IsAvailable = true,
                                     Price = dishSizeDetail.Price
                                 });
                             }
                         }
+
+                        var updateDishSizeDetailIds = updateDishSizeDetails.Select(u => u.DishSizeDetailId).ToList();
+                        toDeleteDishSize = await dishSizeDetailRepository.GetAllDataByExpression(d => !updateDishSizeDetailIds.Contains(d.DishSizeDetailId) && d.DishId == dto.DishId, 0, 0, null, false, null);
+                        toDeleteDishSize.Items.ForEach(d => d.IsDeleted = true);
                     }
                     
 
@@ -425,6 +432,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (addDishSizeDetails.Count > 0)
                         {
                             await dishSizeDetailRepository!.InsertRange(addDishSizeDetails);
+                        }
+                        if(toDeleteDishSize.Items.Count > 0)
+                        {
+                            await dishSizeDetailRepository!.UpdateRange(toDeleteDishSize.Items);
                         }
                         await _unitOfWork.SaveChangesAsync();
                         result.Messages.Add("Update dish successfully");
