@@ -613,7 +613,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var couponProgramRepository = Resolve<IGenericRepository<CouponProgram>>();
                 var fireBaseService = Resolve<IFirebaseService>();
                 var dishRepository = Resolve<IGenericRepository<Dish>>();
-                var orderAppliedCouponRepository = Resolve<IGenericRepository<AssignedCoupon>>();
+                var orderAppliedCouponRepository = Resolve<IGenericRepository<OrderAppliedCoupon>>();
                 var tableRepository = Resolve<IGenericRepository<Table>>();
                 var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
                 var transcationService = Resolve<ITransactionService>();
