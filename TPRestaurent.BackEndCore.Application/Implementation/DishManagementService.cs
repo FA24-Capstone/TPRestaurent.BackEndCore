@@ -96,7 +96,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var utility = Resolve<Utility>();
                 var dishRepository = Resolve<IGenericRepository<Dish>>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
-                var dishDb = await _dishDetailRepository.GetAllDataByExpression(d => !d.Dish.IsDeleted, 0, 0, null, false, null);
+                var dishDb = await _dishDetailRepository.GetAllDataByExpression(d => !d.Dish.IsDeleted && !d.IsDeleted, 0, 0, null, false, null);
                 var comboDb = await _comboRepository.GetAllDataByExpression(d => !d.IsDeleted && d.StartDate <= currentTime && d.EndDate >= currentTime
                                                                                  , 0, 0, null, false, null);
 
