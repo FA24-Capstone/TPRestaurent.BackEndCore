@@ -1169,7 +1169,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                         scope.Complete();
 
-                        if(orderRequestDto.DeliveryOrder != null || orderRequestDto.ReservationOrder != null)
+                        if (orderRequestDto.DeliveryOrder != null || orderRequestDto.ReservationOrder != null)
                         {
                             StringBuilder messageBody = new StringBuilder();
                             if (orderDetails != null && orderDetails.Count > 0)
@@ -3945,6 +3945,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             Task.CompletedTask.Wait();
         }
+
         private async Task<AppActionResult> UpdateCancelledOrderDishQuantity(Order order, List<DishSizeDetail> updateDishSizeDetailList, DateTime currentTime, bool refillAllow = true)
         {
             AppActionResult result = new AppActionResult();
@@ -3953,7 +3954,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                 var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
                 var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
+                var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
                 var emailService = Resolve<IEmailService>();
+                var notificationMessageReposiory = Resolve<IGenericRepository<NotificationMessage>>();
                 order.StatusId = OrderStatus.Cancelled;
                 bool dishQuantityAccounted = order.MealTime.HasValue ? order.MealTime.Value == currentTime.Date : order.OrderDate.Date == currentTime.Date;
                 var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId && o.OrderDetailStatusId != OrderDetailStatus.ReadyToServe && o.OrderDetailStatusId != OrderDetailStatus.Cancelled, 0, 0, null, false, o => o.DishSizeDetail);
@@ -4039,12 +4042,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 await orderSessionRepository.UpdateRange(orderSessionDb.Items);
                 await _detailRepository.UpdateRange(orderDetailDb.Items);
-
-                if (!string.IsNullOrEmpty(order.Account?.Email))
-                {
-                    var username = order.Account?.FirstName + "" + order.Account?.LastName;
-                    emailService.SendEmail(order.Account?.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateMailToCancelReservation(username, order));
-                }
             }
             catch (Exception ex)
             {
@@ -4087,65 +4084,82 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-        //[Hangfire.Queue("cancel-reservation")]
-        //public async Task CancelReservation()
-        //{
-        //    var emailService = Resolve<IEmailService>();
-        //    var utility = Resolve<Utility>();
-        //    var configurationRepository = Resolve<IGenericRepository<Configuration>>();
-        //    var timeLastForReservationWithDishesConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_RESERVATION_WITH_DISHES_LAST).Result;
-        //    var timeLastForReservationConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_RESERVATION_LAST).Result;
-        //    var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-        //    try
-        //    {
-        //        var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+        [Hangfire.Queue("cancel-reservation")]
+        public async Task CancelReservation()
+        {
+            var emailService = Resolve<IEmailService>();
+            var utility = Resolve<Utility>();
+            var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+            var timeLastForReservationWithDishesConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_RESERVATION_WITH_DISHES_LAST).Result;
+            var timeLastForReservationConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_RESERVATION_LAST).Result;
+            var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
+            var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+            var notificationMessageReposiory = Resolve<IGenericRepository<NotificationMessage>>();
+            try
+            {
+                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
 
-        //        var orderReservationDb = await _repository.GetAllDataByExpression(p => p.OrderTypeId == OrderType.Reservation && p.StatusId == OrderStatus.TableAssigned, 0, 0, p => p.OrderDate, false, null);
-        //        if (orderReservationDb.Items != null)
-        //        {
-        //            foreach (var orderReservation in orderReservationDb.Items)
-        //            {
-        //                var orderReservationDetailDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderId == orderReservation.OrderId, 0, 0, null, false, null);
-        //                if (orderReservationDb!.Items!.Count > 0 && orderReservationDb.Items != null)
-        //                {
-        //                    if (orderReservation.ReservationDate!.Value.AddHours(int.Parse(timeLastForReservationWithDishesConfig!.CurrentValue)) <= currentTime)
-        //                    {
-        //                        var orderReservationDetailList = new List<OrderDetail>();
-        //                        foreach (var orderReservationDetail in orderReservationDetailDb.Items!)
-        //                        {
-        //                            orderReservationDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
-        //                            orderReservationDetailList.Add(orderReservationDetail);
-        //                        }
-        //                        orderReservation.StatusId = OrderStatus.Cancelled;
+                var orderReservationDb = await _repository.GetAllDataByExpression(p => p.OrderTypeId == OrderType.Reservation && p.StatusId == OrderStatus.TableAssigned, 0, 0, p => p.OrderDate, false, null);
+                if (orderReservationDb.Items != null)
+                {
+                    foreach (var orderReservation in orderReservationDb.Items)
+                    {
+                        var orderReservationDetailDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderId == orderReservation.OrderId, 0, 0, null, false, null);
+                        if (orderReservationDb!.Items!.Count > 0 && orderReservationDb.Items != null)
+                        {
+                            if (orderReservation.ReservationDate!.Value.AddHours(int.Parse(timeLastForReservationWithDishesConfig!.CurrentValue)) <= currentTime)
+                            {
+                                var orderReservationDetailList = new List<OrderDetail>();
+                                foreach (var orderReservationDetail in orderReservationDetailDb.Items!)
+                                {
+                                    orderReservationDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
+                                    orderReservationDetailList.Add(orderReservationDetail);
+                                }
+                                orderReservation.StatusId = OrderStatus.Cancelled;
 
-        //                        await _repository.Update(orderReservation);
-        //                        await orderDetailRepository.UpdateRange(orderReservationDetailList);
-        //                    }
-        //                }
-        //                else
-        //                {
-        //                    if (orderReservation.ReservationDate.Value.AddHours(int.Parse(timeLastForReservationConfig!.CurrentValue)) <= currentTime)
-        //                    {
-        //                        orderReservation.StatusId = OrderStatus.Cancelled;
-        //                        await _repository.Update(orderReservation);
-        //                    }
-        //                }
+                                await _repository.Update(orderReservation);
+                                await orderDetailRepository.UpdateRange(orderReservationDetailList);
+                            }
+                        }
+                        else
+                        {
+                            if (orderReservation.ReservationDate.Value.AddHours(int.Parse(timeLastForReservationConfig!.CurrentValue)) <= currentTime)
+                            {
+                                orderReservation.StatusId = OrderStatus.Cancelled;
+                                await _repository.Update(orderReservation);
+                            }
+                        }
 
-        //                if (!string.IsNullOrEmpty(orderReservation.Account?.Email))
-        //                {
-        //                    var username = orderReservation.Account?.FirstName + "" + orderReservation.Account?.LastName;
-        //                    emailService.SendEmail(orderReservation.Account?.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateMailToCancelReservation(username, orderReservation));
-        //                }
-        //            }
-        //        }
+                        var tableDetailDb = await _tableDetailRepository.GetAllDataByExpression(p => p.OrderId == orderReservation.OrderId, 0, 0, null, false, p => p!.Table!, p => p.Table!.Room!, p => p.Table!.TableSize!);
+                        var tableDetail = tableDetailDb!.Items!.FirstOrDefault();
+                        if (!string.IsNullOrEmpty(orderReservation.Account?.Email))
+                        {
+                            var username = orderReservation.Account?.FirstName + " " + orderReservation.Account?.LastName;
+                            emailService.SendEmail(orderReservation.Account?.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateMailToCancelReservation(username, orderReservation, tableDetail));
+                            
+                            var message = $"Đơn đặt bàn của bạn vào lúc {orderReservation.MealTime} đã bị hủy, để biết thêm thông tin chi tiết vui lòng kiểm tra hộp thư mail của bạn";
+                            var notificationMessage = new NotificationMessage
+                            {
+                                NotificationId = Guid.NewGuid(),
+                                AccountId = orderReservation.AccountId,
+                                NotificationName = "Bạn có thông báo mới",
+                                Messages = message,
+                                NotifyTime = currentTime
+                            };
 
-        //        await _unitOfWork.SaveChangesAsync();
-        //    }
-        //    catch (Exception ex)
-        //    {
+                            await notificationMessageReposiory!.Insert(notificationMessage);
+                        }
 
-        //    }
-        //    Task.CompletedTask.Wait();
-        //}
+                    }
+                }
+
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+
+            }
+            Task.CompletedTask.Wait();
+        }
     }
 }

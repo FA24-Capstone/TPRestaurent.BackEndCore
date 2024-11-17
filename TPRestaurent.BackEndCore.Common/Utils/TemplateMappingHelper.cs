@@ -672,7 +672,7 @@ public class TemplateMappingHelper
         return content;
     }
 
-    public static string GetTemplateMailToCancelReservation(string username, Order order)
+    public static string GetTemplateMailToCancelReservation(string username, Order order, TableDetail tableDetail)
     {
         var orderTime = order.OrderTypeId == Domain.Enums.OrderType.Reservation ? order.ReservationDate.Value : order.OrderDate;
 
@@ -791,13 +791,15 @@ public class TemplateMappingHelper
         <h2 class=""emailBody"">Xin chào {username},</h2>
         
         <p class=""emailBody"">
-          Chúng tôi rất tiếc phải thông báo rằng đặt chỗ/đơn giao tận nơi của bạn đã bị hủy tại <b><i>Nhà hàng Thiên Phú</i></b>.
+          Chúng tôi rất tiếc phải thông báo rằng đặt bàn của bạn đã bị hủy tại <b><i>Nhà hàng Thiên Phú</i></b>.
         </p>
 
         <p class=""emailBody"">
           Mã đơn: <b>{order.OrderId.ToString().Substring(0,5)}</b><br>
           Thời gian đặt: <b>{orderTime}</b>
           Thời gian dùng bữa tại nhà hàng(Nếu có): <b> {order.MealTime ?? order.MealTime.Value}</b>
+          Loại phòng: {tableDetail.Table!.Room!}
+          Loại bàn: {tableDetail.Table!.TableSize!}
         </p>
 
         <p class=""emailBody"">
