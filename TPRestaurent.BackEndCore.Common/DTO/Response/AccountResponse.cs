@@ -29,5 +29,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public bool? IsManuallyCreated { get; set; }  
         public List<IdentityRole> Roles { get; set; }
         public string MainRole { get; set; }
+        public bool IsBanned { get; set; }
     }
 }
