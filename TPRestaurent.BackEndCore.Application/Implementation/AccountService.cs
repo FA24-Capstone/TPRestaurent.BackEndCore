@@ -671,10 +671,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetAllAccount(int pageIndex, int pageSize)
+        public async Task<AppActionResult> GetAllAccount(string? keyword, int pageIndex, int pageSize)
         {
             var result = new AppActionResult();
-            var list = await _accountRepository.GetAllDataByExpression(null, pageIndex, pageSize, null, false, null);
+            var list = new PagedResult<Account>();
+            if (keyword != null)
+            {
+                list = await _accountRepository.GetAllDataByExpression(p => p.PhoneNumber.Contains(keyword), pageIndex, pageSize, null, false, null);
+            }
+            else
+            {
+                list = await _accountRepository.GetAllDataByExpression(null, pageIndex, pageSize, null, false, null);
+            }
 
             var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
             var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
@@ -2033,7 +2041,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return BuildAppActionResultError(result, $"Không tìm thấy tài khoản với id {accountId}");
                 }
 
-                accountDb.IsBanned = true;
+                if (accountDb.IsBanned == true)
+                {
+                    accountDb.IsBanned = false;
+                }
+                else
+                {
+                    accountDb.IsBanned = true;      
+                }
                 await _accountRepository.Update(accountDb);
                 await _unitOfWork.SaveChangesAsync();
             }
