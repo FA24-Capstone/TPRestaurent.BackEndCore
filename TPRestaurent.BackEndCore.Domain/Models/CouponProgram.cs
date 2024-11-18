@@ -16,6 +16,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public int DiscountPercent { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime ExpiryDate { get; set; }
+        public bool IsDeleted { get; set; }
         public double MinimumAmount { get; set; }
         public int Quantity { get; set; }
         public string? Img { get; set; }

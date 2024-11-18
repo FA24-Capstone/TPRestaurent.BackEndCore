@@ -7,12 +7,15 @@ using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
 {
-    public class OrderAppliedCoupon
+    public class Coupon
     {
-        public Guid OrderAppliedCouponId { get; set; }  
-        public Guid OrderId { get; set; }
+        public Guid CouponId { get; set; }  
+        public Guid? OrderId { get; set; }
         [ForeignKey(nameof(OrderId))]
-        public Order? Order { get; set; }    
+        public Order? Order { get; set; }
+        public string AccountId { get; set; }
+        [ForeignKey(nameof(AccountId))]
+        public Account? Account { get; set; } = null;
         public Guid CouponProgramId { get; set; }
         [ForeignKey(nameof(CouponProgramId))]
         public CouponProgram? CouponProgram { get; set; } = null;

@@ -10,6 +10,7 @@ public class SD
     public static int MAX_RECORD_PER_PAGE = short.MaxValue;
     public static string DEFAULT_PASSWORD = "TourGuide@123";
     public static string DEFAULT_EMAIL_DOMAIN = "@gmail.com";
+    public static DateTime MINIMUM_DATE = DateTime.Parse("0001-01-01 00:00:00.0000000");
 
     public class AccountDefaultInfomation
     {
