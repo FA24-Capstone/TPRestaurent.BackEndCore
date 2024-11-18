@@ -45,51 +45,68 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var currentTime = utility.GetCurrentDateTimeInTimeZone();
             var vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
 
-            if (startDate.Value == default(DateTime))
-            {
-                startDate = TimeZoneInfo.ConvertTime(
-                    new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, 0, 0, 0),
-                    vietnamTimeZone);
-            }
-            if (endDate.Value == default(DateTime))
-            {
-                endDate = TimeZoneInfo.ConvertTime(
-                    new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, 23, 59, 59),
-                    vietnamTimeZone);
-            }
-
             try
             {
                 StatisticReportDashboardResponse statisticReportDashboardResponse = new StatisticReportDashboardResponse();
-                var monthlyRevenue = new Dictionary<int, decimal>();
+                var monthlyRevenue = new Dictionary<string, decimal>();
 
                 if (monthlyRevenue.Count() > 0)
                 {
                     monthlyRevenue.Clear();
                 }
 
-                for (int month = 1; month <= endDate.Value.Month; month++)
+                var months = Enumerable.Range(0, ((endDate.Value.Year - startDate.Value.Year) * 12 + endDate.Value.Month - startDate.Value.Month + 1))
+                               .Select(offset => new DateTime(startDate.Value.Year, startDate.Value.Month, 1).AddMonths(offset))
+                               .ToList();
+
+                foreach (var month in months)
                 {
-                    var transactions = await transactionRepository!.GetAllDataByExpression(
-                        p => p.Date.Month == month &&
-                             p.Date.Year == endDate.Value.Year &&
-                             p.TransationStatusId == TransationStatus.SUCCESSFUL,
-                        0,
-                        0,
-                        null,
-                        false,
-                        null
-                    );
-                    var totalRevenue = transactions.Items.Sum(t => t.Amount);
-                    monthlyRevenue[month] = (decimal)totalRevenue;
+                    var profitDb = await orderRepository!.GetAllDataByExpression(
+                          p => (p.OrderDate.Date.Month == month.Month && p.OrderDate.Year == month.Year 
+                                || p.MealTime.HasValue && p.MealTime.Value.Month == month.Month && p.MealTime.Value.Year == month.Year)
+                                 && (p.OrderDate.Date > SD.MINIMUM_DATE 
+                                        && (!startDate.HasValue || startDate.HasValue && p.OrderDate.Date >= startDate.Value)
+                                        && (!endDate.HasValue || endDate.HasValue && p.OrderDate.Date <= endDate.Value)
+                                    || p.MealTime.HasValue
+                                        && (!startDate.HasValue || startDate.HasValue && p.MealTime.Value.Date >= startDate.Value)
+                                        && (!endDate.HasValue || endDate.HasValue && p.MealTime.Value.Date <= endDate.Value)
+                                    )
+                             && p.StatusId == OrderStatus.Completed,
+                          0, 0, null, false, null);
+                    var totalRevenue = profitDb.Items.Sum(t => t.TotalAmount);
+                    monthlyRevenue[month.ToString("MM-yyyy")] = (decimal)totalRevenue;
                 }
 
                 statisticReportDashboardResponse.MonthlyRevenue = monthlyRevenue;
 
                 OrderStatusReportResponse orderStatusReportResponse = new OrderStatusReportResponse();
-                var successfulOrderDb = await orderRepository.GetAllDataByExpression(p => p.StatusId == OrderStatus.Completed && p.OrderDate >= startDate && p.OrderDate <= endDate, 0, 0, null, false, null);
-                var cancellingOrderDb = await orderRepository.GetAllDataByExpression(p => p.StatusId == OrderStatus.Cancelled && p.OrderDate >= startDate && p.OrderDate <= endDate, 0, 0, null, false, null);
-                var pendingOrderDb = await orderRepository.GetAllDataByExpression(p => p.StatusId == OrderStatus.Pending && p.OrderDate >= startDate && p.OrderDate <= endDate, 0, 0, null, false, null);
+                var successfulOrderDb = await orderRepository.GetAllDataByExpression(p => p.StatusId == OrderStatus.Completed 
+                                                                                          && (p.OrderDate.Date > SD.MINIMUM_DATE
+                                                                                                && (!startDate.HasValue || startDate.HasValue && p.OrderDate.Date >= startDate.Value)
+                                                                                                && (!endDate.HasValue || endDate.HasValue && p.OrderDate.Date <= endDate.Value)
+                                                                                            || p.MealTime.HasValue
+                                                                                                && (!startDate.HasValue || startDate.HasValue && p.MealTime.Value.Date >= startDate.Value)
+                                                                                                && (!endDate.HasValue || endDate.HasValue && p.MealTime.Value.Date <= endDate.Value)
+                                                                                            )
+                                                                                          , 0, 0, null, false, null);
+                var cancellingOrderDb = await orderRepository.GetAllDataByExpression(p => p.StatusId == OrderStatus.Cancelled
+                                                                                          && (p.OrderDate.Date > SD.MINIMUM_DATE
+                                                                                                && (!startDate.HasValue || startDate.HasValue && p.OrderDate.Date >= startDate.Value)
+                                                                                                && (!endDate.HasValue || endDate.HasValue && p.OrderDate.Date <= endDate.Value)
+                                                                                            || p.MealTime.HasValue
+                                                                                                && (!startDate.HasValue || startDate.HasValue && p.MealTime.Value.Date >= startDate.Value)
+                                                                                                && (!endDate.HasValue || endDate.HasValue && p.MealTime.Value.Date <= endDate.Value)
+                                                                                            )
+                                                                                          , 0, 0, null, false, null);
+                var pendingOrderDb = await orderRepository.GetAllDataByExpression(p => (p.StatusId != OrderStatus.Cancelled && p.StatusId != OrderStatus.Completed)
+                                                                                          && (p.OrderDate.Date > SD.MINIMUM_DATE
+                                                                                                && (!startDate.HasValue || startDate.HasValue && p.OrderDate.Date >= startDate.Value)
+                                                                                                && (!endDate.HasValue || endDate.HasValue && p.OrderDate.Date <= endDate.Value)
+                                                                                            || p.MealTime.HasValue
+                                                                                                && (!startDate.HasValue || startDate.HasValue && p.MealTime.Value.Date >= startDate.Value)
+                                                                                                && (!endDate.HasValue || endDate.HasValue && p.MealTime.Value.Date <= endDate.Value)
+                                                                                            )
+                                                                                          , 0, 0, null, false, null);
 
                 orderStatusReportResponse.SuccessfullyOrderNumber = successfulOrderDb.Items.Count();
                 orderStatusReportResponse.CancellingOrderNumber = cancellingOrderDb.Items.Count();
@@ -115,21 +132,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             var transactionRepository = Resolve<IGenericRepository<Transaction>>();
             var vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            if (startDate.Value == default(DateTime))
+            {
+                startDate = TimeZoneInfo.ConvertTime(
+                    new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, 0, 0, 0),
+                    vietnamTimeZone);
+            }
+            if (endDate.Value == default(DateTime))
+            {
+                endDate = TimeZoneInfo.ConvertTime(
+                    new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, 23, 59, 59),
+                    vietnamTimeZone);
+            }
             try
             {
-                if (startDate.Value == default(DateTime))
-                {
-                    startDate = TimeZoneInfo.ConvertTime(
-                        new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, 0, 0, 0),
-                        vietnamTimeZone);
-                }
-                if (endDate.Value == default(DateTime))
-                {
-                    endDate = TimeZoneInfo.ConvertTime(
-                        new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, 23, 59, 59),
-                        vietnamTimeZone);
-                }
-
+                
                 StatisticReportNumberResponse statisticReportNumberResponse = new StatisticReportNumberResponse();
 
                 ShipperStatisticResponse shipperStatisticResponse = new ShipperStatisticResponse();
@@ -140,13 +157,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 statisticReportNumberResponse.ShipperStatisticResponse = shipperStatisticResponse;
 
-                var reservationOrderDb = await orderRepository!.GetAllDataByExpression(
-                                                                       p => p.OrderDate >= startDate && p.OrderDate <= endDate && p.OrderTypeId == OrderType.Reservation,
+                var reservationOrderDb = await orderRepository!.GetAllDataByExpression(p => 
+                                                                       p.OrderTypeId == OrderType.Reservation
+                                                                       && p.MealTime.HasValue 
+                                                                       && (!startDate.HasValue || startDate.HasValue && p.MealTime.Value.Date >= startDate.Value)
+                                                                       && (!endDate.HasValue || endDate.HasValue && p.MealTime.Value.Date <= endDate.Value),
                                                                        0, 0, null, false, null);
                 statisticReportNumberResponse.TotalReservationNumber = reservationOrderDb!.Items!.Count();
 
-                var deliveringOrderDb = await orderRepository!.GetAllDataByExpression(
-                                                                    p => p.OrderDate >= startDate && p.OrderDate <= endDate && p.OrderTypeId == OrderType.Delivery,
+                var deliveringOrderDb = await orderRepository!.GetAllDataByExpression(p => p.OrderTypeId == OrderType.Delivery
+                                                                                        && p.OrderDate.Date > SD.MINIMUM_DATE
+                                                                                        && (!startDate.HasValue || startDate.HasValue && p.OrderDate.Date >= startDate.Value)
+                                                                                        && (!endDate.HasValue || endDate.HasValue && p.OrderDate.Date <= endDate.Value),
                                                                     0, 0, null, false, null);
 
                 statisticReportNumberResponse.TotalDeliveringOrderNumber = deliveringOrderDb!.Items!.Count();
@@ -176,15 +198,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var yesterdayEnd = endDate.Value.AddTicks(-1);
 
                 var presentProfitDb = await orderRepository!.GetAllDataByExpression(
-                    p => p.OrderDate >= startDate &&
-                         p.OrderDate <= endDate &&
-                         p.StatusId == OrderStatus.Completed,
+                    p => (p.OrderDate.Date > SD.MINIMUM_DATE
+                            && (!startDate.HasValue || startDate.HasValue && p.OrderDate.Date >= startDate.Value)
+                            && (!endDate.HasValue || endDate.HasValue && p.OrderDate.Date <= endDate.Value)
+                          || p.MealTime.HasValue
+                            && (!startDate.HasValue || startDate.HasValue && p.MealTime.Value.Date >= startDate.Value)
+                            && (!endDate.HasValue || endDate.HasValue && p.MealTime.Value.Date <= endDate.Value))
+                         && p.StatusId == OrderStatus.Completed,
                     0, 0, null, false, null);
 
                 var yesterdayProfitDb = await orderRepository!.GetAllDataByExpression(
-                    p => p.OrderDate >= yesterdayStart &&
-                         p.OrderDate <= yesterdayEnd &&
-                         p.StatusId == OrderStatus.Completed,
+                    p => p.OrderDate.Date > SD.MINIMUM_DATE
+                            && p.OrderDate.Date >= yesterdayStart
+                            && p.OrderDate.Date <= yesterdayEnd
+                          || p.MealTime.HasValue
+                            && p.MealTime.Value.Date >= yesterdayStart
+                            && p.MealTime.Value.Date <= yesterdayEnd
+                         && p.StatusId == OrderStatus.Completed,
                     0, 0, null, false, null);
 
                 var presentProfitNumber = presentProfitDb.Items?.Sum(t => t.TotalAmount) ?? 0;

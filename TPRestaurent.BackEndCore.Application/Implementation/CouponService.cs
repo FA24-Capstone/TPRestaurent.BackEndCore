@@ -122,7 +122,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;  
         }
 
-      
+        public Task<AppActionResult> GetApplicableCoupon(double total, string accountId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<AppActionResult> GetAvailableCouponByAccountId(string accountId)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<AppActionResult> GetCouponById(Guid couponId)
         {
             var result = new AppActionResult();

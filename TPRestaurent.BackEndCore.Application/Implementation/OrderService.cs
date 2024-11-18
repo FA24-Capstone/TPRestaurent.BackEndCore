@@ -525,7 +525,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var couponProgramRepository = Resolve<IGenericRepository<CouponProgram>>();
                 var fireBaseService = Resolve<IFirebaseService>();
                 var dishRepository = Resolve<IGenericRepository<Dish>>();
-                var orderAppliedCouponRepository = Resolve<IGenericRepository<OrderAppliedCoupon>>();
+                var orderAppliedCouponRepository = Resolve<IGenericRepository<AssignedCoupon>>();
                 var tableRepository = Resolve<IGenericRepository<Table>>();
                 var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
                 var transcationService = Resolve<ITransactionService>();
@@ -1338,7 +1338,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var accountRepository = Resolve<IGenericRepository<Account>>();
                     var couponRepository = Resolve<IGenericRepository<CouponProgram>>();
-                    var orderAppliedCouponRepository = Resolve<IGenericRepository<OrderAppliedCoupon>>();
+                    var orderAppliedCouponRepository = Resolve<IGenericRepository<AssignedCoupon>>();
                     var customerInfoRepository = Resolve<IGenericRepository<Account>>();
                     var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
                     var transactionService = Resolve<ITransactionService>();
@@ -1372,7 +1372,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     if(accountDb == null && orderRequestDto.CouponIds.Count > 0)
                     {
-                        return BuildAppActionResultError(result, $"Coupon chỉ áp dụng được cho khách hàng có tài khoản trong hệ thống");
+                        return BuildAppActionResultError(result, $"AssignedCoupon chỉ áp dụng được cho khách hàng có tài khoản trong hệ thống");
                     }
 
                     var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderRequestDto.OrderId && o.OrderDetailStatusId != OrderDetailStatus.Cancelled, 0, 0, p => p.OrderTime, false, null);
