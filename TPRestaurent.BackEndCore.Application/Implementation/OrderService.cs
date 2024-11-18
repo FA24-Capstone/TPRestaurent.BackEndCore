@@ -525,7 +525,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var couponProgramRepository = Resolve<IGenericRepository<CouponProgram>>();
                 var fireBaseService = Resolve<IFirebaseService>();
                 var dishRepository = Resolve<IGenericRepository<Dish>>();
-                var orderAppliedCouponRepository = Resolve<IGenericRepository<OrderAppliedCoupon>>();
+                var orderAppliedCouponRepository = Resolve<IGenericRepository<AssignedCoupon>>();
                 var tableRepository = Resolve<IGenericRepository<Table>>();
                 var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
                 var transcationService = Resolve<ITransactionService>();
@@ -1338,7 +1338,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var accountRepository = Resolve<IGenericRepository<Account>>();
                     var couponRepository = Resolve<IGenericRepository<CouponProgram>>();
-                    var orderAppliedCouponRepository = Resolve<IGenericRepository<OrderAppliedCoupon>>();
+                    var orderAppliedCouponRepository = Resolve<IGenericRepository<AssignedCoupon>>();
                     var customerInfoRepository = Resolve<IGenericRepository<Account>>();
                     var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
                     var transactionService = Resolve<ITransactionService>();
@@ -1372,7 +1372,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     if(accountDb == null && orderRequestDto.CouponIds.Count > 0)
                     {
-                        return BuildAppActionResultError(result, $"Coupon chỉ áp dụng được cho khách hàng có tài khoản trong hệ thống");
+                        return BuildAppActionResultError(result, $"AssignedCoupon chỉ áp dụng được cho khách hàng có tài khoản trong hệ thống");
                     }
 
                     var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderRequestDto.OrderId && o.OrderDetailStatusId != OrderDetailStatus.Cancelled, 0, 0, p => p.OrderTime, false, null);
@@ -2209,7 +2209,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderListDb = await _repository.GetAllDataByExpression(p => p.MealTime!.Value.AddHours(-1) <= currentTime && p.StatusId == OrderStatus.DepositPaid, 0, 0, null, false, null);
                 if (orderListDb!.Items!.Count > 0 && orderListDb.Items != null)
                 {
-                    var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => orderListDb.Items.Select(or => or.OrderId).ToList().Contains(o.OrderId), 0, 0, null, false, o => o.OrderSession);
+                    var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => orderListDb.Items.Select(or => or.OrderId).ToList().Contains(o.OrderId) && o.OrderDetailStatusId == OrderDetailStatus.Reserved, 0, 0, null, false, o => o.OrderSession);
                     if (orderDetailDb.Items.Count > 0)
                     {
                         orderDetailDb.Items.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
@@ -2511,7 +2511,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var orderSessionService = Resolve<IOrderSessionService>();
                     var groupedDishCraftService = Resolve<IGroupedDishCraftService>();
                     var orderDetailIds = orderDetailItems.Select(o => o.OrderDetailId).ToList();
-                    var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => orderDetailIds.Contains(p.OrderDetailId) && !(p.OrderDetailStatusId == OrderDetailStatus.Reserved || p.OrderDetailStatusId == OrderDetailStatus.ReadyToServe || p.OrderDetailStatusId == OrderDetailStatus.Cancelled), 0, 0, null, false, null);
+                    var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => orderDetailIds.Contains(p.OrderDetailId) && !(p.OrderDetailStatusId == OrderDetailStatus.Reserved || p.OrderDetailStatusId == OrderDetailStatus.ReadyToServe || p.OrderDetailStatusId == OrderDetailStatus.Cancelled), 0, 0, null, false, o => o.Order);
                     //if (orderDetailDb.Items.Count != orderDetailIds.Count)
                     //{
                     //    return BuildAppActionResultError(result, $"Tồn tại id gọi món không nằm trong hệ thống hoặc không thể ập nhập trạng thái được");
@@ -2654,7 +2654,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 {
                                     //All OrderDetail in DB is ready to serve
                                     var allOrderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == orderDetailDb.Items.FirstOrDefault().OrderId, 0, 0, null, false, null);
-                                    if (allOrderDetailDb.Items.All(a => a.OrderDetailStatusId == OrderDetailStatus.ReadyToServe || a.OrderDetailStatusId == OrderDetailStatus.Cancelled))
+                                    if (orderDetailDb.Items.FirstOrDefault().Order.StatusId == OrderStatus.Pending && allOrderDetailDb.Items.All(a => a.OrderDetailStatusId == OrderDetailStatus.ReadyToServe || a.OrderDetailStatusId == OrderDetailStatus.Cancelled))
                                     {
                                         await ChangeOrderStatus(orderDetailDb.Items.FirstOrDefault().OrderId, true, OrderStatus.TemporarilyCompleted, false);
                                     }

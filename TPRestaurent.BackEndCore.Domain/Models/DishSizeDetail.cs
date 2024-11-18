@@ -23,5 +23,6 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public EnumModels.DishSize? DishSize { get; set; }
         public int? QuantityLeft { get; set; }
         public int DailyCountdown { get; set; }
+        public bool IsDeleted { get; set; }
     }
 }
