@@ -132,6 +132,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     ComboOrderDetailId = Guid.NewGuid(),
                                     DishComboId = dishComboId,
                                     OrderDetailId = orderDetail.OrderDetailId,
+                                    StatusId = DishComboDetailStatus.Unchecked,
                                     PreparationTime = await dishManagementService.CalculatePreparationTime(new List<CalculatePreparationTime>
                                                         {
                                                             new CalculatePreparationTime
@@ -165,7 +166,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             orderDetail.Note = o.Note;
                             estimatedPreparationTime.Add(new CalculatePreparationTime
                             {
-                                PreparationTime = combo.PreparationTime.Value,
+                                PreparationTime = combo.PreparationTime == null ? comboOrderDetails.Sum(c => c.PreparationTime) : combo.PreparationTime.Value,
                                 Quantity = orderDetail.Quantity
                             });
                         }
