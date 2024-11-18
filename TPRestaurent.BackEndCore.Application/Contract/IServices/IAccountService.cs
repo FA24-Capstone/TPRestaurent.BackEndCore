@@ -22,7 +22,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> VerifyForReservation(string phoneNumber, string code);
         Task<AppActionResult> ChangePassword(ChangePasswordDto changePasswordDto);
         Task<AppActionResult> GetAccountByUserId(string id);
-        Task<AppActionResult> GetAllAccount(int pageIndex, int pageSize);
+        Task<AppActionResult> GetAllAccount(string? keyword, int pageIndex, int pageSize);
         Task<AppActionResult> GetNewToken(string refreshToken, string userId);
         Task<AppActionResult> ForgotPassword(ForgotPasswordDto dto);
         Task<string> GenerateVerifyCode(string email, bool isForForgettingPassword);
