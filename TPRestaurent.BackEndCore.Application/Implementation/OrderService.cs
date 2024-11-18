@@ -3432,7 +3432,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                             (
                                                                                                 !request.TableId.HasValue
                                                                                                 || (request.TableId.HasValue && o.TableId == request.TableId.Value)
-                                                                                            ),
+                                                                                            )
+                                                                                            &&
+                                                                                            (
+                                                                                                request.PhoneNumber!.Equals(o.Order.Account!.PhoneNumber)
+                                                                                            )
+                                                                                            ,
                                                                                             0, 0, null, false, null);
 
                     if (orderDiningTableDb.Items.Count == 0)
