@@ -495,7 +495,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var configurationService = Resolve<IConfigService>();
                 var utility = Resolve<Utility>();
                 List<DishSizeDetail> dishSizeDetails = new List<DishSizeDetail>();
-                var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId && o.OrderDetailStatusId == OrderDetailStatus.Reserved, 0, 0, null, false, null);
+                var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId && (o.OrderDetailStatusId == OrderDetailStatus.Unchecked || o.OrderDetailStatusId == OrderDetailStatus.Reserved), 0, 0, null, false, null);
                 if(orderDetailDb.Items.Count > 0)
                 {
                     var orderDetailIds = orderDetailDb.Items.Where(o => o.ComboId.HasValue).Select(o => o.OrderDetailId).ToList();
@@ -715,6 +715,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 OrderId = order.OrderId,
                                 OrderTime = orderTime,
                                 OrderSessionId = orderSession.OrderSessionId,
+                                OrderDetailStatusId = OrderDetailStatus.Reserved
                             };
 
                             if (item.DishSizeDetailId.HasValue)
@@ -865,7 +866,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await orderDetailRepository.InsertRange(orderDetails);
                         if (comboOrderDetails.Count > 0)
                         {
-                            if (orderRequestDto.OrderType != OrderType.Reservation)
+                            if (orderRequestDto.OrderType == OrderType.MealWithoutReservation)
                             {
                                 comboOrderDetails.ForEach(c => c.StatusId = DishComboDetailStatus.Unchecked);
                             }
@@ -956,10 +957,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         await tableDetailRepository.InsertRange(reservationTableDetails);
 
-                        if (orderDetails.Count > 0)
-                        {
-                            orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Reserved);
-                        }
+                        
                         orderWithPayment.Order = order;
                     }
                     else if (orderRequestDto.OrderType == OrderType.MealWithoutReservation)
