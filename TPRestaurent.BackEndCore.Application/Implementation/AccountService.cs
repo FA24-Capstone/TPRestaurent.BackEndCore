@@ -1485,7 +1485,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (updateAccountRequest.Image != null)
                     {
 
-                        var pathName = SD.FirebasePathName.DISH_PREFIX + $"{updateAccountRequest.AccountId}{Guid.NewGuid()}.jpg";
+                        var pathName = SD.FirebasePathName.ACCOUNT_PREFIX + $"{updateAccountRequest.AccountId}{Guid.NewGuid()}.jpg";
                         var upload = await firebaseService!.UploadFileToFirebase(updateAccountRequest.Image!, pathName);
 
                         if (!upload.IsSuccess)
