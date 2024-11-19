@@ -77,8 +77,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task InsertGroupedDish()
+        public async Task<AppActionResult> InsertGroupedDish()
         {
+            AppActionResult result = new AppActionResult();
             try
             {
                 var orderSessionService = Resolve<IOrderSessionService>();
@@ -99,13 +100,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var groupedDishResult = await orderSessionService.GetGroupedDish(groupedTime);
                 if (!groupedDishResult.IsSuccess)
                 {
-                    return;
+                    return BuildAppActionResultError(result, $"Lấy dữ liệu gom món tối ưu thất bại. Vui lòng thử lại.");
                 }
 
                 var groupedDishData = groupedDishResult.Result as KitchenGroupedDishResponse;
                 if(groupedDishData == null || groupedDishData?.MutualOrderDishes?.Count == 0 && groupedDishData?.SingleOrderDishes?.Count == 0)
                 {
-                    return;
+                    return BuildAppActionResultError(result, $"Không có món mới.");
                 }
 
                 var newGroupDish = new GroupedDishCraft
@@ -124,8 +125,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
-
+                result = BuildAppActionResultError(result, ex.Message);
             }
+            return result;
         }
 
         public async Task<AppActionResult> UpdateGroupedDish(List<Guid> orderDetailIds)

@@ -467,6 +467,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
                             await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
+                            await _hubServices!.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
                         }
 
                     }
@@ -1298,8 +1300,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
                         await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
                         await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
+                        await hubService!.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
                     }
-                    await hubService!.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
                 }
 
             }
@@ -3458,7 +3460,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return BuildAppActionResultError(result, $"Các chi tiết đơn hàng không thể cập nhật trạng thái vì đều không ở trạn thái chờ hay đang xừ lí");
                 }
 
-                orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = OrderDetailStatus.ReadyToServe);
+                orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = status);
                 await orderDetailRepository.UpdateRange(orderDetailDb.Items);
                 await _unitOfWork.SaveChangesAsync();
             }
