@@ -533,7 +533,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-
         public async Task<AppActionResult> GetTransactionById(Guid paymentId)
         {
             AppActionResult result = new AppActionResult();
@@ -556,25 +555,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-
-        //public async Task<AppActionResult> GetPaymentById(Guid paymentId)
-        //{
-        //    var result = new AppActionResult();
-        //    try
-        //    {
-        //        var transactionDb = await _repository.GetByExpression(p => p.Id == paymentId, p => p.Order!, p => p.Reservation!, p => p.PaymentMethod!);
-        //        if (transactionDb == null)
-        //        {
-        //            result = BuildAppActionResultError(result, $"Hóa đơn với id {paymentId} không tồn tại");
-        //        }
-        //        result.Result = transactionDb;      
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        result = BuildAppActionResultError(result, ex.Message);
-        //    }
-        //    return result;
-        //}
 
         public async Task<AppActionResult> UpdateTransactionStatus(Guid transactionId, TransationStatus transactionStatus)
         {
