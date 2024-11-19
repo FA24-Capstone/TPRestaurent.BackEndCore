@@ -565,6 +565,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                     }
                     await dishSizeDetailRepository.UpdateRange(dishSizeDetails);
+                    await _unitOfWork.SaveChangesAsync();
                 }
             } 
             catch(Exception ex)
@@ -3483,6 +3484,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 comboOrderDetailDb.Items.ForEach(c => c.StatusId = DishComboDetailStatus.Unchecked);
                 await comboOrderDetailRepository.UpdateRange(comboOrderDetailDb.Items);
                 await _detailRepository.UpdateRange(orderDetails);
+                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
