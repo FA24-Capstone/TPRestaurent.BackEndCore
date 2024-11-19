@@ -4037,7 +4037,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             Task.CompletedTask.Wait();
         }
 
-        private async Task<AppActionResult> UpdateCancelledOrderDishQuantity(Order order, List<DishSizeDetail> updateDishSizeDetailList, DateTime currentTime, bool refillAllow = true)
+        public async Task<AppActionResult> UpdateCancelledOrderDishQuantity(Order order, List<DishSizeDetail> updateDishSizeDetailList, DateTime currentTime, bool refillAllow = true)
         {
             AppActionResult result = new AppActionResult();
             try
@@ -4053,7 +4053,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId && o.OrderDetailStatusId != OrderDetailStatus.ReadyToServe && o.OrderDetailStatusId != OrderDetailStatus.Cancelled, 0, 0, null, false, o => o.DishSizeDetail);
                 foreach (var orderDetail in orderDetailDb.Items.Where(o => o.DishSizeDetailId.HasValue))
                 {
-                    if (orderDetail.OrderDetailStatusId == OrderDetailStatus.Processing || orderDetail.OrderDetailStatusId == OrderDetailStatus.LateWarning)
+                    if (orderDetail.OrderDetailStatusId == OrderDetailStatus.Reserved || orderDetail.OrderDetailStatusId == OrderDetailStatus.Processing || orderDetail.OrderDetailStatusId == OrderDetailStatus.LateWarning)
                     {
                         orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
                         continue;

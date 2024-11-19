@@ -497,6 +497,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                 var groupedDishCraftService = Resolve<IGroupedDishCraftService>();
+                var utility = Resolve < Utility > ();
                 var orderSessionDb = await _orderSessionRepository.GetById(orderSessionId);
                 if (orderSessionId == null)
                 {
@@ -545,6 +546,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         } else
                         {
                             await orderService.ChangeOrderStatus(orderId, false, null);
+                            await orderService.UpdateCancelledOrderDishQuantity(orderDb, new List<DishSizeDetail>(), utility.GetCurrentDateTimeInTimeZone());
                         }
                     }
                     else
