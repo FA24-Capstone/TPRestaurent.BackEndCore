@@ -113,6 +113,7 @@ public class SD
         public static string NEW = "NEW";
         public static string IS_SET_UP = "IS_SET_UP";
         public static string INITIAL = "INITIAL";
+        public static string TIME_TO_NOTIFY_DISH_TO_KITCHEN_BEFORE_HAND = "TIME_TO_NOTIFY_DISH_TO_KITCHEN_BEFORE_HAND";
     }
 
     public class SubjectMail
