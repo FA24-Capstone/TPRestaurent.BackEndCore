@@ -24,47 +24,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _unitOfWork = unitOfWork;   
         }
 
-        //public async Task<AppActionResult> ApplyCoupon(Guid orderId)
-        //{
-        //    var result = new AppActionResult();
-        //    var orderRepository = Resolve<IGenericRepository<Order>>();
-        //    var customerSavedCouponRepository = Resolve<IGenericRepository<CustomerSavedCoupon>>();
-        //    var utility = Resolve<Utility>();
-        //    try
-        //    {
-        //        var orderDb = await orderRepository!.GetAllDataByExpression(
-        //            p => p.OrderId == orderId, 0, 0, null, false, 
-        //            p => p.CustomerInfo!.Account!,
-        //            p => p.PaymentMethod!,
-        //            p => p.CustomerSavedCoupon!,
-        //            p => p.Reservation!,
-        //            p => p.Reservation!,
-        //            p => p.LoyalPointsHistory!
-        //            );
-        //        var couponId = orderDb.Items!.FirstOrDefault()!.CustomerSavedCoupon!.CouponId;
-        //        var couponDb = await _couponRepository.GetById(couponId);
-        //        if (couponDb.ExpiryDate > utility!.GetCurrentDateTimeInTimeZone())
-        //        {
-        //            result = BuildAppActionResultError(result, $"Mã giảm giá với id {couponId} đã hết hạn");
-        //        }
-        //        var discount = (orderDb.Items!.FirstOrDefault()!.TotalAmount * couponDb.DiscountPercent) / 100;
-        //        orderDb.Items!.FirstOrDefault()!.TotalAmount -= discount;
-        //        var customerSavedCouponDb = orderDb.Items!.FirstOrDefault()!.CustomerSavedCoupon;
-        //        customerSavedCouponDb!.IsUsedOrExpired = true;
-
-        //        await customerSavedCouponRepository!.Update(customerSavedCouponDb);
-        //        await orderRepository.Update(orderDb.Items!.FirstOrDefault()!);
-
-        //        result.Result = orderDb;
-        //        result.Messages.Add("Áp dụng mã giảm giá thành công");
-        //        await _unitOfWork.SaveChangesAsync();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        result = BuildAppActionResultError(result, ex.Message);
-        //    }
-        //    return result;
-        //}
 
         public async Task<AppActionResult> CreateCoupon(CouponDto couponDto)
         {
@@ -106,13 +65,36 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> DeleteCouponProgram(Guid couponId)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                var couponDb = await _couponRepository.GetById(couponId);
+                if (couponDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Mã khuyến mãi với id {couponId} không tồn tại");
+                }
+
+                couponDb.IsDeleted = true;
+                await _couponRepository.Update(couponDb);   
+                await _unitOfWork.SaveChangesAsync();       
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
         public async Task<AppActionResult> GetAllAvailableCoupon(int pageNumber, int pageSize)
         {
             var utility = Resolve<Utility>();
-            var result = new AppActionResult();     
+            var result = new AppActionResult();
+            var currentTime = utility!.GetCurrentDateTimeInTimeZone();
             try
             {
-                var couponDb = await _couponRepository.GetAllDataByExpression(p => p.ExpiryDate > utility.GetCurrentDateTimeInTimeZone(), pageNumber, pageSize, p => p.ExpiryDate, false, null);
+                var couponDb = await _couponRepository.GetAllDataByExpression(p => p.ExpiryDate >= currentTime && p.Quantity > 0 && p.IsDeleted == false, pageNumber, pageSize, p => p.ExpiryDate, false, p => p.Account);
                  result.Result = couponDb;      
             }
             catch (Exception ex)
@@ -122,14 +104,38 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;  
         }
 
-        public Task<AppActionResult> GetApplicableCoupon(double total, string accountId)
+        public async Task<AppActionResult> GetApplicableCoupon(double total, string accountId)
         {
-            throw new NotImplementedException();
+            var utility = Resolve<Utility>();
+            var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+            var result = new AppActionResult(); 
+            try
+            {
+                var couponDb = await _couponRepository.GetAllDataByExpression(p => p.MinimumAmount <= total && p.AccountId == accountId && p.Quantity > 0 && p.IsDeleted == false && p.ExpiryDate >= currentTime, 0, 0, p => p.ExpiryDate, false, p => p.Account!);
+                result.Result = couponDb;   
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         }
 
-        public Task<AppActionResult> GetAvailableCouponByAccountId(string accountId)
+        public async Task<AppActionResult> GetAvailableCouponByAccountId(string accountId, int pageNumber, int pageSize)
         {
-            throw new NotImplementedException();
+            var result = new AppActionResult();
+            var utility = Resolve<Utility>();
+            var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+            try
+            {
+                var couponDb = await _couponRepository.GetAllDataByExpression(p => p.AccountId == accountId && p.ExpiryDate >= currentTime && p.Quantity > 0 && p.IsDeleted == false, pageNumber, pageSize, p => p.ExpiryDate, false, p => p.Account!);
+                result.Result = couponDb;   
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         }
 
         public async Task<AppActionResult> GetCouponById(Guid couponId)
@@ -139,6 +145,89 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var couponDb = await _couponRepository.GetById(couponId);
                 result.Result = couponDb;   
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task RemoveExpiredCoupon()
+        {
+            var utility = Resolve<Utility>();
+            var currentTime = utility.GetCurrentDateTimeInTimeZone();
+            try
+            {
+                var expiredCouponDb = await _couponRepository.GetAllDataByExpression(p => p.ExpiryDate < currentTime, 0, 0, null, false, null);
+                if (expiredCouponDb.Items.Count > 0 && expiredCouponDb.Items != null)
+                {
+                    await _couponRepository.DeleteRange(expiredCouponDb.Items); 
+                    await _unitOfWork.SaveChangesAsync();   
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+            Task.CompletedTask.Wait();
+        }
+
+        public async Task<AppActionResult> UpdateCoupon(UpdateCouponDto updateCouponDto)
+        {
+            var result = new AppActionResult();
+            var firebaseService = Resolve<IFirebaseService>();
+            try
+            {
+                var couponDb = await _couponRepository.GetById(updateCouponDto.CouponProgramId);
+                if (couponDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy coupon với id {updateCouponDto.CouponProgramId} không tồn tại");
+                }
+
+                if (updateCouponDto.Quantity.HasValue)
+                {
+                    couponDb.Quantity = updateCouponDto.Quantity.Value;
+                }
+
+                if (!string.IsNullOrEmpty(updateCouponDto.Code))
+                {
+                    couponDb.Code = updateCouponDto.Code;
+                }
+
+                if (updateCouponDto.DiscountPercent.HasValue)
+                {
+                    couponDb.DiscountPercent = updateCouponDto.DiscountPercent.Value;
+                }
+
+                if (updateCouponDto.StartDate.HasValue)
+                {
+                    couponDb.StartDate = updateCouponDto.StartDate.Value;
+                }
+
+                if (updateCouponDto.ExpiryDate.HasValue)
+                {
+                    couponDb.ExpiryDate = updateCouponDto.ExpiryDate.Value;
+                }
+
+                if (updateCouponDto.MinimumAmount.HasValue)
+                {
+                    couponDb.MinimumAmount = updateCouponDto.MinimumAmount.Value;
+                }
+
+                if (updateCouponDto.ImageFile != null)
+                {
+                    await firebaseService!.DeleteFileFromFirebase(couponDb.Img);
+                    var pathName = SD.FirebasePathName.COUPON_PREFIX + $"{couponDb.CouponProgramId}{Guid.NewGuid()}.jpg";
+                    var upload = await firebaseService!.UploadFileToFirebase(updateCouponDto.ImageFile, pathName);
+                    couponDb.Img = pathName;
+                    if (!upload.IsSuccess)
+                    {
+                        return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
+                    }
+                }
+
+                await _couponRepository.Update(couponDb);   
+                await _unitOfWork.SaveChangesAsync();       
             }
             catch (Exception ex)
             {
