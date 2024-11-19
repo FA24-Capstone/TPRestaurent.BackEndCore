@@ -351,7 +351,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         await ChangeOrderDetailStatusAfterPayment(orderDetailDb.Items.Where(o => o.OrderDetailStatusId == OrderDetailStatus.Reserved).ToList());
                                         await UpdateKitchenQuantityAfterPayment(orderDb);
                                     }
-                                    //UPDATE ACCOUNT DISH QUANTITY
                                 }
                                 else
                                 {
@@ -1247,7 +1246,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             if ((orderRequestDto.DeliveryOrder?.PaymentMethod != null && orderRequestDto.DeliveryOrder?.PaymentMethod == PaymentMethod.STORE_CREDIT)
                                 || (orderRequestDto.ReservationOrder?.PaymentMethod != null && orderRequestDto.ReservationOrder?.PaymentMethod == PaymentMethod.STORE_CREDIT))
                             {
-                                await ChangeOrderStatus(order.OrderId, true, null);
+                                await ChangeOrderStatus(order.OrderId, true, null, true, false);
                             }
 
                             if (linkPaymentDb.Result != null && !string.IsNullOrEmpty(linkPaymentDb.Result.ToString()))
@@ -3521,8 +3520,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                             )
                                                                                             &&
                                                                                             (
-                                                                                                string.IsNullOrEmpty(request.PhoneNumber)    
-                                                                                                || o.Order.Account!.PhoneNumber.Contains(request.PhoneNumber)
+                                                                                                string.IsNullOrEmpty(request.ShipperId)
+                                                                                                || (!string.IsNullOrEmpty(o.ShipperId) && o.ShipperId.Equals(request.ShipperId))
                                                                                             )
                                                                                             ,
                                                                                             0, 0, null, false, null);
