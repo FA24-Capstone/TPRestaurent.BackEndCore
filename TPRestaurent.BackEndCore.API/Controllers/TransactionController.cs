@@ -31,9 +31,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-payment/{pageIndex}/{pageSize}")]
-        public async Task<AppActionResult> GetAllPayment(Domain.Enums.TransationStatus? transationStatus, int pageIndex = 1, int pageSize = 10)
+        public async Task<AppActionResult> GetAllPayment(Domain.Enums.TransationStatus? transationStatus, string? phoneNumber, int pageIndex = 1, int pageSize = 10)
         {
-            return await _service.GetAllTransaction(transationStatus, pageIndex, pageSize);
+            return await _service.GetAllTransaction(transationStatus, phoneNumber, pageIndex, pageSize);
         }
 
         [HttpGet("get-payment-by-id/{paymentId}")]
