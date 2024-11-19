@@ -489,12 +489,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //    return result;
         //}
 
-        public async Task<AppActionResult> GetAllTransaction(Domain.Enums.TransationStatus? transactionStatus, int pageNumber, int pageSize)
+        public async Task<AppActionResult> GetAllTransaction(Domain.Enums.TransationStatus? transactionStatus, string? phoneNumber, int pageNumber, int pageSize)
         {
             AppActionResult result = new AppActionResult();
             try
             {
-                var transactionDb = await _repository.GetAllDataByExpression(t => !transactionStatus.HasValue || (transactionStatus.HasValue && transactionStatus.Value == t.TransationStatusId), pageNumber, pageSize, p => p.Date, false , 
+                var transactionDb = await _repository.GetAllDataByExpression(t => (!transactionStatus.HasValue || (transactionStatus.HasValue && transactionStatus.Value == t.TransationStatusId))
+                                                                                  && (string.IsNullOrEmpty(phoneNumber) 
+                                                                                        || (!string.IsNullOrEmpty(phoneNumber)
+                                                                                            && (t.Order.Account.PhoneNumber.Contains(phoneNumber)
+                                                                                            || t.Account.PhoneNumber.Contains(phoneNumber))))
+                                                                                   , pageNumber, pageSize, p => p.Date, false , 
                     t => t.Account!, 
                     t => t.Order!.Account!,
                     t => t.TransationStatus,
@@ -580,7 +585,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         if (transactionDb.OrderId.HasValue)
                         {
-                            await orderService.ChangeOrderStatus(transactionDb.OrderId.Value, transactionStatus == TransationStatus.SUCCESSFUL, null);
+                            await orderService.ChangeOrderStatus(transactionDb.OrderId.Value, transactionStatus == TransationStatus.SUCCESSFUL, null, false);
 
                             var orderDb = await orderRepository.GetById(transactionDb.OrderId);
                             if (orderDb != null && (orderDb.OrderTypeId == OrderType.Reservation || orderDb.OrderTypeId == OrderType.Delivery))
@@ -593,10 +598,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await storeCreditService.AddStoreCredit(transactionId);
                         }
                     }
-                    else if(transactionStatus == TransationStatus.FAILED)
-                    {
-                        await orderService.ChangeOrderStatus(transactionDb.OrderId.Value, false, OrderStatus.Cancelled);
-                    }
+                    //else if(transactionStatus == TransationStatus.FAILED)
+                    //{
+                    //    await orderService.ChangeOrderStatus(transactionDb.OrderId.Value, false, OrderStatus.Cancelled, false);
+                    //}
                 } else
                 {
                     result = BuildAppActionResultError(result, $"Để cập nhật, Trạn thanh toán phải chờ xử lí và trạng thái mong muốn phải khác chờ xử lí");
