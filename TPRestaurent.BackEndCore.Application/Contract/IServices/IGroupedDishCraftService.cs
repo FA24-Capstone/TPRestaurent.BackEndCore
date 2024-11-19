@@ -14,7 +14,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> GetAllGroupedDish();
         public Task<AppActionResult> GetGroupedDishById(Guid groupedDishId, Guid? dishId, bool? isMutual);
         public Task<AppActionResult> UpdateGroupedDish(List<Guid> OrderDetailIds);
-        public Task InsertGroupedDish();
+        public Task<AppActionResult> InsertGroupedDish();
         public Task UpdateLateWarningGroupedDish();
         public Task RemoveOverdueGroupedDish();
     }
