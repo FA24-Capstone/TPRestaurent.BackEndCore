@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
+using NPOI.SS.Formula.Functions;
 using System.Linq.Expressions;
 using System.Text;
 using System.Transactions;
@@ -268,7 +269,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     }
                                     orderDb.StatusId = OrderStatus.DepositPaid;
                                     //UPDATE ACCOUNT DISH QUANTITY
-                                    await UpdateKitchenQuantityAfterPayment(orderId);
+                                    if (orderDb.MealTime.Value.Date == currentTime.Date)
+                                    {
+                                        await UpdateKitchenQuantityAfterPayment(orderDb);
+                                    }
                                 }
                                 else
                                 {
@@ -516,22 +520,57 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, $"Không tìm thấy size món ăn mới id {orderDetail.DishSizeDetailId}");
                         }
 
-        private async Task UpdateKitchenQuantityAfterPayment(Guid orderId)
-        {
-            try
-            {
-                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>(); 
-                var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => o.OrderId == orderId, 0, 0, null, false, null);
-                if(orderDetailDb.Items.Count > 0)
-                {
-                    var orderDetailIds = orderDetailDb.Items.Select(o => o.OrderDetailId);
-                    var orderSessionIds = orderDetailDb.Items.Select(o => o.OrderSessionId);
+                        dishSizeDetail.QuantityLeft -= orderDetail.Quantity;
+                        if (dishSizeDetail.QuantityLeft == 0)
+                        {
+                            dishSizeDetail.IsAvailable = false;
+                        }
+                        if (dishSizeDetail.QuantityLeft <= 5)
+                        {
+                            string message = $"{dishSizeDetail.Dish.Name} chỉ còn x{dishSizeDetail.QuantityLeft} món";
+                            await hubService!.SendAsync(SD.SignalMessages.LOAD_NOTIFICATION);
+                            await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
+                        }
+                    }
+                    //Combo: Quantity + Status
+                    foreach(var comboOrderDetail in comboOrderDetailDb.Items)
+                    {
+                        var dishSizeDetail = dishSizeDetails.FirstOrDefault(d => d.DishSizeDetailId == comboOrderDetail.DishCombo.DishSizeDetailId);
+                        if (dishSizeDetail == null)
+                        {
+                            dishSizeDetail = await dishSizeDetailRepository!.GetByExpression(o => o.DishSizeDetailId == comboOrderDetail.DishCombo.DishSizeDetailId, o => o.Dish);
+                            dishSizeDetails.Add(dishSizeDetail);
+                        }
+
+                        if (dishSizeDetail == null)
+                        {
+                            return BuildAppActionResultError(result, $"Không tìm thấy size món ăn mới id {comboOrderDetail.DishCombo.DishSizeDetailId}");
+                        }
+                        if (dishSizeDetail.QuantityLeft < comboOrderDetail.DishCombo.Quantity * comboOrderDetail.OrderDetail.Quantity)
+                        {
+                            return BuildAppActionResultError(result, $"Không tìm thấy size món ăn mới id {comboOrderDetail.DishCombo.DishSizeDetailId}");
+                        }
+
+                        dishSizeDetail.QuantityLeft -= comboOrderDetail.DishCombo.Quantity * comboOrderDetail.OrderDetail.Quantity;
+                        if (dishSizeDetail.QuantityLeft == 0)
+                        {
+                            dishSizeDetail.IsAvailable = false;
+                        }
+                        if (dishSizeDetail.QuantityLeft <= 5)
+                        {
+                            string message = $"{dishSizeDetail.Dish.Name} chỉ còn x{dishSizeDetail.QuantityLeft} món";
+                            await hubService!.SendAsync(SD.SignalMessages.LOAD_NOTIFICATION);
+                            await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
+                        }
+                    }
+                    await dishSizeDetailRepository.UpdateRange(dishSizeDetails);
                 }
             } 
             catch(Exception ex)
             {
-
+                result = BuildAppActionResultError(result, ex.Message);
             }
+            return result;
         }
 
         private async Task ApplyLoyalTyPoint(Order order)
