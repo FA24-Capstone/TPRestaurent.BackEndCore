@@ -247,7 +247,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         asCustomer = true;
                     }
-                       
+
                     if (orderDb == null)
                     {
                         result = BuildAppActionResultError(result, $"Đơn hàng với id {orderId} không tồn tại");
