@@ -497,6 +497,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                 var groupedDishCraftService = Resolve<IGroupedDishCraftService>();
+                var utility = Resolve < Utility > ();
                 var orderSessionDb = await _orderSessionRepository.GetById(orderSessionId);
                 if (orderSessionId == null)
                 {
@@ -544,7 +545,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await _orderRepository.Update(orderDb);
                         } else
                         {
-                            await orderService.ChangeOrderStatus(orderId, false, null);
+                            await orderService.ChangeOrderStatus(orderId, false, null, false);
+                            await orderService.UpdateCancelledOrderDishQuantity(orderDb, new List<DishSizeDetail>(), utility.GetCurrentDateTimeInTimeZone());
                         }
                     }
                     else
@@ -552,7 +554,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var allOrderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderId, 0, 0, null, false, null);
                         if(allOrderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled || o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe))
                         {
-                            await orderService.ChangeOrderStatus(orderId, true, OrderStatus.TemporarilyCompleted);
+                            await orderService.ChangeOrderStatus(orderId, true, OrderStatus.TemporarilyCompleted, false);
 
                         }
                     }
@@ -610,19 +612,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var orderDetailList = new List<OrderDetail>();
                 var orderList = new List<Order>();
-                var orderSessionDailyDb = await _orderSessionRepository.GetAllDataByExpression(p => p.OrderSessionTime.Date == currentTime.Date, 0, 0, null, false, null);
+                var orderSessionDailyDb = await _orderSessionRepository.GetAllDataByExpression(p => p.OrderSessionTime.Date <= currentTime.Date, 0, 0, null, false, null);
                 if (orderSessionDailyDb!.Items!.Count > 0 && orderSessionDailyDb.Items != null)
                 {
                     var orderSessionDaily = orderSessionDailyDb.Items;
-                    foreach (var orderSession in orderSessionDaily)
+                    var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderSessionId.HasValue 
+                                                                                                 && orderSessionDaily.Select(o => o.OrderSessionId).ToList().Contains((Guid)p.OrderSessionId)
+                                                                                                 , 0, 0, null, false, null);
+                    if (orderDetailDb.Items.Count > 0)
                     {
-                        var orderDetailDb = await orderDetailRepository!.GetByExpression(p => p.OrderSessionId == orderSession.OrderSessionId);
-                        if (orderDetailDb != null)
-                        {
-                            orderDetailDb.OrderSessionId = null;
-                            orderDetailList.Add(orderDetailDb);
-                        }
-                        await orderDetailRepository.UpdateRange(orderDetailList);
+                        orderDetailDb.Items.ForEach(o => o.OrderSessionId = null);
+                        await orderDetailRepository.UpdateRange(orderDetailDb.Items);
                     }
                    
                     await _orderSessionRepository.DeleteRange(orderSessionDaily);

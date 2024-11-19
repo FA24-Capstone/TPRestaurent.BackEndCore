@@ -23,7 +23,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> CalculateDeliveryOrder(Guid customerInfoAddressId);
         public Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto);
         public Task<AppActionResult> MakeDineInOrderBill(OrderPaymentRequestDto orderRequestDto);
-        public Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful, OrderStatus? status, bool? requireSignalR = true, bool? asCustomer = true);
+        public Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful, OrderStatus? status, bool? asCustomer, bool? requireSignalR = true);
         public Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto);
         //public Task<AppActionResult> SuggestTable(SuggestTableDto dto);
         //public Task<AppActionResult> GetOrderTotal(CalculateOrderRequest orderRequestDto);
@@ -49,7 +49,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> CancelDeliveringOrder(CancelDeliveringOrderRequest cancelDeliveringOrderRequest);
         public Task<AppActionResult> GetBestSellerDishesAndCombo(int topNumber, DateTime? startTime, DateTime? endTime);
         public Task<AppActionResult> GetAllOrderDetailByAccountId(string accountId, int feedbackStatus, int pageNumber, int pageSize);
-
+        public Task<AppActionResult> UpdateCancelledOrderDishQuantity(Order order, List<DishSizeDetail> updateDishSizeDetailList, DateTime currentTime, bool refillAllow = true);
         public Task CancelOrder();
     }
 }
