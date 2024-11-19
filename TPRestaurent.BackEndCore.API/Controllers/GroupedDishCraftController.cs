@@ -28,9 +28,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("add-grouped-dish")]
-        public async Task InsertGroupedDish()
+        public async Task<AppActionResult> InsertGroupedDish()
         {
-            await _service.InsertGroupedDish();
+            return await _service.InsertGroupedDish();
         }
 
         [HttpDelete("remove-overdue-grouped-dish")]

@@ -139,6 +139,13 @@ builder.Services.AddHangfireServer(options =>
     options.WorkerCount = 1;
 });
 
+builder.Services.AddSignalR(options =>
+{
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(300);
+    options.KeepAliveInterval = TimeSpan.FromSeconds(240);
+});
+
+
 var app = builder.Build();
 
 app.UseSwagger(op => op.SerializeAsV2 = false);

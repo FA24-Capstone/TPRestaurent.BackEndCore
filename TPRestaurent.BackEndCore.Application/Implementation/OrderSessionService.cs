@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
+using System.Transactions;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IHubServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
@@ -493,84 +494,91 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> UpdateOrderSessionStatus(Guid orderSessionId, OrderSessionStatus orderSessionStatus, bool sendSignalR)
         {
             var result = new AppActionResult(); 
-            try
+            using(var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-                var groupedDishCraftService = Resolve<IGroupedDishCraftService>();
-                var utility = Resolve < Utility > ();
-                var orderSessionDb = await _orderSessionRepository.GetById(orderSessionId);
-                if (orderSessionId == null)
+                try
                 {
-                    return BuildAppActionResultError(result, $"Phiên đặt món với id {orderSessionId} không tồn tại");
-                }
-                orderSessionDb.OrderSessionStatusId = orderSessionStatus;
-                await _orderSessionRepository.Update(orderSessionDb);
+                    var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                    var groupedDishCraftService = Resolve<IGroupedDishCraftService>();
+                    var utility = Resolve<Utility>();
+                    var orderSessionDb = await _orderSessionRepository.GetById(orderSessionId);
+                    if (orderSessionId == null)
+                    {
+                        return BuildAppActionResultError(result, $"Phiên đặt món với id {orderSessionId} không tồn tại");
+                    }
+                    orderSessionDb.OrderSessionStatusId = orderSessionStatus;
+                    await _orderSessionRepository.Update(orderSessionDb);
 
-                await _unitOfWork.SaveChangesAsync();
+                    await _unitOfWork.SaveChangesAsync();
 
-                if (sendSignalR)
-                {
-                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
-                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
-                }
-
-                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderSessionId == orderSessionId, 0, 0, null, false, null);
-                if (orderDetailDb.Items.Count > 0)
-                {
-                    var orderService = Resolve<IOrderService>();
-                    var orderId = orderDetailDb.Items.FirstOrDefault().OrderId;
                     if (sendSignalR)
                     {
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+                    }
+
+                    var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderSessionId == orderSessionId, 0, 0, null, false, null);
+                    if (orderDetailDb.Items.Count > 0)
+                    {
+                        var orderService = Resolve<IOrderService>();
+                        var orderId = orderDetailDb.Items.FirstOrDefault().OrderId;
+                        if (sendSignalR)
+                        {
                             await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
-                    }
+                        }
 
-                    var orderDetailToCompleteId = orderDetailDb.Items.Where(o => o.OrderDetailStatusId != OrderDetailStatus.Reserved && o.OrderDetailStatusId == OrderDetailStatus.Cancelled).Select(o => o.OrderDetailId).ToList();
-                    if (orderSessionStatus == OrderSessionStatus.Processing)
-                    {
+                        var orderDetailToCompleteId = orderDetailDb.Items.Where(o => o.OrderDetailStatusId != OrderDetailStatus.Reserved && o.OrderDetailStatusId != OrderDetailStatus.Cancelled).Select(o => o.OrderDetailId).ToList();
+                        if (orderSessionStatus == OrderSessionStatus.Processing)
+                        {
                             await orderService.UpdateOrderDetailStatusForce(orderDetailToCompleteId, OrderDetailStatus.Processing);
-                    } else if (orderSessionStatus == OrderSessionStatus.Completed)
-                    {
+                        }
+                        else if (orderSessionStatus == OrderSessionStatus.Completed)
+                        {
                             await orderService.UpdateOrderDetailStatusForce(orderDetailToCompleteId, OrderDetailStatus.ReadyToServe);
-                    } else if(orderSessionStatus == OrderSessionStatus.Cancelled)
-                    {
-                         await orderService.UpdateOrderDetailStatusForce(orderDetailToCompleteId, OrderDetailStatus.Cancelled);
-                    }
-
-                    var orderDb = await _orderRepository.GetById(orderId);
-                    if (orderDb.OrderTypeId == OrderType.Delivery)
-                    {
-                        if(orderSessionDb.OrderSessionStatusId == OrderSessionStatus.Completed)
-                        {
-                            orderDb.StatusId = OrderStatus.ReadyForDelivery;
-                            await _orderRepository.Update(orderDb);
-                        } else
-                        {
-                            await orderService.ChangeOrderStatus(orderId, false, null);
-                            await orderService.UpdateCancelledOrderDishQuantity(orderDb, new List<DishSizeDetail>(), utility.GetCurrentDateTimeInTimeZone());
                         }
-                    }
-                    else
-                    {
-                        var allOrderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderId, 0, 0, null, false, null);
-                        if(allOrderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled || o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe))
+                        else if (orderSessionStatus == OrderSessionStatus.Cancelled)
                         {
-                            await orderService.ChangeOrderStatus(orderId, true, OrderStatus.TemporarilyCompleted);
-
+                            await orderService.UpdateOrderDetailStatusForce(orderDetailToCompleteId, OrderDetailStatus.Cancelled);
                         }
+
+                        var orderDb = await _orderRepository.GetById(orderId);
+                        if (orderDb.OrderTypeId == OrderType.Delivery)
+                        {
+                            if (orderSessionDb.OrderSessionStatusId == OrderSessionStatus.Completed)
+                            {
+                                orderDb.StatusId = OrderStatus.ReadyForDelivery;
+                                await _orderRepository.Update(orderDb);
+                            }
+                            else
+                            {
+                                await orderService.ChangeOrderStatus(orderId, false, null, false);
+                                await orderService.UpdateCancelledOrderDishQuantity(orderDb, new List<DishSizeDetail>(), utility.GetCurrentDateTimeInTimeZone());
+                            }
+                        }
+                        else
+                        {
+                            var allOrderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderId, 0, 0, null, false, null);
+                            if (allOrderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled || o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe))
+                            {
+                                await orderService.ChangeOrderStatus(orderId, true, OrderStatus.TemporarilyCompleted, false);
+
+                            }
+                        }
+
+                        await _unitOfWork.SaveChangesAsync();
+                        await groupedDishCraftService.UpdateGroupedDish(orderDetailDb.Items.Where(o => o.OrderDetailStatusId == OrderDetailStatus.Unchecked
+                                                                                || o.OrderDetailStatusId == OrderDetailStatus.Processing
+                                                                                || o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe)
+                                                                       .Select(o => o.OrderDetailId).ToList());
+                        scope.Complete();
                     }
-
-
-                    await groupedDishCraftService.UpdateGroupedDish(orderDetailDb.Items.Where(o => o.OrderDetailStatusId == OrderDetailStatus.Unchecked
-                                                                            || o.OrderDetailStatusId == OrderDetailStatus.Processing
-                                                                            || o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe)
-                                                                   .Select(o => o.OrderDetailId).ToList());
                 }
+                catch (Exception ex)
+                {
+                    result = BuildAppActionResultError(result, ex.Message);
+                }
+                return result;
             }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
         }
 
         [Hangfire.Queue("update-late-order-session")]

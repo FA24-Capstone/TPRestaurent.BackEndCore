@@ -229,7 +229,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
         }
 
-        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful, OrderStatus? status, bool? requireSignalR = true, bool? asCustomer = false)
+        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful, OrderStatus? status, bool? asCustomer, bool? requireSignalR = true)
         {
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
@@ -243,6 +243,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var updateDishSizeDetailList = new List<DishSizeDetail>();
                     var utility = Resolve<Utility>();
                     var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                    if (!asCustomer.HasValue)
+                    {
+                        asCustomer = true;
+                    }
+                       
                     if (orderDb == null)
                     {
                         result = BuildAppActionResultError(result, $"Đơn hàng với id {orderId} không tồn tại");
@@ -311,7 +316,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                         orderDb.StatusId = OrderStatus.Completed;
                                     }
-                                    else if (!asCustomer.Value)
+                                    else if (asCustomer.HasValue && !asCustomer.Value)
                                     {
                                         orderDb.StatusId = OrderStatus.Cancelled;
                                         orderDb.CancelledTime = utility.GetCurrentDateTimeInTimeZone();
@@ -340,12 +345,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     }
                                     orderDb.StatusId = OrderStatus.Processing;
                                     var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderId, 0, 0, null, false, null);
+                                    //UPDATE ACCOUNT DISH QUANTITY
                                     if (orderDetailDb.Items.Count() > 0)
                                     {
                                         await ChangeOrderDetailStatusAfterPayment(orderDetailDb.Items.Where(o => o.OrderDetailStatusId == OrderDetailStatus.Reserved).ToList());
                                         await UpdateKitchenQuantityAfterPayment(orderDb);
                                     }
-                                    //UPDATE ACCOUNT DISH QUANTITY
                                 }
                                 else
                                 {
@@ -354,20 +359,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     await UpdateCancelledOrderDishQuantity(orderDb, updateDishSizeDetailList, currentTime, false);
                                 }
                             }
-                            else if (orderDb.StatusId == OrderStatus.Processing && !asCustomer.Value)
+                            else if (orderDb.StatusId == OrderStatus.Processing)
                             {
                                 if (IsSuccessful)
                                 {
                                     orderDb.StatusId = OrderStatus.ReadyForDelivery;
                                 }
-                                else if (!asCustomer.Value)
+                                else
                                 {
                                     orderDb.StatusId = OrderStatus.Cancelled;
                                     orderDb.CancelledTime = utility.GetCurrentDateTimeInTimeZone();
                                     await UpdateCancelledOrderDishQuantity(orderDb, updateDishSizeDetailList, currentTime);
                                 }
                             }
-                            else if (orderDb.StatusId == OrderStatus.ReadyForDelivery && !asCustomer.Value)
+                            else if (orderDb.StatusId == OrderStatus.ReadyForDelivery)
                             {
                                 orderDb.StatusId = IsSuccessful ? OrderStatus.AssignedToShipper : OrderStatus.Cancelled;
                                 if (IsSuccessful)
@@ -391,7 +396,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     orderDb.CancelledTime = utility.GetCurrentDateTimeInTimeZone();
                                 }
                             }
-                            else if (orderDb.StatusId == OrderStatus.Delivering && !asCustomer.Value)
+                            else if (orderDb.StatusId == OrderStatus.Delivering)
                             {
                                 orderDb.StatusId = IsSuccessful ? OrderStatus.Completed : OrderStatus.Cancelled;
                                 if (IsSuccessful)
@@ -1241,7 +1246,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             if ((orderRequestDto.DeliveryOrder?.PaymentMethod != null && orderRequestDto.DeliveryOrder?.PaymentMethod == PaymentMethod.STORE_CREDIT)
                                 || (orderRequestDto.ReservationOrder?.PaymentMethod != null && orderRequestDto.ReservationOrder?.PaymentMethod == PaymentMethod.STORE_CREDIT))
                             {
-                                await ChangeOrderStatus(order.OrderId, true, null);
+                                await ChangeOrderStatus(order.OrderId, true, null, true, false);
                             }
 
                             if (linkPaymentDb.Result != null && !string.IsNullOrEmpty(linkPaymentDb.Result.ToString()))
@@ -3204,7 +3209,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {orderId}");
                         }
                         orderDb.ShipperId = shipperId;
-                        await ChangeOrderStatus(orderDb.OrderId, true, null);
+                        await ChangeOrderStatus(orderDb.OrderId, true, null, false);
                         orderList.Add(orderDb);
 
                         var addressDb = await customerAddressRepository!.GetById(orderDb.AddressId);
@@ -3262,7 +3267,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         orderDb.CancelledTime = utility.GetCurrentDateTimeInTimeZone();
                         orderDb.CancelDeliveryReason = confirmedOrderRequest.CancelReason;
-                        orderDb.StatusId = OrderStatus.Cancelled;
+                        await ChangeOrderStatus(orderDb.OrderId, false, OrderStatus.Cancelled, false, true);
                     }
 
                     if (!BuildAppActionResultIsError(result))
@@ -3491,76 +3496,55 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 List<Order> orderDb = null;
                 int totalPage = 0;
-                if (request.Type != OrderType.Delivery)
-                {
-                    var orderDiningTableDb = await _tableDetailRepository.GetAllDataByExpression(
+                var orderDiningTableDb = await _repository.GetAllDataByExpression(
                                                                                       o => (
-                                                                                            o.Order.MealTime.Value.Date >= request.StartDate.Date
-                                                                                            && o.Order.MealTime.Value.Date <= request.EndDate.Date
+                                                                                            o.MealTime.Value.Date >= request.StartDate.Date
+                                                                                            && o.MealTime.Value.Date <= request.EndDate.Date
                                                                                             ||
-                                                                                            o.Order.OrderDate.Date >= request.StartDate.Date
-                                                                                            && o.Order.OrderDate.Date <= request.EndDate.Date
+                                                                                            o.OrderDate.Date >= request.StartDate.Date
+                                                                                            && o.OrderDate.Date <= request.EndDate.Date
                                                                                             )
                                                                                             && (
                                                                                                 request.Type == 0
-                                                                                                || o.Order.OrderTypeId == request.Type
+                                                                                                || o.OrderTypeId == request.Type
                                                                                             )
-                                                                                            &&
-                                                                                            (
-                                                                                                !request.Status.HasValue
-                                                                                                || (request.Status.HasValue && o.Order.StatusId == request.Status.Value)
-                                                                                            )
-                                                                                            &&
-                                                                                            (
-                                                                                                !request.TableId.HasValue
-                                                                                                || (request.TableId.HasValue && o.TableId == request.TableId.Value)
-                                                                                            )
-                                                                                            &&
-                                                                                            (
-                                                                                                string.IsNullOrEmpty(request.PhoneNumber)    
-                                                                                                || o.Order.Account!.PhoneNumber.Contains(request.PhoneNumber)
-                                                                                            )
-                                                                                            ,
-                                                                                            0, 0, null, false, null);
-
-                    if (orderDiningTableDb.Items.Count == 0)
-                    {
-                        return result;
-                    }
-
-                    var orderIds = orderDiningTableDb.Items.DistinctBy(o => o.OrderId).Select(o => o.OrderId).ToList();
-                    var orderDiningDb = await _repository.GetAllDataByExpression(o => orderIds.Contains(o.OrderId), request.pageNumber, request.pageSize, null, false, o => o.Status,
-                                                                                                                                        o => o.OrderType,
-                                                                                                                                        o => o.Account);
-                    if (orderDiningDb.Items!.Count > 0)
-                    {
-                        orderDb = orderDiningDb.Items;
-                        totalPage = orderDiningDb.TotalPages;
-                    }
-
-                }
-                else
-                {
-                    var orderDeliveryDb = (await _repository.GetAllDataByExpression(o => o.OrderDate.Date >= request.StartDate.Date
-                                                                                            && o.OrderDate.Date <= request.EndDate.Date
-                                                                                            && o.OrderTypeId == request.Type
                                                                                             &&
                                                                                             (
                                                                                                 !request.Status.HasValue
                                                                                                 || (request.Status.HasValue && o.StatusId == request.Status.Value)
                                                                                             )
+                                                                                            &&
+                                                                                            (
+                                                                                                string.IsNullOrEmpty(request.PhoneNumber)
+                                                                                                || o.Account!.PhoneNumber.Contains(request.PhoneNumber)
+                                                                                            )
+                                                                                            &&
+                                                                                            (
+                                                                                                string.IsNullOrEmpty(request.ShipperId)
+                                                                                                || (!string.IsNullOrEmpty(o.ShipperId) && o.ShipperId.Equals(request.ShipperId))
+                                                                                            )
                                                                                             ,
-                                                                                            request.pageNumber, request.pageSize, null, false,
-                                                                                            o => o.Status!,
-                                                                                            o => o.OrderType!,
-                                                                                            o => o.Account!));
-                    if (orderDeliveryDb.Items!.Count > 0)
-                    {
-                        orderDb = orderDeliveryDb.Items;
-                        totalPage = orderDeliveryDb.TotalPages;
-                    }
+                                                                                            0, 0, null, false, null);
+
+                if (orderDiningTableDb.Items.Count == 0)
+                {
+                    return result;
                 }
 
+                var orderIds = orderDiningTableDb.Items.DistinctBy(o => o.OrderId).Select(o => o.OrderId).ToList();
+                if(request.TableId.HasValue)
+                {
+                    var reservationTableDb = await _tableDetailRepository.GetAllDataByExpression(o => orderIds.Contains(o.OrderId), 0, 0, null, false, null);
+                    orderIds = reservationTableDb.Items.Select(o => o.OrderId).ToList();
+                }
+                var orderDiningDb = await _repository.GetAllDataByExpression(o => orderIds.Contains(o.OrderId), request.pageNumber, request.pageSize, null, false, o => o.Status,
+                                                                                                                                    o => o.OrderType,
+                                                                                                                                    o => o.Account);
+                if (orderDiningDb.Items!.Count > 0)
+                {
+                    orderDb = orderDiningDb.Items;
+                    totalPage = orderDiningDb.TotalPages;
+                }
 
                 List<ReservationTableItemResponse> data = new List<ReservationTableItemResponse>();
                 if (orderDb != null && orderDb.Count > 0)
