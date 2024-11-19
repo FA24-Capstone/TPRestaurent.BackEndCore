@@ -549,7 +549,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 orderDb.StatusId = OrderStatus.ReadyForDelivery;
                                 await _orderRepository.Update(orderDb);
                             }
-                            else
+                            else if(orderSessionDb.OrderSessionStatusId == OrderSessionStatus.Cancelled)
                             {
                                 await orderService.ChangeOrderStatus(orderId, false, null, false);
                                 await orderService.UpdateCancelledOrderDishQuantity(orderDb, new List<DishSizeDetail>(), utility.GetCurrentDateTimeInTimeZone());
