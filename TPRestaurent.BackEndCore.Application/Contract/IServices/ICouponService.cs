@@ -11,10 +11,13 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
     public interface ICouponService
     {
-        public Task<AppActionResult> GetAllAvailableCoupon(int pageNumber, int pageSize);
-        public Task<AppActionResult> GetCouponById(Guid couponId);
-        public Task<AppActionResult> GetAvailableCouponByAccountId(string accountId);
-        public Task<AppActionResult> GetApplicableCoupon(double total, string accountId);
-        public Task<AppActionResult> CreateCoupon(CouponDto couponDto);
+        Task<AppActionResult> GetAllAvailableCoupon(int pageNumber, int pageSize);
+        Task<AppActionResult> GetCouponById(Guid couponId);
+        Task<AppActionResult> GetAvailableCouponByAccountId(string accountId, int pageNumber, int pageSize);
+        Task<AppActionResult> GetApplicableCoupon(double total, string accountId);
+        Task<AppActionResult> CreateCoupon(CouponDto couponDto);
+        Task<AppActionResult> DeleteCouponProgram(Guid couponId);
+        Task<AppActionResult> UpdateCoupon(UpdateCouponDto updateCouponDto);    
+        Task RemoveExpiredCoupon();
     }
 }
