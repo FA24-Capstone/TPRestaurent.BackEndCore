@@ -74,5 +74,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             await _orderSessionService.UpdateLateOrderSession();
         }
+
+        [HttpDelete("delete-session-daily")]
+        public async Task ClearOrderSessionDaily()
+        {
+            await _orderSessionService.ClearOrderSessionDaily();
+        }
     }
 }
