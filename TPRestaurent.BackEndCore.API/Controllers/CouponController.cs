@@ -33,5 +33,29 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _couponService.CreateCoupon(couponDto);        
         }
+
+        [HttpGet("get-available-coupon-by-account-id/{accountId}/{pageNumber}/{pageSize}")]
+        public async Task<AppActionResult> GetAvailableCouponByAccountId(string accountId, int pageNumber = 1, int pageSize = 10)
+        {
+            return await _couponService.GetAvailableCouponByAccountId(accountId, pageNumber, pageSize);
+        }
+
+        [HttpGet("get-applicable-coupon")]
+        public async Task<AppActionResult> GetApplicableCoupon(double total, string accountId)
+        {
+            return await _couponService.GetApplicableCoupon(total, accountId);      
+        }
+
+        [HttpPut("delete-coupon-program")]
+        public async Task<AppActionResult> DeleteCouponProgram(Guid couponId)
+        {
+            return await _couponService.DeleteCouponProgram(couponId);  
+        }
+
+        [HttpPut("update-coupon")] 
+        public async Task<AppActionResult> UpdateCoupon([FromForm]UpdateCouponDto updateCouponDto)
+        {
+            return await _couponService.UpdateCoupon(updateCouponDto);  
+        }
     }
 }
