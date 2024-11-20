@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241120044850_RemoveCouponForRename")]
+    partial class RemoveCouponForRename
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -502,74 +504,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasIndex("ConfigurationId");
 
                     b.ToTable("ConfigurationVersions");
-                });
-
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Coupon", b =>
-                {
-                    b.Property<Guid>("CouponId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("AccountId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<Guid>("CouponProgramId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("OrderId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("CouponId");
-
-                    b.HasIndex("AccountId");
-
-                    b.HasIndex("CouponProgramId");
-
-                    b.HasIndex("OrderId");
-
-                    b.ToTable("Coupons");
-                });
-
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.CouponProgram", b =>
-                {
-                    b.Property<Guid>("CouponProgramId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("AccountId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("DiscountPercent")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("ExpiryDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Img")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<double>("MinimumAmount")
-                        .HasColumnType("float");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("CouponProgramId");
-
-                    b.HasIndex("AccountId");
-
-                    b.ToTable("CouponPrograms");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.CustomerInfoAddress", b =>
@@ -2387,40 +2321,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .IsRequired();
 
                     b.Navigation("Configuration");
-                });
-
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Coupon", b =>
-                {
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "Account")
-                        .WithMany()
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.CouponProgram", "CouponProgram")
-                        .WithMany()
-                        .HasForeignKey("CouponProgramId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Order", "Order")
-                        .WithMany()
-                        .HasForeignKey("OrderId");
-
-                    b.Navigation("Account");
-
-                    b.Navigation("CouponProgram");
-
-                    b.Navigation("Order");
-                });
-
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.CouponProgram", b =>
-                {
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "Account")
-                        .WithMany()
-                        .HasForeignKey("AccountId");
-
-                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.CustomerInfoAddress", b =>

@@ -111,7 +111,51 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     return result;
                 }
-                result.Messages.Add($"Nhà hàng không xếp bàn cho quý khách. Xin lỗi và xin hẹn quý khách lần sau");
+
+                if(dto.NumOfPeople < 4)
+                {
+                    dto.NumOfPeople = 4;
+                    var exceedingCaseFindTableResult = await FindTableWithCase(dto, availableTables, false);
+                    if (exceedingCaseFindTableResult.IsSuccess && exceedingCaseFindTableResult.Result != null)
+                    {
+                        result.Result = exceedingCaseFindTableResult.Result as List<TableArrangementResponseItem>;
+                        return result;
+                    }
+                }
+
+                if (dto.NumOfPeople < 6)
+                {
+                    dto.NumOfPeople = 6;
+                    var exceedingCaseFindTableResult = await FindTableWithCase(dto, availableTables, false);
+                    if (exceedingCaseFindTableResult.IsSuccess && exceedingCaseFindTableResult.Result != null)
+                    {
+                        result.Result = exceedingCaseFindTableResult.Result as List<TableArrangementResponseItem>;
+                        return result;
+                    }
+                }
+
+                if (dto.NumOfPeople < 8)
+                {
+                    dto.NumOfPeople = 8;
+                    var exceedingCaseFindTableResult = await FindTableWithCase(dto, availableTables, false);
+                    if (exceedingCaseFindTableResult.IsSuccess && exceedingCaseFindTableResult.Result != null)
+                    {
+                        result.Result = exceedingCaseFindTableResult.Result as List<TableArrangementResponseItem>;
+                        return result;
+                    }
+                }
+
+                if (dto.NumOfPeople < 10)
+                {
+                    dto.NumOfPeople = 10;
+                    var exceedingCaseFindTableResult = await FindTableWithCase(dto, availableTables, false);
+                    if (exceedingCaseFindTableResult.IsSuccess && exceedingCaseFindTableResult.Result != null)
+                    {
+                        result.Result = exceedingCaseFindTableResult.Result as List<TableArrangementResponseItem>;
+                        return result;
+                    }
+                }
+                result = BuildAppActionResultError(result, $"Nhà hàng không xếp bàn cho quý khách. Xin lỗi và xin hẹn quý khách lần sau");
             }
             catch (Exception ex)
             {

@@ -307,9 +307,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.AssignedCoupon", b =>
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Coupon", b =>
                 {
-                    b.Property<Guid>("AssignedCouponId")
+                    b.Property<Guid>("CouponId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
@@ -323,7 +323,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<Guid?>("OrderId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.HasKey("AssignedCouponId");
+                    b.HasKey("CouponId");
 
                     b.HasIndex("AccountId");
 
@@ -2308,7 +2308,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.AssignedCoupon", b =>
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Coupon", b =>
                 {
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "Account")
                         .WithMany()

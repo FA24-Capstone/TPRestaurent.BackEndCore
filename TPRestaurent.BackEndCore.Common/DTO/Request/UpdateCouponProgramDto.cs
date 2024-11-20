@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Common.DTO.Request
 {
-    public class UpdateCouponDto
+    public class UpdateCouponProgramDto
     {
         public Guid CouponProgramId { get; set; }
         public string? Code { get; set; } 
