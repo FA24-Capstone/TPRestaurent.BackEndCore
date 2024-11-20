@@ -206,6 +206,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public Task<AppActionResult> GetUserRank()
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task RemoveExpiredCoupon()
         {
             var utility = Resolve<Utility>();
