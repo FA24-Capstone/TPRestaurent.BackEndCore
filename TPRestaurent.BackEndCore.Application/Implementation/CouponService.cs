@@ -101,6 +101,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy tài khoản với id {couponDto.AccountId}");
                 }
+
+                var accountDb = await accountRepository.GetById(couponDto.AccountId);
+                if (accountDb != null)
+                {
+                    result = BuildAppActionResultError(result, $"Khôn tìm thấy tài khoản với id {couponDto.AccountId}");
+                }
                 var coupon = new CouponProgram
                 {
                     CouponProgramId = Guid.NewGuid(),
