@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241120061450_AddCreatorCouponProgram")]
+    partial class AddCreatorCouponProgram
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -544,13 +546,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("CreateBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("CreateDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("DiscountPercent")
                         .HasColumnType("int");
 
@@ -572,17 +567,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("UpdateBy")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("UpdateDate")
-                        .HasColumnType("datetime2");
-
                     b.HasKey("CouponProgramId");
-
-                    b.HasIndex("CreateBy");
-
-                    b.HasIndex("UpdateBy");
 
                     b.ToTable("CouponPrograms");
                 });
@@ -2409,13 +2394,13 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "Account")
                         .WithMany()
                         .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.CouponProgram", "CouponProgram")
                         .WithMany()
                         .HasForeignKey("CouponProgramId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Order", "Order")
@@ -2427,23 +2412,6 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Navigation("CouponProgram");
 
                     b.Navigation("Order");
-                });
-
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.CouponProgram", b =>
-                {
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "CreateByAccount")
-                        .WithMany()
-                        .HasForeignKey("CreateBy")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "UpdateByAccount")
-                        .WithMany()
-                        .HasForeignKey("UpdateBy");
-
-                    b.Navigation("CreateByAccount");
-
-                    b.Navigation("UpdateByAccount");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.CustomerInfoAddress", b =>
