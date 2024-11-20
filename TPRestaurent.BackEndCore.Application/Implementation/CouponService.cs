@@ -9,6 +9,7 @@ using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
+using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
@@ -112,16 +113,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     Quantity = couponDto.Quantity,  
                     StartDate = couponDto.StartDate,   
                     CreateBy = couponDto.AccountId,
-                    IsDeleted = false
+                    IsDeleted = false,
+                    Img = couponDto.File
                 };
 
-                var pathName = SD.FirebasePathName.COUPON_PREFIX + $"{coupon.CouponProgramId}{Guid.NewGuid()}.jpg";
-                var upload = await firebaseService!.UploadFileToFirebase(couponDto.File, pathName);
-                coupon.Img = pathName;
-                if (!upload.IsSuccess)
-                {
-                    return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
-                }
+               
                 await _couponProgramRepository.Insert(coupon);
                 await _unitOfWork.SaveChangesAsync();       
             }
@@ -191,6 +187,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public Task GetBirthdayUserForCoupon()
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<AppActionResult> GetCouponProgramById(Guid couponId)
         {
             var result = new AppActionResult();
@@ -204,6 +205,31 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
+        }
+
+        public async Task<AppActionResult> GetRanks()
+        {
+            var result = new AppActionResult();
+            var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+            var listRank = new List<Configuration>();
+            try
+            {
+                var bronzeRankDb = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.BRONZE_RANK);
+                var silverRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.SILVER_RANK);
+                var goldRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.GOLD_RANK);
+                var diamondRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DIAMOND_RANK);
+
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public Task<AppActionResult> GetUserByRank(UserRank userRank)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task RemoveExpiredCoupon()
@@ -273,14 +299,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if (updateCouponDto.ImageFile != null)
                 {
-                    await firebaseService!.DeleteFileFromFirebase(couponDb.Img);
-                    var pathName = SD.FirebasePathName.COUPON_PREFIX + $"{couponDb.CouponProgramId}{Guid.NewGuid()}.jpg";
-                    var upload = await firebaseService!.UploadFileToFirebase(updateCouponDto.ImageFile, pathName);
-                    couponDb.Img = pathName;
-                    if (!upload.IsSuccess)
-                    {
-                        return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
-                    }
+                   couponDb.Img = updateCouponDto.ImageFile;    
                 }
 
                 await _couponProgramRepository.Update(couponDb);   

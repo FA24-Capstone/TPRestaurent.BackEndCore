@@ -114,6 +114,10 @@ public class SD
         public static string IS_SET_UP = "IS_SET_UP";
         public static string INITIAL = "INITIAL";
         public static string TIME_TO_NOTIFY_DISH_TO_KITCHEN_BEFORE_HAND = "TIME_TO_NOTIFY_DISH_TO_KITCHEN_BEFORE_HAND";
+        public static string BRONZE_RANK = "BRONZE_RANK";
+        public static string SILVER_RANK = "SILVER_RANK";
+        public static string GOLD_RANK = "GOLD_RANK";
+        public static string DIAMOND_RANK = "DIAMOND_RANK";
     }
 
     public class SubjectMail
