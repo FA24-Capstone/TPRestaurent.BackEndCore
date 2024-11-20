@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Domain.Enums
 {
-    public enum UserRange
+    public enum UserRank
     {
         BRONZE = 1,
         SILVER = 2,

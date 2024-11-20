@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Domain.Models.EnumModels
 {
-    public class UserRange
+    public class UserRank
     {
         [Key]
-        public TPRestaurent.BackEndCore.Domain.Enums.UserRange Id { get; set; }
+        public TPRestaurent.BackEndCore.Domain.Enums.UserRank Id { get; set; }
         public string Name { get; set; } = null!;
         public string? VietnameseName { get; set; } = null!;
     }

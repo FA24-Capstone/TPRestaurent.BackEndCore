@@ -17,7 +17,9 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> CreateCouponProgram(CouponProgramDto couponDto);
         Task<AppActionResult> AssignCoupon(AssignCouponRequestDto couponDto);
         Task<AppActionResult> DeleteCouponProgram(Guid couponId);
-        Task<AppActionResult> UpdateCouponProgram(UpdateCouponProgramDto updateCouponDto);    
+        Task<AppActionResult> UpdateCouponProgram(UpdateCouponProgramDto updateCouponDto);
+        Task<AppActionResult> GetUserRank();
+        Task
         Task RemoveExpiredCoupon();
     }
 }
