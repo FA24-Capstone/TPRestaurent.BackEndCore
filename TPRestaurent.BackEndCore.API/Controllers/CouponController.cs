@@ -16,34 +16,34 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             _couponService = couponService; 
         }
 
-        [HttpGet("get-available-coupon/{pageNumber}/{pageSize}")]
-        public async Task<AppActionResult> GetAllAvailableCoupon(int pageNumber = 1, int pageSize = 10)
+        [HttpGet("get-available-coupon-program/{pageNumber}/{pageSize}")]
+        public async Task<AppActionResult> GetAllAvailableCouponProgram(int pageNumber = 1, int pageSize = 10)
         {
-            return await _couponService.GetAllAvailableCoupon(pageNumber, pageSize);    
+            return await _couponService.GetAllAvailableCouponProgram(pageNumber, pageSize);    
         }
 
-        [HttpGet("get-combo-by-id/{comboId}")]
-        public async Task<AppActionResult> GetComboById(Guid comboId)
+        [HttpGet("get-coupon-program-by-id/{comboId}")]
+        public async Task<AppActionResult> GetCouponProgramById(Guid comboId)
         {
-            return await _couponService.GetCouponById(comboId);     
+            return await _couponService.GetCouponProgramById(comboId);     
         }
 
-        [HttpPost("create-coupon")]
-        public async Task<AppActionResult> CreateCoupon([FromForm]CouponDto couponDto)
+        [HttpPost("create-coupon-program")]
+        public async Task<AppActionResult> CreateCouponProgram([FromForm]CouponProgramDto couponDto)
         {
-            return await _couponService.CreateCoupon(couponDto);        
+            return await _couponService.CreateCouponProgram(couponDto);        
+        }
+
+        [HttpPost("assign-coupon")]
+        public async Task<AppActionResult> AssignCoupon(AssignCouponRequestDto couponDto)
+        {
+            return await _couponService.AssignCoupon(couponDto);
         }
 
         [HttpGet("get-available-coupon-by-account-id/{accountId}/{pageNumber}/{pageSize}")]
-        public async Task<AppActionResult> GetAvailableCouponByAccountId(string accountId, int pageNumber = 1, int pageSize = 10)
+        public async Task<AppActionResult> GetAvailableCouponByAccountId(string accountId, double? total, int pageNumber = 1, int pageSize = 10)
         {
-            return await _couponService.GetAvailableCouponByAccountId(accountId, pageNumber, pageSize);
-        }
-
-        [HttpGet("get-applicable-coupon")]
-        public async Task<AppActionResult> GetApplicableCoupon(double total, string accountId)
-        {
-            return await _couponService.GetApplicableCoupon(total, accountId);      
+            return await _couponService.GetAvailableCouponByAccountId(accountId, total, pageNumber, pageSize);
         }
 
         [HttpPut("delete-coupon-program")]
@@ -53,9 +53,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPut("update-coupon")] 
-        public async Task<AppActionResult> UpdateCoupon([FromForm]UpdateCouponDto updateCouponDto)
+        public async Task<AppActionResult> UpdateCoupon([FromForm]UpdateCouponProgramDto updateCouponDto)
         {
-            return await _couponService.UpdateCoupon(updateCouponDto);  
+            return await _couponService.UpdateCouponProgram(updateCouponDto);  
         }
     }
 }

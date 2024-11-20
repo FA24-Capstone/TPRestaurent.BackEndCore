@@ -5,10 +5,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TPRestaurent.BackEndCore.Domain.Models.BaseModel;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
 {
-    public class CouponProgram
+    public class CouponProgram : BaseEntity
     {
         [Key]
         public Guid CouponProgramId { get; set; }
@@ -20,9 +21,6 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public double MinimumAmount { get; set; }
         public int Quantity { get; set; }
         public string? Img { get; set; }
-        public string? AccountId { get; set; }
-        [ForeignKey(nameof(AccountId))]
-        public Account? Account { get; set; }   
         
     }
 }

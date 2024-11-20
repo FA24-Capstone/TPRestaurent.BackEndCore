@@ -20,8 +20,8 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         {
         }
         public DbSet<Models.Blog> Blogs { get; set; } = null!;
-        public DbSet<Models.CouponProgram> Coupons { get; set; } = null!;
-        public DbSet<Models.AssignedCoupon> AssignedCoupons { get; set; } = null!;
+        public DbSet<Models.CouponProgram> CouponPrograms { get; set; } = null!;
+        public DbSet<Models.Coupon> Coupons { get; set; } = null!;
         public DbSet<Models.Account> Accounts { get; set; } = null!;
         public DbSet<Models.Dish> Dishes { get; set; } = null!;
         public DbSet<Models.DishTag> DishTags { get; set; } = null!;
