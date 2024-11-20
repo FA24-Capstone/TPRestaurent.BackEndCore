@@ -21,6 +21,11 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public double MinimumAmount { get; set; }
         public int Quantity { get; set; }
         public string? Img { get; set; }
-        
+        public Enums.UserRange? UserRangeId { get; set; }
+        [ForeignKey(nameof(UserRangeId))]
+        public EnumModels.UserRange? UserRange { get; set; }
+        public Enums.CouponProgramType CouponProgramTypeId { get; set; }
+        [ForeignKey(nameof(CouponProgramTypeId))]
+        public EnumModels.CouponProgramType? CouponProgramType { get; set; }
     }
 }
