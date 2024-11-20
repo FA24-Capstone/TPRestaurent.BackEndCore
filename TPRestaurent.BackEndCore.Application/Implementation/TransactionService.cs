@@ -674,7 +674,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
 
 
-                var paidDepositOrder = await _repository.GetAllDataByExpression(r => r.OrderId == order.OrderId && r.TransactionTypeId == TransactionType.Deposit
+                var paidDepositOrder = await _repository.GetAllDataByExpression(r => r.OrderId == order.OrderId
+                                                                                     && (r.TransactionTypeId == TransactionType.Deposit && r.Order.OrderTypeId == OrderType.Reservation
+                                                                                        || r.TransactionTypeId == TransactionType.Order && r.Order.OrderTypeId == OrderType.Delivery)
                                                                                     && r.TransationStatusId == TransationStatus.SUCCESSFUL, 0, 0, null, false, null);
 
                 if (paidDepositOrder.Items.Count() == 0)

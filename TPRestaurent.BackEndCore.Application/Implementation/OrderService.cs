@@ -696,7 +696,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             OrderSessionId = Guid.NewGuid(),
                             OrderSessionTime = utility!.GetCurrentDateTimeInTimeZone(),
-                            OrderSessionStatusId = orderRequestDto.OrderType == OrderType.Reservation ? OrderSessionStatus.PreOrder : OrderSessionStatus.Confirmed,
+                            OrderSessionStatusId = orderRequestDto.OrderType == OrderType.MealWithoutReservation ? OrderSessionStatus.Confirmed : OrderSessionStatus.PreOrder,
                             OrderSessionNumber = latestOrderSession
                         };
                         DateTime orderTime = utility.GetCurrentDateTimeInTimeZone();
@@ -836,7 +836,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                                                                 PreparationTime = comboDetail.DishSizeDetail.Dish.PreparationTime.Value,
                                                                                                                                 Quantity = orderDetail.Quantity
                                                                                                                             }
-                                                                                                                        })
+                                                                                                                        }),
+                                        StatusId = DishComboDetailStatus.Reserved
                                     });
 
                                 }
@@ -863,14 +864,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (orderDetails.Count > 0)
                     {
                         order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
-                        await orderDetailRepository.InsertRange(orderDetails);
-                        if (comboOrderDetails.Count > 0)
+                        if(orderRequestDto.OrderType == OrderType.MealWithoutReservation)
                         {
-                            if (orderRequestDto.OrderType == OrderType.MealWithoutReservation)
-                            {
-                                comboOrderDetails.ForEach(c => c.StatusId = DishComboDetailStatus.Unchecked);
-                            }
-                            await comboOrderDetailRepository.InsertRange(comboOrderDetails);
+                            orderDetails.ForEach(c => c.OrderDetailStatusId = OrderDetailStatus.Unchecked);
+                            comboOrderDetails.ForEach(c => c.StatusId = DishComboDetailStatus.Unchecked);
+                        }
+                        await orderDetailRepository.InsertRange(orderDetails);
+                        await comboOrderDetailRepository.InsertRange(comboOrderDetails);                            
+                    } else
+                    {
+                        if(orderRequestDto.OrderType != OrderType.Reservation)
+                        {
+                            return BuildAppActionResultError(result, $"Đơn hàng bắt buộc có ít nhất một món");
                         }
                     }
 
@@ -967,14 +972,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.MealTime = utility.GetCurrentDateTimeInTimeZone();
                         order.NumOfPeople = 0;
                         order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
-                        if (orderDetails.Count > 0)
-                        {
-                            orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
-                        }
-                        else
-                        {
-                            return BuildAppActionResultError(result, "Bàn không thực hiện gọi món.");
-                        }
+                        
 
                         orderWithPayment.Order = order;
 
@@ -1183,7 +1181,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         orderWithPayment.Order = order;
 
-                        orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
                         order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
 
                         await orderDetailRepository.InsertRange(orderDetails);
@@ -1435,6 +1432,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
                     var transactionService = Resolve<ITransactionService>();
                     var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                    var dishManagementService = Resolve<IDishManagementService>();
                     var utility = Resolve<Utility>();
                     var orderDb = await _repository.GetByExpression(o => o.OrderId == orderRequestDto.OrderId, null);
                     Transaction refundTransaction = null;
@@ -1625,6 +1623,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await _repository.Update(orderDb);
                             await _unitOfWork.SaveChangesAsync();
                         }
+
+                        await dishManagementService.UpdateComboAvailability();
+                        await dishManagementService.UpdateDishAvailability();
                         scope.Complete();
                     }
 
@@ -3916,6 +3917,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var utility = Resolve<Utility>();
             var configurationRepository = Resolve<IGenericRepository<Configuration>>();
             var dishManagementService = Resolve<IDishManagementService>();
+            var groupedDishCraftService = Resolve<IGroupedDishCraftService>();
             var timeToKeepUnpaidDeliveryOrderConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_KEEP_UNPAID_DELIVERY_ORDER).Result;
             var timeToKeepReservationConfig = configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.TIME_TO_KEEP_RESERVATION).Result;
             if (timeToKeepUnpaidDeliveryOrderConfig == null)
@@ -3942,15 +3944,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                         )
                                                                                     )
                                                                                     , 0, 0, null, false, o => o.Account);
-            foreach (var order in unpaidDeliveryOrder.Items)
+           if(unpaidDeliveryOrder.Items.Count > 0)
             {
-                await UpdateCancelledOrderDishQuantity(order, updateDishSizeDetailList, currentTime);
+                foreach (var order in unpaidDeliveryOrder.Items)
+                {
+                    await UpdateCancelledOrderDishQuantity(order, updateDishSizeDetailList, currentTime);
+                }
+
+                var orderDetaiDb = await _detailRepository.GetAllDataByExpression(o => unpaidDeliveryOrder.Items.Select(u => u.OrderId).Contains(o.OrderId), 0, 0, null, false, null);
+
+
+                await dishManagementService.UpdateComboAvailability();
+                await dishManagementService.UpdateDishAvailability();
+                await dishSizeDetailRepository.UpdateRange(updateDishSizeDetailList);
+                await _repository.UpdateRange(unpaidDeliveryOrder.Items);
+                await _unitOfWork.SaveChangesAsync();
+                await groupedDishCraftService.UpdateGroupedDish(orderDetaiDb.Items.Select(o => o.OrderDetailId).ToList());
             }
-            await dishManagementService.UpdateComboAvailability();
-            await dishManagementService.UpdateDishAvailability();
-            await dishSizeDetailRepository.UpdateRange(updateDishSizeDetailList);
-            await _repository.UpdateRange(unpaidDeliveryOrder.Items);
-            await _unitOfWork.SaveChangesAsync();
             Task.CompletedTask.Wait();
         }
 
