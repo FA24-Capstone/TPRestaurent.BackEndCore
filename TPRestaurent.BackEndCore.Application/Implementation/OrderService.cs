@@ -613,10 +613,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                 var comboRepository = Resolve<IGenericRepository<Combo>>();
                 var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
-                var couponProgramRepository = Resolve<IGenericRepository<CouponProgram>>();
+                var couponRepository = Resolve<IGenericRepository<Coupon>>();
                 var fireBaseService = Resolve<IFirebaseService>();
                 var dishRepository = Resolve<IGenericRepository<Dish>>();
-                var orderAppliedCouponRepository = Resolve<IGenericRepository<AssignedCoupon>>();
+                var orderAppliedCouponRepository = Resolve<IGenericRepository<Coupon>>();
                 var tableRepository = Resolve<IGenericRepository<Table>>();
                 var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
                 var transcationService = Resolve<ITransactionService>();
@@ -1097,8 +1097,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         money += double.Parse(shippingCost.Result.ToString());
 
                         var currentTime = utility.GetCurrentDateTimeInTimeZone();
-                        var couponDb = await couponProgramRepository!.GetAllDataByExpression(c => currentTime > c.StartDate && currentTime < c.ExpiryDate && c.MinimumAmount <= money && c.Quantity > 0, 0, 0, null, false, null);
-                        if (couponDb.Items!.Count > 0 && couponDb.Items != null
+                        var customerSavedCouponDb = await couponRepository!.GetAllDataByExpression(c => currentTime > c.CouponProgram.StartDate && currentTime < c.CouponProgram.ExpiryDate
+                                                                                                       && c.CouponProgram.MinimumAmount <= money && !c.IsUsedOrExpired
+                                                                                                       && c.AccountId.Equals(accountDb.Id) && !c.CouponProgram.IsDeleted
+                                                                                                       , 0, 0, null, false, null);
+                        if (customerSavedCouponDb.Items!.Count > 0 && customerSavedCouponDb.Items != null
                             && orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.CouponIds.Count > 0)
                         {
                             foreach (var couponId in orderRequestDto.DeliveryOrder.CouponIds)
@@ -1108,7 +1111,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     break;
                                 }
 
-                                var coupon = couponDb.Items.FirstOrDefault(c => c.CouponProgramId == couponId);
+                                var coupon = customerSavedCouponDb.Items.FirstOrDefault(c => c.CouponId == couponId);
 
                                 if (coupon == null)
                                 {
@@ -1122,12 +1125,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 //    OrderId = order.OrderId
                                 //};
 
-                                double discountMoney = money * (coupon.DiscountPercent * 0.01);
+                                double discountMoney = money * (coupon.CouponProgram.DiscountPercent * 0.01);
                                 money -= discountMoney;
                                 money = Math.Max(0, money);
-
+                                coupon.IsUsedOrExpired = true;
                                 //await orderAppliedCouponRepository.Insert(orderAppliedCoupon);
                             }
+                            await couponRepository.UpdateRange(customerSavedCouponDb.Items);
                         }
 
                         if (orderRequestDto.DeliveryOrder.LoyalPointToUse.HasValue && orderRequestDto.DeliveryOrder.LoyalPointToUse > 0)
@@ -1425,8 +1429,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 try
                 {
                     var accountRepository = Resolve<IGenericRepository<Account>>();
-                    var couponRepository = Resolve<IGenericRepository<CouponProgram>>();
-                    var orderAppliedCouponRepository = Resolve<IGenericRepository<AssignedCoupon>>();
+                    var couponProgramRepository = Resolve<IGenericRepository<CouponProgram>>();
+                    var couponRepository = Resolve<IGenericRepository<Coupon>>();
                     var customerInfoRepository = Resolve<IGenericRepository<Account>>();
                     var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
                     var transactionService = Resolve<ITransactionService>();
@@ -1460,7 +1464,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     if (accountDb == null && orderRequestDto.CouponIds.Count > 0)
                     {
-                        return BuildAppActionResultError(result, $"AssignedCoupon chỉ áp dụng được cho khách hàng có tài khoản trong hệ thống");
+                        return BuildAppActionResultError(result, $"Coupon chỉ áp dụng được cho khách hàng có tài khoản trong hệ thống");
                     }
 
                     var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderRequestDto.OrderId && o.OrderDetailStatusId != OrderDetailStatus.Cancelled, 0, 0, p => p.OrderTime, false, null);
@@ -1491,7 +1495,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     else if (accountDb != null)
                     {
                         var currentTime = utility.GetCurrentDateTimeInTimeZone();
-                        var customerSavedCouponDb = await couponRepository!.GetAllDataByExpression(c => currentTime > c.StartDate && currentTime < c.ExpiryDate && c.MinimumAmount <= money && c.Quantity > 0, 0, 0, null, false, null);
+                        var customerSavedCouponDb = await couponRepository!.GetAllDataByExpression(c => currentTime > c.CouponProgram.StartDate && currentTime < c.CouponProgram.ExpiryDate 
+                                                                                                        && c.CouponProgram.MinimumAmount <= money && !c.IsUsedOrExpired 
+                                                                                                        && c.AccountId.Equals(accountDb.Id) && !c.CouponProgram.IsDeleted
+                                                                                                        , 0, 0, null, false, null);
                         if (customerSavedCouponDb.Items!.Count > 0 && customerSavedCouponDb.Items != null
                             && orderRequestDto.CouponIds.Count > 0)
                         {
@@ -1502,7 +1509,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     break;
                                 }
 
-                                var coupon = customerSavedCouponDb.Items.FirstOrDefault(c => c.CouponProgramId == couponId);
+                                var coupon = customerSavedCouponDb.Items.FirstOrDefault(c => c.CouponId == couponId);
 
                                 if (coupon == null)
                                 {
@@ -1511,11 +1518,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
 
 
-                                double discountMoney = money * (coupon.DiscountPercent * 0.01);
+                                double discountMoney = money * (coupon.CouponProgram.DiscountPercent * 0.01);
                                 money -= discountMoney;
                                 money = Math.Max(0, money);
-
+                                coupon.IsUsedOrExpired = true;
                             }
+                            await couponRepository.UpdateRange(customerSavedCouponDb.Items);
                         }
 
                         if (orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse > 0)

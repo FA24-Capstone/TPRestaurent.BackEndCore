@@ -8,10 +8,11 @@ using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
 {
-    public class AssignedCoupon
+    public class Coupon
     {
         [Key]
-        public Guid AssignedCouponId { get; set; }  
+        public Guid CouponId { get; set; }  
+        public bool IsUsedOrExpired { get; set; }
         public Guid? OrderId { get; set; }
         [ForeignKey(nameof(OrderId))]
         public Order? Order { get; set; }
