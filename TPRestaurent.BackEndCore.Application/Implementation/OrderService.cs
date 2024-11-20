@@ -1127,6 +1127,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 money -= discountMoney;
                                 money = Math.Max(0, money);
                                 coupon.IsUsedOrExpired = true;
+                                coupon.OrderId = order.OrderId;
                                 //await orderAppliedCouponRepository.Insert(orderAppliedCoupon);
                             }
                             await couponRepository.UpdateRange(customerSavedCouponDb.Items);
@@ -1520,6 +1521,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 money -= discountMoney;
                                 money = Math.Max(0, money);
                                 coupon.IsUsedOrExpired = true;
+                                coupon.OrderId = orderDb.OrderId;
                             }
                             await couponRepository.UpdateRange(customerSavedCouponDb.Items);
                         }
