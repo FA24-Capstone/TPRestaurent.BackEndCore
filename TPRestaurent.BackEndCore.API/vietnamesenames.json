@@ -82,7 +82,14 @@
     "Unchecked": "Chờ xử lý",
     "ReadyToServe": "Đã hoàn thành",
     "NEW": "Vừa tạo",
-    "AVAILABLE":  "Trống",
-    "CURRENTLYUSED": "Đang dùng"
+    "AVAILABLE": "Trống",
+    "CURRENTLYUSED": "Đang dùng",
+    "BIRTHDAY": "Sinh nhật",
+    "NEWBIE": "Khách hàng mới",
+    "TO_RANGE": "Theo phân hạng",
+    "BRONZE": "Đồng",
+    "SILVER": "Bạc",
+    "GOLD": "Vàng",
+    "DIAMOND": "Kim cương"
   }
 }
