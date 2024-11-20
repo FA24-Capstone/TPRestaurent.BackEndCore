@@ -36,7 +36,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var couponProgramDb = await _couponProgramRepository.GetByExpression(p => p.CouponProgramId == couponDto.CouponProgramId);
                 if (couponProgramDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"Không tìm thấy mã giảm giá với id {couponDto.CouponProgramId}");
+                    return BuildAppActionResultError(result, $"Không tìm thấy mã giảm giá với id {couponDto.CouponProgramId}");
                 }
 
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
@@ -93,14 +93,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var staticFileRepository = Resolve<IGenericRepository<Image>>();
                 if (couponDb != null)
                 {
-                    result = BuildAppActionResultError(result, $"Mã giảm giá với code {couponDto.Code} đã tồn tại");
+                    return BuildAppActionResultError(result, $"Mã giảm giá với code {couponDto.Code} đã tồn tại");
                 }
 
                 var accountDb = await accountRepository.GetById(couponDto.AccountId);
-                if (accountDb != null)
+                if (accountDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"Khôn tìm thấy tài khoản với id {couponDto.AccountId}");
+                    return BuildAppActionResultError(result, $"Không tìm thấy tài khoản với id {couponDto.AccountId}");
                 }
+
                 var coupon = new CouponProgram
                 {
                     CouponProgramId = Guid.NewGuid(),
