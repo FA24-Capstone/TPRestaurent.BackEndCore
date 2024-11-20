@@ -13,6 +13,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
     {
         [Key]
         public Guid CouponProgramId { get; set; }
+        public string Title { get; set; } = null!;
         public string Code { get; set; } = null!;
         public int DiscountPercent { get; set; }
         public DateTime StartDate { get; set; }
