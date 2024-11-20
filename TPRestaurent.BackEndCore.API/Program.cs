@@ -138,6 +138,24 @@ builder.Services.AddHangfireServer(options =>
     options.Queues = new[] { "clear-order-session-daily" };
     options.WorkerCount = 1;
 });
+builder.Services.AddHangfireServer(options =>
+{
+    options.ServerName = $"{Environment.MachineName}:coupon-session";
+    options.Queues = new[] { "get-birthday-user-for-coupon" };
+    options.WorkerCount = 1;
+});
+builder.Services.AddHangfireServer(options =>
+{
+    options.ServerName = $"{Environment.MachineName}:coupon-session";
+    options.Queues = new[] { "remove-expired-coupon" };
+    options.WorkerCount = 1;
+});
+builder.Services.AddHangfireServer(options =>
+{
+    options.ServerName = $"{Environment.MachineName}:coupon-session";
+    options.Queues = new[] { "reset-user-rank" };
+    options.WorkerCount = 1;
+});
 
 builder.Services.AddSignalR(options =>
 {
