@@ -14,6 +14,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public string Code { get; set; } = null!;
         public string Title { get; set;} = null!;
         public Domain.Enums.CouponProgramType CouponProgramType { get; set; }    
+        public Domain.Enums.UserRank UserRank { get; set; }     
         public int DiscountPercent { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime ExpiryDate { get; set; }

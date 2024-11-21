@@ -19,5 +19,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public int? Quantity { get; set; }
         public string? ImageFile { get; set; }
         public Domain.Enums.CouponProgramType? CouponProgramType { get; set; }
+        public Domain.Enums.UserRank? UserRank { get; set; }    
     }
 }

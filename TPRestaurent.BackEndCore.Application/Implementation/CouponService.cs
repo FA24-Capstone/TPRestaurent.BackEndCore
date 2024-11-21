@@ -116,7 +116,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     StartDate = couponDto.StartDate,   
                     CreateBy = couponDto.AccountId,
                     IsDeleted = false,
-                    Img = couponDto.File
+                    Img = couponDto.File,
+                    UserRankId = couponDto.UserRank
                 };
 
                
@@ -179,7 +180,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var couponDb = await _couponRepository.GetAllDataByExpression(p => p.AccountId == accountId && p.CouponProgram.ExpiryDate >= currentTime 
                                                                                     && (!total.HasValue || total.Value >= p.CouponProgram.MinimumAmount)
                                                                                     && !p.IsUsedOrExpired && p.CouponProgram.IsDeleted == false, 
-                                                                                    pageNumber, pageSize, p => p.CouponProgram.DiscountPercent, false, p => p.Account!, p => p.CouponProgram);
+                                                                                    pageNumber, pageSize, p => p.CouponProgram.DiscountPercent, false, p => p.Account!, p => p.CouponProgram, p => p.CouponProgram.UserRank, p => p.CouponProgram.CouponProgramType);
                 result.Result = couponDb;   
             }
             catch (Exception ex)
@@ -395,6 +396,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (updateCouponDto.CouponProgramType != null)
                 {
                     couponDb.CouponProgramTypeId = updateCouponDto.CouponProgramType.Value;
+                }
+                if (updateCouponDto.UserRank.HasValue)
+                {
+                    couponDb.UserRankId = updateCouponDto.UserRank; 
                 }
 
                 if (updateCouponDto.ImageFile != null)
