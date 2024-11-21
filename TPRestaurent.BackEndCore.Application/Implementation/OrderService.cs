@@ -1081,6 +1081,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         var distanceResponse = await mapService!.GetEstimateDeliveryResponse(restaurantAddress, customerAddress);
                         var element = distanceResponse.Result as EstimatedDeliveryTimeDto.Response;
+                        if(element == null)
+                        {
+                            return BuildAppActionResultError(result, $"Xảy ra lỗi khi tính khoảng cách. Vui lòng thủ lại sau");
+                        }
                         var distance = element!.TotalDistance;
                         if (distance > maxDistanceToOrder)
                         {
@@ -2658,7 +2662,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         }
                                         else
                                         {
-                                            return BuildAppActionResultError(result, $"Chi tiết đơn hàng đang ở trạng thái dang xử lí, không thể huỷ");
+                                            return BuildAppActionResultError(result, $"Chi tiết đơn hàng đang ở trạng thái đang xử lí, không thể huỷ");
                                         }
                                     }
                                 }
