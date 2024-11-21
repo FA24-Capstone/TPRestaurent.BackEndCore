@@ -3129,6 +3129,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var distanceResponse = await mapService!.GetEstimateDeliveryResponse(restaurantAddress, customerAddress);
                 var eletement = distanceResponse.Result as EstimatedDeliveryTimeDto.Response;
+                if(eletement == null)
+                {
+                    return BuildAppActionResultError(result, $"Xảy ra lỗi khi tính phí giao hàng. Vui lòng thử lại sau");
+                }
 
                 var distance = eletement!.TotalDistance;
                 var maxDistanceToOrder = double.Parse(restaurantMaxDistanceToOrderConfig!.CurrentValue);
