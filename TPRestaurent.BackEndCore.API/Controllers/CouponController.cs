@@ -23,10 +23,10 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _couponService.GetAllAvailableCouponProgram(pageNumber, pageSize);    
         }
 
-        [HttpGet("get-coupon-program-by-id/{comboId}")]
-        public async Task<AppActionResult> GetCouponProgramById(Guid comboId)
+        [HttpGet("get-coupon-program-by-id/{couponId}")]
+        public async Task<AppActionResult> GetCouponProgramById(Guid couponId)
         {
-            return await _couponService.GetCouponProgramById(comboId);     
+            return await _couponService.GetCouponProgramById(couponId);     
         }
 
         [HttpGet("get-ranks")]
