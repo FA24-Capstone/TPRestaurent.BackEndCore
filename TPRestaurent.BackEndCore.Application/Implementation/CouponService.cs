@@ -9,6 +9,7 @@ using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
+using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
@@ -106,22 +107,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     CouponProgramId = Guid.NewGuid(),
                     Code = couponDto.Code,  
-                    DiscountPercent = couponDto.DiscountPercent,    
+                    Title = couponDto.Title,    
+                    DiscountPercent = couponDto.DiscountPercent,   
+                    CouponProgramTypeId = couponDto.CouponProgramType,  
                     ExpiryDate = couponDto.ExpiryDate,  
                     MinimumAmount = couponDto.MinimumAmount,    
                     Quantity = couponDto.Quantity,  
                     StartDate = couponDto.StartDate,   
                     CreateBy = couponDto.AccountId,
-                    IsDeleted = false
+                    IsDeleted = false,
+                    Img = couponDto.File
                 };
 
-                var pathName = SD.FirebasePathName.COUPON_PREFIX + $"{coupon.CouponProgramId}{Guid.NewGuid()}.jpg";
-                var upload = await firebaseService!.UploadFileToFirebase(couponDto.File, pathName);
-                coupon.Img = pathName;
-                if (!upload.IsSuccess)
-                {
-                    return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
-                }
+               
                 await _couponProgramRepository.Insert(coupon);
                 await _unitOfWork.SaveChangesAsync();       
             }
@@ -191,6 +189,41 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        [Hangfire.Queue("get-birthday-user-for-coupon")]
+        public async Task GetBirthdayUserForCoupon()
+        {
+            var utility = Resolve<Utility>();
+            var accountRepository = Resolve<IGenericRepository<Account>>();
+            var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+            var listCouponBirthday = new List<Coupon>();
+            try
+            {
+                var couponDb = await _couponProgramRepository!.GetByExpression(p => p.CouponProgramTypeId == CouponProgramType.BIRTHDAY);
+                var accountDb = await accountRepository!.GetAllDataByExpression(p => p.DOB.Value.Month == currentTime.Month, 0, 0, null, false, null);
+                if (accountDb!.Items!.Count > 0 && accountDb.Items != null)
+                {
+                    foreach (var account in accountDb.Items)
+                    {
+                        var coupon = new Coupon
+                        {
+                            CouponId = Guid.NewGuid(),
+                            AccountId = account.Id,
+                            CouponProgramId = couponDb.CouponProgramId,
+                            IsUsedOrExpired = false
+                        };
+                        listCouponBirthday.Add(coupon); 
+                    }
+
+                    await _couponRepository.InsertRange(listCouponBirthday);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+            Task.CompletedTask.Wait();
+        }
+
         public async Task<AppActionResult> GetCouponProgramById(Guid couponId)
         {
             var result = new AppActionResult();
@@ -206,6 +239,53 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> GetRanks()
+        {
+            var result = new AppActionResult();
+            var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+            var listRank = new List<Configuration>();
+            try
+            {
+                var bronzeRankDb = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.BRONZE_RANK);
+                var silverRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.SILVER_RANK);
+                var goldRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.GOLD_RANK);
+                var diamondRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DIAMOND_RANK);
+
+                listRank.Add(bronzeRankDb);
+                listRank.Add(silverRankDb);
+                listRank.Add(goldRankDb);
+                listRank.Add(diamondRankDb);
+
+                result.Result = listRank;       
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetUserByRank(UserRank userRank)
+        {
+            var result = new AppActionResult();
+            var accountRepository = Resolve<IGenericRepository<Account>>();
+            try
+            {
+                var userByRankDb = await accountRepository!.GetAllDataByExpression(p => p.UserRankId == userRank, 0, 0, null, false, null);
+                if (userByRankDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy người dùng với rank {userRank}");
+                }
+                result.Result = userByRankDb;   
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        [Hangfire.Queue("remove-expired-coupon")]
         public async Task RemoveExpiredCoupon()
         {
             var utility = Resolve<Utility>();
@@ -220,6 +300,41 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     couponDb.Items.ForEach(c => c.IsUsedOrExpired = true);
                     await _couponProgramRepository.UpdateRange(expiredCouponProgramDb.Items);
                     await _couponRepository.UpdateRange(couponDb.Items);
+                    await _unitOfWork.SaveChangesAsync();   
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+            Task.CompletedTask.Wait();
+        }
+
+        [Hangfire.Queue("reset-user-rank")]
+        public async Task ResetUserRank()
+        {
+            var acocuntRepository = Resolve<IGenericRepository<Account>>();
+            try
+            {
+                var accountDb = await acocuntRepository!.GetAllDataByExpression(null, 0, 0, null, false, null);
+                if (accountDb!.Items!.Count > 0 && accountDb.Items != null)
+                {
+                    foreach (var account in accountDb.Items)
+                    {
+                        if (account.UserRankId == UserRank.DIAMOND)
+                        {
+                            account.UserRankId = UserRank.GOLD;
+                        }
+                        else if (account.UserRankId == UserRank.GOLD)
+                        {
+                            account.UserRankId = UserRank.SILVER;
+                        }
+                        else if (account.UserRankId == UserRank.SILVER)
+                        {
+                            account.UserRankId = UserRank.BRONZE;
+                        }
+                    }
+
+                    await acocuntRepository.UpdateRange(accountDb.Items);
                     await _unitOfWork.SaveChangesAsync();   
                 }
             }
@@ -251,6 +366,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     couponDb.Code = updateCouponDto.Code;
                 }
 
+                if (!string.IsNullOrEmpty(updateCouponDto.Tittle))
+                {
+                    couponDb.Title = updateCouponDto.Tittle;
+                }
+
                 if (updateCouponDto.DiscountPercent.HasValue)
                 {
                     couponDb.DiscountPercent = updateCouponDto.DiscountPercent.Value;
@@ -271,16 +391,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     couponDb.MinimumAmount = updateCouponDto.MinimumAmount.Value;
                 }
 
+
+                if (updateCouponDto.CouponProgramType != null)
+                {
+                    couponDb.CouponProgramTypeId = updateCouponDto.CouponProgramType.Value;
+                }
+
                 if (updateCouponDto.ImageFile != null)
                 {
-                    await firebaseService!.DeleteFileFromFirebase(couponDb.Img);
-                    var pathName = SD.FirebasePathName.COUPON_PREFIX + $"{couponDb.CouponProgramId}{Guid.NewGuid()}.jpg";
-                    var upload = await firebaseService!.UploadFileToFirebase(updateCouponDto.ImageFile, pathName);
-                    couponDb.Img = pathName;
-                    if (!upload.IsSuccess)
-                    {
-                        return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
-                    }
+                   couponDb.Img = updateCouponDto.ImageFile;    
                 }
 
                 await _couponProgramRepository.Update(couponDb);   

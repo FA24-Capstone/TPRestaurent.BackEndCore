@@ -63,6 +63,8 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.EnumModels.DishComboDetailStatus> DishComboDetailStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.OrderAssignedStatus> OrderAssignedStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.TableStatus> TableStatuses { get; set; } = null!;
+        public DbSet<Models.EnumModels.CouponProgramType> CouponProgramTypes { get; set; } = null!;
+        public DbSet<Models.EnumModels.UserRank> UserRanks { get; set; } = null!;
 
 
 
@@ -125,6 +127,8 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             SeedEnumTable<Models.EnumModels.DishComboDetailStatus, Enums.DishComboDetailStatus>(builder, enums);
             SeedEnumTable<Models.EnumModels.OrderAssignedStatus, Enums.OrderAssignedStatus>(builder, enums);
             SeedEnumTable<Models.EnumModels.TableStatus, Enums.TableStatus>(builder, enums);
+            SeedEnumTable<Models.EnumModels.CouponProgramType, Enums.CouponProgramType>(builder, enums);
+            SeedEnumTable<Models.EnumModels.UserRank, Enums.UserRank>(builder, enums);
 
         }
 
@@ -173,8 +177,8 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             //{
             //    optionsBuilder.UseSqlServer(cs);
             //}
-            optionsBuilder.UseSqlServer(
-            "Server=tcp:tprestaurent.database.windows.net,1433;Initial Catalog=TPRestaurent;Persist Security Info=False;User ID=tprestaurentsa;Password=Tp06042003@;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+            //optionsBuilder.UseSqlServer(
+            //"Server=tcp:tprestaurent.database.windows.net,1433;Initial Catalog=TPRestaurent;Persist Security Info=False;User ID=tprestaurentsa;Password=Tp06042003@;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
         }
     }
 }

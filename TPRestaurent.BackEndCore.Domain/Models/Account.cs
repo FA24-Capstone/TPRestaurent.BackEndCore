@@ -26,6 +26,9 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public double StoreCreditAmount { get; set; }
         public DateTime ExpiredDate { get; set; }
         public DateTime RegisteredDate { get; set; }    
-        public bool IsBanned { get; set; }      
+        public bool IsBanned { get; set; }
+        public Enums.UserRank? UserRankId { get; set; }
+        [ForeignKey(nameof(UserRankId))]
+        public EnumModels.UserRank? UserRank { get; set; }
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241120143611_AddRangeandCouponType")]
+    partial class AddRangeandCouponType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -292,7 +294,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<int?>("UserRankId")
+                    b.Property<int?>("UserRangeId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -305,7 +307,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
-                    b.HasIndex("UserRankId");
+                    b.HasIndex("UserRangeId");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -580,17 +582,13 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("UpdateBy")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("UpdateDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("UserRankId")
+                    b.Property<int?>("UserRangeId")
                         .HasColumnType("int");
 
                     b.HasKey("CouponProgramId");
@@ -601,7 +599,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.HasIndex("UpdateBy");
 
-                    b.HasIndex("UserRankId");
+                    b.HasIndex("UserRangeId");
 
                     b.ToTable("CouponPrograms");
                 });
@@ -1661,7 +1659,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         });
                 });
 
-            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.UserRank", b =>
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.EnumModels.UserRange", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("int");
@@ -1675,7 +1673,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("UserRanks");
+                    b.ToTable("UserRanges");
 
                     b.HasData(
                         new
@@ -2422,11 +2420,11 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Account", b =>
                 {
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.UserRank", "UserRank")
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.UserRange", "UserRange")
                         .WithMany()
-                        .HasForeignKey("UserRankId");
+                        .HasForeignKey("UserRangeId");
 
-                    b.Navigation("UserRank");
+                    b.Navigation("UserRange");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Blog", b =>
@@ -2555,9 +2553,9 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .WithMany()
                         .HasForeignKey("UpdateBy");
 
-                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.UserRank", "UserRank")
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.EnumModels.UserRange", "UserRange")
                         .WithMany()
-                        .HasForeignKey("UserRankId");
+                        .HasForeignKey("UserRangeId");
 
                     b.Navigation("CouponProgramType");
 
@@ -2565,7 +2563,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
 
                     b.Navigation("UpdateByAccount");
 
-                    b.Navigation("UserRank");
+                    b.Navigation("UserRange");
                 });
 
             modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.CustomerInfoAddress", b =>

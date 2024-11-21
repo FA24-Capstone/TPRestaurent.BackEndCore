@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Domain.Enums;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
@@ -28,8 +29,20 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _couponService.GetCouponProgramById(comboId);     
         }
 
+        [HttpGet("get-ranks")]
+        public async Task<AppActionResult> GetRanks()
+        {
+            return await _couponService.GetRanks();     
+        }
+
+        [HttpGet("get-user-by-rank")]
+        public async Task<AppActionResult> GetUserByRank(UserRank userRank)
+        {
+            return await _couponService.GetUserByRank(userRank);
+        }
+
         [HttpPost("create-coupon-program")]
-        public async Task<AppActionResult> CreateCouponProgram([FromForm]CouponProgramDto couponDto)
+        public async Task<AppActionResult> CreateCouponProgram(CouponProgramDto couponDto)
         {
             return await _couponService.CreateCouponProgram(couponDto);        
         }
@@ -53,7 +66,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPut("update-coupon")] 
-        public async Task<AppActionResult> UpdateCoupon([FromForm]UpdateCouponProgramDto updateCouponDto)
+        public async Task<AppActionResult> UpdateCoupon(UpdateCouponProgramDto updateCouponDto)
         {
             return await _couponService.UpdateCouponProgram(updateCouponDto);  
         }

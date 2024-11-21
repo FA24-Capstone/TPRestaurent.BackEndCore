@@ -284,6 +284,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var jwtService = Resolve<IJwtService>();
             var tokenRepository = Resolve<IGenericRepository<Token>>();
             var otpRepository = Resolve<IGenericRepository<OTP>>();
+            var couponRepository = Resolve<IGenericRepository<Coupon>>();
+            var couponProgramRepository = Resolve<IGenericRepository<CouponProgram>>();
+
             try
             {
                 if (!utility.IsValidPhoneNumberInput(signUpRequest.PhoneNumber))
@@ -407,6 +410,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     //};
                     //await storeCreditRepository.Insert(newStoreCreditDb);
 
+                    var couponProgramDb = await couponProgramRepository!.GetByExpression(p => p.CouponProgramTypeId == CouponProgramType.NEWBIE);
+                    var coupon = new Coupon
+                    {
+                        AccountId = user.Id,
+                        CouponId = Guid.NewGuid(),
+                        CouponProgramId = couponProgramDb.CouponProgramId,
+                        IsUsedOrExpired = false
+                    };
+
+                    await couponRepository!.Insert(coupon);
                     await _unitOfWork.SaveChangesAsync();
                 }
             }
@@ -601,7 +614,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var configurationRepository = Resolve<IGenericRepository<Configuration>>();
                 var utility = Resolve<Utility>();
-
+                var couponRepository = Resolve<IGenericRepository<Coupon>>();
+                var couponProgramRepository = Resolve<IGenericRepository<CouponProgram>>();
                 var random = new Random();
                 var verifyCode = string.Empty;
                 verifyCode = random.Next(100000, 999999).ToString();
@@ -644,7 +658,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 //    AccountId = user.Id
                 //};
                 //await storeCreditRepository.Insert(newStoreCreditDb);
+                var couponProgramDb = await couponProgramRepository!.GetByExpression(p => p.CouponProgramTypeId == CouponProgramType.NEWBIE);
+                var coupon = new Coupon
+                {
+                    AccountId = user.Id,
+                    CouponId = Guid.NewGuid(),
+                    CouponProgramId = couponProgramDb.CouponProgramId,
+                    IsUsedOrExpired = false
+                };
 
+                await couponRepository!.Insert(coupon);
                 await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Application.Contract.IServices
@@ -17,7 +18,11 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> CreateCouponProgram(CouponProgramDto couponDto);
         Task<AppActionResult> AssignCoupon(AssignCouponRequestDto couponDto);
         Task<AppActionResult> DeleteCouponProgram(Guid couponId);
-        Task<AppActionResult> UpdateCouponProgram(UpdateCouponProgramDto updateCouponDto);    
+        Task<AppActionResult> UpdateCouponProgram(UpdateCouponProgramDto updateCouponDto);
+        Task<AppActionResult> GetRanks();
+        Task<AppActionResult> GetUserByRank(UserRank userRank);
+        Task GetBirthdayUserForCoupon();
         Task RemoveExpiredCoupon();
+        Task ResetUserRank();
     }
 }
