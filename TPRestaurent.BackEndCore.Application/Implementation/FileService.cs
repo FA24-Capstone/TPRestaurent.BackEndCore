@@ -23,8 +23,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 GlobalSettings =
             {
+                ColorMode = ColorMode.Color,
                 PaperSize = PaperKind.A4,
                 Orientation = Orientation.Portrait,
+                Margins = new MarginSettings { Top = 10, Bottom = 10 },
+                DPI = 300
             },
                 Objects =
             {
