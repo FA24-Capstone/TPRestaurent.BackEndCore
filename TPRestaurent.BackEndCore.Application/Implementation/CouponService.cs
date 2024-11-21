@@ -160,7 +160,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var currentTime = utility!.GetCurrentDateTimeInTimeZone();
             try
             {
-                var couponDb = await _couponProgramRepository.GetAllDataByExpression(p => p.ExpiryDate >= currentTime && p.Quantity > 0 && p.IsDeleted == false, pageNumber, pageSize, p => p.ExpiryDate, false, p => p.CreateByAccount);
+                var couponDb = await _couponProgramRepository.GetAllDataByExpression(p => p.ExpiryDate >= currentTime && p.Quantity > 0 && p.IsDeleted == false, pageNumber, pageSize, p => p.ExpiryDate, false, p => p.CreateByAccount, p => p.UserRank, p => p.CouponProgramType);
                  result.Result = couponDb;      
             }
             catch (Exception ex)
