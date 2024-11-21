@@ -1,6 +1,10 @@
-﻿using NPOI.Util;
+﻿using Microsoft.AspNetCore.Identity;
+using NPOI.SS.Formula.Functions;
+using NPOI.Util;
+using NPOI.XSSF.UserModel;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +15,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
+using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -88,19 +93,98 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
+                var utility = Resolve<Utility>();
                 var configurationRepository = Resolve<IGenericRepository<Configuration>>();
-                var bronzeRankDb = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.BRONZE_RANK);
-                var silverRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.SILVER_RANK);
-                var goldRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.GOLD_RANK);
-                var diamondRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DIAMOND_RANK);
-                if (dto.SilverCouponProgramIds.Count > 0)
+                var accountRepository = Resolve<IGenericRepository<Account>>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                List<Coupon> couponList = new List<Coupon>();
+                if (dto.BronzeCouponProgramIds != null && dto.BronzeCouponProgramIds.Count > 0)
                 {
+                    var bronzeCouponList = await GetCouponListForCreation(dto.BronzeCouponProgramIds, UserRank.BRONZE, currentTime);
+                    if(bronzeCouponList.Count == 0)
+                    {
+                        return BuildAppActionResultError(result, $"Có các chương trình giảm giá không hợp lệ cho hạng Đồng");
+                    }
+                    couponList.AddRange(bronzeCouponList);
+                }
+
+                if (dto.SilverCouponProgramIds != null && dto.SilverCouponProgramIds.Count > 0)
+                {
+                    var silverCouponList = await GetCouponListForCreation(dto.SilverCouponProgramIds, UserRank.SILVER, currentTime);
+                    if (silverCouponList.Count == 0)
+                    {
+                        return BuildAppActionResultError(result, $"Có các chương trình giảm giá không hợp lệ cho hạng Bạc");
+                    }
+                    couponList.AddRange(silverCouponList);
 
                 }
 
+                if (dto.GoldCouponProgramIds != null && dto.GoldCouponProgramIds.Count > 0)
+                {
+                    var goldCouponList = await GetCouponListForCreation(dto.GoldCouponProgramIds, UserRank.GOLD, currentTime);
+                    if (goldCouponList.Count == 0)
+                    {
+                        return BuildAppActionResultError(result, $"Có các chương trình giảm giá không hợp lệ cho hạng Bạc");
+                    }
+                    couponList.AddRange(goldCouponList);
+                }
+
+                if (dto.DiamondCouponProgramIds != null && dto.DiamondCouponProgramIds.Count > 0)
+                {
+                    var diamondCouponList = await GetCouponListForCreation(dto.DiamondCouponProgramIds, UserRank.DIAMOND, currentTime);
+                    if (diamondCouponList.Count == 0)
+                    {
+                        return BuildAppActionResultError(result, $"Có các chương trình giảm giá không hợp lệ cho hạng Bạc");
+                    }
+                    couponList.AddRange(diamondCouponList);
+                }
+
+                await _couponRepository.InsertRange(couponList);
+                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
+            }
+            return result;
+        }
+
+        private async Task<List<Coupon>> GetCouponListForCreation(List<Guid> couponProgramIds, UserRank rank, DateTime currentTime)
+        {
+            List<Coupon> result = new List<Coupon>();
+            try
+            {
+                var accountRepository = Resolve<IGenericRepository<Account>>();
+                var couponProgramDb = await _couponProgramRepository.GetAllDataByExpression(c => couponProgramIds.Contains(c.CouponProgramId)
+                                                                                                           && c.UserRankId == UserRank.BRONZE
+                                                                                                           && !c.IsDeleted && c.ExpiryDate > currentTime
+                                                                                                           , 0, 0, null, false, null);
+                if (couponProgramDb.Items.Count != couponProgramIds.Count)
+                {
+                    return result;
+                }
+
+                var customerIds = await GetCustomerId();
+                var accountDb = await accountRepository.GetAllDataByExpression(a => customerIds.Contains(a.Id) && a.UserRankId == UserRank.BRONZE && !a.IsBanned && !a.IsDeleted, 0, 0, null, false, null);
+                if (accountDb.Items.Count > 0)
+                {
+                    foreach (var couponProgram in couponProgramDb.Items)
+                    {
+                        accountDb.Items.ForEach(c => result.Add(new Coupon
+                        {
+                            CouponId = Guid.NewGuid(),
+                            CouponProgramId = couponProgram.CouponProgramId,
+                            AccountId = c.Id,
+                            IsUsedOrExpired = false,
+                            OrderId = null
+                        }));
+                        couponProgram.Quantity -= accountDb.Items.Count;
+                    }
+                    await _couponProgramRepository.UpdateRange(couponProgramDb.Items);
+                }
+            }
+            catch (Exception ex)
+            {
+                result = new List<Coupon>();
             }
             return result;
         }
@@ -414,7 +498,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     couponDb.MinimumAmount = updateCouponDto.MinimumAmount.Value;
                 }
 
-
                 if (updateCouponDto.CouponProgramType != null)
                 {
                     couponDb.CouponProgramTypeId = updateCouponDto.CouponProgramType.Value;
@@ -437,6 +520,132 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
+        }
+
+        public async Task AssignCouponToUserWithRank()
+        {
+            try
+            {
+                var utility = Resolve<Utility>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                var accountRepository = Resolve<IGenericRepository<Account>>();
+                var emailService = Resolve<IEmailService>();
+                var customerIds = await GetCustomerId(); 
+                var couponList = new List<Coupon>();    
+                var accountDb = await accountRepository.GetAllDataByExpression(a => customerIds.Contains(a.Id) && !a.IsBanned && !a.IsDeleted && a.IsVerified, 0, 0, null, false, null);
+                var bronzeCoupons = await GetCouponListForCreation(accountDb.Items.Where(a => a.UserRankId == UserRank.BRONZE).Select(a => a.Id).ToList(), UserRank.BRONZE, currentTime, emailService);
+                if(bronzeCoupons.Count > 0)
+                {
+                    couponList.AddRange(bronzeCoupons);
+                }
+
+                var silverCoupons = await GetCouponListForCreation(accountDb.Items.Where(a => a.UserRankId == UserRank.SILVER).Select(a => a.Id).ToList(), UserRank.SILVER, currentTime, emailService);
+                if (silverCoupons.Count > 0)
+                {
+                    couponList.AddRange(silverCoupons);
+                }
+
+                var goldCoupons = await GetCouponListForCreation(accountDb.Items.Where(a => a.UserRankId == UserRank.GOLD).Select(a => a.Id).ToList(), UserRank.GOLD, currentTime, emailService);
+                if (goldCoupons.Count > 0)
+                {
+                    couponList.AddRange(goldCoupons);
+                }
+
+                var diamondCoupons = await GetCouponListForCreation(accountDb.Items.Where(a => a.UserRankId == UserRank.DIAMOND).Select(a => a.Id).ToList(), UserRank.DIAMOND, currentTime, emailService);
+                if (diamondCoupons.Count > 0)
+                {
+                    couponList.AddRange(diamondCoupons);
+                }
+
+                await _couponRepository.InsertRange(couponList);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
+        private async Task<List<Coupon>> GetCouponListForCreation(List<string> accountIds, UserRank rank, DateTime currentTime, IEmailService emailService)
+        {
+            List<Coupon> result = new List<Coupon>();
+            try
+            {
+                var couponProgramDb = await _couponProgramRepository.GetAllDataByExpression(c => c.ExpiryDate.Date.Month == currentTime.Month 
+                                                                                                 && c.ExpiryDate.Date.Year == currentTime.Year
+                                                                                                 && !c.IsDeleted && c.UserRankId == rank
+                                                                                                 , 0, 0, null, false, c => c.CreateByAccount);
+                var insufficientCouponProgramList = couponProgramDb.Items.Where(c => c.Quantity < accountIds.Count).ToList();
+                if(insufficientCouponProgramList.Count != couponProgramDb.Items.Count)
+                {
+
+                    var html = GetInSufficientCouponProgramHtml(rank.ToString(), accountIds.Count, insufficientCouponProgramList);
+                    emailService!.SendEmail(insufficientCouponProgramList.FirstOrDefault().CreateByAccount.Email, SD.SubjectMail.INSUFFICIENT_COUPON_QUANTITY,
+                                         TemplateMappingHelper.GetTemplateOTPEmail(
+                                             TemplateMappingHelper.ContentEmailType.INSUFFICIENT_COUPON_QUANTITY, html,
+                                             insufficientCouponProgramList.FirstOrDefault().CreateByAccount.LastName));
+                    return result;
+                }
+
+                foreach (var couponProgram in couponProgramDb.Items)
+                {
+                    accountIds.ForEach(a => result.Add(
+                        new Coupon
+                        {
+                            CouponId = Guid.NewGuid(),
+                            AccountId = a,
+                            CouponProgramId = couponProgram.CouponProgramId,
+                            IsUsedOrExpired = false,
+                            OrderId = null
+                        }
+                    ));
+                    couponProgram.Quantity -= accountIds.Count;
+                }
+                await _couponProgramRepository.UpdateRange(couponProgramDb.Items);
+            }
+            catch (Exception ex)
+            {
+                result = new List<Coupon>();
+            }
+            return result;
+        }
+
+        private async Task<List<string>> GetCustomerId()
+        {
+            List<string> customerIds = new List<string>();
+            try
+            {
+                var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
+                var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
+                var customerRoleDb = await roleRepository.GetByExpression(r => r.Name.ToLower().Equals("customer"));
+                var customerDb = await userRoleRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
+                var roleGroup = customerDb.Items.GroupBy(c => c.UserId).ToDictionary(c => c.Key, c => c.ToList());
+                customerIds = roleGroup.Where(c => c.Value.Count == 1 && c.Value.FirstOrDefault().RoleId.Equals(customerRoleDb.Id)).Select(c => c.Key).ToList();
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return customerIds;
+        }
+
+        private string GetInSufficientCouponProgramHtml(string rank, int quantity, List<CouponProgram> couponPrograms)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($@"<p>Hạng {rank}</p>");
+            sb.AppendLine($@"<p>Số lượng yêu cầu: {quantity}</p>");
+            sb.AppendLine(@"<ul class=""couponList"">");
+
+            foreach (var coupon in couponPrograms)
+            {
+                var quantityStatus = coupon.Quantity > 0
+                    ? $"Số lượng hiện tại: {coupon.Quantity}"
+                    : "Số lượng hiện tại: 0";
+
+                sb.AppendLine($@"  <li>{coupon.Code}: {quantityStatus}</li>");
+            }
+
+            sb.AppendLine("</ul>");
+            return sb.ToString();
         }
     }
 }
