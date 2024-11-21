@@ -22,7 +22,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 {
     public class MapService : GenericBackendService, IMapService
     {
-        public const string APIKEY = "TG84JNaXhZZrBRt6NmY0cnEHIHkU4woAYqsfLNPF";
+        public const string APIKEY = "AgMUj32K5X37r0Fu3fiRnFLz3FsEsc1OjgsTgJ7c";
         private IGenericRepository<Configuration> _configurationRepository;
         private IUnitOfWork _unitOfWork;
 
