@@ -83,6 +83,28 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> AssignCouponToUserWithRank(AssignCouponToRankRequest dto)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var bronzeRankDb = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.BRONZE_RANK);
+                var silverRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.SILVER_RANK);
+                var goldRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.GOLD_RANK);
+                var diamondRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DIAMOND_RANK);
+                if (dto.SilverCouponProgramIds.Count > 0)
+                {
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+            }
+            return result;
+        }
+
         public async Task<AppActionResult> CreateCouponProgram(CouponProgramDto couponDto)
         {
             var result = new AppActionResult();
