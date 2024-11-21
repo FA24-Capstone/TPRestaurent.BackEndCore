@@ -177,6 +177,8 @@ public class MappingConfig
             .ForMember(dest => dest.Deposit, act => act.MapFrom(src => src.Deposit))
             .ForMember(dest => dest.IsPrivate, act => act.MapFrom(src => src.IsPrivate))
             .ForMember(dest => dest.ValidatingImg, act => act.MapFrom(src => src.ValidatingImg))
+            .ForMember(dest => dest.TotalDistance, act => act.MapFrom(src => src.TotalDistance))
+            .ForMember(dest => dest.TotalDuration, act => act.MapFrom(src => src.TotalDuration))
             .ForMember(dest => dest.CancelDeliveryReason, act => act.MapFrom(src => src.CancelDeliveryReason))
             .ReverseMap();
 

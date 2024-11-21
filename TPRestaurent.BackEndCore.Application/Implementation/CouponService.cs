@@ -439,7 +439,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     foreach (var account in accountDb.Items)
                     {
-                        var orderDb = await orderRepository!.GetAllDataByExpression(p => p.AccountId == account.Id, 0, 0, null, false, null);
+                        var orderDb = await orderRepository!.GetAllDataByExpression(p => p.AccountId == account.Id && p.StatusId == OrderStatus.Completed, 0, 0, null, false, null);
                         var totalAmount = orderDb.Items!.Sum(p => p.TotalAmount);
                         if (account.UserRankId == UserRank.DIAMOND)
                         {

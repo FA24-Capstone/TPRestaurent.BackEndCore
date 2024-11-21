@@ -1091,6 +1091,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, $"Nhà hàng chỉ hỗ trợ cho đơn giao hàng trong bán kính 10km");
                         }
 
+                        order.TotalDistance = element.Elements.FirstOrDefault().Distance.Text;
+                        order.TotalDuration = element.Elements.FirstOrDefault().Duration.Text;
+
                         var shippingCost = await CalculateDeliveryOrder(customerAddressDb.CustomerInfoAddressId);
                         if (shippingCost.Result == null)
                         {
@@ -3010,7 +3013,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var successfulOrderTransaction = orderTransactionDb.Items.Where(o => o.TransationStatusId == TransationStatus.SUCCESSFUL && o.TransactionTypeId == TransactionType.Order).ToList();
                     if (successfulOrderTransaction.Count() == 1)
                     {
-                        orderResponse.OrderPaidDate = successfulOrderTransaction.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).First().PaidDate;
+                        orderResponse.OrderPaidDate = successfulOrderTransaction.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).FirstOrDefault().PaidDate;
                     }
                 }
 
@@ -3019,7 +3022,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var data = new ReservationReponse
                 {
-                    Order = await AssignEstimatedTimeToOrder(orderResponse),
+                    Order = orderResponse,
                     OrderTables = reservationTableDetails,
                     OrderDishes = reservationDishes
                 };
@@ -3365,22 +3368,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
                         order.ItemLeft = orderDetailDb.Items.Count() - 1;
 
-                        var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.CustomerInfoAddressId == order.AddressId);
-                        if (customerAddressDb == null)
-                        {
-                            return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {order.AccountId}");
-                        }
+                        //var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.CustomerInfoAddressId == order.AddressId);
+                        //if (customerAddressDb == null)
+                        //{
+                        //    return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {order.AccountId}");
+                        //}
 
-                        double[] endDestination = new double[2];
-                        endDestination[0] = customerAddressDb.Lat;
-                        endDestination[1] = customerAddressDb.Lng;
-                        Task.Delay(350);
-                        var estimateDelivery = await mapService!.GetEstimateDeliveryResponse(startDestination, endDestination);
-                        if (estimateDelivery.IsSuccess && estimateDelivery.Result is EstimatedDeliveryTimeDto.Response response)
-                        {
-                            order.TotalDistance = response.Elements.FirstOrDefault().Distance.Text;
-                            order.TotalDuration = response.Elements.FirstOrDefault().Duration.Text;
-                        }
+                        //double[] endDestination = new double[2];
+                        //endDestination[0] = customerAddressDb.Lat;
+                        //endDestination[1] = customerAddressDb.Lng;
+                        //Task.Delay(350);
+                        //var estimateDelivery = await mapService!.GetEstimateDeliveryResponse(startDestination, endDestination);
+                        //if (estimateDelivery.IsSuccess && estimateDelivery.Result is EstimatedDeliveryTimeDto.Response response)
+                        //{
+                        //    order.TotalDistance = response.Elements.FirstOrDefault().Distance.Text;
+                        //    order.TotalDuration = response.Elements.FirstOrDefault().Duration.Text;
+                        //}
                     }
                 }
                 result.Result = new PagedResult<OrderWithFirstDetailResponse>
@@ -3430,6 +3433,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     return order;
                 }
+
 
                 var configurationRepository = Resolve<IGenericRepository<Configuration>>();
                 var mapService = Resolve<IMapService>();

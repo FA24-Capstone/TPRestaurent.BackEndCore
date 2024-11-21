@@ -53,6 +53,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _couponService.AssignCoupon(couponDto);
         }
 
+        [HttpPost("assign-coupon-with-rank")]
+        public async Task<AppActionResult> AssignCouponToUserWithRank(AssignCouponToRankRequest couponDto)
+        {
+            return await _couponService.AssignCouponToUserWithRank(couponDto);
+        }
+
         [HttpGet("get-available-coupon-by-account-id/{accountId}/{pageNumber}/{pageSize}")]
         public async Task<AppActionResult> GetAvailableCouponByAccountId(string accountId, double? total, int pageNumber = 1, int pageSize = 10)
         {
