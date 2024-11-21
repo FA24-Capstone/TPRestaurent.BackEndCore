@@ -137,7 +137,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 // Send all messages as a batch
                 foreach (var message in messages)
                 {
-                    await _messaging.SendAsync(message);
+                    try
+                    {
+                        await _messaging.SendAsync(message);
+                    }
+                    catch (Exception ex)
+                    {
+                        continue;
+                    }
                 }
                 return deviceTokens; // Successfully sent all messages
 
