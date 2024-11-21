@@ -1244,4 +1244,109 @@ public class TemplateMappingHelper
         return content;
     }
 
+    public static string GetTemplateBirthdayCoupon(string username, CouponProgram couponProgram)
+    {
+        var content = $@"
+<html>
+  <head>
+    <style>
+      * {{
+        margin: 0;
+        padding: 0;
+      }}
+
+      body {{
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4; /* Background color for the entire email */
+      }}
+
+      .container {{
+        max-width: 900px;
+        margin: 20px auto;
+        border-radius: 5px;
+        box-shadow: 0px 0px 5px 2px #ccc; /* Shadow for content */
+      }}
+
+      .header {{
+        text-align: center;
+        background-color: #ffba00; /* Header background color */
+        padding: 20px;
+      }}
+
+      .mainBody {{
+        background-color: #ffffff; /* Main content background */
+        padding: 20px;
+      }}
+
+      .emailBody {{
+        margin: 5px 5px;
+      }}
+
+      .support {{
+        font-size: 15px;
+        font-style: italic;
+        margin: 5px 5px;
+      }}
+
+      .footer {{
+        font-size: 14px;
+        text-align: center;
+        background-color: #ffba00; /* Footer background color */
+        padding: 10px;
+      }}
+
+      .signature {{
+        text-align: right;
+        font-size: 16px;
+        margin: 5px 5px;
+      }}
+    </style>
+  </head>
+  <body>
+    <div class=""container"">
+      <div class=""header"">
+        <h1 style=""color: #515151;"">Nhà hàng Thiên Phú</h1>
+      </div>
+      <div class=""mainBody"">
+        <h2 class=""emailBody"">Xin chào {username},</h2>
+        
+        <p class=""emailBody"">
+          Chúc mừng sinh nhật bạn! 🎉
+        </p>
+
+        <p class=""emailBody"">
+          Để chúc mừng ngày đặc biệt của bạn, chúng tôi xin gửi tặng bạn một coupon sinh nhật từ <b><i>Nhà hàng Thiên Phú</i></b>!
+        </p>
+
+        <p class=""emailBody"">
+          Mã coupon: <b>{couponProgram.Code}</b><br>
+          Giảm giá: <b>{couponProgram.DiscountPercent:C}</b><br>
+          Ngày sử dụng: <b>{couponProgram.StartDate:dd/MM/yyyy}</b>
+          Hạn sử dụng: <b>{couponProgram.ExpiryDate:dd/MM/yyyy}</b>
+        </p>
+
+        <p class=""emailBody"">
+          Hãy sử dụng mã coupon này khi bạn đến nhà hàng để tận hưởng bữa ăn tuyệt vời cùng gia đình và bạn bè trong ngày sinh nhật của bạn!
+        </p>
+
+        <p class=""emailBody"">
+          Nếu bạn có bất kỳ câu hỏi nào hoặc cần thêm thông tin, vui lòng liên hệ với chúng tôi qua email <u><i>qk.backend@gmail.com</i></u>.
+        </p>
+
+        <p class=""support"">
+          Cảm ơn bạn đã chọn <b><i>Nhà hàng Thiên Phú</i></b> để kỷ niệm ngày đặc biệt này!
+        </p>
+        <div class=""signature"">
+          <p>Trân trọng,</p>
+          <p>
+            <b><i>Đội ngũ Nhà hàng Thiên Phú</i></b>
+          </p>
+        </div>
+      </div>
+      <div style=""height: 100px""></div>
+    </div>
+  </body>
+</html>";
+        return content;
+    }
 }
