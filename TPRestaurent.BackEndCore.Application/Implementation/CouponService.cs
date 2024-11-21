@@ -22,9 +22,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         public CouponService(IServiceProvider serviceProvider, IGenericRepository<CouponProgram> couponProgramRepository, IGenericRepository<Coupon> couponRepository, IUnitOfWork unitOfWork) : base(serviceProvider)
         {
-            _couponProgramRepository = couponProgramRepository;   
+            _couponProgramRepository = couponProgramRepository;
             _couponRepository = couponRepository;
-            _unitOfWork = unitOfWork;   
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<AppActionResult> AssignCoupon(AssignCouponRequestDto couponDto)
@@ -41,7 +41,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
-                if(currentTime > couponProgramDb.ExpiryDate)
+                if (currentTime > couponProgramDb.ExpiryDate)
                 {
                     return BuildAppActionResultError(result, $"Mã giảm giá {couponProgramDb.Code} đã hết hạn");
                 }
@@ -85,7 +85,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         public async Task<AppActionResult> CreateCouponProgram(CouponProgramDto couponDto)
         {
-            var result = new AppActionResult(); 
+            var result = new AppActionResult();
             try
             {
                 var accountRepository = Resolve<IGenericRepository<Account>>();
@@ -106,23 +106,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var coupon = new CouponProgram
                 {
                     CouponProgramId = Guid.NewGuid(),
-                    Code = couponDto.Code,  
-                    Title = couponDto.Title,    
-                    DiscountPercent = couponDto.DiscountPercent,   
-                    CouponProgramTypeId = couponDto.CouponProgramType,  
-                    ExpiryDate = couponDto.ExpiryDate,  
-                    MinimumAmount = couponDto.MinimumAmount,    
-                    Quantity = couponDto.Quantity,  
-                    StartDate = couponDto.StartDate,   
+                    Code = couponDto.Code,
+                    Title = couponDto.Title,
+                    DiscountPercent = couponDto.DiscountPercent,
+                    CouponProgramTypeId = couponDto.CouponProgramType,
+                    ExpiryDate = couponDto.ExpiryDate,
+                    MinimumAmount = couponDto.MinimumAmount,
+                    Quantity = couponDto.Quantity,
+                    StartDate = couponDto.StartDate,
                     CreateBy = couponDto.AccountId,
                     IsDeleted = false,
                     Img = couponDto.File,
                     UserRankId = couponDto.UserRank
                 };
 
-               
+
                 await _couponProgramRepository.Insert(coupon);
-                await _unitOfWork.SaveChangesAsync();       
+                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -143,8 +143,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 couponDb.IsDeleted = true;
-                await _couponProgramRepository.Update(couponDb);   
-                await _unitOfWork.SaveChangesAsync();       
+                await _couponProgramRepository.Update(couponDb);
+                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -161,13 +161,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var couponDb = await _couponProgramRepository.GetAllDataByExpression(p => p.ExpiryDate >= currentTime && p.Quantity > 0 && p.IsDeleted == false, pageNumber, pageSize, p => p.ExpiryDate, false, p => p.CreateByAccount, p => p.UserRank, p => p.CouponProgramType);
-                 result.Result = couponDb;      
+                result.Result = couponDb;
             }
             catch (Exception ex)
             {
                 result = BuildAppActionResultError(result, ex.Message);
             }
-            return result;  
+            return result;
         }
 
         public async Task<AppActionResult> GetAvailableCouponByAccountId(string accountId, double? total, int pageNumber, int pageSize)
@@ -177,11 +177,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var currentTime = utility!.GetCurrentDateTimeInTimeZone();
             try
             {
-                var couponDb = await _couponRepository.GetAllDataByExpression(p => p.AccountId == accountId && p.CouponProgram.ExpiryDate >= currentTime 
+                var couponDb = await _couponRepository.GetAllDataByExpression(p => p.AccountId == accountId && p.CouponProgram.ExpiryDate >= currentTime
                                                                                     && (!total.HasValue || total.Value >= p.CouponProgram.MinimumAmount)
-                                                                                    && !p.IsUsedOrExpired && p.CouponProgram.IsDeleted == false, 
+                                                                                    && !p.IsUsedOrExpired && p.CouponProgram.IsDeleted == false,
                                                                                     pageNumber, pageSize, p => p.CouponProgram.DiscountPercent, false, p => p.Account!, p => p.CouponProgram, p => p.CouponProgram.UserRank, p => p.CouponProgram.CouponProgramType);
-                result.Result = couponDb;   
+                result.Result = couponDb;
             }
             catch (Exception ex)
             {
@@ -197,6 +197,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var accountRepository = Resolve<IGenericRepository<Account>>();
             var currentTime = utility!.GetCurrentDateTimeInTimeZone();
             var listCouponBirthday = new List<Coupon>();
+            var emailService = Resolve<IEmailService>();
             try
             {
                 var couponDb = await _couponProgramRepository!.GetByExpression(p => p.CouponProgramTypeId == CouponProgramType.BIRTHDAY);
@@ -212,7 +213,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             CouponProgramId = couponDb.CouponProgramId,
                             IsUsedOrExpired = false
                         };
-                        listCouponBirthday.Add(coupon); 
+                        listCouponBirthday.Add(coupon);
+                        
+                        var username = account.FirstName + " " + account.LastName;
+                        emailService.SendEmail(account.Email, SD.SubjectMail.NOTIFY_RESERVATION,
+                             TemplateMappingHelper.GetTemplateBirthdayCoupon(username, couponDb)
+                           );
                     }
 
                     await _couponRepository.InsertRange(listCouponBirthday);
@@ -231,7 +237,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var couponDb = await _couponProgramRepository.GetById(couponId);
-                result.Result = couponDb;   
+                result.Result = couponDb;
             }
             catch (Exception ex)
             {
@@ -257,7 +263,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 listRank.Add(goldRankDb);
                 listRank.Add(diamondRankDb);
 
-                result.Result = listRank;       
+                result.Result = listRank;
             }
             catch (Exception ex)
             {
@@ -277,7 +283,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy người dùng với rank {userRank}");
                 }
-                result.Result = userByRankDb;   
+                result.Result = userByRankDb;
             }
             catch (Exception ex)
             {
@@ -301,7 +307,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     couponDb.Items.ForEach(c => c.IsUsedOrExpired = true);
                     await _couponProgramRepository.UpdateRange(expiredCouponProgramDb.Items);
                     await _couponRepository.UpdateRange(couponDb.Items);
-                    await _unitOfWork.SaveChangesAsync();   
+                    await _unitOfWork.SaveChangesAsync();
                 }
             }
             catch (Exception ex)
@@ -314,29 +320,46 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task ResetUserRank()
         {
             var acocuntRepository = Resolve<IGenericRepository<Account>>();
+            var orderRepository = Resolve<IGenericRepository<Order>>();
+            var configurationRepository = Resolve<IGenericRepository<Configuration>>();
             try
             {
                 var accountDb = await acocuntRepository!.GetAllDataByExpression(null, 0, 0, null, false, null);
+                var bronzeRankDb = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.BRONZE_RANK);
+                var silverRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.SILVER_RANK);
+                var goldRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.GOLD_RANK);
+                var diamondRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DIAMOND_RANK);
                 if (accountDb!.Items!.Count > 0 && accountDb.Items != null)
                 {
                     foreach (var account in accountDb.Items)
                     {
+                        var orderDb = await orderRepository!.GetAllDataByExpression(p => p.AccountId == account.Id, 0, 0, null, false, null);
+                        var totalAmount = orderDb.Items!.Sum(p => p.TotalAmount);
                         if (account.UserRankId == UserRank.DIAMOND)
                         {
-                            account.UserRankId = UserRank.GOLD;
+                            if (totalAmount <= double.Parse(diamondRankDb.CurrentValue))
+                            {
+                                account.UserRankId = UserRank.GOLD;
+                            }
                         }
                         else if (account.UserRankId == UserRank.GOLD)
                         {
-                            account.UserRankId = UserRank.SILVER;
+                            if (totalAmount <= double.Parse(goldRankDb.CurrentValue))
+                            {
+                                account.UserRankId = UserRank.SILVER;
+                            }
                         }
                         else if (account.UserRankId == UserRank.SILVER)
                         {
-                            account.UserRankId = UserRank.BRONZE;
+                            if (totalAmount <= double.Parse(silverRankDb.CurrentValue))
+                            {
+                                account.UserRankId = UserRank.BRONZE;
+                            }
                         }
                     }
 
                     await acocuntRepository.UpdateRange(accountDb.Items);
-                    await _unitOfWork.SaveChangesAsync();   
+                    await _unitOfWork.SaveChangesAsync();
                 }
             }
             catch (Exception ex)
@@ -367,9 +390,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     couponDb.Code = updateCouponDto.Code;
                 }
 
-                if (!string.IsNullOrEmpty(updateCouponDto.Tittle))
+                if (!string.IsNullOrEmpty(updateCouponDto.Title))
                 {
-                    couponDb.Title = updateCouponDto.Tittle;
+                    couponDb.Title = updateCouponDto.Title;
                 }
 
                 if (updateCouponDto.DiscountPercent.HasValue)
@@ -392,23 +415,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     couponDb.MinimumAmount = updateCouponDto.MinimumAmount.Value;
                 }
 
-
                 if (updateCouponDto.CouponProgramType != null)
                 {
                     couponDb.CouponProgramTypeId = updateCouponDto.CouponProgramType.Value;
                 }
                 if (updateCouponDto.UserRank.HasValue)
                 {
-                    couponDb.UserRankId = updateCouponDto.UserRank; 
+                    couponDb.UserRankId = updateCouponDto.UserRank;
                 }
 
                 if (updateCouponDto.ImageFile != null)
                 {
-                   couponDb.Img = updateCouponDto.ImageFile;    
+                    couponDb.Img = updateCouponDto.ImageFile;
+                }
+                if (!string.IsNullOrEmpty(updateCouponDto.AccountId))
+                {
+                    couponDb.UpdateBy =  updateCouponDto.AccountId;     
                 }
 
-                await _couponProgramRepository.Update(couponDb);   
-                await _unitOfWork.SaveChangesAsync();       
+                await _couponProgramRepository.Update(couponDb);
+                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
