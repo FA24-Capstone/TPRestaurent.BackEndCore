@@ -23,5 +23,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GetUserByRank(UserRank userRank);
         Task GetBirthdayUserForCoupon();
         Task RemoveExpiredCoupon();
+        Task ResetUserRank();
     }
 }
