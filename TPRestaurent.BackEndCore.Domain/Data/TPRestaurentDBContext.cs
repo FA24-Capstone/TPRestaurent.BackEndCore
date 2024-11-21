@@ -166,19 +166,6 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             return configuration.GetSection("VietnameseNames");
         }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            //IConfiguration config = new ConfigurationBuilder()
-            //               .SetBasePath(Directory.GetCurrentDirectory())
-            //               .AddJsonFile("appsettings.json", true, true)
-            //               .Build();
-            //string cs = config["ConnectionStrings:DB"];
-            //if (!optionsBuilder.IsConfigured)
-            //{
-            //    optionsBuilder.UseSqlServer(cs);
-            //}
-            //optionsBuilder.UseSqlServer(
-            //"Server=tcp:tprestaurent.database.windows.net,1433;Initial Catalog=TPRestaurent;Persist Security Info=False;User ID=tprestaurentsa;Password=Tp06042003@;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
-        }
+       
     }
 }
