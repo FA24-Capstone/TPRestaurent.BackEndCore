@@ -3485,15 +3485,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             try
             {
-                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
-                orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
-                var orderDetailIds = orderDetails.Where(or => or.ComboId.HasValue).Select(or => or.OrderDetailId).ToList();
-                var comboOrderDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(o => orderDetailIds.Contains(o.OrderDetailId.Value),
-                                                                                                                  0, 0, null, false, null);
-                comboOrderDetailDb.Items.ForEach(c => c.StatusId = DishComboDetailStatus.Unchecked);
-                await comboOrderDetailRepository.UpdateRange(comboOrderDetailDb.Items);
-                await _detailRepository.UpdateRange(orderDetails);
-                await _unitOfWork.SaveChangesAsync();
+                if(orderDetails.Count > 0)
+                {
+                    var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+                    var orderSessionDb = await _sessionRepository.GetById(orderDetails.FirstOrDefault().OrderSessionId);
+                    orderSessionDb.OrderSessionStatusId = OrderSessionStatus.Confirmed;
+                    orderDetails.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
+                    var orderDetailIds = orderDetails.Where(or => or.ComboId.HasValue).Select(or => or.OrderDetailId).ToList();
+                    var comboOrderDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(o => orderDetailIds.Contains(o.OrderDetailId.Value),
+                                                                                                                      0, 0, null, false, null);
+                    if(comboOrderDetailDb.Items.Count > 0)
+                    {
+                        comboOrderDetailDb.Items.ForEach(c => c.StatusId = DishComboDetailStatus.Unchecked);
+                        await comboOrderDetailRepository.UpdateRange(comboOrderDetailDb.Items);
+                    }
+                    await _sessionRepository.Update(orderSessionDb);
+                    await _detailRepository.UpdateRange(orderDetails);
+                    await _unitOfWork.SaveChangesAsync();
+                }
             }
             catch (Exception ex)
             {
