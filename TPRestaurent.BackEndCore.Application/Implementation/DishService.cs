@@ -197,9 +197,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var dishDetailsListDb = await dishDetailsRepository!.GetAllDataByExpression(p => p.DishId == item.DishId 
                                                                                                     && !p.IsDeleted
-                                                                                                    && (!startPrice.HasValue ||p.Price >= startPrice) 
-                                                                                                    && (!endPrice.HasValue ||p.Price <= endPrice), 
-                                                                                                    0, 0, p => p.Price, false, p => p.DishSize!);
+                                                                                                    && (!startPrice.HasValue ||p.Price * (1-p.Discount / 100) >= startPrice) 
+                                                                                                    && (!endPrice.HasValue ||p.Price * (1 - p.Discount / 100) <= endPrice), 
+                                                                                                    0, 0, p => p.Price * (1 - p.Discount / 100), false, p => p.DishSize!);
                     var dishSizeResponse = new DishSizeResponse();
                     dishSizeResponse.Dish = _mapper.Map<DishReponse>(item);
                     dishSizeResponse.DishSizeDetails = dishDetailsListDb.Items!.OrderBy(d => d.DishSizeId).ToList();

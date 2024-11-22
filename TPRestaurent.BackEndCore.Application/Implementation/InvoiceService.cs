@@ -25,6 +25,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Response;
 using System.Diagnostics.Contracts;
 using Newtonsoft.Json;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using Aspose.Pdf;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -173,6 +174,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         margin: 0;
         padding: 20px;
       }
+        .page {
+           contain: size;
+        }
       .container {
         background-color: #fff;
         max-width: 900px;
@@ -625,6 +629,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
       margin: 0;
       padding: 20px;
     }}
+        .page {{
+           contain: size;
+        }}
     .container {{
       background-color: #fff;
       width: 800px; /* Fixed width for PDF rendering */

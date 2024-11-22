@@ -19,6 +19,7 @@
     <None Remove="Implementation\" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Aspose.PDF" Version="24.11.0" />
     <PackageReference Include="AutoMapper" Version="13.0.1" />
     <PackageReference Include="BCrypt.Net" Version="0.1.0" />
     <PackageReference Include="DinkToPdf" Version="1.0.8" />
