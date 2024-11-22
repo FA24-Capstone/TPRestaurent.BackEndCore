@@ -100,7 +100,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             orderCombo = true;
                             orderDetail.Price = combo.Price;
                             orderDetail.ComboId = combo.ComboId;
-
+                            orderDetail.Discount = combo.Discount;
                             foreach (var dishComboId in o.Combo.DishComboIds)
                             {
                                 var dishCombo = await dishComboRepository.GetByExpression(d => d.DishComboId == dishComboId, null);
@@ -168,6 +168,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             orderDetail.OrderDetailStatusId = OrderDetailStatus.Unchecked;
                             orderDetail.OrderTime = utility!.GetCurrentDateTimeInTimeZone();
                             orderDetail.Note = o.Note;
+                            orderDetail.Discount = dishSizeDetail.Discount;
                             orderDetail.PreparationTime = await dishManagementService.CalculatePreparationTime(new List<CalculatePreparationTime>
                             {
                                 new CalculatePreparationTime
@@ -201,7 +202,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             });
                         }
 
-                        orderDb.TotalAmount += orderDetail.Price * orderDetail.Quantity;
+                        orderDb.TotalAmount += Math.Ceiling((1 - orderDetail.Discount / 100) * orderDetail.Price * orderDetail.Quantity / 1000) * 1000;
                         orderDetails.Add(orderDetail);
                     }
 
@@ -736,6 +737,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 orderDetail.DishSizeDetailId = item.DishSizeDetailId.Value;
                                 orderDetail.Price = dishSizeDetail.Price;
+                                orderDetail.Discount = dishSizeDetail.Discount;
                                 orderDetail.PreparationTime = await dishManagementService.CalculatePreparationTime(new List<CalculatePreparationTime>
                                                                                                                         {
                                                                                                                             new CalculatePreparationTime
@@ -786,6 +788,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 orderDetail.ComboId = item.Combo.ComboId;
                                 orderDetail.Price = combo.Price;
+                                orderDetail.Discount = combo.Discount;
 
                                 if (item.Combo.DishComboIds.Count == 0)
                                 {
@@ -856,7 +859,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                             orderDetails.Add(orderDetail);
                         }
-                        money = orderDetails.Sum(o => o.Quantity * o.Price);
+                        money = orderDetails.Sum(o => Math.Ceiling((1 - o.Discount / 100) * o.Price * o.Quantity / 1000) * 1000);
                         orderSession.PreparationTime = await dishManagementService.CalculatePreparationTime(estimatedPreparationTime);
                         await orderSessionRepository.Insert(orderSession);
                         await dishSizeDetailRepository.UpdateRange(dishSizeDetails);
@@ -1107,7 +1110,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var customerSavedCouponDb = await couponRepository!.GetAllDataByExpression(c => currentTime > c.CouponProgram.StartDate && currentTime < c.CouponProgram.ExpiryDate
                                                                                                        && c.CouponProgram.MinimumAmount <= money && !c.IsUsedOrExpired
                                                                                                        && c.AccountId.Equals(accountDb.Id) && !c.CouponProgram.IsDeleted
-                                                                                                       , 0, 0, null, false, null);
+                                                                                                       , 0, 0, null, false, c => c.CouponProgram);
                         if (customerSavedCouponDb.Items!.Count > 0 && customerSavedCouponDb.Items != null
                             && orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.CouponIds.Count > 0)
                         {
@@ -1476,8 +1479,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
 
                     var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderRequestDto.OrderId && o.OrderDetailStatusId != OrderDetailStatus.Cancelled, 0, 0, p => p.OrderTime, false, null);
-                    double money = 0;
-                    orderDetailDb.Items.ForEach(o => money += o.Price * o.Quantity);
+                    double money = orderDb.TotalAmount;
 
                     money -= ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0) ? Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000 : 0);
 
@@ -1506,7 +1508,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var customerSavedCouponDb = await couponRepository!.GetAllDataByExpression(c => currentTime > c.CouponProgram.StartDate && currentTime < c.CouponProgram.ExpiryDate 
                                                                                                         && c.CouponProgram.MinimumAmount <= money && !c.IsUsedOrExpired 
                                                                                                         && c.AccountId.Equals(accountDb.Id) && !c.CouponProgram.IsDeleted
-                                                                                                        , 0, 0, null, false, null);
+                                                                                                        , 0, 0, null, false, c => c.CouponProgram);
                         if (customerSavedCouponDb.Items!.Count > 0 && customerSavedCouponDb.Items != null
                             && orderRequestDto.CouponIds.Count > 0)
                         {
@@ -1977,7 +1979,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 result = BuildAppActionResultError(result, $"Không tìm thấy combo với id {reservationDish.Combo.ComboId}");
                                 return result;
                             }
-                            total += reservationDish.Quantity * comboDb.Price;
+                            total += Math.Ceiling((1 - comboDb.Discount / 100) * reservationDish.Quantity * comboDb.Price / 1000) * 1000;
                         }
                         else
                         {
@@ -1988,7 +1990,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 result = BuildAppActionResultError(result, $"Không tìm thấy món ăn với id {reservationDish.DishSizeDetailId}");
                                 return result;
                             }
-                            total += reservationDish.Quantity * dishSizeDetailDb.Price;
+                            total += Math.Ceiling((1 - dishSizeDetailDb.Discount / 100) * reservationDish.Quantity * dishSizeDetailDb.Price / 1000) * 1000;
                         }
                     }
                 }
@@ -2983,6 +2985,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 d => d.DishCombo.ComboOptionSet
             );
 
+            r.Combo.Price = r.Price;
+            r.Combo.Discount = r.Discount;
+
             return new ComboDishDto
             {
                 ComboId = r.Combo.ComboId,
@@ -3080,6 +3085,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else
                 {
+                    r.DishSizeDetail.Discount = r.Discount;
+                    r.DishSizeDetail.Price = r.Price;
                     reservationDishes.Add(new Common.DTO.Response.OrderDishDto
                     {
                         OrderDetailsId = r.OrderDetailId,

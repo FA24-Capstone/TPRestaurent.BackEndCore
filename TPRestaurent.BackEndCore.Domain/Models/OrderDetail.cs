@@ -24,6 +24,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Combo? Combo { get; set; }
         public int Quantity { get; set; }
         public double Price { get; set; }
+        public double Discount { get; set; }
         public string? Note { get; set; }
         public DateTime OrderTime { get; set; }
         public DateTime? HandOverTime { get; set; }
