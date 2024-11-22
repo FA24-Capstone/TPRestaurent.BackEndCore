@@ -605,6 +605,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto)
         {
             var result = new AppActionResult();
+
             try
             {
                 var utility = Resolve<Utility>();
@@ -645,8 +646,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 double money = 0;
                 var order = new Order();
                 Account accountDb = null;
-                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-                {
+
+              
+            await _unitOfWork.ExecuteInTransaction(async ()=>
+            {
+
                     order = new Order()
                     {
                         OrderId = Guid.NewGuid(),
@@ -659,7 +663,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         accountDb = await accountRepository.GetByExpression(c => c.Id == orderRequestDto.CustomerId.Value.ToString(), null);
                         if (accountDb == null)
                         {
-                            return BuildAppActionResultError(result, $"Xảy ra lỗi");
+                            throw new Exception($"Xảy ra lỗi");
                         }
 
                         order.AccountId = orderRequestDto.CustomerId.ToString();
@@ -668,7 +672,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             if (accountDb.Email.Contains("TPCustomer") || accountDb.LastName.ToLower().Contains("lastname") || accountDb.LastName.ToLower().Contains("firstname") || accountDb.DOB == new DateTime(1, 1, 1))
                             {
-                                return BuildAppActionResultError(result, $"Quý khách chưa cập nhật thông tin tài khoản nên không thể tạo đặt bàn");
+                                throw new Exception ( $"Quý khách chưa cập nhật thông tin tài khoản nên không thể tạo đặt bàn");
                             }
                         }
 
@@ -679,14 +683,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         || (orderRequestDto.OrderType == OrderType.MealWithoutReservation && orderRequestDto.MealWithoutReservation == null)
                         || (orderRequestDto.OrderType == OrderType.Delivery && orderRequestDto.DeliveryOrder == null))
                     {
-                        return BuildAppActionResultError(result, $"Loại đơn hàng và dữ liệu không trùng khớp");
+                      throw new Exception( $"Loại đơn hàng và dữ liệu không trùng khớp");
                     }
 
 
                     if (orderRequestDto.OrderType != OrderType.MealWithoutReservation && ((orderRequestDto!.ReservationOrder != null && orderRequestDto.ReservationOrder.PaymentMethod == 0)
                         || (orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.PaymentMethod == 0)))
                     {
-                        return BuildAppActionResultError(result, $"Yêu cầu phương thức thanh toán");
+                        throw new Exception( $"Yêu cầu phương thức thanh toán");
                     }
 
                     if (orderRequestDto.OrderDetailsDtos != null && orderRequestDto.OrderDetailsDtos.Count > 0)
@@ -732,7 +736,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 if (dishSizeDetail == null)
                                 {
-                                    return BuildAppActionResultError(result, $"Không tìm thấy món ăn có size với id {item.DishSizeDetailId.Value}");
+                                    throw new Exception( $"Không tìm thấy món ăn có size với id {item.DishSizeDetailId.Value}");
                                 }
 
                                 orderDetail.DishSizeDetailId = item.DishSizeDetailId.Value;
@@ -753,7 +757,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 });
                                 if (dishSizeDetail.QuantityLeft < item.Quantity)
                                 {
-                                    return BuildAppActionResultError(result, $"Món ăn {dishSizeDetail.Dish.Name} chỉ còn x{dishSizeDetail.QuantityLeft}");
+                                    throw new Exception( $"Món ăn {dishSizeDetail.Dish.Name} chỉ còn x{dishSizeDetail.QuantityLeft}");
                                 }
 
                                 if (orderRequestDto.OrderType == OrderType.MealWithoutReservation)
@@ -783,7 +787,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 if (combo == null)
                                 {
-                                    return BuildAppActionResultError(result, $"Không tìm thấy combo với id {item.Combo.ComboId}");
+                                    throw new Exception( $"Không tìm thấy combo với id {item.Combo.ComboId}");
                                 }
 
                                 orderDetail.ComboId = item.Combo.ComboId;
@@ -792,7 +796,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 if (item.Combo.DishComboIds.Count == 0)
                                 {
-                                    return BuildAppActionResultError(result, $"Không tìm thấy chi tiết cho combo {combo.Name}");
+                                    throw new Exception( $"Không tìm thấy chi tiết cho combo {combo.Name}");
                                 }
 
                                 foreach (var dishComboId in item.Combo.DishComboIds)
@@ -800,12 +804,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     var comboDetail = await dishComboRepository.GetByExpression(d => d.DishComboId == dishComboId, d => d.DishSizeDetail.Dish);
                                     if (comboDetail == null)
                                     {
-                                        return BuildAppActionResultError(result, $"Không tìm thấy chi tiết combo với id {dishComboId}");
+                                        throw new Exception( $"Không tìm thấy chi tiết combo với id {dishComboId}");
                                     }
 
                                     if (comboDetail.DishSizeDetail.QuantityLeft < item.Quantity * comboDetail.Quantity)
                                     {
-                                        return BuildAppActionResultError(result, $"Món ăn {comboDetail.DishSizeDetail.Dish.Name} chỉ còn x{comboDetail.DishSizeDetail.QuantityLeft}");
+                                        throw new Exception( $"Món ăn {comboDetail.DishSizeDetail.Dish.Name} chỉ còn x{comboDetail.DishSizeDetail.QuantityLeft}");
                                     }
 
                                     if (orderRequestDto.OrderType == OrderType.MealWithoutReservation)
@@ -854,7 +858,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                             else
                             {
-                                return BuildAppActionResultError(result, $"Không tìm thấy thông tin món ăn");
+                                throw new Exception(  $"Không tìm thấy thông tin món ăn");
                             }
 
                             orderDetails.Add(orderDetail);
@@ -880,7 +884,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         if(orderRequestDto.OrderType != OrderType.Reservation)
                         {
-                            return BuildAppActionResultError(result, $"Đơn hàng bắt buộc có ít nhất một món");
+                            throw new Exception( $"Đơn hàng bắt buộc có ít nhất một món");
                         }
                     }
 
@@ -891,29 +895,28 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         if (orderRequestDto.ReservationOrder == null)
                         {
-                            return BuildAppActionResultError(result, $"Thiếu thông tin để tạo đặt bàn");
+                            throw new Exception( $"Thiếu thông tin để tạo đặt bàn");
                         }
 
 
                         if (orderRequestDto.ReservationOrder.Deposit < 0)
                         {
-                            result = BuildAppActionResultError(result, $"Số tiền cọc không hợp lệ");
-                            return result;
+                            throw new Exception( $"Số tiền cọc không hợp lệ");
                         }
 
                         if (orderRequestDto.ReservationOrder == null)
                         {
-                            return BuildAppActionResultError(result, $"Thiếu thông tin để tạo đặt bàn");
+                            throw new Exception( $"Thiếu thông tin để tạo đặt bàn");
                         }
 
                         if (orderRequestDto.ReservationOrder == null)
                         {
-                            return BuildAppActionResultError(result, $"Thiếu thông tin để tạo đặt bàn");
+                            throw new Exception( $"Thiếu thông tin để tạo đặt bàn");
                         }
                         if (orderRequestDto.ReservationOrder.MealTime < utility!.GetCurrentDateTimeInTimeZone())
                         {
-                            result = BuildAppActionResultError(result, "Thời gian đặt bàn không hợp lệ");
-                            return result;
+                            throw new Exception(  "Thời gian đặt bàn không hợp lệ");
+                          
                         }
 
                         order.StatusId = OrderStatus.TableAssigned;
@@ -937,14 +940,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         if (!suggestedTables.IsSuccess)
                         {
-                            return BuildAppActionResultError(result, $"Xảy ra lỗi khi xếp bàn. Vui lòng thử lại");
+                            throw new Exception(  $"Xảy ra lỗi khi xếp bàn. Vui lòng thử lại");
                         }
 
                         if (suggestedTables.Result == null)
                         {
-                            return BuildAppActionResultError(result, $"Không có bàn trống cho {orderRequestDto.ReservationOrder.NumberOfPeople} người " +
-                                                                       $"vào lúc {orderRequestDto.ReservationOrder.MealTime.Hour}h{orderRequestDto.ReservationOrder.MealTime.Minute}p " +
-                                                                       $"ngày {orderRequestDto.ReservationOrder.MealTime.Date}");
+                            throw new Exception( $"Không có bàn trống cho {orderRequestDto.ReservationOrder.NumberOfPeople} người " +
+                                                 $"vào lúc {orderRequestDto.ReservationOrder.MealTime.Hour}h{orderRequestDto.ReservationOrder.MealTime.Minute}p " +
+                                                 $"ngày {orderRequestDto.ReservationOrder.MealTime.Date}");
                         }
 
                         if (suggestedTables.Messages.Count > 0)
@@ -990,8 +993,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 // Tạo danh sách các tên bàn thành chuỗi phân cách bằng dấu phẩy
                                 var tableNames = string.Join(", ", collidedTable.Select(ct => ct.TableName));
 
-                                result = BuildAppActionResultError(result, $"Sắp xếp bàn chưa hợp lí. Trong danh sách nhập vào có các bàn đang hoặc đã được đặt từ trước, gồm: {tableNames}");
-                                return result;
+                                throw new Exception(  $"Sắp xếp bàn chưa hợp lí. Trong danh sách nhập vào có các bàn đang hoặc đã được đặt từ trước, gồm: {tableNames}");
                             }
 
                             foreach (var tableId in orderRequestDto.MealWithoutReservation.TableIds)
@@ -1030,7 +1032,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                         else
                         {
-                            return BuildAppActionResultError(result, "Không có thông tin bàn");
+                            throw new Exception(  "Không có thông tin bàn");
                         }
                     }
                     else if (orderRequestDto.OrderType == OrderType.Delivery)
@@ -1041,19 +1043,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.OrderDate = utility.GetCurrentDateTimeInTimeZone();
                         if (accountDb == null)
                         {
-                            return BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng. Đặt hàng thất bại");
+                            throw new Exception( $"Không tìm thấy thông tin khách hàng. Đặt hàng thất bại");
                         }
 
                         if (orderDetails.Count == 0)
                         {
-                            return BuildAppActionResultError(result, "Đơn hàng không thực hiện đặt món.");
+                            throw new Exception( "Đơn hàng không thực hiện đặt món.");
                         }
 
                         order.AccountId = accountDb.Id;
 
                         if (string.IsNullOrEmpty(accountDb.Address))
                         {
-                            return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ của bạn. Vui lòng cập nhật địa chỉ");
+                            throw new Exception( $"Không tìm thấy địa chỉ của bạn. Vui lòng cập nhật địa chỉ");
                         }
 
                         var restaurantLatConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LATITUDE);
@@ -1063,7 +1065,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var customerInfoAddressListDb = await customerInfoAddressRepository!.GetAllDataByExpression(p => p.CustomerInfoAddressName == accountDb.Address, 0, 0, null, false, null);
                         if (customerInfoAddressListDb.Items.Count == 0)
                         {
-                            return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ {accountDb.Address}");
+                            throw new Exception( $"Không tìm thấy địa chỉ {accountDb.Address}");
                         }
 
                         var customerAddressDb = customerInfoAddressListDb.Items.FirstOrDefault(c => c.IsCurrentUsed && !c.IsDeleted);
@@ -1088,12 +1090,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var element = distanceResponse.Result as EstimatedDeliveryTimeDto.Response;
                         if(element == null)
                         {
-                            return BuildAppActionResultError(result, $"Xảy ra lỗi khi tính khoảng cách. Vui lòng thủ lại sau");
+                            throw new Exception( $"Xảy ra lỗi khi tính khoảng cách. Vui lòng thủ lại sau");
                         }
                         var distance = element!.TotalDistance;
                         if (distance > maxDistanceToOrder)
                         {
-                            return BuildAppActionResultError(result, $"Nhà hàng chỉ hỗ trợ cho đơn giao hàng trong bán kính 10km");
+                            throw new Exception( $"Nhà hàng chỉ hỗ trợ cho đơn giao hàng trong bán kính 10km");
                         }
 
                         order.TotalDistance = element.Elements.FirstOrDefault().Distance.Text;
@@ -1102,7 +1104,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var shippingCost = await CalculateDeliveryOrder(customerAddressDb.CustomerInfoAddressId);
                         if (shippingCost.Result == null)
                         {
-                            return BuildAppActionResultError(result, $"Xảy ra lỗi khi tính phí giao hàng. Vui lòng kiểm tra lại thông tin địa chỉ");
+                            throw new Exception( $"Xảy ra lỗi khi tính phí giao hàng. Vui lòng kiểm tra lại thông tin địa chỉ");
                         }
                         money += double.Parse(shippingCost.Result.ToString());
 
@@ -1125,7 +1127,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 if (coupon == null)
                                 {
-                                    return BuildAppActionResultError(result, $"Không tìm thấy coupon với id {couponId}");
+                                    throw new Exception( $"Không tìm thấy coupon với id {couponId}");
                                 }
 
                                 //var orderAppliedCoupon = new OrderAppliedCoupon
@@ -1175,7 +1177,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             else
                             {
                                 // Handle the case where the user doesn't have enough points
-                                return BuildAppActionResultError(result, "Không đủ điểm tích lũy để sử dụng.");
+                                throw new Exception( "Không đủ điểm tích lũy để sử dụng.");
                             }
                         }
 
@@ -1231,7 +1233,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     else
                     {
-                        return BuildAppActionResultError(result, $"Thiếu loại đơn hàng (orderType) trong yêu cầu tạo");
+                        throw new Exception( $"Thiếu loại đơn hàng (orderType) trong yêu cầu tạo");
                     }
 
                     if (!BuildAppActionResultIsError(result))
@@ -1255,7 +1257,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             var linkPaymentDb = await transcationService!.CreatePayment(paymentRequest);
                             if (!linkPaymentDb.IsSuccess)
                             {
-                                return BuildAppActionResultError(result, String.Join(", ", linkPaymentDb.Messages));
+                                throw new Exception( String.Join(", ", linkPaymentDb.Messages));
                             }
 
                             if ((orderRequestDto.DeliveryOrder?.PaymentMethod != null && orderRequestDto.DeliveryOrder?.PaymentMethod == PaymentMethod.STORE_CREDIT)
@@ -1272,9 +1274,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     }
                     result.Result = orderWithPayment;
-                    scope.Complete();
 
-                }
+                });
                 if (orderRequestDto.DeliveryOrder != null || orderRequestDto.ReservationOrder != null)
                 {
                     StringBuilder messageBody = new StringBuilder();
