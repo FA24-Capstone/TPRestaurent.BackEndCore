@@ -223,7 +223,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 string requestType = "payWithATM";
 
                                 string requestId = Guid.NewGuid().ToString();
-                                string extraData = transaction.OrderId.ToString();
+                                string extraData = transaction.Id.ToString();
 
                                 string rawHash = "accessKey=" + accessKey +
                                                  "&amount=" + (Math.Ceiling(transaction.Amount / 1000) * 1000)
