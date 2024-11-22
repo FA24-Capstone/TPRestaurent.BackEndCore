@@ -4302,5 +4302,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+        public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful, OrderStatus? status, bool? asCustomer, bool? requireSignalR = true)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                await _unitOfWork.ExecuteInTransaction(async () =>
+                {
+                    result = await ChangeOrderStatusService(orderId, IsSuccessful, status, asCustomer, requireSignalR);
+                });
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
     }
 }
