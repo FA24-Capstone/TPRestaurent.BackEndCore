@@ -47,6 +47,8 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public string? ShipperId { get; set; }
         [ForeignKey(nameof(ShipperId))]
         public Account? Shipper { get; set; }
+        public string? TotalDistance { get; set; }
+        public string? TotalDuration { get; set; }
         public string? CancelDeliveryReason { get; set; }
     }
 }

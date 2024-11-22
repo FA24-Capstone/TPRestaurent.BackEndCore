@@ -10,8 +10,8 @@ public class TemplateMappingHelper
         VERIFICATION_CODE,
         FORGOTPASSWORD,
         CONTRACT_CODE,
-        TOURGUIDE_ACCOUNT_CREATION
-       
+        TOURGUIDE_ACCOUNT_CREATION,
+       INSUFFICIENT_COUPON_QUANTITY
     }
 
     public static string GetTemplateOTPEmail(ContentEmailType type, string body, string name)
@@ -668,6 +668,119 @@ public class TemplateMappingHelper
 
 ";
                 break;
+            case ContentEmailType.INSUFFICIENT_COUPON_QUANTITY:
+                content = @"
+<html>
+  <head>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 20 auto;
+        border-radius: 5px;
+        box-shadow: 0px 0px 5px 2px #ccc;
+      }
+
+      .header {
+        text-align: center;
+        background-color: #ffba00;
+        padding: 20px;
+      }
+
+      .title {
+        color: black;
+        font-size: 30px;
+        font-weight: bold;
+      }
+
+      .mainBody {
+        background-color: #ffffff;
+        padding: 20px;
+      }
+
+      .emailBody {
+        margin: 5 5;
+        font-size: 16px;
+        color: #333;
+      }
+
+      .couponList {
+        margin: 10 5;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        list-style-type: none;
+      }
+
+      .couponList li {
+        margin: 5px 0;
+        padding: 10px;
+        background-color: #fff8ea;
+        border-radius: 3px;
+        box-shadow: 0px 0px 3px 1px #ccc;
+      }
+
+      .support {
+        font-size: 15px;
+        font-style: italic;
+        margin: 5 5;
+      }
+
+      .signature {
+        text-align: right;
+        font-size: 16px;
+        margin: 5 5;
+      }
+
+      .footer {
+        text-align: center;
+        background-color: #ffba00;
+        padding: 10px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class=""container"">
+      <div class=""header"">
+        <p class=""title"">Nhà hàng Thiên Phú</p>
+      </div>
+      <div class=""mainBody"">
+        <h2 class=""emailBody"">Kính gửi Quản trị viên,</h2>
+        <p class=""emailBody"">
+          Đây là thông báo về quy trình tự động gán mã giảm giá. Hiện tại, số lượng của các coupon sau không đủ và cần được cập nhật:
+        </p>
+        " + body + @"
+        <p class=""emailBody"">
+          Vui lòng đăng nhập vào hệ thống và cập nhật số lượng coupon để đảm bảo quy trình không bị gián đoạn.
+        </p>
+        <p class=""support"">
+          Nếu cần hỗ trợ, vui lòng liên hệ <u><i>qk.backend@gmail.com</i></u>.
+        </p>
+        <div class=""signature"">
+          <p>Trân trọng,</p>
+          <p><b>Hệ thống Nhà hàng Thiên Phú</b></p>
+        </div>
+      </div>
+      <div class=""footer"">
+        <p>Email này được gửi tự động. Vui lòng không trả lời trực tiếp.</p>
+      </div>
+    </div>
+  </body>
+</html>
+";
+                break;
+           
         }
         return content;
     }

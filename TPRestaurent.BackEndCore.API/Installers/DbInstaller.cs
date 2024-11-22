@@ -11,7 +11,13 @@ public class DbInstaller : IInstaller
     {
         services.AddDbContext<TPRestaurentDBContext>(option =>
         {
-            option.UseSqlServer(configuration["ConnectionStrings:Host"]);
+            option.UseSqlServer(configuration["ConnectionStrings:Host"],
+                options => options.EnableRetryOnFailure(
+                    maxRetryCount: 5, // Number of retries
+                    maxRetryDelay: TimeSpan.FromSeconds(5), // Delay between retries
+                    errorNumbersToAdd: null // Optionally, specify error numbers to trigger retries
+                )
+                );
         });
 
         services.AddIdentity<Account, IdentityRole>().AddEntityFrameworkStores<TPRestaurentDBContext>()

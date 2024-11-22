@@ -28,7 +28,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> EnableNotification(string deviceToken, HttpContext httpContext)
         {
             var result = new AppActionResult();
-            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            await _unitOfWork.ExecuteInTransaction(async () =>
             {
                 try
                 {
@@ -38,10 +38,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     string deviceName = ParseDeviceNameFromUserAgent(userAgent);
                     string token = ExtractJwtToken(headers["Authorization"]);
 
-                    var tokenDb = await _tokenRepository.GetByExpression(p => p.AccessTokenValue == token, p => p.Account!);
+                    var tokenDb =
+                        await _tokenRepository.GetByExpression(p => p.AccessTokenValue == token, p => p.Account!);
                     if (tokenDb == null)
                     {
-                        return BuildAppActionResultError(result, $"Không tìm thấy token với {token}");
+                        throw new Exception($"Không tìm thấy token với {token}");
                     }
 
                     var userIP = GetClientIpAddress(httpContext);
@@ -54,14 +55,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         await _tokenRepository.Update(tokenDb);
                         await _unitOfWork.SaveChangesAsync();
-                        scope.Complete();
                     }
                 }
                 catch (Exception ex)
                 {
                     result = BuildAppActionResultError(result, ex.Message);
                 }
-            }
+            });
             return result;
         }
 
@@ -157,7 +157,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var tokenDb = await _tokenRepository.GetByExpression(p => p.TokenId == tokenId);
                 if (tokenDb == null)
                 {
-                    return BuildAppActionResultError(result, $"Token với id {tokenId} không tồn tại");
+                 throw new Exception ( $"Token với id {tokenId} không tồn tại");
                 }
                 else
                 {
@@ -188,7 +188,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var tokenDb = await _tokenRepository.GetByExpression(p => p.AccessTokenValue == accessToken && p.DeviceIP == userIP, p => p.Account!);
                 if (tokenDb == null)
                 {
-                    return BuildAppActionResultError(result, $"Không tìm thấy token ");
+                 throw new Exception ( $"Không tìm thấy token ");
                 }
 
                 result.Result = tokenDb;

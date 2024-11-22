@@ -89,14 +89,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             RecurringJob.AddOrUpdate(() => _orderSessionService.UpdateLateOrderSession(), Cron.MinuteInterval(3), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _orderService.CancelOrder(), Cron.MinuteInterval(10), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _invoiceService.GenerateInvoice(), "01 0 * * *", vietnamTimeZone);
-            RecurringJob.AddOrUpdate(() => _dishService.AutoRefillDish(), "01 0 * * *", vietnamTimeZone);
+            RecurringJob.AddOrUpdate(() => _dishService.AutoRefillDish(), "02 0 * * *", vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _groupedDishCraftService.RemoveOverdueGroupedDish(), "04 0 * * *", vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _dishManagementService.UpdateComboAvailability(), "03 0 * * *", vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _orderSessionService.ClearOrderSessionDaily(), Cron.DayInterval(1), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _couponService.GetBirthdayUserForCoupon(), Cron.MonthInterval(1), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _couponService.ResetUserRank(), Cron.MonthInterval(1), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _couponService.RemoveExpiredCoupon(), Cron.DayInterval(1), vietnamTimeZone);
-            
+            RecurringJob.AddOrUpdate(() => _couponService.AssignCouponToUserWithRank(), "5 0 1 * *", vietnamTimeZone);
+
 
 
 
