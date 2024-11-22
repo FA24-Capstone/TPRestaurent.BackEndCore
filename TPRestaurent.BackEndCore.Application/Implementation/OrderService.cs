@@ -1,4 +1,5 @@
 using AutoMapper;
+using MailKit;
 using Microsoft.AspNetCore.Identity;
 using NPOI.SS.Formula.Functions;
 using System.Linq.Expressions;
@@ -13,6 +14,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
+using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
 using Transaction = TPRestaurent.BackEndCore.Domain.Models.Transaction;
 using Utility = TPRestaurent.BackEndCore.Common.Utils.Utility;
 
@@ -3325,7 +3327,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var startLatConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LATITUDE);
                 var startLngConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LNG);
-
+                
                 var startLat = Double.Parse(startLatConfig.CurrentValue);
                 var startLng = Double.Parse(startLngConfig.CurrentValue);
 
@@ -3367,23 +3369,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         order.OrderDetail = orderDetailDb.Items.FirstOrDefault();
                         order.ItemLeft = orderDetailDb.Items.Count() - 1;
-
-                        //var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.CustomerInfoAddressId == order.AddressId);
-                        //if (customerAddressDb == null)
-                        //{
-                        //    return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ với id {order.AccountId}");
-                        //}
-
-                        //double[] endDestination = new double[2];
-                        //endDestination[0] = customerAddressDb.Lat;
-                        //endDestination[1] = customerAddressDb.Lng;
-                        //Task.Delay(350);
-                        //var estimateDelivery = await mapService!.GetEstimateDeliveryResponse(startDestination, endDestination);
-                        //if (estimateDelivery.IsSuccess && estimateDelivery.Result is EstimatedDeliveryTimeDto.Response response)
-                        //{
-                        //    order.TotalDistance = response.Elements.FirstOrDefault().Distance.Text;
-                        //    order.TotalDuration = response.Elements.FirstOrDefault().Duration.Text;
-                        //}
                     }
                 }
                 result.Result = new PagedResult<OrderWithFirstDetailResponse>
