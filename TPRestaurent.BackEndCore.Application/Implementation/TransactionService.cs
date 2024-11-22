@@ -52,7 +52,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> CreatePayment(PaymentRequestDto paymentRequest)
         {
             AppActionResult result = new AppActionResult();
-            using (var scope = new System.Transactions.TransactionScope(System.Transactions.TransactionScopeAsyncFlowOption.Enabled))
+            await _unitOfWork.ExecuteInTransaction(async () =>
             {
                 try
                 {
@@ -64,17 +64,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var utility = Resolve<Utility>();
                     var transaction = new Transaction();
                     IConfiguration config = new ConfigurationBuilder()
-                          .SetBasePath(Directory.GetCurrentDirectory())
-                          .AddJsonFile("appsettings.json", true, true)
-                          .Build();
+                        .SetBasePath(Directory.GetCurrentDirectory())
+                        .AddJsonFile("appsettings.json", true, true)
+                        .Build();
                     string key = config["HashingKeys:PaymentLink"];
                     string paymentUrl = "";
                     double amount = 0;
                     if (!paymentRequest.OrderId.HasValue && string.IsNullOrEmpty(paymentRequest.AccountId))
                     {
                         result = BuildAppActionResultError(result, $"Đơn hàng/Đặt bàn/Ví này không tồn tại");
-                        return result;
                     }
+
                     if (!BuildAppActionResultIsError(result))
                     {
 
@@ -83,14 +83,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             case Domain.Enums.PaymentMethod.VNPAY:
                                 if (paymentRequest.OrderId.HasValue)
                                 {
-                                    var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
-                                    if(orderDb.StatusId == OrderStatus.Completed || orderDb.StatusId == OrderStatus.Cancelled)
+                                    var orderDb =
+                                        await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId,
+                                            p => p.Account!);
+                                    if (orderDb.StatusId == OrderStatus.Completed ||
+                                        orderDb.StatusId == OrderStatus.Cancelled)
                                     {
-                                        result = BuildAppActionResultError(result, $"Đơn hàng đã hủy hoặc đã được thanh toán thành công");
-                                        return result;
-                                    }
+                                        result = BuildAppActionResultError(result,
+                                            $"Đơn hàng đã hủy hoặc đã được thanh toán thành công");
+                                                    }
 
-                                    if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
+                                    if ((orderDb.OrderTypeId != OrderType.Delivery &&
+                                         (orderDb.StatusId == OrderStatus.TemporarilyCompleted ||
+                                          orderDb.StatusId == OrderStatus.Processing))
                                         || orderDb.StatusId == OrderStatus.Pending)
                                     {
                                         amount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
@@ -103,9 +108,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         }
                                         else
                                         {
-                                            return BuildAppActionResultError(result, $"Số tiền thanh toán không hợp lệ");
+                                         throw new Exception ( 
+                                                $"Số tiền thanh toán không hợp lệ");
                                         }
                                     }
+
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
@@ -114,12 +121,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         OrderId = orderDb.OrderId,
                                         Date = utility!.GetCurrentDateTimeInTimeZone(),
                                         TransationStatusId = TransationStatus.PENDING,
-                                        TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned ? TransactionType.Deposit : TransactionType.Order
+                                        TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned
+                                            ? TransactionType.Deposit
+                                            : TransactionType.Order
                                     };
 
                                     var paymentInformationRequest = new PaymentInformationRequest
                                     {
-                                        TransactionID  = transaction.Id.ToString(),
+                                        TransactionID = transaction.Id.ToString(),
                                         PaymentMethod = paymentRequest.PaymentMethod,
                                         Amount = amount,
                                         CustomerName = orderDb!?.Account!?.LastName,
@@ -127,7 +136,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     };
 
                                     await _repository.Insert(transaction);
-                                    paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest);
+                                    paymentUrl =
+                                        await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest);
 
                                     result.Result = paymentUrl;
                                 }
@@ -157,17 +167,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         };
 
                                         await _repository.Insert(transaction);
-                                        paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest);
+                                        paymentUrl =
+                                            await paymentGatewayService!.CreatePaymentUrlVnpay(
+                                                paymentInformationRequest);
 
                                         result.Result = paymentUrl;
                                     }
                                 }
+
                                 break;
                             case Domain.Enums.PaymentMethod.MOMO:
                                 if (paymentRequest.OrderId.HasValue)
                                 {
-                                    var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
-                                    if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
+                                    var orderDb =
+                                        await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId,
+                                            p => p.Account!);
+                                    if ((orderDb.OrderTypeId != OrderType.Delivery &&
+                                         (orderDb.StatusId == OrderStatus.TemporarilyCompleted ||
+                                          orderDb.StatusId == OrderStatus.Processing))
                                         || orderDb.StatusId == OrderStatus.Pending)
                                     {
                                         amount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
@@ -180,9 +197,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         }
                                         else
                                         {
-                                            return BuildAppActionResultError(result, $"Số tiền thanh toán không hợp lệ");
+                                         throw new Exception ( 
+                                                $"Số tiền thanh toán không hợp lệ");
                                         }
                                     }
+
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
@@ -191,7 +210,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         OrderId = orderDb.OrderId,
                                         Date = utility!.GetCurrentDateTimeInTimeZone(),
                                         TransationStatusId = TransationStatus.PENDING,
-                                        TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned ? TransactionType.Deposit : TransactionType.Order
+                                        TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned
+                                            ? TransactionType.Deposit
+                                            : TransactionType.Order
                                     };
 
                                     string endpoint = _momoConfiguration.Api;
@@ -207,7 +228,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     string extraData = transaction.OrderId.ToString();
 
                                     string rawHash = "accessKey=" + accessKey +
-                                                     "&amount=" + (Math.Ceiling(transaction.Amount / 1000) * 1000).ToString() +
+                                                     "&amount=" + (Math.Ceiling(transaction.Amount / 1000) * 1000)
+                                                     .ToString() +
                                                      "&extraData=" + extraData +
                                                      "&ipnUrl=" + ipnUrl +
                                                      "&orderId=" + transaction.Id +
@@ -221,21 +243,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     string signature = crypto.signSHA256(rawHash, secretkey);
 
                                     JObject message = new JObject
-                                {
-                                    { "partnerCode", partnerCode },
-                                    { "partnerName", "Test" },
-                                    { "storeId", "MomoTestStore" },
-                                    { "requestId", requestId },
-                                    { "amount", amount },
-                                    { "orderId", transaction.Id },
-                                    { "orderInfo", orderInfo },
-                                    { "redirectUrl", redirectUrl },
-                                    { "ipnUrl", ipnUrl },
-                                    { "lang", "en" },
-                                    { "extraData", extraData },
-                                    { "requestType", requestType },
-                                    { "signature", signature }
-                                };
+                                    {
+                                        { "partnerCode", partnerCode },
+                                        { "partnerName", "Test" },
+                                        { "storeId", "MomoTestStore" },
+                                        { "requestId", requestId },
+                                        { "amount", amount },
+                                        { "orderId", transaction.Id },
+                                        { "orderInfo", orderInfo },
+                                        { "redirectUrl", redirectUrl },
+                                        { "ipnUrl", ipnUrl },
+                                        { "lang", "en" },
+                                        { "extraData", extraData },
+                                        { "requestType", requestType },
+                                        { "signature", signature }
+                                    };
 
                                     var client = new RestClient();
                                     var request = new RestRequest(endpoint, Method.Post);
@@ -250,7 +272,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
                                 else if (!string.IsNullOrEmpty(paymentRequest.AccountId))
                                 {
-                                    if(paymentRequest.StoreCreditAmount > 0)
+                                    if (paymentRequest.StoreCreditAmount > 0)
                                     {
                                         {
                                             var accountDb = await accountRepository!.GetById(paymentRequest.AccountId);
@@ -278,7 +300,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             string extraData = transaction.OrderId.ToString();
 
                                             string rawHash = "accessKey=" + accessKey +
-                                                             "&amount=" + (Math.Ceiling(transaction.Amount / 1000) * 1000).ToString() +
+                                                             "&amount=" +
+                                                             (Math.Ceiling(transaction.Amount / 1000) * 1000)
+                                                             .ToString() +
                                                              "&extraData=" + extraData +
                                                              "&ipnUrl=" + ipnUrl +
                                                              "&orderId=" + transaction.Id +
@@ -292,21 +316,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             string signature = crypto.signSHA256(rawHash, secretkey);
 
                                             JObject message = new JObject
-                                {
-                                     { "partnerCode", partnerCode },
-                                    { "partnerName", "Test" },
-                                    { "storeId", "MomoTestStore" },
-                                    { "requestId", requestId },
-                                    { "amount", amount },
-                                    { "orderId", transaction.Id },
-                                    { "orderInfo", orderInfo },
-                                    { "redirectUrl", redirectUrl },
-                                    { "ipnUrl", ipnUrl },
-                                    { "lang", "en" },
-                                    { "extraData", extraData },
-                                    { "requestType", requestType },
-                                    { "signature", signature }
-                                };
+                                            {
+                                                { "partnerCode", partnerCode },
+                                                { "partnerName", "Test" },
+                                                { "storeId", "MomoTestStore" },
+                                                { "requestId", requestId },
+                                                { "amount", amount },
+                                                { "orderId", transaction.Id },
+                                                { "orderInfo", orderInfo },
+                                                { "redirectUrl", redirectUrl },
+                                                { "ipnUrl", ipnUrl },
+                                                { "lang", "en" },
+                                                { "extraData", extraData },
+                                                { "requestType", requestType },
+                                                { "signature", signature }
+                                            };
 
                                             var client = new RestClient();
                                             var request = new RestRequest(endpoint, Method.Post);
@@ -323,18 +347,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                     ////
                                 }
+
                                 break;
                             case Domain.Enums.PaymentMethod.STORE_CREDIT:
                                 if (paymentRequest.OrderId.HasValue)
                                 {
-                                    var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
+                                    var orderDb =
+                                        await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId,
+                                            p => p.Account!);
 
-                                    if(orderDb.Account == null)
+                                    if (orderDb.Account == null)
                                     {
-                                        return BuildAppActionResultError(result, $"Không tìm thấy tài khoản đặt hàng. Khôn thể thực hiện thanh toán với phương thức: Thanh toán với số dư tài khoản.");
+                                     throw new Exception ( 
+                                            $"Không tìm thấy tài khoản đặt hàng. Khôn thể thực hiện thanh toán với phương thức: Thanh toán với số dư tài khoản.");
                                     }
 
-                                    if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
+                                    if ((orderDb.OrderTypeId != OrderType.Delivery &&
+                                         (orderDb.StatusId == OrderStatus.TemporarilyCompleted ||
+                                          orderDb.StatusId == OrderStatus.Processing))
                                         || orderDb.StatusId == OrderStatus.Pending)
                                     {
                                         amount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
@@ -347,19 +377,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         }
                                         else
                                         {
-                                            return BuildAppActionResultError(result, $"Số tiền thanh toán không hợp lệ");
+                                         throw new Exception ( 
+                                                $"Số tiền thanh toán không hợp lệ");
                                         }
                                     }
 
                                     var accountDb = await accountRepository.GetById(orderDb.AccountId);
-                                    if(accountDb == null)
+                                    if (accountDb == null)
                                     {
-                                        return BuildAppActionResultError(result, $"Không tìm thấy số dư tài khoản khách hàng");
+                                     throw new Exception ( 
+                                            $"Không tìm thấy số dư tài khoản khách hàng");
                                     }
 
-                                    if(accountDb.StoreCreditAmount < amount)
+                                    if (accountDb.StoreCreditAmount < amount)
                                     {
-                                        return BuildAppActionResultError(result, $"Số dư tài khoản của quý khách không đủ");
+                                     throw new Exception ( 
+                                            $"Số dư tài khoản của quý khách không đủ");
                                     }
 
                                     accountDb.StoreCreditAmount -= amount;
@@ -372,28 +405,36 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         Date = utility!.GetCurrentDateTimeInTimeZone(),
                                         PaidDate = utility!.GetCurrentDateTimeInTimeZone(),
                                         TransationStatusId = TransationStatus.SUCCESSFUL,
-                                        TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned ? TransactionType.Deposit : TransactionType.Order
+                                        TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned
+                                            ? TransactionType.Deposit
+                                            : TransactionType.Order
                                     };
 
                                     await _repository.Insert(transaction);
                                     await accountRepository.Update(accountDb);
                                     //await orderService.ChangeOrderStatus(orderDb.OrderId, true);
                                 }
+
                                 break;
                             default:
-                                if(paymentRequest.PaymentMethod == PaymentMethod.ZALOPAY)
+                                if (paymentRequest.PaymentMethod == PaymentMethod.ZALOPAY)
                                 {
-                                    return BuildAppActionResultError(result, $"Hệ thống chưa hỗ trợ thanh toán với ZALOPAY");
+                                 throw new Exception ( 
+                                        $"Hệ thống chưa hỗ trợ thanh toán với ZALOPAY");
                                 }
 
                                 if (paymentRequest.OrderId.HasValue)
                                 {
-                                    var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
-                                    if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
+                                    var orderDb =
+                                        await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId,
+                                            p => p.Account!);
+                                    if ((orderDb.OrderTypeId != OrderType.Delivery &&
+                                         (orderDb.StatusId == OrderStatus.TemporarilyCompleted ||
+                                          orderDb.StatusId == OrderStatus.Processing))
                                         || orderDb.StatusId == OrderStatus.Pending)
                                     {
                                         amount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
-                                    } 
+                                    }
                                     else
                                     {
                                         if (orderDb.Deposit.HasValue)
@@ -402,7 +443,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         }
                                         else
                                         {
-                                            return BuildAppActionResultError(result, $"Số tiền thanh toán không hợp lệ");
+                                         throw new Exception ( 
+                                                $"Số tiền thanh toán không hợp lệ");
                                         }
                                     }
 
@@ -414,7 +456,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         OrderId = orderDb.OrderId,
                                         Date = utility!.GetCurrentDateTimeInTimeZone(),
                                         TransationStatusId = TransationStatus.PENDING,
-                                        TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned ? TransactionType.Deposit : TransactionType.Order
+                                        TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned
+                                            ? TransactionType.Deposit
+                                            : TransactionType.Order
                                     };
                                     await _repository.Insert(transaction);
                                     result.Result = transaction;
@@ -427,9 +471,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                         if (storeCreditDb == null)
                                         {
-                                            result = BuildAppActionResultError(result, $"Khong tìm thấy thông tin ví với id {paymentRequest.AccountId}");
-                                            return result;
-                                        }
+                                            result = BuildAppActionResultError(result,
+                                                $"Khong tìm thấy thông tin ví với id {paymentRequest.AccountId}");
+                                                            }
 
                                         transaction = new Transaction
                                         {
@@ -445,21 +489,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         await _repository.Insert(transaction);
                                     }
                                 }
+
                                 break;
                         }
                     }
+
                     if (!BuildAppActionResultIsError(result))
                     {
                         await _unitOfWork.SaveChangesAsync();
-                        scope.Complete();
                     }
                 }
                 catch (Exception ex)
                 {
                     result = BuildAppActionResultError(result, ex.Message);
                 }
-                
-            }
+
+            });
 
             return result;
         }
@@ -660,11 +705,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 if (order == null)
                 {
-                    return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng");
+                 throw new Exception (  $"Không tìm thấy đơn hàng");
                 }
                 if (!order.CancelledTime.HasValue || order.StatusId != OrderStatus.Cancelled)
                 {
-                    return BuildAppActionResultError(result, $"Đơn hàng chưa được huỷ");
+                 throw new Exception (  $"Đơn hàng chưa được huỷ");
                 }
 
                 var utility = Resolve<Utility>();
@@ -689,13 +734,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if(refundedOrderDb.Items.Count() > 0)
                 {
-                    return BuildAppActionResultError(result, $"Đơn hàng đã được hàng tiền");
+                 throw new Exception (  $"Đơn hàng đã được hàng tiền");
                 }
 
                 var timeConfigurationDb = await configurationRepository.GetByExpression(t => t.Name.Equals(SD.DefaultValue.TIME_FOR_REFUND));
                 if(timeConfigurationDb == null)
                 {
-                    return BuildAppActionResultError(result, $"không tìm thấy cấu hình tên {SD.DefaultValue.TIME_FOR_REFUND}");
+                 throw new Exception (  $"không tìm thấy cấu hình tên {SD.DefaultValue.TIME_FOR_REFUND}");
                 }
 
 
@@ -715,7 +760,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 if (percentageConfigurationDb == null)
                 {
-                    return BuildAppActionResultError(result, $"không tìm thấy cấu hình tên {SD.DefaultValue.REFUND_PERCENTAGE_AS_ADMIN}");
+                 throw new Exception (  $"không tìm thấy cấu hình tên {SD.DefaultValue.REFUND_PERCENTAGE_AS_ADMIN}");
                 }
 
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();

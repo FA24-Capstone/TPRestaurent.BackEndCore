@@ -57,32 +57,38 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> AddStoreCredit(Guid transactionId)
         {
             AppActionResult result = new AppActionResult();
-            using (var scope = new System.Transactions.TransactionScope(System.Transactions.TransactionScopeAsyncFlowOption.Enabled))
+            await _unitOfWork.ExecuteInTransaction(async () =>
             {
                 try
                 {
                     //Validate in transaction
                     var transactionRepository = Resolve<IGenericRepository<Transaction>>();
-                    var transactionDb = await transactionRepository.GetByExpression(t => t.Id == transactionId && t.TransationStatusId == Domain.Enums.TransationStatus.SUCCESSFUL, t => t.Account);
+                    var transactionDb = await transactionRepository.GetByExpression(
+                        t => t.Id == transactionId && t.TransationStatusId == Domain.Enums.TransationStatus.SUCCESSFUL,
+                        t => t.Account);
                     if (transactionDb == null || string.IsNullOrEmpty(transactionDb.AccountId))
                     {
-                        return BuildAppActionResultError(result, $"Không tìm thấy thông tin giao dịch cho việc nộp ví");
+                        throw new Exception($"Không tìm thấy thông tin giao dịch cho việc nộp ví");
                     }
 
                     if (transactionDb.TransationStatusId == Domain.Enums.TransationStatus.APPLIED)
                     {
-                        return BuildAppActionResultError(result, $"Giao dịch với id {transactionId} đã được cập nhật vào ví");
+                        throw new Exception($"Giao dịch với id {transactionId} đã được cập nhật vào ví");
                     }
 
                     transactionDb.Account.StoreCreditAmount += transactionDb.Amount;
 
                     var utility = Resolve<Utility>();
                     var configurationRepository = Resolve<IGenericRepository<Configuration>>();
-                    var configurationDb = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.EXPIRE_TIME_FOR_STORE_CREDIT), null);
+                    var configurationDb =
+                        await configurationRepository.GetByExpression(
+                            c => c.Name.Equals(SD.DefaultValue.EXPIRE_TIME_FOR_STORE_CREDIT), null);
                     if (configurationDb == null)
                     {
-                        result = BuildAppActionResultError(result, $"Xảy ra lỗi khi ghi lại thông tin nạp tiền. Vui lòng thử lại");
+                        result = BuildAppActionResultError(result,
+                            $"Xảy ra lỗi khi ghi lại thông tin nạp tiền. Vui lòng thử lại");
                     }
+
                     var expireTimeInDay = double.Parse(configurationDb.CurrentValue);
 
                     transactionDb.Account!.ExpiredDate = utility.GetCurrentDateInTimeZone().AddDays(expireTimeInDay);
@@ -90,14 +96,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await transactionRepository.Update(transactionDb);
                     await _repository.Update(transactionDb.Account!);
                     await _unitOfWork.SaveChangesAsync();
-                    scope.Complete();
                 }
                 catch (Exception ex)
                 {
                     result = BuildAppActionResultError(result, ex.Message);
                 }
-                return result;
-            }
+            });
+            return result;
+
         }
 
         //public async Task<AppActionResult> GetStoreCreditByAccountId(string accountId)
