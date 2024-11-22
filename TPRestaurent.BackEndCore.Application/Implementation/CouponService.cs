@@ -334,7 +334,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             catch (Exception ex)
             {
             }
-            Task.CompletedTask.Wait();
         }
 
         public async Task<AppActionResult> GetCouponProgramById(Guid couponId)
@@ -567,6 +566,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        [Hangfire.Queue("assign-coupon-to-user-with-rank")]
         public async Task AssignCouponToUserWithRank()
         {
             try
