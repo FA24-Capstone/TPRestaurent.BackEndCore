@@ -11,8 +11,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         EntityEntry<T> Entry<T>(T entity) where T : class;
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
         DatabaseFacade Database { get; }
-
-
     }
 }

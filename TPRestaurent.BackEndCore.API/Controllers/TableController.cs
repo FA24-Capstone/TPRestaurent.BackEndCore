@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
@@ -11,6 +10,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class TableController : ControllerBase
     {
         private ITableService _service;
+
         public TableController(ITableService service)
         {
             _service = service;
@@ -23,7 +23,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("create-table")]
-        public async Task<AppActionResult> CreateTable([FromBody]TableDto dto)
+        public async Task<AppActionResult> CreateTable([FromBody] TableDto dto)
         {
             return await _service.CreateTable(dto);
         }
@@ -55,7 +55,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpGet("get-all-table-rating/{pageNumber}/{pageSize}")]
         public async Task<AppActionResult> GetAllTableRating(int pageNumber = 1, int pageSize = 10)
         {
-            return await _service.GetAllTableRating(pageNumber, pageSize);      
+            return await _service.GetAllTableRating(pageNumber, pageSize);
         }
     }
 }

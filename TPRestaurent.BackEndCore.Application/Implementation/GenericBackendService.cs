@@ -35,42 +35,41 @@ public class GenericBackendService
         return !result.IsSuccess ? true : false;
     }
 
-public enum APIMethod
-{
-    GET,
-    POST,
-    PUT,
-    DELETE
-}
-
-public async Task<RestResponse> CallAPIAsync(string endpoint, object data, APIMethod method)
-{
-    var client = new RestClient();
-    var request = new RestRequest(endpoint);
-
-    switch (method)
+    public enum APIMethod
     {
-        case APIMethod.GET:
-            request.Method = Method.Get;
-            break;
-
-        case APIMethod.POST:
-            request.Method = Method.Post;
-            request.AddJsonBody(data); // Assuming data is already in JSON format
-            break;
-
-        case APIMethod.PUT:
-            request.Method = Method.Put;
-            request.AddJsonBody(data); // Assuming data is already in JSON format
-            break;
-
-        case APIMethod.DELETE:
-            request.Method = Method.Delete;
-            break;
+        GET,
+        POST,
+        PUT,
+        DELETE
     }
 
-    RestResponse response = await client.ExecuteAsync(request);
-    return response;
-}
+    public async Task<RestResponse> CallAPIAsync(string endpoint, object data, APIMethod method)
+    {
+        var client = new RestClient();
+        var request = new RestRequest(endpoint);
 
+        switch (method)
+        {
+            case APIMethod.GET:
+                request.Method = Method.Get;
+                break;
+
+            case APIMethod.POST:
+                request.Method = Method.Post;
+                request.AddJsonBody(data); // Assuming data is already in JSON format
+                break;
+
+            case APIMethod.PUT:
+                request.Method = Method.Put;
+                request.AddJsonBody(data); // Assuming data is already in JSON format
+                break;
+
+            case APIMethod.DELETE:
+                request.Method = Method.Delete;
+                break;
+        }
+
+        RestResponse response = await client.ExecuteAsync(request);
+        return response;
+    }
 }

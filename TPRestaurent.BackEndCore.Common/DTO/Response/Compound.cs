@@ -1,9 +1,4 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Common.DTO.Response
 {
@@ -61,10 +56,12 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         [JsonProperty("types")] public List<object> Types { get; set; }
 
         [JsonProperty("distance_meters")] public object DistanceMeters { get; set; }
+
         [JsonIgnore]
-        public double Lng {  get; set; }
+        public double Lng { get; set; }
+
         [JsonIgnore]
-        public double Lat {  get; set; }
+        public double Lat { get; set; }
     }
 
     public class AutoCompleteRoot

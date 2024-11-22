@@ -1,13 +1,5 @@
 using AutoMapper;
-using Castle.Core.Internal;
-using NPOI.SS.Formula.Functions;
-using Org.BouncyCastle.Asn1.X509;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
@@ -23,7 +15,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly IGenericRepository<Table> _repository;
         private readonly IUnitOfWork _unitOfWork;
         private IMapper _mapper;
-        public TableService(IGenericRepository<Table> repository, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service) : base(service) 
+
+        public TableService(IGenericRepository<Table> repository, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service) : base(service)
         {
             _repository = repository;
             _unitOfWork = unitOfWork;
@@ -37,7 +30,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var congfigurationRepository = Resolve<IGenericRepository<Configuration>>();
                 //Name validation (if needed)
-                if (string.IsNullOrEmpty(dto.TableName)) {
+                if (string.IsNullOrEmpty(dto.TableName))
+                {
                     result = BuildAppActionResultError(result, "Tên bàn không được để trống");
                     return result;
                 }
@@ -49,7 +43,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var tableRatingRepository = Resolve<IGenericRepository<Room>>();
-                if((await tableRatingRepository.GetById(dto.TableRatingId) == null))
+                if ((await tableRatingRepository.GetById(dto.TableRatingId) == null))
                 {
                     result = BuildAppActionResultError(result, $"Không tìm thấy phòng với id {dto.TableRatingId}");
                     return result;
@@ -93,9 +87,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result.Messages.Add("Không tìm thấy bàn cho yêu cầu đặt bàn");
                     return result;
                 }
-                
+
                 var bestCaseFindTableResult = await FindTableWithCase(dto, availableTables, false);
-                if(bestCaseFindTableResult.IsSuccess && bestCaseFindTableResult.Result != null)
+                if (bestCaseFindTableResult.IsSuccess && bestCaseFindTableResult.Result != null)
                 {
                     result.Result = bestCaseFindTableResult.Result as List<TableArrangementResponseItem>;
                     return result;
@@ -105,14 +99,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (badCaseFindTableResult.IsSuccess && badCaseFindTableResult.Result != null)
                 {
                     result.Result = badCaseFindTableResult.Result as List<TableArrangementResponseItem>;
-                    if(badCaseFindTableResult.Messages.Count > 0)
+                    if (badCaseFindTableResult.Messages.Count > 0)
                     {
                         result.Messages.AddRange(badCaseFindTableResult.Messages);
                     }
                     return result;
                 }
 
-                if(dto.NumOfPeople < 4)
+                if (dto.NumOfPeople < 4)
                 {
                     dto.NumOfPeople = 4;
                     var exceedingCaseFindTableResult = await FindTableWithCase(dto, availableTables, false);
@@ -159,7 +153,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
-                result = BuildAppActionResultError(result, ex.Message );
+                result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
@@ -173,11 +167,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 int[] sizes = null;
                 if (allowAddChair)
                 {
-                   sizes = new int[]{ 2, 4, 6, 9, 11 }; // Possible sizes
+                    sizes = new int[] { 2, 4, 6, 9, 11 }; // Possible sizes
                 }
                 else
                 {
-                    sizes = new int[]{ 2, 4, 6, 8, 10 }; // Possible sizes
+                    sizes = new int[] { 2, 4, 6, 8, 10 }; // Possible sizes
                 }
                 int target = dto.NumOfPeople + 2;
                 List<List<int>> possibleTableSet = new List<List<int>>();
@@ -251,6 +245,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
         private async Task<List<List<int>>> FilterAvailableQuantity(List<List<int>> possibleTableSet, Dictionary<int, int> dictionary)
         {
             List<List<int>> reducedList = new List<List<int>>();
@@ -433,7 +428,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 if (!endTime.HasValue)
                 {
-
                     endTime = startTime.AddHours(double.Parse(configurationDb.Items[0].CurrentValue));
                 }
 
@@ -470,6 +464,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
         private List<(int, int)> DeserializeList(string str)
         {
             // Split the string by ';' and convert each substring to a tuple
@@ -504,24 +499,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             tableResponse.Position.Y = tableCoordinates.FirstOrDefault().Item2;
                         }
 
-                        if(item.TableStatusId == TableStatus.NEW)
+                        if (item.TableStatusId == TableStatus.NEW)
                         {
                             tableResponse.TableStatusId = TableStatus.NEW;
                         }
                         else if (unavailableTableIds.Contains(tableResponse.Id))
                         {
                             tableResponse.TableStatusId = TableStatus.CURRENTLYUSED;
-                        } else
+                        }
+                        else
                         {
                             tableResponse.TableStatusId = TableStatus.AVAILABLE;
                         }
 
-
-
                         data.Add(tableResponse);
                     }
-
-
 
                     result.Result = new PagedResult<TableArrangementResponseItem>
                     {
@@ -544,7 +536,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var congfigurationRepository = Resolve<IGenericRepository<Configuration>>();
                 var tableSetUpConfig = await congfigurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TABLE_IS_SET_UP), null);
-                if(!isForce.HasValue || !isForce.Value)
+                if (!isForce.HasValue || !isForce.Value)
                 {
                     if (tableSetUpConfig != null)
                     {
@@ -562,22 +554,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 foreach (var table in tableDb.Items)
                 {
-                    if(table.TableStatusId == TableStatus.NEW)
+                    if (table.TableStatusId == TableStatus.NEW)
                     {
                         table.TableStatusId = TableStatus.AVAILABLE;
                     }
                     var inputTable = request.FirstOrDefault(i => i.Id == table.TableId);
                     List<(int, int)> coordinate = new List<(int, int)>();
                     coordinate.Add((inputTable.Position.X, inputTable.Position.Y));
-                    if(inputTable.TableSizeId != TableSize.EIGHT && inputTable.TableSizeId != TableSize.TEN)
+                    if (inputTable.TableSizeId != TableSize.EIGHT && inputTable.TableSizeId != TableSize.TEN)
                     {
                         for (int i = 1; i < (int)inputTable.TableSizeId / 2; i++)
                         {
                             coordinate.Add((inputTable.Position.X, inputTable.Position.Y + i));
                         }
-                    } else
+                    }
+                    else
                     {
-                        if(inputTable.TableSizeId == TableSize.TEN)
+                        if (inputTable.TableSizeId == TableSize.TEN)
                         {
                             coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 1));
                             coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 2));
@@ -587,7 +580,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 1));
                             coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 2));
                             coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 3));
-                        } else
+                        }
+                        else
                         {
                             coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y));
 
@@ -595,10 +589,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 1));
                         }
                     }
-                    table.TableSizeId = inputTable.TableSizeId; 
-                    table.Coordinates = ParseListToString(coordinate);  
+                    table.TableSizeId = inputTable.TableSizeId;
+                    table.Coordinates = ParseListToString(coordinate);
                 }
-                if(tableSetUpConfig != null)
+                if (tableSetUpConfig != null)
                 {
                     tableSetUpConfig.CurrentValue = SD.DefaultValue.IS_SET_UP;
                     await congfigurationRepository.Update(tableSetUpConfig);
@@ -633,7 +627,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                                   && t.Order.StatusId != OrderStatus.Cancelled
                                                                                                   && t.Order.MealTime <= currentTime
                                                                                                   && (t.Order.EndTime.HasValue && t.Order.EndTime.Value >= currentTime
-                                                                                                      || !t.Order.EndTime.HasValue && t.Order.MealTime.Value.AddHours(averageTime) >= currentTime), 
+                                                                                                      || !t.Order.EndTime.HasValue && t.Order.MealTime.Value.AddHours(averageTime) >= currentTime),
                                                                                                   0, 0, null, false, null);
 
                 result = unavailableDetailDb.Items.DistinctBy(u => u.TableId).Select(u => u.TableId).ToList();
@@ -674,7 +668,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var tableDb = await _repository.GetById(dto.TableId);
-                if(tableDb == null)
+                if (tableDb == null)
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy bàn với id {dto.TableId}");
                 }
@@ -739,7 +733,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
-                tableHasCurrentOrUpcomingReservation= true;
+                tableHasCurrentOrUpcomingReservation = true;
             }
             return tableHasCurrentOrUpcomingReservation;
         }

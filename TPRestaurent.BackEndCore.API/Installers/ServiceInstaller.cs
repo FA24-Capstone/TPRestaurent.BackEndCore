@@ -1,5 +1,4 @@
-﻿using TPRestaurent.BackEndCore.API.Middlewares;
-using TPRestaurent.BackEndCore.Application;
+﻿using TPRestaurent.BackEndCore.Application;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.Implementation;
 using TPRestaurent.BackEndCore.Application.IRepositories;
@@ -48,6 +47,5 @@ public class ServiceInstaller : IInstaller
         services.AddScoped<IRatingService, RatingService>();
         services.AddScoped<IOpenAIClient, OpenAIClient>();
         services.AddScoped<IChatBotService, ChatBotService>();
-
     }
 }

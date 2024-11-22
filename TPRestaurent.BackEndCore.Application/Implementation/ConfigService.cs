@@ -1,11 +1,4 @@
-﻿using Castle.DynamicProxy.Generators;
-using NPOI.HPSF;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TPRestaurent.BackEndCore.Application.Contract.IServices;
+﻿using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
@@ -80,7 +73,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     ConfigurationId = Guid.NewGuid(),
                     Name = dto.Name,
                     CurrentValue = dto.CurrentValue,
-                    VietnameseName = dto.VietnameseName,    
+                    VietnameseName = dto.VietnameseName,
                     Unit = dto.Unit
                 };
 
@@ -101,15 +94,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var configurationVersion = new ConfigurationVersion
                 {
-                    ConfigurationVersionId = Guid.NewGuid(),    
+                    ConfigurationVersionId = Guid.NewGuid(),
                     ActiveDate = configurationVersionDto.ActiveDate,
                     ActiveValue = configurationVersionDto.ActiveValue,
-                    ConfigurationId = configurationVersionDto.ConfigurationId, 
+                    ConfigurationId = configurationVersionDto.ConfigurationId,
                     IsApplied = false
                 };
 
                 await configurationServiceRepository!.Insert(configurationVersion);
-                await _unitOfWork.SaveChangesAsync();   
+                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -224,6 +217,5 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-
     }
 }

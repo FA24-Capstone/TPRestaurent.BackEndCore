@@ -1,13 +1,11 @@
-﻿using System.Buffers.Text;
-
-namespace TPRestaurent.BackEndCore.Common.ConfigurationModel;
+﻿namespace TPRestaurent.BackEndCore.Common.ConfigurationModel;
 
 public class FirebaseAdminSDK
 {
     public string? Type { get; set; }
     public string? Project_id { get; set; }
     public string? Private_key_id { get; set; }
-    public   string? Private_key { get; set; }
+    public string? Private_key { get; set; }
     public string? Client_email { get; set; }
     public string? Client_id { get; set; }
     public string? Auth_uri { get; set; }

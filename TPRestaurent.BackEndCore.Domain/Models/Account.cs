@@ -1,11 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
 {
@@ -25,9 +19,10 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public bool IsDelivering { get; set; }
         public double StoreCreditAmount { get; set; }
         public DateTime ExpiredDate { get; set; }
-        public DateTime RegisteredDate { get; set; }    
+        public DateTime RegisteredDate { get; set; }
         public bool IsBanned { get; set; }
         public Enums.UserRank? UserRankId { get; set; }
+
         [ForeignKey(nameof(UserRankId))]
         public EnumModels.UserRank? UserRank { get; set; }
     }

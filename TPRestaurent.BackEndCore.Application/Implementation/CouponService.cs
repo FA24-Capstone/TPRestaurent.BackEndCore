@@ -1,13 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using NPOI.SS.Formula.Functions;
-using NPOI.Util;
-using NPOI.XSSF.UserModel;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
@@ -15,7 +7,6 @@ using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
-using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -116,7 +107,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         return BuildAppActionResultError(result, $"Có các chương trình giảm giá không hợp lệ cho hạng Bạc");
                     }
                     couponList.AddRange(silverCouponList);
-
                 }
 
                 if (dto.GoldCouponProgramIds != null && dto.GoldCouponProgramIds.Count > 0)
@@ -225,7 +215,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     Img = couponDto.File,
                     UserRankId = couponDto.UserRank
                 };
-
 
                 await _couponProgramRepository.Insert(coupon);
                 await _unitOfWork.SaveChangesAsync();
@@ -622,7 +611,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var insufficientCouponProgramList = couponProgramDb.Items.Where(c => c.Quantity < accountIds.Count).ToList();
                 if (insufficientCouponProgramList.Count != couponProgramDb.Items.Count)
                 {
-
                     var html = GetInSufficientCouponProgramHtml(rank.ToString(), accountIds.Count, insufficientCouponProgramList);
                     emailService!.SendEmail(insufficientCouponProgramList.FirstOrDefault().CreateByAccount.Email, SD.SubjectMail.INSUFFICIENT_COUPON_QUANTITY,
                                          TemplateMappingHelper.GetTemplateOTPEmail(
@@ -668,7 +656,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
-
             }
             return customerIds;
         }

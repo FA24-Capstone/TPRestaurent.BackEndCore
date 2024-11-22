@@ -1,18 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TPRestaurent.BackEndCore.Domain.Models;
+﻿using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Common.DTO.Response
 {
     public class TableSessionResponse
     {
         //public TableSession TableSession { get; set; } = null!;
-        public List<PrelistOrderDetails> UncheckedPrelistOrderDetails { get; set; } = new List<PrelistOrderDetails>();       
-        public List<PrelistOrderDetails> ReadPrelistOrderDetails { get; set; } = new List<PrelistOrderDetails>();       
+        public List<PrelistOrderDetails> UncheckedPrelistOrderDetails { get; set; } = new List<PrelistOrderDetails>();
+
+        public List<PrelistOrderDetails> ReadPrelistOrderDetails { get; set; } = new List<PrelistOrderDetails>();
         public List<PrelistOrderDetails> ReadyToServePrelistOrderDetails { get; set; } = new List<PrelistOrderDetails>();
     }
 

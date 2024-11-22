@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TPRestaurent.BackEndCore.Common.DTO.Response;
-using TPRestaurent.BackEndCore.Domain.Models;
-using TPRestaurent.BackEndCore.Domain.Models.EnumModels;
+﻿using TPRestaurent.BackEndCore.Common.DTO.Response;
 
 namespace TPRestaurent.BackEndCore.Common.DTO.Request
 {

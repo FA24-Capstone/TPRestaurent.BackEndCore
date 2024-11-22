@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
-using TPRestaurent.BackEndCore.Common.Utils;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
     public class HashingService : GenericBackendService, IHashingService
     {
-        public HashingService(IServiceProvider service): base(service) { }
+        public HashingService(IServiceProvider service) : base(service) { }
         public string Hashing(string password, string key)
         {
             using (Aes aes = Aes.Create())
