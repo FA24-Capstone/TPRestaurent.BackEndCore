@@ -1,15 +1,5 @@
 ﻿using AutoMapper;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Transactions;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
-using TPRestaurent.BackEndCore.Application.IRepositories;
-using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
-using TPRestaurent.BackEndCore.Common.Utils;
-using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -20,7 +10,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private IUnitOfWork _unitOfWork;
         public PrelistOrderService(IMapper mapper, IUnitOfWork unitOfWork, IServiceProvider service) : base(service)
         {
-            
             _mapper = mapper;
             _unitOfWork = unitOfWork;
         }

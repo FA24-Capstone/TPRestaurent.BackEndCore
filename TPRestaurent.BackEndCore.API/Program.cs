@@ -2,12 +2,10 @@
 using Microsoft.EntityFrameworkCore;
 using TPRestaurent.BackEndCore.API.Installers;
 using TPRestaurent.BackEndCore.API.Middlewares;
-using TPRestaurent.BackEndCore.Application.Implementation;
 using TPRestaurent.BackEndCore.Domain.Data;
 using TPRestaurent.BackEndCore.Infrastructure.ServerHub;
 
 var builder = WebApplication.CreateBuilder(args);
-
 
 builder.Services.AddCors(options =>
 {
@@ -15,11 +13,10 @@ builder.Services.AddCors(options =>
         builder => builder.WithOrigins("*")
                           .AllowAnyMethod() // Allows GET, POST, PUT, DELETE, etc.
                           .AllowAnyHeader() // Allows all headers
-                          //.AllowCredentials()
-                          //.SetIsOriginAllowed(_ => true)
+                                            //.AllowCredentials()
+                                            //.SetIsOriginAllowed(_ => true)
         );
 });
-
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -94,7 +91,6 @@ builder.Services.AddHangfireServer(options =>
     options.ServerName = $"{Environment.MachineName}:transaction";
     options.Queues = new[] { "cancel-pending-transaction" };
     options.WorkerCount = 1;
-
 });
 builder.Services.AddHangfireServer(options =>
 {
@@ -163,7 +159,6 @@ builder.Services.AddSignalR(options =>
     options.KeepAliveInterval = TimeSpan.FromSeconds(240);
 });
 
-
 var app = builder.Build();
 
 app.UseSwagger(op => op.SerializeAsV2 = false);
@@ -187,8 +182,6 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
     Authorization = new[] { new DashboardNoAuthorizationFilter() }
 }); ;
-
-
 
 //using (var scope = app.Services.CreateScope())
 //{

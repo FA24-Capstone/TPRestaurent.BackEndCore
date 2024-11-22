@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TPRestaurent.BackEndCore.Common.DTO.Request;
+﻿using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 
 namespace TPRestaurent.BackEndCore.Application.Contract.IServices
@@ -13,7 +8,9 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         string GenerateRefreshToken();
 
         Task<string> GenerateAccessToken(LoginRequestDto loginRequest);
+
         Task<string> GenerateAccessTokenForDevice(LoginDeviceRequestDto loginDeviceRequest);
+
         Task<TokenDto> GetNewToken(string refreshToken, string accountId);
     }
 }

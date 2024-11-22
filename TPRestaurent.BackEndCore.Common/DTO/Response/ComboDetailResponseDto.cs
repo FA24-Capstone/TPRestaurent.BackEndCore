@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Common.DTO.Response
@@ -23,8 +18,10 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public int OptionSetNumber { get; set; }
         public int NumOfChoice { get; set; }
         public Domain.Enums.DishItemType DishItemTypeId { get; set; }
+
         [ForeignKey(nameof(DishItemTypeId))]
         public Domain.Models.EnumModels.DishItemType DishItemType { get; set; }
+
         public List<DishCombo> DishCombo { get; set; } = new List<DishCombo>();
     }
 }

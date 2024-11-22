@@ -1,11 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.AspNetCore.Mvc.Filters;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
-using TPRestaurent.BackEndCore.Application.Implementation;
-using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.API.Middlewares

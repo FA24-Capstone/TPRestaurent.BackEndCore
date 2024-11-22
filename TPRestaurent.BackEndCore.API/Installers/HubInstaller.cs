@@ -9,6 +9,5 @@ public class HubInstaller : IInstaller
     {
         services.AddSignalR();
         services.AddSingleton<IHubServices, HubServices>();
-        
     }
 }

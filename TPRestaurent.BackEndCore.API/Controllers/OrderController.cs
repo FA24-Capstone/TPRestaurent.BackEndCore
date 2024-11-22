@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
@@ -12,6 +11,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class OrderController : ControllerBase
     {
         private readonly IOrderService _service;
+
         public OrderController(IOrderService service)
         {
             _service = service;
@@ -32,7 +32,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpGet("get-all-order-by-phone-number/{pageNumber}/{pageSize}")]
         public async Task<AppActionResult> GetAllOrderByPhoneNumber(string phoneNumber, OrderStatus? status, OrderType? orderType, int pageNumber = 1, int pageSize = 10)
         {
-            return await _service.GetAllOrderByPhoneNumber(phoneNumber, status, orderType ,pageNumber, pageSize);
+            return await _service.GetAllOrderByPhoneNumber(phoneNumber, status, orderType, pageNumber, pageSize);
         }
 
         [HttpGet("get-order-by-time/{pageNumber}/{pageSize}")]
@@ -62,7 +62,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPost("calculate-deliver-order")]
         public async Task<AppActionResult> CalculateDeliveryOrder(Guid customerInfoAddressId)
         {
-            return await _service.CalculateDeliveryOrder(customerInfoAddressId);        
+            return await _service.CalculateDeliveryOrder(customerInfoAddressId);
         }
 
         [HttpPost("add-dish-to-order/{orderId}")]
@@ -134,7 +134,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPost("assign-order-for-shipper")]
         public async Task<AppActionResult> AssignOrderForShipper(string shipperId, List<Guid> orderListId)
         {
-            return await _service.AssignOrderForShipper(shipperId, orderListId);      
+            return await _service.AssignOrderForShipper(shipperId, orderListId);
         }
 
         [HttpPost("upload-confirmed-order-image")]
@@ -150,15 +150,15 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("get-number-of-order-by-status")]
-        public async Task<AppActionResult> GetNumberOfOrderByStatus([FromBody]OrderFilterRequest request)
+        public async Task<AppActionResult> GetNumberOfOrderByStatus([FromBody] OrderFilterRequest request)
         {
-            return  await _service.GetNumberOfOrderByStatus(request);       
+            return await _service.GetNumberOfOrderByStatus(request);
         }
 
         [HttpPost("cancel-delivering-order")]
         public async Task<AppActionResult> CancelDeliveringOrder(CancelDeliveringOrderRequest cancelDeliveringOrderRequest)
         {
-            return await _service.CancelDeliveringOrder(cancelDeliveringOrderRequest);      
+            return await _service.CancelDeliveringOrder(cancelDeliveringOrderRequest);
         }
 
         [HttpGet("get-best-seller-dishes-and-combo")]
@@ -189,6 +189,5 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         //{
         //    return await _service.GetOrderJsonByTableSessionId(tableSessionId);
         //}
-
     }
 }

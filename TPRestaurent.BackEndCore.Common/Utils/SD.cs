@@ -206,6 +206,7 @@ public class SD
         //public string? Description { get; set; }
         //public string? MenuType { get; set; }
     }
+
     public class FirebasePathName
     {
         public static string BASE_URL = "https://firebasestorage.googleapis.com/v0/b/hcqs-project.appspot.com/o/";
@@ -216,8 +217,6 @@ public class SD
         public static string ORDER_PREFIX = "order/";
         public static string INVOICE_PREFIX = "invoice/";
         public static string RATING_PREFIX = "rating/";
-
-
     }
 
     public class SignalMessages
@@ -245,7 +244,6 @@ public class SD
         public static string ROLE_ADMIN = "ADMIN";
         public static string ROLE_SHIPPER = "SHIPPER";
         public static string ROLE_CUSTOMER = "CUSTOMER";
-
     }
 
     public class CancelledReason
@@ -261,6 +259,7 @@ public class SD
             "Tôi muốn đặt bàn cho 7 người vào 7h tối ngày mai.->trigger_find_table: startTime={{TODAY+1}}T19:00, endTime={{TODAY+1}}T20:00, numOfPeople=7|, " +
             "Giao hàng tới Chợ Bến Thành ko?->trigger_distance: address=Chợ Bến Thành, Quận 1, TP. HCM|." +
             "Nếu không thuộc các trigger trên, trả lời bình thường. Câu hỏi:";
+
         public static string GetCustomerGreeting(Account customer, string dishName, bool isFirstCall)
         {
             StringBuilder response = new StringBuilder();
@@ -314,5 +313,4 @@ public class SD
             return response.ToString();
         }
     }
-
 }

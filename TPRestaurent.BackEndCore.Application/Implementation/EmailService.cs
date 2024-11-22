@@ -47,7 +47,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
         }
 
-
         public void SendEmailWithFiles(string recipient, string subject, string body, List<IFormFile> files)
         {
             try

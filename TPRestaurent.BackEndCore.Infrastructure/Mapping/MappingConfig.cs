@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Castle.Core.Resource;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Domain.Enums;
@@ -13,7 +12,6 @@ public class MappingConfig
     {
         var mappingConfig = new MapperConfiguration(config =>
         {
-
             config.CreateMap<Account, AccountResponse>()
                 .ForMember(desc => desc.Id, act => act.MapFrom(src => src.Id))
                 .ForMember(desc => desc.Email, act => act.MapFrom(src => src.Email))
@@ -38,7 +36,7 @@ public class MappingConfig
             .ForMember(desc => desc.DevicePassword, act => act.MapFrom(src => src.DevicePassword))
             .ForMember(desc => desc.TableId, act => act.MapFrom(src => src.TableId))
             .ForMember(desc => desc.TableName, act => act.MapFrom(src => src.TableName))
-            .ReverseMap()   
+            .ReverseMap()
             ;
 
             config.CreateMap<Dish, DishDto>()
@@ -58,14 +56,12 @@ public class MappingConfig
              .ReverseMap();
             ;
 
-
             config.CreateMap<OrderDetailsDto, OrderDetail>()
             .ForMember(dest => dest.ComboId, opt => opt.MapFrom(src => src.Combo != null ? src.Combo.ComboId : (Guid?)null))
             .ForMember(dest => dest.OrderTime, opt => opt.MapFrom(src => DateTime.Now))
             .ForMember(dest => dest.OrderDetailStatusId, opt => opt.MapFrom(src => OrderDetailStatus.Unchecked)) // Assuming a default status
            .ReverseMap();
             ;
-
 
             config.CreateMap<ConfigurationDto, Configuration>()
             .ForMember(desc => desc.Name, act => act.MapFrom(src => src.Name))
@@ -115,7 +111,6 @@ public class MappingConfig
             .ForMember(dest => dest.IsMainItem, act => act.MapFrom(src => src.IsMainItem))
             .ForMember(dest => dest.PreparationTime, act => act.MapFrom(src => src.PreparationTime))
 ;
-
 
             config.CreateMap<Order, OrderResponse>()
             .ForMember(dest => dest.OrderId, act => act.MapFrom(src => src.OrderId))
@@ -214,8 +209,6 @@ public class MappingConfig
             .ForMember(dest => dest.Room, opt => opt.MapFrom(src => src.Room))
             .ReverseMap();
         });
-
-
 
         return mappingConfig;
     }

@@ -1,10 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.Extensions.Configuration;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Payment.PaymentLibrary;
 using TPRestaurent.BackEndCore.Common.DTO.Payment.PaymentRequest;
@@ -15,11 +9,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     {
         private readonly IConfiguration _configuration;
         private IHashingService _hashingService;
+
         public PaymentGatewayService(IConfiguration configuration, IHashingService hashingService)
         {
             _configuration = configuration;
             _hashingService = hashingService;
         }
+
         public async Task<string> CreatePaymentUrlVnpay(PaymentInformationRequest requestDto)
         {
             IConfiguration config = new ConfigurationBuilder()

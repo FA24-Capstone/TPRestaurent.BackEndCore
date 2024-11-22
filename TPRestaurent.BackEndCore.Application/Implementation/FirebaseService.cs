@@ -1,26 +1,18 @@
 ﻿using DinkToPdf.Contracts;
 using Firebase.Auth;
-using FirebaseAdmin;
 using Firebase.Storage;
+using FirebaseAdmin;
+using FirebaseAdmin.Messaging;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using RestSharp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using FirebaseAdmin.Messaging;
-using Google.Apis.Auth.OAuth2;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.ConfigurationModel;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
-using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -31,7 +23,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private FirebaseConfiguration _firebaseConfiguration;
         private FirebaseAdminSDK _firebaseAdminSdk;
         private readonly IConfiguration _configuration;
-        private  FirebaseMessaging _messaging;
+        private FirebaseMessaging _messaging;
 
         public FirebaseService(IConverter pdfConverter, IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider)
         {
@@ -48,7 +40,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     Credential = credentials
                 });
                 _messaging = FirebaseMessaging.DefaultInstance;
-
             }
             else
             {
@@ -58,9 +49,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     Credential = credentials
                 });
                 _messaging = FirebaseMessaging.DefaultInstance;
-
             }
-
         }
 
         public async Task<AppActionResult> DeleteFileFromFirebase(string pathFileName)
@@ -90,7 +79,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         }
 
         public async Task<string> SendNotificationAsync(string deviceToken, string title, string body, AppActionResult data = null)
-        { 
+        {
             try
             {
                 var message = new Message
@@ -147,7 +136,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                 }
                 return deviceTokens; // Successfully sent all messages
-
             }
             catch (Exception ex)
             {

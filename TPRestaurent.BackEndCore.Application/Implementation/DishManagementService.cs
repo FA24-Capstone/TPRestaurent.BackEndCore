@@ -1,9 +1,4 @@
 using AutoMapper;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
@@ -250,6 +245,5 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-
     }
 }

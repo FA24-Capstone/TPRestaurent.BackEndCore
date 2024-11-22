@@ -1,5 +1,4 @@
-﻿using System.Xml.Linq;
-using TPRestaurent.BackEndCore.Domain.Models;
+﻿using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Common.Utils;
 
@@ -11,7 +10,7 @@ public class TemplateMappingHelper
         FORGOTPASSWORD,
         CONTRACT_CODE,
         TOURGUIDE_ACCOUNT_CREATION,
-       INSUFFICIENT_COUPON_QUANTITY
+        INSUFFICIENT_COUPON_QUANTITY
     }
 
     public static string GetTemplateOTPEmail(ContentEmailType type, string body, string name)
@@ -668,6 +667,7 @@ public class TemplateMappingHelper
 
 ";
                 break;
+
             case ContentEmailType.INSUFFICIENT_COUPON_QUANTITY:
                 content = @"
 <html>
@@ -780,7 +780,6 @@ public class TemplateMappingHelper
 </html>
 ";
                 break;
-           
         }
         return content;
     }
@@ -902,13 +901,13 @@ public class TemplateMappingHelper
       </div>
       <div class=""mainBody"">
         <h2 class=""emailBody"">Xin chào {username},</h2>
-        
+
         <p class=""emailBody"">
           Chúng tôi rất tiếc phải thông báo rằng đặt bàn của bạn đã bị hủy tại <b><i>Nhà hàng Thiên Phú</i></b>.
         </p>
 
         <p class=""emailBody"">
-          Mã đơn: <b>{order.OrderId.ToString().Substring(0,5)}</b><br>
+          Mã đơn: <b>{order.OrderId.ToString().Substring(0, 5)}</b><br>
           Thời gian đặt: <b>{orderTime}</b>
           Thời gian dùng bữa tại nhà hàng(Nếu có): <b> {order.MealTime ?? order.MealTime.Value}</b>
           Loại phòng: {tableDetail.Table!.Room!}
@@ -920,7 +919,7 @@ public class TemplateMappingHelper
         </p>
 
         <p class=""emailBody"">
-          Để biết thêm thông tin, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi qua 
+          Để biết thêm thông tin, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi qua
           <u><i>qk.backend@gmail.com</i></u>.
         </p>
 
@@ -1006,7 +1005,7 @@ public class TemplateMappingHelper
       </div>
       <div class=""mainBody"">
         <h2 class=""emailBody"">Xin chào {username},</h2>
-        
+
         <p class=""emailBody"">
           Đây là lời nhắc nhở để thông báo rằng thời gian đặt chỗ của bạn tại <b><i>Nhà hàng Thiên Phú</i></b> đang đến gần!
         </p>
@@ -1106,7 +1105,7 @@ public class TemplateMappingHelper
       </div>
       <div class=""mainBody"">
         <h2 class=""emailBody"">Xin chào {username},</h2>
-        
+
         <p class=""emailBody"">
           Chúng tôi vui mừng thông báo rằng đơn hàng của bạn tại <b><i>Nhà hàng Thiên Phú</i></b> đã được tạo thành công!
         </p>
@@ -1207,7 +1206,7 @@ public class TemplateMappingHelper
       </div>
       <div class=""mainBody"">
         <h2 class=""emailBody"">Xin chào {username},</h2>
-        
+
         <p class=""emailBody"">
           Chúng tôi vui mừng xác nhận rằng đặt chỗ của bạn tại <b><i>Nhà hàng Thiên Phú</i></b> đã được tạo thành công!
         </p>
@@ -1223,7 +1222,7 @@ public class TemplateMappingHelper
         </p>
 
         <p class=""emailBody"">
-          Để biết thêm thông tin, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi qua 
+          Để biết thêm thông tin, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi qua
           <u><i>qk.backend@gmail.com</i></u>.
         </p>
 
@@ -1309,7 +1308,7 @@ public class TemplateMappingHelper
       </div>
       <div class=""mainBody"">
         <h2 class=""emailBody"">Xin chào {username},</h2>
-        
+
         <p class=""emailBody"">
           Chúc mừng sinh nhật bạn! 🎉
         </p>

@@ -1,4 +1,4 @@
-﻿    using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,9 +15,10 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class AccountController : ControllerBase
     {
         private IAccountService _accountService;
+
         public AccountController(IAccountService accountService)
         {
-            _accountService = accountService;   
+            _accountService = accountService;
         }
 
         [HttpPost("login")]
@@ -29,13 +30,13 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPost("update-account-phone-number")]
         public async Task<AppActionResult> UpdateAccountPhoneNumber(UpdatePhoneRequestDto accountRequest)
         {
-            return await _accountService.UpdateAccountPhoneNumber(accountRequest);  
+            return await _accountService.UpdateAccountPhoneNumber(accountRequest);
         }
 
         [HttpPost("send-otp")]
         public async Task<AppActionResult> SendOTP(string phoneNumber, OTPType otp)
         {
-            return await _accountService.SendOTP(phoneNumber, otp); 
+            return await _accountService.SendOTP(phoneNumber, otp);
         }
 
         [HttpPost("verify-for-reservation")]
@@ -47,7 +48,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpGet("get-account-by-user-id/{id}")]
         public async Task<AppActionResult> GetAccountByUserId(string id)
         {
-            return await _accountService.GetAccountByUserId(id);    
+            return await _accountService.GetAccountByUserId(id);
         }
 
         [HttpPost("create-account")]
@@ -57,7 +58,6 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-account")]
-        //[TokenValidationMiddleware("CUSTOMER")]
         public async Task<AppActionResult> GetAllAccount(string? keyword, int pageIndex = 1, int pageSize = 10)
         {
             return await _accountService.GetAllAccount(keyword, pageIndex, pageSize);
@@ -93,7 +93,6 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.ForgotPassword(dto);
         }
 
-
         [HttpPost("google-callback")]
         public async Task<AppActionResult> GoogleCallBack([FromBody] string accessTokenFromGoogle)
         {
@@ -106,23 +105,22 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.SendEmailForActiveCode(email);
         }
 
-
         [HttpPost("verify-number")]
         public async Task<AppActionResult> VerifyNumberAccount(string phoneNumber, string optCode)
         {
-            return await _accountService.VerifyNumberAccount(phoneNumber, optCode); 
+            return await _accountService.VerifyNumberAccount(phoneNumber, optCode);
         }
 
         [HttpPut("update-account")]
         public async Task<AppActionResult> UpdateAccount([FromForm] UpdateAccountInfoRequest updateAccountRequest)
         {
-            return await _accountService.UpdateAccount(updateAccountRequest);  
+            return await _accountService.UpdateAccount(updateAccountRequest);
         }
 
         [HttpDelete("delete-account")]
         public async Task<AppActionResult> DeleteAccount(string customerId)
         {
-            return await _accountService.DeleteAccount(customerId);    
+            return await _accountService.DeleteAccount(customerId);
         }
 
         [HttpPost("verify-account-otp")]
@@ -158,13 +156,13 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPut("update-customer-info-address")]
         public async Task<AppActionResult> UpdateCustomerInfoAddress(UpdateCustomerInforAddressRequest updateCustomerInforAddress)
         {
-            return await _accountService.UpdateCustomerInfoAddress(updateCustomerInforAddress);     
+            return await _accountService.UpdateCustomerInfoAddress(updateCustomerInforAddress);
         }
 
         [HttpPut("delete-customer-info-address")]
         public async Task<AppActionResult> DeleteCustomerInfoAddress(Guid customerInfoAddresId)
         {
-            return await _accountService.DeleteCustomerInfoAddress(customerInfoAddresId);       
+            return await _accountService.DeleteCustomerInfoAddress(customerInfoAddresId);
         }
 
         [HttpGet("load-available-shipper")]
@@ -194,7 +192,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPost("up-role")]
         public async Task<AppActionResult> UpLevel(string accountId, string roleName)
         {
-            return await _accountService.UpRole(accountId, roleName);   
+            return await _accountService.UpRole(accountId, roleName);
         }
 
         [HttpPost("create-account-for-restaurant-employees")]

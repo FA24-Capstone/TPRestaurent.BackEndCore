@@ -2,8 +2,6 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Globalization;
-using System.Security.Cryptography;
-using System.Text;
 using Formatting = System.Xml.Formatting;
 
 namespace TPRestaurent.BackEndCore.Common.Utils;
@@ -14,7 +12,7 @@ using System.Text.RegularExpressions;
 public class Utility
 {
     private static readonly HashSet<int> generatedNumbers = new();
-    public static Dictionary<string, string> ToDictionary( object obj)
+    public static Dictionary<string, string> ToDictionary(object obj)
     {
         if (obj == null) throw new ArgumentNullException(nameof(obj));
 
@@ -48,7 +46,6 @@ public class Utility
         string regex = "^[1-9]\\d{8,9}$";
         return Regex.IsMatch(phoneNumber, regex);
     }
-
 
     public string FormatMoney(double money)
     {
@@ -264,6 +261,5 @@ public class Utility
             string[] excelExtensions = { ".xls", ".xlsx" };
             return Array.Exists(excelExtensions, ext => ext.Equals(fileExtension));
         }
-
     }
 }
