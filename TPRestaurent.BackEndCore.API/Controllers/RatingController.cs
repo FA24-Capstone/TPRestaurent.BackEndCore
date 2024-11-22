@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
@@ -12,9 +11,10 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class RatingController : ControllerBase
     {
         private IRatingService _ratingService;
+
         public RatingController(IRatingService ratingService)
         {
-            _ratingService = ratingService; 
+            _ratingService = ratingService;
         }
 
         [HttpGet("get-all-rating-of-dish/{dishId}/{pageNumber}/{pageSize}")]
@@ -30,21 +30,21 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("create-rating")]
-        public async Task<AppActionResult> CreateRating([FromForm]CreateRatingRequestDto createRatingRequestDto)
+        public async Task<AppActionResult> CreateRating([FromForm] CreateRatingRequestDto createRatingRequestDto)
         {
-            return await _ratingService.CreateRating(createRatingRequestDto);   
+            return await _ratingService.CreateRating(createRatingRequestDto);
         }
 
         [HttpPut("update-rating")]
         public async Task<AppActionResult> UpdateRating([FromForm] UpdateRatingRequestDto updateRatingRequestDto)
         {
-            return await _ratingService.UpdateRating(updateRatingRequestDto);   
+            return await _ratingService.UpdateRating(updateRatingRequestDto);
         }
 
         [HttpDelete("delete-rating")]
         public async Task<AppActionResult> DeleteRating(Guid ratingId)
         {
-            return await _ratingService.DeleteRating(ratingId); 
+            return await _ratingService.DeleteRating(ratingId);
         }
     }
 }

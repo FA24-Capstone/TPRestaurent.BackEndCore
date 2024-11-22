@@ -11,6 +11,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class ConfigurationController : ControllerBase
     {
         private IConfigService _service;
+
         public ConfigurationController(IConfigService service)
         {
             _service = service;
@@ -31,7 +32,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpGet("get-all-configuration-version/{pageNumber}/{pageSize}")]
         public async Task<AppActionResult> GetAllConfigurationVersion(int pageNumber = 1, int pageSize = 10)
         {
-            return await _service.GetAllConfigurationVersion(pageNumber, pageSize);       
+            return await _service.GetAllConfigurationVersion(pageNumber, pageSize);
         }
 
         [HttpPut("update-config")]
@@ -57,7 +58,5 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return _service.GetByName(name);
         }
-
-
     }
 }

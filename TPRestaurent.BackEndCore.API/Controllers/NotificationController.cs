@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
@@ -28,7 +23,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _notificationMessageService.GetNotificationMessageByAccountId(accountId);
         }
-      
+
         [HttpPost("send")]
         public async Task<IActionResult> SendNotification([FromBody] NotificationRequest request)
         {
@@ -47,14 +42,13 @@ namespace TPRestaurent.BackEndCore.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
-    
+
         [HttpPost("send-multi")]
         public async Task<IActionResult> SendMulticastAsync([FromBody] List<NotificationRequest> request)
         {
             try
             {
-                
-                var result = await _firebase.SendMulticastAsync(request.Select(a=> a.DeviceToken).ToList(),"test","test"
+                var result = await _firebase.SendMulticastAsync(request.Select(a => a.DeviceToken).ToList(), "test", "test"
                 );
                 return Ok(result);
             }

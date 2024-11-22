@@ -12,21 +12,22 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class ComboController : ControllerBase
     {
         private IComboService _comboService;
+
         public ComboController(IComboService comboService)
         {
-            _comboService = comboService;   
+            _comboService = comboService;
         }
 
         [HttpGet("get-all-combo/{pageNumber}/{pageSize}")]
         public async Task<AppActionResult> GetAllCombo(string? keyword, ComboCategory? category, int? startPrice, int? endPrice, int pageNumber = 1, int pageSize = 10)
         {
-            return await _comboService.GetAllCombo(keyword, category, startPrice, endPrice ,pageNumber, pageSize);
+            return await _comboService.GetAllCombo(keyword, category, startPrice, endPrice, pageNumber, pageSize);
         }
 
         //[HttpGet("get-combo-by-id/{comboId}")]
         //public async Task<AppActionResult> GetComboById(Guid comboId)
         //{
-        //    return await _comboService.GetComboById(comboId);   
+        //    return await _comboService.GetComboById(comboId);
         //}
         [HttpGet("get-combo-by-id-ver-2/{comboId}")]
         public async Task<AppActionResult> GetComboById2(Guid comboId)
@@ -37,13 +38,13 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPost("create-combo")]
         public async Task<AppActionResult> CreateCombo([FromForm] ComboDto comboDto)
         {
-            return await _comboService.CreateCombo(comboDto);     
+            return await _comboService.CreateCombo(comboDto);
         }
 
         [HttpPost("delete-combo-by-id")]
         public async Task<AppActionResult> DeleteComboById(Guid comboId)
         {
-            return await _comboService.DeleteComboById(comboId);        
+            return await _comboService.DeleteComboById(comboId);
         }
 
         [HttpPut("update-combo")]

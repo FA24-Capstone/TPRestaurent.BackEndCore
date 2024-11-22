@@ -8,8 +8,8 @@ namespace TPRestaurent.BackEndCore.Infrastructure.Implementation
 {
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
-        private  IDBContext _context;
-        private  DbSet<T> _dbSet;
+        private IDBContext _context;
+        private DbSet<T> _dbSet;
 
         public GenericRepository(IDBContext context)
         {
@@ -129,7 +129,5 @@ namespace TPRestaurent.BackEndCore.Infrastructure.Implementation
             }
             return entities.ToList();
         }
-
-       
     }
 }

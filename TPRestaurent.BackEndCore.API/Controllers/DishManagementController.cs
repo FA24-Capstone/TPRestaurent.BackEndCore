@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
@@ -11,6 +10,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class DishManagementController : ControllerBase
     {
         private IDishManagementService _service;
+
         public DishManagementController(IDishManagementService service)
         {
             _service = service;
@@ -31,7 +31,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPut("update-combo-availability")]
         public async Task UpdateComboAvailability()
         {
-           await _service.UpdateComboAvailability();
+            await _service.UpdateComboAvailability();
         }
     }
 }

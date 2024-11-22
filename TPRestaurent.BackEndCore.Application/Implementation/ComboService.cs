@@ -1,13 +1,4 @@
 ﻿using AutoMapper;
-using Hangfire.Logging.LogProviders;
-using Humanizer;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Transactions;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
@@ -46,7 +37,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var tagRepository = Resolve<IGenericRepository<Tag>>();
                     var dishTagRepository = Resolve<IGenericRepository<DishTag>>();
                     var firebaseService = Resolve<IFirebaseService>();
-
 
                     var comboIsExisted = await _comboRepository.GetByExpression(p => p.Name == comboDto.Name);
                     if (comboIsExisted != null)
@@ -192,7 +182,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var currentDateTime = Resolve<Utility>().GetCurrentDateTimeInTimeZone();
                 var comboDb = await _comboRepository.GetAllDataByExpression(
-                    p => (string.IsNullOrEmpty(keyword) || p.Name.Contains(keyword)) 
+                    p => (string.IsNullOrEmpty(keyword) || p.Name.Contains(keyword))
                     && (!category.HasValue || category.HasValue && p.CategoryId == category.Value)
                     && (!startPrice.HasValue || p.Price * (1 - p.Discount / 100) >= startPrice.Value)
                     && (!endPrice.HasValue || p.Price * (1 - p.Discount / 100) <= endPrice.Value)
@@ -479,7 +469,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await _unitOfWork.SaveChangesAsync();
                         result.Messages.Add("Cập nhập hình ảnh thành công");
                     }
-
                 }
                 catch (Exception ex)
                 {
@@ -598,7 +587,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         dishComboList.Add(dishCombo);
                                     }
                                 }
-
                             }
                             else
                             {
@@ -672,7 +660,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
             });
             return result;
-
         }
 
         public async Task<AppActionResult> ActivateCombo(Guid comboId)
@@ -687,7 +674,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 comboDb!.IsDeleted = false;
                 var utility = Resolve<Utility>();
-                if(comboDb.EndDate < utility.GetCurrentDateTimeInTimeZone())
+                if (comboDb.EndDate < utility.GetCurrentDateTimeInTimeZone())
                 {
                     comboDb.StartDate = utility.GetCurrentDateTimeInTimeZone();
                     comboDb.EndDate = comboDb.StartDate.AddDays(100);

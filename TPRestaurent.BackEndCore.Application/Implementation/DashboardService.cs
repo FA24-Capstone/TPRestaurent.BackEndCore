@@ -1,10 +1,4 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
@@ -12,9 +6,6 @@ using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
-using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
-using static TPRestaurent.BackEndCore.Common.Utils.SD;
-
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -24,6 +15,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly IGenericRepository<IdentityUserRole<string>> _userRoleRepository;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly UserManager<Account> _userManager;
+
         public DashboardService(IServiceProvider serviceProvider, IGenericRepository<Account> accountRepository,
             UserManager<Account> userManager,
             IGenericRepository<IdentityUserRole<string>> userRoleRepository,
@@ -62,9 +54,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 foreach (var month in months)
                 {
                     var profitDb = await orderRepository!.GetAllDataByExpression(
-                          p => (p.OrderDate.Date.Month == month.Month && p.OrderDate.Year == month.Year 
+                          p => (p.OrderDate.Date.Month == month.Month && p.OrderDate.Year == month.Year
                                 || p.MealTime.HasValue && p.MealTime.Value.Month == month.Month && p.MealTime.Value.Year == month.Year)
-                                 && (p.OrderDate.Date > SD.MINIMUM_DATE 
+                                 && (p.OrderDate.Date > SD.MINIMUM_DATE
                                         && (!startDate.HasValue || startDate.HasValue && p.OrderDate.Date >= startDate.Value)
                                         && (!endDate.HasValue || endDate.HasValue && p.OrderDate.Date <= endDate.Value)
                                     || p.MealTime.HasValue
@@ -80,7 +72,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 statisticReportDashboardResponse.MonthlyRevenue = monthlyRevenue;
 
                 OrderStatusReportResponse orderStatusReportResponse = new OrderStatusReportResponse();
-                var successfulOrderDb = await orderRepository.GetAllDataByExpression(p => p.StatusId == OrderStatus.Completed 
+                var successfulOrderDb = await orderRepository.GetAllDataByExpression(p => p.StatusId == OrderStatus.Completed
                                                                                           && (p.OrderDate.Date > SD.MINIMUM_DATE
                                                                                                 && (!startDate.HasValue || startDate.HasValue && p.OrderDate.Date >= startDate.Value)
                                                                                                 && (!endDate.HasValue || endDate.HasValue && p.OrderDate.Date <= endDate.Value)
@@ -146,7 +138,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             try
             {
-                
                 StatisticReportNumberResponse statisticReportNumberResponse = new StatisticReportNumberResponse();
 
                 ShipperStatisticResponse shipperStatisticResponse = new ShipperStatisticResponse();
@@ -157,9 +148,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 statisticReportNumberResponse.ShipperStatisticResponse = shipperStatisticResponse;
 
-                var reservationOrderDb = await orderRepository!.GetAllDataByExpression(p => 
+                var reservationOrderDb = await orderRepository!.GetAllDataByExpression(p =>
                                                                        p.OrderTypeId == OrderType.Reservation
-                                                                       && p.MealTime.HasValue 
+                                                                       && p.MealTime.HasValue
                                                                        && (!startDate.HasValue || startDate.HasValue && p.MealTime.Value.Date >= startDate.Value)
                                                                        && (!endDate.HasValue || endDate.HasValue && p.MealTime.Value.Date <= endDate.Value),
                                                                        0, 0, null, false, null);

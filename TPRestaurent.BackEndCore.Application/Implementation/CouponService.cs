@@ -1,13 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using NPOI.SS.Formula.Functions;
-using NPOI.Util;
-using NPOI.XSSF.UserModel;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
@@ -15,7 +7,6 @@ using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
-using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -101,7 +92,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (dto.BronzeCouponProgramIds != null && dto.BronzeCouponProgramIds.Count > 0)
                 {
                     var bronzeCouponList = await GetCouponListForCreation(dto.BronzeCouponProgramIds, UserRank.BRONZE, currentTime);
-                    if(bronzeCouponList.Count == 0)
+                    if (bronzeCouponList.Count == 0)
                     {
                         return BuildAppActionResultError(result, $"Có các chương trình giảm giá không hợp lệ cho hạng Đồng");
                     }
@@ -116,7 +107,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         return BuildAppActionResultError(result, $"Có các chương trình giảm giá không hợp lệ cho hạng Bạc");
                     }
                     couponList.AddRange(silverCouponList);
-
                 }
 
                 if (dto.GoldCouponProgramIds != null && dto.GoldCouponProgramIds.Count > 0)
@@ -226,7 +216,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     UserRankId = couponDto.UserRank
                 };
 
-
                 await _couponProgramRepository.Insert(coupon);
                 await _unitOfWork.SaveChangesAsync();
             }
@@ -320,7 +309,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             IsUsedOrExpired = false
                         };
                         listCouponBirthday.Add(coupon);
-                        
+
                         var username = account.FirstName + " " + account.LastName;
                         emailService.SendEmail(account.Email, SD.SubjectMail.NOTIFY_RESERVATION,
                              TemplateMappingHelper.GetTemplateBirthdayCoupon(username, couponDb)
@@ -536,7 +525,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 if (!string.IsNullOrEmpty(updateCouponDto.AccountId))
                 {
-                    couponDb.UpdateBy =  updateCouponDto.AccountId;     
+                    couponDb.UpdateBy = updateCouponDto.AccountId;
                 }
 
                 await _couponProgramRepository.Update(couponDb);
@@ -557,11 +546,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
                 var accountRepository = Resolve<IGenericRepository<Account>>();
                 var emailService = Resolve<IEmailService>();
-                var customerIds = await GetCustomerId(); 
-                var couponList = new List<Coupon>();    
+                var customerIds = await GetCustomerId();
+                var couponList = new List<Coupon>();
                 var accountDb = await accountRepository.GetAllDataByExpression(a => customerIds.Contains(a.Id) && !a.IsBanned && !a.IsDeleted && a.IsVerified, 0, 0, null, false, null);
                 var bronzeCoupons = await GetCouponListForCreation(accountDb.Items.Where(a => a.UserRankId == UserRank.BRONZE).Select(a => a.Id).ToList(), UserRank.BRONZE, currentTime, emailService);
-                if(bronzeCoupons.Count > 0)
+                if (bronzeCoupons.Count > 0)
                 {
                     couponList.AddRange(bronzeCoupons);
                 }
@@ -597,14 +586,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             List<Coupon> result = new List<Coupon>();
             try
             {
-                var couponProgramDb = await _couponProgramRepository.GetAllDataByExpression(c => c.ExpiryDate.Date.Month == currentTime.Month 
+                var couponProgramDb = await _couponProgramRepository.GetAllDataByExpression(c => c.ExpiryDate.Date.Month == currentTime.Month
                                                                                                  && c.ExpiryDate.Date.Year == currentTime.Year
                                                                                                  && !c.IsDeleted && c.UserRankId == rank
                                                                                                  , 0, 0, null, false, c => c.CreateByAccount);
                 var insufficientCouponProgramList = couponProgramDb.Items.Where(c => c.Quantity < accountIds.Count).ToList();
-                if(insufficientCouponProgramList.Count != couponProgramDb.Items.Count)
+                if (insufficientCouponProgramList.Count != couponProgramDb.Items.Count)
                 {
-
                     var html = GetInSufficientCouponProgramHtml(rank.ToString(), accountIds.Count, insufficientCouponProgramList);
                     emailService!.SendEmail(insufficientCouponProgramList.FirstOrDefault().CreateByAccount.Email, SD.SubjectMail.INSUFFICIENT_COUPON_QUANTITY,
                                          TemplateMappingHelper.GetTemplateOTPEmail(
@@ -650,7 +638,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
-
             }
             return customerIds;
         }

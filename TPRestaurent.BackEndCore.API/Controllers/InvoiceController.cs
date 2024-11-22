@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
@@ -11,6 +10,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class InvoiceController : ControllerBase
     {
         private IInvoiceService _service;
+
         public InvoiceController(IInvoiceService service)
         {
             _service = service;
