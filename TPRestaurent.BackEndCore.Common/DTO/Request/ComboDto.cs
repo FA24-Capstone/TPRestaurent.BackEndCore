@@ -1,11 +1,4 @@
 ﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TPRestaurent.BackEndCore.Domain.Enums;
-using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Common.DTO.Request
 {
@@ -29,13 +22,12 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public int OptionSetNumber { get; set; }
         public Domain.Enums.DishItemType DishItemType { get; set; }
         public int NumOfChoice { get; set; }
-        public List<ComboDishSizeDetailDto> ListDishId { get; set; } = new List<ComboDishSizeDetailDto>();  
+        public List<ComboDishSizeDetailDto> ListDishId { get; set; } = new List<ComboDishSizeDetailDto>();
     }
 
     public class ComboDishSizeDetailDto
     {
         public int Quantity { get; set; }
         public Guid DishSizeDetailId { get; set; }
-
     }
 }

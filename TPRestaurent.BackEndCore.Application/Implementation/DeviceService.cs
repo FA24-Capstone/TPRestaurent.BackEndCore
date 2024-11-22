@@ -1,10 +1,4 @@
 ﻿using AutoMapper;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
@@ -24,7 +18,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         public DeviceService(
             IGenericRepository<Table> repository,
-            IMapper mapper, IUnitOfWork unitOfWork, 
+            IMapper mapper, IUnitOfWork unitOfWork,
             IServiceProvider service
             ) : base(service)
         {
@@ -33,7 +27,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _unitOfWork = unitOfWork;
             _tokenDto = new TokenDto();
         }
-        
+
         public async Task<AppActionResult> CreateNewDevice(DeviceAccessRequest deviceAccess)
         {
             var result = new AppActionResult();
@@ -54,12 +48,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 tableDb.DeviceCode = deviceAccess.DeviceCode;
                 tableDb.DevicePassword = deviceAccess.DevicePassword;
 
-                await _repository.Update(tableDb);  
+                await _repository.Update(tableDb);
                 await _unitOfWork.SaveChangesAsync();
-                result.Result = _mapper.Map<DeviceResponse>(tableDb); 
+                result.Result = _mapper.Map<DeviceResponse>(tableDb);
             }
-            catch (Exception ex) 
-            { 
+            catch (Exception ex)
+            {
                 return BuildAppActionResultError(result, ex.Message);
             }
             return result;
@@ -67,7 +61,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         public async Task<AppActionResult> GetAllDevice(int pageNumber, int pageIndex)
         {
-            var result = new AppActionResult();     
+            var result = new AppActionResult();
             try
             {
                 var deviceDb = await _repository.GetAllDataByExpression(null, pageNumber, pageIndex, null, false, null);
@@ -75,10 +69,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     Items = _mapper.Map<List<DeviceResponse>>(deviceDb.Items),
                     TotalPages = deviceDb.TotalPages
-                };       
+                };
             }
-            catch (Exception ex) 
-            { 
+            catch (Exception ex)
+            {
                 return BuildAppActionResultError(result, ex.Message);
             }
             return result;
@@ -92,15 +86,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var deviceDb = await _repository.GetById(deviceId);
                 if (deviceDb == null)
                 {
-                     BuildAppActionResultError(result, $"Thiết bị với id {deviceId} không tồn tại");
+                    BuildAppActionResultError(result, $"Thiết bị với id {deviceId} không tồn tại");
                 }
-                result.Result = _mapper.Map<DeviceResponse>(deviceDb);   
+                result.Result = _mapper.Map<DeviceResponse>(deviceDb);
             }
             catch (Exception ex)
             {
                 return BuildAppActionResultError(result, ex.Message);
             }
-            return result;  
+            return result;
         }
 
         public async Task<AppActionResult> LoginDevice(LoginDeviceRequestDto loginDeviceRequestDto)

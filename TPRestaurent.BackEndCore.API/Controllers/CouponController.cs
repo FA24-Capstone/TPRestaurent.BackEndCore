@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
@@ -12,27 +11,28 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class CouponController : ControllerBase
     {
         private ICouponService _couponService;
+
         public CouponController(ICouponService couponService)
         {
-            _couponService = couponService; 
+            _couponService = couponService;
         }
 
         [HttpGet("get-available-coupon-program/{pageNumber}/{pageSize}")]
         public async Task<AppActionResult> GetAllAvailableCouponProgram(int pageNumber = 1, int pageSize = 10)
         {
-            return await _couponService.GetAllAvailableCouponProgram(pageNumber, pageSize);    
+            return await _couponService.GetAllAvailableCouponProgram(pageNumber, pageSize);
         }
 
         [HttpGet("get-coupon-program-by-id/{couponId}")]
         public async Task<AppActionResult> GetCouponProgramById(Guid couponId)
         {
-            return await _couponService.GetCouponProgramById(couponId);     
+            return await _couponService.GetCouponProgramById(couponId);
         }
 
         [HttpGet("get-ranks")]
         public async Task<AppActionResult> GetRanks()
         {
-            return await _couponService.GetRanks();     
+            return await _couponService.GetRanks();
         }
 
         [HttpGet("get-user-by-rank")]
@@ -44,7 +44,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPost("create-coupon-program")]
         public async Task<AppActionResult> CreateCouponProgram(CouponProgramDto couponDto)
         {
-            return await _couponService.CreateCouponProgram(couponDto);        
+            return await _couponService.CreateCouponProgram(couponDto);
         }
 
         [HttpPost("assign-coupon")]
@@ -68,13 +68,13 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPut("delete-coupon-program")]
         public async Task<AppActionResult> DeleteCouponProgram(Guid couponId)
         {
-            return await _couponService.DeleteCouponProgram(couponId);  
+            return await _couponService.DeleteCouponProgram(couponId);
         }
 
-        [HttpPut("update-coupon")] 
+        [HttpPut("update-coupon")]
         public async Task<AppActionResult> UpdateCoupon(UpdateCouponProgramDto updateCouponDto)
         {
-            return await _couponService.UpdateCouponProgram(updateCouponDto);  
+            return await _couponService.UpdateCouponProgram(updateCouponDto);
         }
     }
 }

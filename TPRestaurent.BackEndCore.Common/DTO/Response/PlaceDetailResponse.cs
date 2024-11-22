@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TPRestaurent.BackEndCore.Common.DTO.Response
+﻿namespace TPRestaurent.BackEndCore.Common.DTO.Response
 {
     public class PlaceDetailResponse
     {
         public Result result { get; set; }
         public string status { get; set; }
     }
+
     public class Geometry
     {
         public Location location { get; set; }

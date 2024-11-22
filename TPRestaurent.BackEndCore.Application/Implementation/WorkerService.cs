@@ -1,9 +1,4 @@
 ﻿using Hangfire;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Models;
@@ -14,20 +9,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     {
         private BackEndLogger _logger;
         private IReservationService _reservationService;
-        private IConfigService _configService; 
-        private IOrderService _orderService; 
+        private IConfigService _configService;
+        private IOrderService _orderService;
         private IOrderSessionService _orderSessionService;
         private IDishManagementService _dishManagementService;
         private IUnitOfWork _unitOfWork;
-        private IStoreCreditService _storeCreditService;  
+        private IStoreCreditService _storeCreditService;
         private IAccountService _accountService;
         private IGroupedDishCraftService _groupedDishCraftService;
         private ITransactionService _transactionService;
         private IInvoiceService _invoiceService;
         private IDishService _dishService;
         private ICouponService _couponService;
-
-
 
         public WorkerService(IServiceProvider serviceProvider,
             BackEndLogger logger,
@@ -38,7 +31,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             IConfigService configService,
             IStoreCreditService storeCreditService,
             IAccountService accountService,
-            IGroupedDishCraftService groupedDishCraftService, 
+            IGroupedDishCraftService groupedDishCraftService,
             ITransactionService transactionService,
             IInvoiceService invoiceService,
             IDishService dishService,
@@ -47,35 +40,33 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             _logger = logger;
             _unitOfWork = unitOfWork;
-            //_reservationService = reservationService;   
+            //_reservationService = reservationService;
             _configService = configService;
             _orderService = orderService;
             _orderSessionService = orderSessionService;
-            _storeCreditService = storeCreditService;   
-            _accountService = accountService;   
+            _storeCreditService = storeCreditService;
+            _accountService = accountService;
             _groupedDishCraftService = groupedDishCraftService;
-            _transactionService = transactionService;   
+            _transactionService = transactionService;
             _invoiceService = invoiceService;
             _dishService = dishService;
             _dishManagementService = dishManagementService;
-            _couponService = couponService; 
+            _couponService = couponService;
         }
-
 
         public async Task Start()
         {
             double reloadGrouped = 0;
             try
             {
-            var reloadGroupedDish = await _configService.GetByName(SD.DefaultValue.TIME_FOR_GROUPED_DISH);
-            reloadGrouped = string.IsNullOrEmpty((reloadGroupedDish.Result as Configuration).CurrentValue) ? 10 : double.Parse((reloadGroupedDish.Result as Configuration).CurrentValue);
+                var reloadGroupedDish = await _configService.GetByName(SD.DefaultValue.TIME_FOR_GROUPED_DISH);
+                reloadGrouped = string.IsNullOrEmpty((reloadGroupedDish.Result as Configuration).CurrentValue) ? 10 : double.Parse((reloadGroupedDish.Result as Configuration).CurrentValue);
             }
             catch (Exception ex)
             {
             }
 
             TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
-
 
             RecurringJob.AddOrUpdate(() => _orderService.NotifyReservationDishToKitchen(), Cron.MinuteInterval(2), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _orderService.AccountDailyReservationDish(), "01 0 * * *", vietnamTimeZone);
@@ -97,9 +88,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             RecurringJob.AddOrUpdate(() => _couponService.ResetUserRank(), Cron.MonthInterval(1), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _couponService.RemoveExpiredCoupon(), Cron.DayInterval(1), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _couponService.AssignCouponToUserWithRank(), "5 0 1 * *", vietnamTimeZone);
-
-
-
 
             //RecurringJob.AddOrUpdate(() => _orderService.CancelOverReservation(), Cron.MinuteInterval(2), vietnamTimeZone);
             //RecurringJob.AddOrUpdate(() => _orderService.CancelReservation(), Cron.HourInterval(2), vietnamTimeZone);

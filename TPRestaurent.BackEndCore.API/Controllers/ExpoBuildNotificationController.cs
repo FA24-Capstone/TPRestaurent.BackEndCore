@@ -1,7 +1,4 @@
-using System;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using RestSharp;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
@@ -13,7 +10,8 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         private const string DiscordWebhookShipperUrl =
             "https://discord.com/api/webhooks/1303209823344787477/0kIOpRLacybvRrE9v3bHs9Sj6xS7TaxDWVGeXnA-HuzLuKCYenZZZLvmrx5gzneVHJZt";
 
-        private const string DiscordWebhookTabletUrl ="https://discord.com/api/webhooks/1303209503046500384/aXlJzYw37BO9hkSl2NnD64UjCOU6mkO0OE9vbo7Bv61rgfPqhl_WqjoZsmu_Kva2svPV";
+        private const string DiscordWebhookTabletUrl = "https://discord.com/api/webhooks/1303209503046500384/aXlJzYw37BO9hkSl2NnD64UjCOU6mkO0OE9vbo7Bv61rgfPqhl_WqjoZsmu_Kva2svPV";
+
         [HttpPost("shipper")]
         public async Task<IActionResult> ReceiveBuildNotification([FromBody] ExpoBuildPayload payload)
         {
@@ -22,10 +20,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
                 return BadRequest("Build failed or incomplete data");
             }
 
-            var embedMessage = CreateEmbedMessage(payload.Artifacts.BuildUrl,0);
+            var embedMessage = CreateEmbedMessage(payload.Artifacts.BuildUrl, 0);
 
-            return await SendDiscordNotification(embedMessage,0);
+            return await SendDiscordNotification(embedMessage, 0);
         }
+
         [HttpPost("tablet")]
         public async Task<IActionResult> ReceiveBuildNotificationTablet([FromBody] ExpoBuildPayload payload)
         {
@@ -34,9 +33,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
                 return BadRequest("Build failed or incomplete data");
             }
 
-            var embedMessage = CreateEmbedMessage(payload.Artifacts.BuildUrl,1);
+            var embedMessage = CreateEmbedMessage(payload.Artifacts.BuildUrl, 1);
 
-            return await SendDiscordNotification(embedMessage,1);
+            return await SendDiscordNotification(embedMessage, 1);
         }
 
         private object CreateEmbedMessage(string buildUrl, int type)
@@ -64,21 +63,18 @@ namespace TPRestaurent.BackEndCore.API.Controllers
                                 Inline = true
                             },
                         },
-                      
                     }
                 }
             };
 
-        return webhookMessage; // Return only the embed object wrapped in a valid structure
+            return webhookMessage; // Return only the embed object wrapped in a valid structure
         }
 
-        private async Task<IActionResult> SendDiscordNotification(object embedMessage,int type)
+        private async Task<IActionResult> SendDiscordNotification(object embedMessage, int type)
         {
             var client = new RestClient();
-            var request = new RestRequest( type==0 ?DiscordWebhookShipperUrl:DiscordWebhookTabletUrl);
-            request.Method=Method.Post;
-           
-
+            var request = new RestRequest(type == 0 ? DiscordWebhookShipperUrl : DiscordWebhookTabletUrl);
+            request.Method = Method.Post;
 
             // Properly serialize the embedMessage to JSON
             request.AddJsonBody(embedMessage);
@@ -92,7 +88,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
                 }
                 else
                 {
-                     return StatusCode((int)response.StatusCode, response);
+                    return StatusCode((int)response.StatusCode, response);
                 }
             }
             catch (Exception ex)
@@ -112,6 +108,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             public string BuildUrl { get; set; }
         }
+
         public class WebhookMessage
         {
             public string Content { get; set; }
@@ -140,6 +137,5 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             public string Text { get; set; }
         }
-
     }
 }

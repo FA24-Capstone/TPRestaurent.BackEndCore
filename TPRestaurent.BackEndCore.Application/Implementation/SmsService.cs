@@ -1,11 +1,4 @@
-﻿using Castle.Core.Configuration;
-using Firebase.Auth;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TPRestaurent.BackEndCore.Application.Contract.IServices;
+﻿using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.ConfigurationModel;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using Twilio;
@@ -16,9 +9,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     public class SmsService : GenericBackendService, ISmsService
     {
         private readonly SmsConfiguration _configuration;
+
         public SmsService(IServiceProvider serviceProvider) : base(serviceProvider)
         {
-            _configuration = Resolve<SmsConfiguration>()!; 
+            _configuration = Resolve<SmsConfiguration>()!;
         }
 
         public async Task<AppActionResult> SendMessage(string message, string phoneNumber)

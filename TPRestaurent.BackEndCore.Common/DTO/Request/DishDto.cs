@@ -1,9 +1,4 @@
 ﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Domain.Enums;
 
 namespace TPRestaurent.BackEndCore.Common.DTO.Request
@@ -14,8 +9,8 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public string Description { get; set; } = null!;
         public IFormFile? MainImageFile { get; set; }
         public List<IFormFile>? ImageFiles { get; set; } = new List<IFormFile>();
-        public List<DishSizeDetailDto> DishSizeDetailDtos { get; set; } = new List<DishSizeDetailDto> ();
-        public List<Guid> TagIds { get; set; } = new List<Guid> ();
+        public List<DishSizeDetailDto> DishSizeDetailDtos { get; set; } = new List<DishSizeDetailDto>();
+        public List<Guid> TagIds { get; set; } = new List<Guid>();
         public DishItemType DishItemType { get; set; }
         public int? PreparationTime { get; set; }
     }

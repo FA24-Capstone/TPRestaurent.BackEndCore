@@ -1,15 +1,5 @@
 using AutoMapper;
-using NPOI.POIFS.Crypt.Agile;
-using NPOI.SS.Formula.Functions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata.Ecma335;
-using System.Text;
-using System.Threading.Tasks;
-using System.Transactions;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
-using TPRestaurent.BackEndCore.Application.IHubServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
@@ -17,7 +7,6 @@ using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
-using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -37,6 +26,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _mapper = mapper;
             _hubServices = hubService;
         }
+
         public async Task DeleteOrderSession()
         {
             try
@@ -48,11 +38,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await _unitOfWork.SaveChangesAsync();
                 }
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
             }
-            Task.CompletedTask.Wait();  
+            Task.CompletedTask.Wait();
         }
+
         public async Task<AppActionResult> GetAllOrderSession(OrderSessionStatus? orderSessionStatus, int pageNumber, int pageSize)
         {
             AppActionResult result = new AppActionResult();
@@ -75,7 +66,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderSessionResponseList = new List<OrderSessionResponse>();
                 if (displayOrderSessionDb!.Items!.Count == 0 && displayOrderSessionDb.Items != null)
                 {
-              throw new Exception ($"Hiện tại không có phiên đặt bàn");
+                    throw new Exception($"Hiện tại không có phiên đặt bàn");
                 }
 
                 Dictionary<Guid, Order> orders = new Dictionary<Guid, Order>();
@@ -83,13 +74,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 foreach (var orderSession in displayOrderSessionDb.Items!)
                 {
                     var orderSessionResponse = new OrderSessionResponse();
-                    var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderSessionId == orderSession.OrderSessionId, 0, 0, null, false, 
-                                                                                                                                        o => o.DishSizeDetail!.Dish.DishItemType, 
+                    var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderSessionId == orderSession.OrderSessionId, 0, 0, null, false,
+                                                                                                                                        o => o.DishSizeDetail!.Dish.DishItemType,
                                                                                                                                         o => o.DishSizeDetail!.DishSize,
                                                                                                                                         o => o.OrderDetailStatus!,
                                                                                                                                         o => o.Combo!.Category
                                                                                                                                         );
-                    if(orderDetailDb.Items.Count > 0)
+                    if (orderDetailDb.Items.Count > 0)
                     {
                         if (orders.ContainsKey(orderDetailDb.Items[0].OrderId))
                         {
@@ -97,14 +88,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                         else
                         {
-                            orderSessionResponse.Order = await _orderRepository.GetByExpression(o => o.OrderId == orderDetailDb.Items.FirstOrDefault().OrderId, o => o.OrderType, o => o.Status); 
+                            orderSessionResponse.Order = await _orderRepository.GetByExpression(o => o.OrderId == orderDetailDb.Items.FirstOrDefault().OrderId, o => o.OrderType, o => o.Status);
                             orders.Add(orderSessionResponse.Order.OrderId, orderSessionResponse.Order);
                         }
 
                         if (orderSessionResponse.Order != null)
                         {
                             var tableDb = (await tableDetailRepository.GetAllDataByExpression(t => t.OrderId == orderSessionResponse.Order.OrderId, 0, 0, t => t.TableId, false, t => t.Table.Room, t => t.Table.TableSize));
-                            if(tableDb.Items.Count() > 0)
+                            if (tableDb.Items.Count() > 0)
                             {
                                 orderSessionResponse.Table = tableDb.Items[0]?.Table;
                             }
@@ -115,7 +106,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         orderSessionResponseList.Add(orderSessionResponse);
                     }
-                   
                 }
                 var data = new OrderSessionListReponseWithStatus
                 {
@@ -137,6 +127,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
         public async Task<AppActionResult> GetGroupedDish(DateTime?[]? groupedTime)
         {
             AppActionResult result = new AppActionResult();
@@ -145,9 +136,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                 var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
                 var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => (
-                                                                                                groupedTime == null 
+                                                                                                groupedTime == null
                                                                                                 || (
-                                                                                                    groupedTime != null 
+                                                                                                    groupedTime != null
                                                                                                     && (
                                                                                                         !groupedTime[0].HasValue
                                                                                                         || (
@@ -158,24 +149,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                                     && groupedTime[1] > o.OrderSession.OrderSessionTime
                                                                                                    )
                                                                                             )
-                                                                                            && o.OrderSession.OrderSessionStatusId != OrderSessionStatus.Completed 
+                                                                                            && o.OrderSession.OrderSessionStatusId != OrderSessionStatus.Completed
                                                                                             && o.OrderSession.OrderSessionStatusId != OrderSessionStatus.Cancelled
                                                                                             && o.OrderSession.OrderSessionStatusId != OrderSessionStatus.PreOrder
                                                                                             && (o.OrderDetailStatusId == OrderDetailStatus.Unchecked
                                                                                                 || o.OrderDetailStatusId == OrderDetailStatus.Processing)
-                                                                                            && (o.Order.OrderTypeId != OrderType.Delivery   
+                                                                                            && (o.Order.OrderTypeId != OrderType.Delivery
                                                                                                 || o.Order.OrderTypeId == OrderType.Delivery && o.Order.StatusId == OrderStatus.Processing),
-                                                                                            0, 0, null, false, 
+                                                                                            0, 0, null, false,
                                                                                             o => o.OrderDetailStatus,
-                                                                                            o => o.Order.Shipper, 
+                                                                                            o => o.Order.Shipper,
                                                                                             o => o.Order.OrderType,
                                                                                             o => o.Order.Status,
                                                                                             o => o.OrderSession.OrderSessionStatus,
-                                                                                            o => o.OrderDetailStatus, 
-                                                                                            o => o.DishSizeDetail.Dish.DishItemType, 
+                                                                                            o => o.OrderDetailStatus,
+                                                                                            o => o.DishSizeDetail.Dish.DishItemType,
                                                                                             o => o.DishSizeDetail.DishSize,
                                                                                             o => o.Combo);
-                if(orderDetailDb.Items.Count > 0)
+                if (orderDetailDb.Items.Count > 0)
                 {
                     var data = new List<KitchenGroupedDishItemResponse>();
                     var dishQuantity = await GetDishQuantity(orderDetailDb.Items.Where(o => o.DishSizeDetailId.HasValue));
@@ -190,11 +181,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     groupedDish.OrderDetailIds = orderDetailDb.Items.DistinctBy(o => o.OrderDetailId).Select(o => o.OrderDetailId).ToList();
                     foreach (var dish in data)
                     {
-                        if(dish.Dish.Total.Count() == 1 
+                        if (dish.Dish.Total.Count() == 1
                             && dish.Dish.Total.Sum(d => d.UncheckedQuantity) + dish.Dish.Total.Sum(d => d.ProcessingQuantity) == 1)
                         {
                             groupedDish.SingleOrderDishes.Add(dish);
-                        } else
+                        }
+                        else
                         {
                             groupedDish.MutualOrderDishes.Add(dish);
                         }
@@ -209,6 +201,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
         private async Task CalculatePreparationTime(List<KitchenGroupedDishItemResponse> data)
         {
             try
@@ -229,9 +222,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
-                
             }
         }
+
         private async Task<List<KitchenGroupedDishItemResponse>> RefineGroupDishData(List<KitchenGroupedDishItemResponse> data)
         {
             try
@@ -274,19 +267,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
              .OrderBy(g => g.DishSize.Id)
              .ToList();
 
-             kitchenGroupedDishItemResponse.UncheckedDishFromTableOrders = group
-              .SelectMany(d => d.UncheckedDishFromTableOrders)
-              .ToList();
-            
-             kitchenGroupedDishItemResponse.ProcessingDishFromTableOrders = group
-             .SelectMany(d => d.ProcessingDishFromTableOrders)
-             .ToList();
+         kitchenGroupedDishItemResponse.UncheckedDishFromTableOrders = group
+          .SelectMany(d => d.UncheckedDishFromTableOrders)
+          .ToList();
+
+         kitchenGroupedDishItemResponse.ProcessingDishFromTableOrders = group
+         .SelectMany(d => d.ProcessingDishFromTableOrders)
+         .ToList();
          return kitchenGroupedDishItemResponse;
      })
      .Where(g => g.UncheckedDishFromTableOrders.Count + g.ProcessingDishFromTableOrders.Count > 0)
      .OrderByDescending(g => g.IsLate)
      .ToList();
-
             }
             catch (Exception ex)
             {
@@ -294,15 +286,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return data;
         }
+
         private async Task<List<KitchenGroupedDishItemResponse>> GetExtractComboQuantity(IEnumerable<OrderDetail> orderDetails)
         {
             List<KitchenGroupedDishItemResponse> result = new List<KitchenGroupedDishItemResponse>();
             try
             {
                 var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
-                foreach(var orderDetail in orderDetails)
+                foreach (var orderDetail in orderDetails)
                 {
-                    var dishDetails = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId, 0, 0, null, false, 
+                    var dishDetails = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId, 0, 0, null, false,
                                                                                               c => c.DishCombo.DishSizeDetail.Dish.DishItemType,
                                                                                               c => c.DishCombo.DishSizeDetail.DishSize,
                                                                                               c => c.OrderDetail.Order.OrderType,
@@ -312,7 +305,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                               c => c.OrderDetail.OrderSession.OrderSessionStatus);
 
                     var dishDictionary = dishDetails.Items.GroupBy(d => d.DishCombo.DishSizeDetail.DishId).ToDictionary(d => d.Key, d => d.ToList());
-                    foreach(var dish in dishDictionary)
+                    foreach (var dish in dishDictionary)
                     {
                         var groupedDishItem = new KitchenGroupedDishItemResponse();
                         groupedDishItem.Dish = _mapper.Map<DishQuantityResponse>(dish.Value.FirstOrDefault().DishCombo.DishSizeDetail.Dish);
@@ -339,6 +332,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
         private async Task<List<KitchenGroupedDishItemResponse>> GetDishQuantity(IEnumerable<OrderDetail> orderDetails)
         {
             List<KitchenGroupedDishItemResponse> result = new List<KitchenGroupedDishItemResponse>();
@@ -351,7 +345,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     groupedDishItem.Dish = _mapper.Map<DishQuantityResponse>(dish.Value.FirstOrDefault().DishSizeDetail.Dish);
                     var totalDictionary = dish.Value.GroupBy(d => d.DishSizeDetail.DishSize).ToDictionary(t => t.Key, t => t.ToList()).ToList();
-                    foreach(var sizeTotal in totalDictionary)
+                    foreach (var sizeTotal in totalDictionary)
                     {
                         groupedDishItem.Dish.Total.Add(new QuantityBySize
                         {
@@ -362,7 +356,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
 
                     var listDish = await GetListDishFromTableOrder(dish.Value);
-                    groupedDishItem.UncheckedDishFromTableOrders = listDish.Where(o =>o.OrderDetail.OrderDetailStatusId == OrderDetailStatus.Unchecked).ToList();
+                    groupedDishItem.UncheckedDishFromTableOrders = listDish.Where(o => o.OrderDetail.OrderDetailStatusId == OrderDetailStatus.Unchecked).ToList();
                     groupedDishItem.ProcessingDishFromTableOrders = listDish.Where(o => o.OrderDetail.OrderDetailStatusId == OrderDetailStatus.Processing).ToList();
 
                     result.Add(groupedDishItem);
@@ -374,6 +368,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
         private async Task<List<DishFromTableOrder>> GetListDishFromTableOrder(List<OrderDetail> orderDetails)
         {
             List<DishFromTableOrder> result = new List<DishFromTableOrder>();
@@ -402,6 +397,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
         private async Task<List<DishFromTableOrder>> GetListDishFromTableOrder(List<ComboOrderDetail> comboOrderDetails)
         {
             List<DishFromTableOrder> result = new List<DishFromTableOrder>();
@@ -431,9 +427,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
         public async Task<AppActionResult> GetOrderSessionById(Guid orderSessionId)
         {
-            var result = new AppActionResult(); 
+            var result = new AppActionResult();
             var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
             var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
             var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
@@ -443,10 +440,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderSessionResponse = new OrderSessionDetailResponse();
                 if (orderSessionDb == null)
                 {
-              throw new Exception ($"Không tìm thấy phiên đặt bàn với id {orderSessionId}");
+                    throw new Exception($"Không tìm thấy phiên đặt bàn với id {orderSessionId}");
                 }
-                var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderSessionId == orderSessionDb.OrderSessionId, 0, 0, null, false, 
-                                                                                                                        o => o.Combo!.Category, 
+                var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderSessionId == orderSessionDb.OrderSessionId, 0, 0, null, false,
+                                                                                                                        o => o.Combo!.Category,
                                                                                                                         o => o.DishSizeDetail.Dish.DishItemType,
                                                                                                                         o => o.DishSizeDetail.DishSize,
                                                                                                                         o => o.OrderDetailStatus
@@ -482,8 +479,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 orderSessionResponse.OrderSession = orderSessionDb;
-                orderSessionResponse.OrderDetails = orderDetailReponseList; 
-                result.Result = orderSessionResponse;   
+                orderSessionResponse.OrderDetails = orderDetailReponseList;
+                result.Result = orderSessionResponse;
             }
             catch (Exception ex)
             {
@@ -491,6 +488,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
         public async Task<AppActionResult> UpdateOrderSessionStatus(Guid orderSessionId, OrderSessionStatus orderSessionStatus, bool sendSignalR)
         {
             var result = new AppActionResult();
@@ -576,7 +574,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 await orderService.ChangeOrderStatusService(orderId, true, OrderStatus.TemporarilyCompleted,
                                     false);
-
                             }
                         }
 
@@ -594,7 +591,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
             });
             return result;
-
         }
 
         [Hangfire.Queue("update-late-order-session")]
@@ -602,17 +598,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             try
             {
-                var unfinishedOrderSession = await _orderSessionRepository.GetAllDataByExpression(u => !u.ReadyToServeTime.HasValue 
-                                                                                                        && (u.OrderSessionStatusId == OrderSessionStatus.Confirmed 
+                var unfinishedOrderSession = await _orderSessionRepository.GetAllDataByExpression(u => !u.ReadyToServeTime.HasValue
+                                                                                                        && (u.OrderSessionStatusId == OrderSessionStatus.Confirmed
                                                                                                         || u.OrderSessionStatusId == OrderSessionStatus.Processing)
                                                                                                         , 0, 0, null, false, null);
                 if (unfinishedOrderSession.Items.Count > 0)
                 {
                     var utility = Resolve<Utility>();
                     var currentTime = utility.GetCurrentDateTimeInTimeZone();
-                    foreach(var orderSession in unfinishedOrderSession.Items)
+                    foreach (var orderSession in unfinishedOrderSession.Items)
                     {
-                        if(orderSession.OrderSessionTime.AddMinutes(orderSession.PreparationTime) < currentTime)
+                        if (orderSession.OrderSessionTime.AddMinutes(orderSession.PreparationTime) < currentTime)
                         {
                             orderSession.OrderSessionStatusId = OrderSessionStatus.LateWarning;
                         }
@@ -620,7 +616,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await _orderSessionRepository.UpdateRange(unfinishedOrderSession.Items);
                     await _unitOfWork.SaveChangesAsync();
                 }
-            } catch(Exception ex)
+            }
+            catch (Exception ex)
             {
             }
             Task.CompletedTask.Wait();
@@ -640,7 +637,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (orderSessionDailyDb!.Items!.Count > 0 && orderSessionDailyDb.Items != null)
                 {
                     var orderSessionDaily = orderSessionDailyDb.Items;
-                    var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderSessionId.HasValue 
+                    var orderDetailDb = await orderDetailRepository!.GetAllDataByExpression(p => p.OrderSessionId.HasValue
                                                                                                  && orderSessionDaily.Select(o => o.OrderSessionId).ToList().Contains((Guid)p.OrderSessionId)
                                                                                                  , 0, 0, null, false, null);
                     if (orderDetailDb.Items.Count > 0)
@@ -648,7 +645,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         orderDetailDb.Items.ForEach(o => o.OrderSessionId = null);
                         await orderDetailRepository.UpdateRange(orderDetailDb.Items);
                     }
-                   
+
                     await _orderSessionRepository.DeleteRange(orderSessionDaily);
                 }
                 await _unitOfWork.SaveChangesAsync();

@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
@@ -11,13 +10,14 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class MapController : ControllerBase
     {
         private IMapService _service;
+
         public MapController(IMapService service)
         {
             _service = service;
         }
 
         [HttpPost("auto-complete")]
-        public async Task<AppActionResult> AutoComplete([FromBody]MapAutoCompleteRequestDto dto)
+        public async Task<AppActionResult> AutoComplete([FromBody] MapAutoCompleteRequestDto dto)
         {
             return await _service.AutoComplete(dto);
         }
@@ -29,7 +29,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("get-estimate-delivery-response")]
-        public async Task<AppActionResult> GetEstimateDeliveryTime([FromBody]GetEstimateTimeRequest dto)
+        public async Task<AppActionResult> GetEstimateDeliveryTime([FromBody] GetEstimateTimeRequest dto)
         {
             return await _service.GetEstimateDeliveryResponse(dto.desc, dto.start);
         }
@@ -45,6 +45,5 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _service.GetOptimalPath(orderIdList);
         }
-
     }
 }

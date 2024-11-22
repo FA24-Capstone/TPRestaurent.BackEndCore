@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 using TPRestaurent.BackEndCore.Domain.Enums;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
@@ -13,6 +7,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
     {
         [Key]
         public Guid InvoiceId { get; set; }
+
         public string OrderDetailJson { get; set; }
         public OrderType OrderTypeId { get; set; }
         public double TotalAmount { get; set; }

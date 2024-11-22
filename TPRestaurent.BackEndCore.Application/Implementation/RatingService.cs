@@ -1,11 +1,4 @@
-﻿using Humanizer;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Transactions;
-using TPRestaurent.BackEndCore.Application.Contract.IServices;
+﻿using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
@@ -109,7 +102,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var ratingDb = await _ratingRepository.GetById(ratingId);
                 if (ratingDb == null)
                 {
-                             throw new Exception ($"Không tìm thấy đánh giá với id {ratingId}");
+                    throw new Exception($"Không tìm thấy đánh giá với id {ratingId}");
                 }
                 var ratingImage = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == ratingId, 0, 0, null, false, null);
                 if (ratingImage.Items.Count > 0 && ratingImage.Items != null)
