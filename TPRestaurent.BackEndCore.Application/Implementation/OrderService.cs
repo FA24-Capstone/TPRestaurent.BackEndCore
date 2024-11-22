@@ -1110,7 +1110,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var customerSavedCouponDb = await couponRepository!.GetAllDataByExpression(c => currentTime > c.CouponProgram.StartDate && currentTime < c.CouponProgram.ExpiryDate
                                                                                                        && c.CouponProgram.MinimumAmount <= money && !c.IsUsedOrExpired
                                                                                                        && c.AccountId.Equals(accountDb.Id) && !c.CouponProgram.IsDeleted
-                                                                                                       , 0, 0, null, false, null);
+                                                                                                       , 0, 0, null, false, c => c.CouponProgram);
                         if (customerSavedCouponDb.Items!.Count > 0 && customerSavedCouponDb.Items != null
                             && orderRequestDto.DeliveryOrder != null && orderRequestDto.DeliveryOrder.CouponIds.Count > 0)
                         {
@@ -1508,7 +1508,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var customerSavedCouponDb = await couponRepository!.GetAllDataByExpression(c => currentTime > c.CouponProgram.StartDate && currentTime < c.CouponProgram.ExpiryDate 
                                                                                                         && c.CouponProgram.MinimumAmount <= money && !c.IsUsedOrExpired 
                                                                                                         && c.AccountId.Equals(accountDb.Id) && !c.CouponProgram.IsDeleted
-                                                                                                        , 0, 0, null, false, null);
+                                                                                                        , 0, 0, null, false, c => c.CouponProgram);
                         if (customerSavedCouponDb.Items!.Count > 0 && customerSavedCouponDb.Items != null
                             && orderRequestDto.CouponIds.Count > 0)
                         {
