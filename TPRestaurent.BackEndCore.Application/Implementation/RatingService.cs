@@ -34,7 +34,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var staticFileRepository = Resolve<IGenericRepository<Image>>();
             var listStaticFile = new List<Image>();
 
-            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            await _unitOfWork.ExecuteInTransaction(async () =>
             {
                 try
                 {
@@ -42,7 +42,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var orderDetailDb = await orderDetailRepository.GetById(createRatingRequestDto.OrderDetailId);
                     if (orderDetailDb == null)
                     {
-                        return BuildAppActionResultError(result, $"Không tìm thấy chi tiết đơn hàng với id {createRatingRequestDto.OrderDetailId}");
+                        throw new Exception(
+                            $"Không tìm thấy chi tiết đơn hàng với id {createRatingRequestDto.OrderDetailId}");
                     }
 
                     orderDetailDb.IsRated = true;
@@ -62,12 +63,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         foreach (var image in createRatingRequestDto.ImageFiles)
                         {
-                            var pathName = SD.FirebasePathName.RATING_PREFIX + $"{newRating.RatingId}{Guid.NewGuid()}.jpg";
+                            var pathName = SD.FirebasePathName.RATING_PREFIX +
+                                           $"{newRating.RatingId}{Guid.NewGuid()}.jpg";
                             var upload = await firebaseService!.UploadFileToFirebase(image, pathName);
 
                             if (!upload.IsSuccess)
                             {
-                                return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
+                                throw new Exception("Upload hình ảnh không thành công");
                             }
 
                             var newStaticFileDb = new Image
@@ -75,7 +77,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 StaticFileId = Guid.NewGuid(),
                                 RatingId = newRating.RatingId,
                                 Path = upload.Result.ToString()
-                            };;
+                            };
+                            ;
 
                             listStaticFile.Add(newStaticFileDb);
                             await staticFileRepository!.InsertRange(listStaticFile);
@@ -87,14 +90,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await orderDetailRepository.Update(orderDetailDb);
                         await _ratingRepository.Insert(newRating);
                         await _unitOfWork.SaveChangesAsync();
-                        scope.Complete();
                     }
                 }
                 catch (Exception ex)
                 {
                     result = BuildAppActionResultError(result, ex.Message);
                 }
-            }
+            });
             return result;
         }
 
@@ -107,7 +109,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var ratingDb = await _ratingRepository.GetById(ratingId);
                 if (ratingDb == null)
                 {
-                    return BuildAppActionResultError(result, $"Không tìm thấy đánh giá với id {ratingId}");
+                             throw new Exception ($"Không tìm thấy đánh giá với id {ratingId}");
                 }
                 var ratingImage = await staticFileRepository.GetAllDataByExpression(p => p.RatingId == ratingId, 0, 0, null, false, null);
                 if (ratingImage.Items.Count > 0 && ratingImage.Items != null)
@@ -167,14 +169,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var staticFileRepository = Resolve<IGenericRepository<Image>>();
             var listStaticFile = new List<Image>();
 
-            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            await _unitOfWork.ExecuteInTransaction(async () =>
             {
                 try
                 {
                     var ratingDb = await _ratingRepository.GetById(updateRatingRequestDto.RatingId);
                     if (ratingDb == null)
                     {
-                        return BuildAppActionResultError(result, $"Không tìm thấy đánh giá với id {updateRatingRequestDto.RatingId}");
+                        throw new Exception($"Không tìm thấy đánh giá với id {updateRatingRequestDto.RatingId}");
                     }
 
                     ratingDb.Title = updateRatingRequestDto.Title;
@@ -184,7 +186,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     if (updateRatingRequestDto.ImageFiles != null && updateRatingRequestDto.ImageFiles.Count > 0)
                     {
-                        var oldImageListDb = await staticFileRepository!.GetAllDataByExpression(p => p.RatingId == updateRatingRequestDto.RatingId, 0, 0, null, false, null);
+                        var oldImageListDb =
+                            await staticFileRepository!.GetAllDataByExpression(
+                                p => p.RatingId == updateRatingRequestDto.RatingId, 0, 0, null, false, null);
                         var oldImageList = oldImageListDb.Items;
                         if (oldImageList!.Count > 0 && oldImageList != null)
                         {
@@ -193,16 +197,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 await firebaseService!.DeleteFileFromFirebase(oldImageDelete.Path);
                             }
 
-                            await staticFileRepository.DeleteRange(oldImageList); 
+                            await staticFileRepository.DeleteRange(oldImageList);
                         }
+
                         foreach (var newImage in updateRatingRequestDto.ImageFiles)
                         {
-                            var pathName = SD.FirebasePathName.RATING_PREFIX + $"{ratingDb.RatingId}{Guid.NewGuid()}.jpg";
+                            var pathName = SD.FirebasePathName.RATING_PREFIX +
+                                           $"{ratingDb.RatingId}{Guid.NewGuid()}.jpg";
                             var upload = await firebaseService!.UploadFileToFirebase(newImage, pathName);
 
                             if (!upload.IsSuccess)
                             {
-                                return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
+                                throw new Exception("Upload hình ảnh không thành công");
                             }
 
                             var newStaticFileDb = new Image
@@ -210,7 +216,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 StaticFileId = Guid.NewGuid(),
                                 RatingId = ratingDb.RatingId,
                                 Path = upload.Result.ToString()
-                            }; ;
+                            };
+                            ;
 
                             listStaticFile.Add(newStaticFileDb);
                             await staticFileRepository!.InsertRange(listStaticFile);
@@ -221,14 +228,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         await _ratingRepository.Update(ratingDb);
                         await _unitOfWork.SaveChangesAsync();
-                        scope.Complete();
                     }
                 }
                 catch (Exception ex)
                 {
                     result = BuildAppActionResultError(result, ex.Message);
                 }
-            }
+            });
             return result;
         }
     }
