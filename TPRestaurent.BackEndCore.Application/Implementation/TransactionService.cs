@@ -52,413 +52,454 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> CreatePayment(PaymentRequestDto paymentRequest)
         {
             AppActionResult result = new AppActionResult();
-            using (var scope = new System.Transactions.TransactionScope(System.Transactions.TransactionScopeAsyncFlowOption.Enabled))
+            try
             {
-                try
+                var paymentGatewayService = Resolve<IPaymentGatewayService>();
+                var orderRepository = Resolve<IGenericRepository<Order>>();
+                var accountRepository = Resolve<IGenericRepository<Account>>();
+                var orderService = Resolve<IOrderService>();
+                var hasingService = Resolve<IHashingService>();
+                var utility = Resolve<Utility>();
+                var transaction = new Transaction();
+                IConfiguration config = new ConfigurationBuilder()
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("appsettings.json", true, true)
+                    .Build();
+                string key = config["HashingKeys:PaymentLink"];
+                string paymentUrl = "";
+                double amount = 0;
+                if (!paymentRequest.OrderId.HasValue && string.IsNullOrEmpty(paymentRequest.AccountId))
                 {
-                    var paymentGatewayService = Resolve<IPaymentGatewayService>();
-                    var orderRepository = Resolve<IGenericRepository<Order>>();
-                    var accountRepository = Resolve<IGenericRepository<Account>>();
-                    var orderService = Resolve<IOrderService>();
-                    var hasingService = Resolve<IHashingService>();
-                    var utility = Resolve<Utility>();
-                    var transaction = new Transaction();
-                    IConfiguration config = new ConfigurationBuilder()
-                          .SetBasePath(Directory.GetCurrentDirectory())
-                          .AddJsonFile("appsettings.json", true, true)
-                          .Build();
-                    string key = config["HashingKeys:PaymentLink"];
-                    string paymentUrl = "";
-                    double amount = 0;
-                    if (!paymentRequest.OrderId.HasValue && string.IsNullOrEmpty(paymentRequest.AccountId))
-                    {
-                        result = BuildAppActionResultError(result, $"Đơn hàng/Đặt bàn/Ví này không tồn tại");
-                        return result;
-                    }
-                    if (!BuildAppActionResultIsError(result))
-                    {
+                    result = BuildAppActionResultError(result, $"Đơn hàng/Đặt bàn/Ví này không tồn tại");
+                }
 
-                        switch (paymentRequest.PaymentMethod)
-                        {
-                            case Domain.Enums.PaymentMethod.VNPAY:
-                                if (paymentRequest.OrderId.HasValue)
+                if (!BuildAppActionResultIsError(result))
+                {
+
+                    switch (paymentRequest.PaymentMethod)
+                    {
+                        case Domain.Enums.PaymentMethod.VNPAY:
+                            if (paymentRequest.OrderId.HasValue)
+                            {
+                                var orderDb =
+                                    await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId,
+                                        p => p.Account!);
+                                if (orderDb.StatusId == OrderStatus.Completed ||
+                                    orderDb.StatusId == OrderStatus.Cancelled)
                                 {
-                                    var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
-                                    if(orderDb.StatusId == OrderStatus.Completed || orderDb.StatusId == OrderStatus.Cancelled)
-                                    {
-                                        result = BuildAppActionResultError(result, $"Đơn hàng đã hủy hoặc đã được thanh toán thành công");
-                                        return result;
-                                    }
+                                    result = BuildAppActionResultError(result,
+                                        $"Đơn hàng đã hủy hoặc đã được thanh toán thành công");
+                                }
 
-                                    if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
-                                        || orderDb.StatusId == OrderStatus.Pending)
+                                if ((orderDb.OrderTypeId != OrderType.Delivery &&
+                                     (orderDb.StatusId == OrderStatus.TemporarilyCompleted ||
+                                      orderDb.StatusId == OrderStatus.Processing))
+                                    || orderDb.StatusId == OrderStatus.Pending)
+                                {
+                                    amount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
+                                }
+                                else
+                                {
+                                    if (orderDb.Deposit.HasValue)
                                     {
-                                        amount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
+                                        amount = Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000;
                                     }
                                     else
                                     {
-                                        if (orderDb.Deposit.HasValue)
-                                        {
-                                            amount = Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000;
-                                        }
-                                        else
-                                        {
-                                            return BuildAppActionResultError(result, $"Số tiền thanh toán không hợp lệ");
-                                        }
+                                        throw new Exception(
+                                               $"Số tiền thanh toán không hợp lệ");
                                     }
+                                }
+
+                                transaction = new Transaction
+                                {
+                                    Id = Guid.NewGuid(),
+                                    Amount = amount,
+                                    PaymentMethodId = Domain.Enums.PaymentMethod.VNPAY,
+                                    OrderId = orderDb.OrderId,
+                                    Date = utility!.GetCurrentDateTimeInTimeZone(),
+                                    TransationStatusId = TransationStatus.PENDING,
+                                    TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned
+                                        ? TransactionType.Deposit
+                                        : TransactionType.Order
+                                };
+
+                                var paymentInformationRequest = new PaymentInformationRequest
+                                {
+                                    TransactionID = transaction.Id.ToString(),
+                                    PaymentMethod = paymentRequest.PaymentMethod,
+                                    Amount = amount,
+                                    CustomerName = orderDb!?.Account!?.LastName,
+                                    AccountID = orderDb?.AccountId,
+                                };
+
+                                await _repository.Insert(transaction);
+                                paymentUrl =
+                                    await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest);
+
+                                result.Result = paymentUrl;
+                            }
+                            else if (!string.IsNullOrEmpty(paymentRequest.AccountId))
+                            {
+                                if (paymentRequest.StoreCreditAmount.HasValue)
+                                {
+                                    var accountDb = await accountRepository!.GetById(paymentRequest.AccountId);
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
-                                        Amount = amount,
+                                        Amount = (double)(paymentRequest.StoreCreditAmount),
                                         PaymentMethodId = Domain.Enums.PaymentMethod.VNPAY,
-                                        OrderId = orderDb.OrderId,
+                                        AccountId = paymentRequest.AccountId,
                                         Date = utility!.GetCurrentDateTimeInTimeZone(),
                                         TransationStatusId = TransationStatus.PENDING,
-                                        TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned ? TransactionType.Deposit : TransactionType.Order
+                                        TransactionTypeId = TransactionType.CreditStore,
                                     };
 
                                     var paymentInformationRequest = new PaymentInformationRequest
                                     {
-                                        TransactionID  = transaction.Id.ToString(),
+                                        TransactionID = transaction.Id.ToString(),
                                         PaymentMethod = paymentRequest.PaymentMethod,
-                                        Amount = amount,
-                                        CustomerName = orderDb!?.Account!?.LastName,
-                                        AccountID = orderDb?.AccountId,
+                                        Amount = (double)paymentRequest.StoreCreditAmount,
+                                        CustomerName = accountDb!.LastName,
+                                        AccountID = accountDb.Id,
                                     };
 
                                     await _repository.Insert(transaction);
-                                    paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest);
+                                    paymentUrl =
+                                        await paymentGatewayService!.CreatePaymentUrlVnpay(
+                                            paymentInformationRequest);
 
                                     result.Result = paymentUrl;
                                 }
-                                else if (!string.IsNullOrEmpty(paymentRequest.AccountId))
+                            }
+
+                            break;
+                        case Domain.Enums.PaymentMethod.MOMO:
+                            if (paymentRequest.OrderId.HasValue)
+                            {
+                                var orderDb =
+                                    await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId,
+                                        p => p.Account!);
+                                if ((orderDb.OrderTypeId != OrderType.Delivery &&
+                                     (orderDb.StatusId == OrderStatus.TemporarilyCompleted ||
+                                      orderDb.StatusId == OrderStatus.Processing))
+                                    || orderDb.StatusId == OrderStatus.Pending)
                                 {
-                                    if (paymentRequest.StoreCreditAmount.HasValue)
+                                    amount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
+                                }
+                                else
+                                {
+                                    if (orderDb.Deposit.HasValue)
+                                    {
+                                        amount = Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000;
+                                    }
+                                    else
+                                    {
+                                        throw new Exception(
+                                               $"Số tiền thanh toán không hợp lệ");
+                                    }
+                                }
+
+                                transaction = new Transaction
+                                {
+                                    Id = Guid.NewGuid(),
+                                    Amount = amount,
+                                    PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
+                                    OrderId = orderDb.OrderId,
+                                    Date = utility!.GetCurrentDateTimeInTimeZone(),
+                                    TransationStatusId = TransationStatus.PENDING,
+                                    TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned
+                                        ? TransactionType.Deposit
+                                        : TransactionType.Order
+                                };
+
+                                string endpoint = _momoConfiguration.Api;
+                                string partnerCode = _momoConfiguration.PartnerCode;
+                                string accessKey = _momoConfiguration.AccessKey;
+                                string secretkey = _momoConfiguration.Secretkey;
+                                string orderInfo = hasingService.Hashing("OR", key);
+                                string redirectUrl = $"{_momoConfiguration.RedirectUrl}";
+                                string ipnUrl = _momoConfiguration.IPNUrl;
+                                string requestType = "payWithATM";
+
+                                string requestId = Guid.NewGuid().ToString();
+                                string extraData = transaction.OrderId.ToString();
+
+                                string rawHash = "accessKey=" + accessKey +
+                                                 "&amount=" + (Math.Ceiling(transaction.Amount / 1000) * 1000)
+                                                 .ToString() +
+                                                 "&extraData=" + extraData +
+                                                 "&ipnUrl=" + ipnUrl +
+                                                 "&orderId=" + transaction.Id +
+                                                 "&orderInfo=" + orderInfo +
+                                                 "&partnerCode=" + partnerCode +
+                                                 "&redirectUrl=" + redirectUrl +
+                                                 "&requestId=" + requestId +
+                                                 "&requestType=" + requestType;
+
+                                MomoSecurity crypto = new MomoSecurity();
+                                string signature = crypto.signSHA256(rawHash, secretkey);
+
+                                JObject message = new JObject
+                                    {
+                                        { "partnerCode", partnerCode },
+                                        { "partnerName", "Test" },
+                                        { "storeId", "MomoTestStore" },
+                                        { "requestId", requestId },
+                                        { "amount", amount },
+                                        { "orderId", transaction.Id },
+                                        { "orderInfo", orderInfo },
+                                        { "redirectUrl", redirectUrl },
+                                        { "ipnUrl", ipnUrl },
+                                        { "lang", "en" },
+                                        { "extraData", extraData },
+                                        { "requestType", requestType },
+                                        { "signature", signature }
+                                    };
+
+                                var client = new RestClient();
+                                var request = new RestRequest(endpoint, Method.Post);
+                                request.AddJsonBody(message.ToString());
+                                RestResponse response = await client.ExecuteAsync(request);
+                                if (response.StatusCode == HttpStatusCode.OK)
+                                {
+                                    JObject jmessage = JObject.Parse(response.Content);
+                                    await _repository.Insert(transaction);
+                                    result.Result = jmessage.GetValue("payUrl").ToString();
+                                }
+                            }
+                            else if (!string.IsNullOrEmpty(paymentRequest.AccountId))
+                            {
+                                if (paymentRequest.StoreCreditAmount > 0)
+                                {
                                     {
                                         var accountDb = await accountRepository!.GetById(paymentRequest.AccountId);
                                         transaction = new Transaction
                                         {
                                             Id = Guid.NewGuid(),
                                             Amount = (double)(paymentRequest.StoreCreditAmount),
-                                            PaymentMethodId = Domain.Enums.PaymentMethod.VNPAY,
-                                            AccountId = paymentRequest.AccountId,
-                                            Date = utility!.GetCurrentDateTimeInTimeZone(),
-                                            TransationStatusId = TransationStatus.PENDING,
-                                            TransactionTypeId = TransactionType.CreditStore,
-                                        };
-
-                                        var paymentInformationRequest = new PaymentInformationRequest
-                                        {
-                                            TransactionID = transaction.Id.ToString(),
-                                            PaymentMethod = paymentRequest.PaymentMethod,
-                                            Amount = (double)paymentRequest.StoreCreditAmount,
-                                            CustomerName = accountDb!.LastName,
-                                            AccountID = accountDb.Id,
-                                        };
-
-                                        await _repository.Insert(transaction);
-                                        paymentUrl = await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest);
-
-                                        result.Result = paymentUrl;
-                                    }
-                                }
-                                break;
-                            case Domain.Enums.PaymentMethod.MOMO:
-                                if (paymentRequest.OrderId.HasValue)
-                                {
-                                    var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
-                                    if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
-                                        || orderDb.StatusId == OrderStatus.Pending)
-                                    {
-                                        amount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
-                                    }
-                                    else
-                                    {
-                                        if (orderDb.Deposit.HasValue)
-                                        {
-                                            amount = Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000;
-                                        }
-                                        else
-                                        {
-                                            return BuildAppActionResultError(result, $"Số tiền thanh toán không hợp lệ");
-                                        }
-                                    }
-                                    transaction = new Transaction
-                                    {
-                                        Id = Guid.NewGuid(),
-                                        Amount = amount,
-                                        PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
-                                        OrderId = orderDb.OrderId,
-                                        Date = utility!.GetCurrentDateTimeInTimeZone(),
-                                        TransationStatusId = TransationStatus.PENDING,
-                                        TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned ? TransactionType.Deposit : TransactionType.Order
-                                    };
-
-                                    string endpoint = _momoConfiguration.Api;
-                                    string partnerCode = _momoConfiguration.PartnerCode;
-                                    string accessKey = _momoConfiguration.AccessKey;
-                                    string secretkey = _momoConfiguration.Secretkey;
-                                    string orderInfo = hasingService.Hashing("OR", key);
-                                    string redirectUrl = $"{_momoConfiguration.RedirectUrl}";
-                                    string ipnUrl = _momoConfiguration.IPNUrl;
-                                    string requestType = "payWithATM";
-
-                                    string requestId = Guid.NewGuid().ToString();
-                                    string extraData = transaction.OrderId.ToString();
-
-                                    string rawHash = "accessKey=" + accessKey +
-                                                     "&amount=" + (Math.Ceiling(transaction.Amount / 1000) * 1000).ToString() +
-                                                     "&extraData=" + extraData +
-                                                     "&ipnUrl=" + ipnUrl +
-                                                     "&orderId=" + transaction.Id +
-                                                     "&orderInfo=" + orderInfo +
-                                                     "&partnerCode=" + partnerCode +
-                                                     "&redirectUrl=" + redirectUrl +
-                                                     "&requestId=" + requestId +
-                                                     "&requestType=" + requestType;
-
-                                    MomoSecurity crypto = new MomoSecurity();
-                                    string signature = crypto.signSHA256(rawHash, secretkey);
-
-                                    JObject message = new JObject
-                                {
-                                    { "partnerCode", partnerCode },
-                                    { "partnerName", "Test" },
-                                    { "storeId", "MomoTestStore" },
-                                    { "requestId", requestId },
-                                    { "amount", amount },
-                                    { "orderId", transaction.Id },
-                                    { "orderInfo", orderInfo },
-                                    { "redirectUrl", redirectUrl },
-                                    { "ipnUrl", ipnUrl },
-                                    { "lang", "en" },
-                                    { "extraData", extraData },
-                                    { "requestType", requestType },
-                                    { "signature", signature }
-                                };
-
-                                    var client = new RestClient();
-                                    var request = new RestRequest(endpoint, Method.Post);
-                                    request.AddJsonBody(message.ToString());
-                                    RestResponse response = await client.ExecuteAsync(request);
-                                    if (response.StatusCode == HttpStatusCode.OK)
-                                    {
-                                        JObject jmessage = JObject.Parse(response.Content);
-                                        await _repository.Insert(transaction);
-                                        result.Result = jmessage.GetValue("payUrl").ToString();
-                                    }
-                                }
-                                else if (!string.IsNullOrEmpty(paymentRequest.AccountId))
-                                {
-                                    if(paymentRequest.StoreCreditAmount > 0)
-                                    {
-                                        {
-                                            var accountDb = await accountRepository!.GetById(paymentRequest.AccountId);
-                                            transaction = new Transaction
-                                            {
-                                                Id = Guid.NewGuid(),
-                                                Amount = (double)(paymentRequest.StoreCreditAmount),
-                                                PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
-                                                AccountId = accountDb.Id,
-                                                Date = utility!.GetCurrentDateTimeInTimeZone(),
-                                                TransationStatusId = TransationStatus.PENDING,
-                                                TransactionTypeId = TransactionType.CreditStore
-                                            };
-                                            amount = (double)paymentRequest.StoreCreditAmount;
-                                            string endpoint = _momoConfiguration.Api;
-                                            string partnerCode = _momoConfiguration.PartnerCode;
-                                            string accessKey = _momoConfiguration.AccessKey;
-                                            string secretkey = _momoConfiguration.Secretkey;
-                                            string orderInfo = hasingService.Hashing("OR", key);
-                                            string redirectUrl = $"{_momoConfiguration.RedirectUrl}";
-                                            string ipnUrl = _momoConfiguration.IPNUrl;
-                                            string requestType = "payWithATM";
-
-                                            string requestId = Guid.NewGuid().ToString();
-                                            string extraData = transaction.OrderId.ToString();
-
-                                            string rawHash = "accessKey=" + accessKey +
-                                                             "&amount=" + (Math.Ceiling(transaction.Amount / 1000) * 1000).ToString() +
-                                                             "&extraData=" + extraData +
-                                                             "&ipnUrl=" + ipnUrl +
-                                                             "&orderId=" + transaction.Id +
-                                                             "&orderInfo=" + orderInfo +
-                                                             "&partnerCode=" + partnerCode +
-                                                             "&redirectUrl=" + redirectUrl +
-                                                             "&requestId=" + requestId +
-                                                             "&requestType=" + requestType;
-
-                                            MomoSecurity crypto = new MomoSecurity();
-                                            string signature = crypto.signSHA256(rawHash, secretkey);
-
-                                            JObject message = new JObject
-                                {
-                                     { "partnerCode", partnerCode },
-                                    { "partnerName", "Test" },
-                                    { "storeId", "MomoTestStore" },
-                                    { "requestId", requestId },
-                                    { "amount", amount },
-                                    { "orderId", transaction.Id },
-                                    { "orderInfo", orderInfo },
-                                    { "redirectUrl", redirectUrl },
-                                    { "ipnUrl", ipnUrl },
-                                    { "lang", "en" },
-                                    { "extraData", extraData },
-                                    { "requestType", requestType },
-                                    { "signature", signature }
-                                };
-
-                                            var client = new RestClient();
-                                            var request = new RestRequest(endpoint, Method.Post);
-                                            request.AddJsonBody(message.ToString());
-                                            RestResponse response = await client.ExecuteAsync(request);
-                                            if (response.StatusCode == HttpStatusCode.OK)
-                                            {
-                                                JObject jmessage = JObject.Parse(response.Content);
-                                                await _repository.Insert(transaction);
-                                                result.Result = jmessage.GetValue("payUrl").ToString();
-                                            }
-                                        }
-                                    }
-
-                                    ////
-                                }
-                                break;
-                            case Domain.Enums.PaymentMethod.STORE_CREDIT:
-                                if (paymentRequest.OrderId.HasValue)
-                                {
-                                    var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
-
-                                    if(orderDb.Account == null)
-                                    {
-                                        return BuildAppActionResultError(result, $"Không tìm thấy tài khoản đặt hàng. Khôn thể thực hiện thanh toán với phương thức: Thanh toán với số dư tài khoản.");
-                                    }
-
-                                    if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
-                                        || orderDb.StatusId == OrderStatus.Pending)
-                                    {
-                                        amount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
-                                    }
-                                    else
-                                    {
-                                        if (orderDb.Deposit.HasValue)
-                                        {
-                                            amount = Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000;
-                                        }
-                                        else
-                                        {
-                                            return BuildAppActionResultError(result, $"Số tiền thanh toán không hợp lệ");
-                                        }
-                                    }
-
-                                    var accountDb = await accountRepository.GetById(orderDb.AccountId);
-                                    if(accountDb == null)
-                                    {
-                                        return BuildAppActionResultError(result, $"Không tìm thấy số dư tài khoản khách hàng");
-                                    }
-
-                                    if(accountDb.StoreCreditAmount < amount)
-                                    {
-                                        return BuildAppActionResultError(result, $"Số dư tài khoản của quý khách không đủ");
-                                    }
-
-                                    accountDb.StoreCreditAmount -= amount;
-                                    transaction = new Transaction
-                                    {
-                                        Id = Guid.NewGuid(),
-                                        Amount = amount,
-                                        PaymentMethodId = Domain.Enums.PaymentMethod.STORE_CREDIT,
-                                        OrderId = orderDb.OrderId,
-                                        Date = utility!.GetCurrentDateTimeInTimeZone(),
-                                        PaidDate = utility!.GetCurrentDateTimeInTimeZone(),
-                                        TransationStatusId = TransationStatus.SUCCESSFUL,
-                                        TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned ? TransactionType.Deposit : TransactionType.Order
-                                    };
-
-                                    await _repository.Insert(transaction);
-                                    await accountRepository.Update(accountDb);
-                                    //await orderService.ChangeOrderStatus(orderDb.OrderId, true);
-                                }
-                                break;
-                            default:
-                                if(paymentRequest.PaymentMethod == PaymentMethod.ZALOPAY)
-                                {
-                                    return BuildAppActionResultError(result, $"Hệ thống chưa hỗ trợ thanh toán với ZALOPAY");
-                                }
-
-                                if (paymentRequest.OrderId.HasValue)
-                                {
-                                    var orderDb = await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId, p => p.Account!);
-                                    if ((orderDb.OrderTypeId != OrderType.Delivery && (orderDb.StatusId == OrderStatus.TemporarilyCompleted || orderDb.StatusId == OrderStatus.Processing))
-                                        || orderDb.StatusId == OrderStatus.Pending)
-                                    {
-                                        amount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
-                                    } 
-                                    else
-                                    {
-                                        if (orderDb.Deposit.HasValue)
-                                        {
-                                            amount = Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000;
-                                        }
-                                        else
-                                        {
-                                            return BuildAppActionResultError(result, $"Số tiền thanh toán không hợp lệ");
-                                        }
-                                    }
-
-                                    transaction = new Transaction
-                                    {
-                                        Id = Guid.NewGuid(),
-                                        Amount = amount,
-                                        PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
-                                        OrderId = orderDb.OrderId,
-                                        Date = utility!.GetCurrentDateTimeInTimeZone(),
-                                        TransationStatusId = TransationStatus.PENDING,
-                                        TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned ? TransactionType.Deposit : TransactionType.Order
-                                    };
-                                    await _repository.Insert(transaction);
-                                    result.Result = transaction;
-                                }
-                                else if (!string.IsNullOrEmpty(paymentRequest.AccountId))
-                                {
-                                    if (paymentRequest.StoreCreditAmount.HasValue)
-                                    {
-                                        var storeCreditDb = await accountRepository!.GetById(paymentRequest.AccountId);
-
-                                        if (storeCreditDb == null)
-                                        {
-                                            result = BuildAppActionResultError(result, $"Khong tìm thấy thông tin ví với id {paymentRequest.AccountId}");
-                                            return result;
-                                        }
-
-                                        transaction = new Transaction
-                                        {
-                                            Id = Guid.NewGuid(),
-                                            Amount = paymentRequest.StoreCreditAmount.Value,
-                                            PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
-                                            AccountId = storeCreditDb.Id,
+                                            PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
+                                            AccountId = accountDb.Id,
                                             Date = utility!.GetCurrentDateTimeInTimeZone(),
                                             TransationStatusId = TransationStatus.PENDING,
                                             TransactionTypeId = TransactionType.CreditStore
-
                                         };
-                                        await _repository.Insert(transaction);
+                                        amount = (double)paymentRequest.StoreCreditAmount;
+                                        string endpoint = _momoConfiguration.Api;
+                                        string partnerCode = _momoConfiguration.PartnerCode;
+                                        string accessKey = _momoConfiguration.AccessKey;
+                                        string secretkey = _momoConfiguration.Secretkey;
+                                        string orderInfo = hasingService.Hashing("OR", key);
+                                        string redirectUrl = $"{_momoConfiguration.RedirectUrl}";
+                                        string ipnUrl = _momoConfiguration.IPNUrl;
+                                        string requestType = "payWithATM";
+
+                                        string requestId = Guid.NewGuid().ToString();
+                                        string extraData = transaction.OrderId.ToString();
+
+                                        string rawHash = "accessKey=" + accessKey +
+                                                         "&amount=" +
+                                                         (Math.Ceiling(transaction.Amount / 1000) * 1000)
+                                                         .ToString() +
+                                                         "&extraData=" + extraData +
+                                                         "&ipnUrl=" + ipnUrl +
+                                                         "&orderId=" + transaction.Id +
+                                                         "&orderInfo=" + orderInfo +
+                                                         "&partnerCode=" + partnerCode +
+                                                         "&redirectUrl=" + redirectUrl +
+                                                         "&requestId=" + requestId +
+                                                         "&requestType=" + requestType;
+
+                                        MomoSecurity crypto = new MomoSecurity();
+                                        string signature = crypto.signSHA256(rawHash, secretkey);
+
+                                        JObject message = new JObject
+                                            {
+                                                { "partnerCode", partnerCode },
+                                                { "partnerName", "Test" },
+                                                { "storeId", "MomoTestStore" },
+                                                { "requestId", requestId },
+                                                { "amount", amount },
+                                                { "orderId", transaction.Id },
+                                                { "orderInfo", orderInfo },
+                                                { "redirectUrl", redirectUrl },
+                                                { "ipnUrl", ipnUrl },
+                                                { "lang", "en" },
+                                                { "extraData", extraData },
+                                                { "requestType", requestType },
+                                                { "signature", signature }
+                                            };
+
+                                        var client = new RestClient();
+                                        var request = new RestRequest(endpoint, Method.Post);
+                                        request.AddJsonBody(message.ToString());
+                                        RestResponse response = await client.ExecuteAsync(request);
+                                        if (response.StatusCode == HttpStatusCode.OK)
+                                        {
+                                            JObject jmessage = JObject.Parse(response.Content);
+                                            await _repository.Insert(transaction);
+                                            result.Result = jmessage.GetValue("payUrl").ToString();
+                                        }
                                     }
                                 }
-                                break;
-                        }
-                    }
-                    if (!BuildAppActionResultIsError(result))
-                    {
-                        await _unitOfWork.SaveChangesAsync();
-                        scope.Complete();
+
+                                ////
+                            }
+
+                            break;
+                        case Domain.Enums.PaymentMethod.STORE_CREDIT:
+                            if (paymentRequest.OrderId.HasValue)
+                            {
+                                var orderDb =
+                                    await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId,
+                                        p => p.Account!);
+
+                                if (orderDb.Account == null)
+                                {
+                                    throw new Exception(
+                                           $"Không tìm thấy tài khoản đặt hàng. Khôn thể thực hiện thanh toán với phương thức: Thanh toán với số dư tài khoản.");
+                                }
+
+                                if ((orderDb.OrderTypeId != OrderType.Delivery &&
+                                     (orderDb.StatusId == OrderStatus.TemporarilyCompleted ||
+                                      orderDb.StatusId == OrderStatus.Processing))
+                                    || orderDb.StatusId == OrderStatus.Pending)
+                                {
+                                    amount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
+                                }
+                                else
+                                {
+                                    if (orderDb.Deposit.HasValue)
+                                    {
+                                        amount = Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000;
+                                    }
+                                    else
+                                    {
+                                        throw new Exception(
+                                               $"Số tiền thanh toán không hợp lệ");
+                                    }
+                                }
+
+                                var accountDb = await accountRepository.GetById(orderDb.AccountId);
+                                if (accountDb == null)
+                                {
+                                    throw new Exception(
+                                           $"Không tìm thấy số dư tài khoản khách hàng");
+                                }
+
+                                if (accountDb.StoreCreditAmount < amount)
+                                {
+                                    throw new Exception(
+                                           $"Số dư tài khoản của quý khách không đủ");
+                                }
+
+                                accountDb.StoreCreditAmount -= amount;
+                                transaction = new Transaction
+                                {
+                                    Id = Guid.NewGuid(),
+                                    Amount = amount,
+                                    PaymentMethodId = Domain.Enums.PaymentMethod.STORE_CREDIT,
+                                    OrderId = orderDb.OrderId,
+                                    Date = utility!.GetCurrentDateTimeInTimeZone(),
+                                    PaidDate = utility!.GetCurrentDateTimeInTimeZone(),
+                                    TransationStatusId = TransationStatus.SUCCESSFUL,
+                                    TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned
+                                        ? TransactionType.Deposit
+                                        : TransactionType.Order
+                                };
+
+                                await _repository.Insert(transaction);
+                                await accountRepository.Update(accountDb);
+                                //await orderService.ChangeOrderStatus(orderDb.OrderId, true);
+                            }
+
+                            break;
+                        default:
+                            if (paymentRequest.PaymentMethod == PaymentMethod.ZALOPAY)
+                            {
+                                throw new Exception(
+                                       $"Hệ thống chưa hỗ trợ thanh toán với ZALOPAY");
+                            }
+
+                            if (paymentRequest.OrderId.HasValue)
+                            {
+                                var orderDb =
+                                    await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId,
+                                        p => p.Account!);
+                                if ((orderDb.OrderTypeId != OrderType.Delivery &&
+                                     (orderDb.StatusId == OrderStatus.TemporarilyCompleted ||
+                                      orderDb.StatusId == OrderStatus.Processing))
+                                    || orderDb.StatusId == OrderStatus.Pending)
+                                {
+                                    amount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
+                                }
+                                else
+                                {
+                                    if (orderDb.Deposit.HasValue)
+                                    {
+                                        amount = Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000;
+                                    }
+                                    else
+                                    {
+                                        throw new Exception(
+                                               $"Số tiền thanh toán không hợp lệ");
+                                    }
+                                }
+
+                                transaction = new Transaction
+                                {
+                                    Id = Guid.NewGuid(),
+                                    Amount = amount,
+                                    PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
+                                    OrderId = orderDb.OrderId,
+                                    Date = utility!.GetCurrentDateTimeInTimeZone(),
+                                    TransationStatusId = TransationStatus.PENDING,
+                                    TransactionTypeId = orderDb.StatusId == OrderStatus.TableAssigned
+                                        ? TransactionType.Deposit
+                                        : TransactionType.Order
+                                };
+                                await _repository.Insert(transaction);
+                                result.Result = transaction;
+                            }
+                            else if (!string.IsNullOrEmpty(paymentRequest.AccountId))
+                            {
+                                if (paymentRequest.StoreCreditAmount.HasValue)
+                                {
+                                    var storeCreditDb = await accountRepository!.GetById(paymentRequest.AccountId);
+
+                                    if (storeCreditDb == null)
+                                    {
+                                        result = BuildAppActionResultError(result,
+                                            $"Khong tìm thấy thông tin ví với id {paymentRequest.AccountId}");
+                                    }
+
+                                    transaction = new Transaction
+                                    {
+                                        Id = Guid.NewGuid(),
+                                        Amount = paymentRequest.StoreCreditAmount.Value,
+                                        PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
+                                        AccountId = storeCreditDb.Id,
+                                        Date = utility!.GetCurrentDateTimeInTimeZone(),
+                                        TransationStatusId = TransationStatus.PENDING,
+                                        TransactionTypeId = TransactionType.CreditStore
+
+                                    };
+                                    await _repository.Insert(transaction);
+                                }
+                            }
+
+                            break;
                     }
                 }
-                catch (Exception ex)
+
+                if (!BuildAppActionResultIsError(result))
                 {
-                    result = BuildAppActionResultError(result, ex.Message);
+                    await _unitOfWork.SaveChangesAsync();
                 }
-                
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
             }
 
             return result;
@@ -564,53 +605,58 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> UpdateTransactionStatus(Guid transactionId, TransationStatus transactionStatus)
         {
             AppActionResult result = new AppActionResult();
-            try
+            await _unitOfWork.ExecuteInTransaction(async () =>
             {
-                var storeCreditService = Resolve<IStoreCreditService>();
-                var orderRepository = Resolve<IGenericRepository<Order>>();
-                var orderService = Resolve<IOrderService>();
-                var transactionDb = await _repository.GetById(transactionId);
-                if(transactionDb.TransationStatusId == TransationStatus.PENDING && transactionStatus != TransationStatus.APPLIED)
+                try
                 {
-                    transactionDb.TransationStatusId = transactionStatus;
-                    if(transactionStatus == TransationStatus.SUCCESSFUL)
+                    var storeCreditService = Resolve<IStoreCreditService>();
+                    var orderRepository = Resolve<IGenericRepository<Order>>();
+                    var orderService = Resolve<IOrderService>();
+                    var transactionDb = await _repository.GetById(transactionId);
+                    if (transactionDb.TransationStatusId == TransationStatus.PENDING && transactionStatus != TransationStatus.APPLIED)
                     {
-                        var utility = Resolve<Utility>();
-                        transactionDb.PaidDate = utility.GetCurrentDateTimeInTimeZone();
-                    }
-                    await _repository.Update(transactionDb);
-                    await _unitOfWork.SaveChangesAsync();
-
-                    if (transactionStatus == TransationStatus.SUCCESSFUL)
-                    {
-                        if (transactionDb.OrderId.HasValue)
+                        transactionDb.TransationStatusId = transactionStatus;
+                        if (transactionStatus == TransationStatus.SUCCESSFUL)
                         {
-                            await orderService.ChangeOrderStatus(transactionDb.OrderId.Value, transactionStatus == TransationStatus.SUCCESSFUL, null, false);
-
-                            var orderDb = await orderRepository.GetById(transactionDb.OrderId);
-                            if (orderDb != null && (orderDb.OrderTypeId == OrderType.Reservation || orderDb.OrderTypeId == OrderType.Delivery))
-                            {
-                                await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
-                                await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
-                            }
-                        } else
-                        {
-                            await storeCreditService.AddStoreCredit(transactionId);
+                            var utility = Resolve<Utility>();
+                            transactionDb.PaidDate = utility.GetCurrentDateTimeInTimeZone();
                         }
+                        await _repository.Update(transactionDb);
+                        await _unitOfWork.SaveChangesAsync();
+
+                        if (transactionStatus == TransationStatus.SUCCESSFUL)
+                        {
+                            if (transactionDb.OrderId.HasValue)
+                            {
+                                await orderService.ChangeOrderStatusService(transactionDb.OrderId.Value, transactionStatus == TransationStatus.SUCCESSFUL, null, false);
+
+                                var orderDb = await orderRepository.GetById(transactionDb.OrderId);
+                                if (orderDb != null && (orderDb.OrderTypeId == OrderType.Reservation || orderDb.OrderTypeId == OrderType.Delivery))
+                                {
+                                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+                                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+                                }
+                            }
+                            else
+                            {
+                                await storeCreditService.AddStoreCredit(transactionId);
+                            }
+                        }
+                        //else if(transactionStatus == TransationStatus.FAILED)
+                        //{
+                        //    await orderService.ChangeOrderStatus(transactionDb.OrderId.Value, false, OrderStatus.Cancelled, false);
+                        //}
                     }
-                    //else if(transactionStatus == TransationStatus.FAILED)
-                    //{
-                    //    await orderService.ChangeOrderStatus(transactionDb.OrderId.Value, false, OrderStatus.Cancelled, false);
-                    //}
-                } else
-                {
-                    result = BuildAppActionResultError(result, $"Để cập nhật, Trạn thanh toán phải chờ xử lí và trạng thái mong muốn phải khác chờ xử lí");
+                    else
+                    {
+                        result = BuildAppActionResultError(result, $"Để cập nhật, Trạn thanh toán phải chờ xử lí và trạng thái mong muốn phải khác chờ xử lí");
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
+                catch (Exception ex)
+                {
+                    result = BuildAppActionResultError(result, ex.Message);
+                }
+            });
             return result;
         }
 
@@ -660,11 +706,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 if (order == null)
                 {
-                    return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng");
+                 throw new Exception (  $"Không tìm thấy đơn hàng");
                 }
                 if (!order.CancelledTime.HasValue || order.StatusId != OrderStatus.Cancelled)
                 {
-                    return BuildAppActionResultError(result, $"Đơn hàng chưa được huỷ");
+                 throw new Exception (  $"Đơn hàng chưa được huỷ");
                 }
 
                 var utility = Resolve<Utility>();
@@ -689,13 +735,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if(refundedOrderDb.Items.Count() > 0)
                 {
-                    return BuildAppActionResultError(result, $"Đơn hàng đã được hàng tiền");
+                 throw new Exception (  $"Đơn hàng đã được hàng tiền");
                 }
 
                 var timeConfigurationDb = await configurationRepository.GetByExpression(t => t.Name.Equals(SD.DefaultValue.TIME_FOR_REFUND));
                 if(timeConfigurationDb == null)
                 {
-                    return BuildAppActionResultError(result, $"không tìm thấy cấu hình tên {SD.DefaultValue.TIME_FOR_REFUND}");
+                 throw new Exception (  $"không tìm thấy cấu hình tên {SD.DefaultValue.TIME_FOR_REFUND}");
                 }
 
 
@@ -715,7 +761,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 if (percentageConfigurationDb == null)
                 {
-                    return BuildAppActionResultError(result, $"không tìm thấy cấu hình tên {SD.DefaultValue.REFUND_PERCENTAGE_AS_ADMIN}");
+                 throw new Exception (  $"không tìm thấy cấu hình tên {SD.DefaultValue.REFUND_PERCENTAGE_AS_ADMIN}");
                 }
 
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();

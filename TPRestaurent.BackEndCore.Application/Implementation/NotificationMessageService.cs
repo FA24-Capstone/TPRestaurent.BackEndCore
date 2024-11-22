@@ -45,7 +45,7 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
             var notificationMessageDb = await _repository.GetByExpression(p => p.NotificationId == notificationId);
             if (notificationMessageDb == null)
             {
-                return BuildAppActionResultError(result, $"Không tim thấy thông báo");
+            throw new Exception($"Không tim thấy thông báo");
             }
 
             result.Result = notificationMessageDb;
@@ -87,7 +87,7 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
             var notificationDb = await _repository.GetByExpression(n => n.NotificationId == notificationId && !n.IsRead, null);
             if(notificationDb == null)
             {
-                return BuildAppActionResultError(result, $"Không tìm thấy thông báo chưa đọc với id {notificationId}");
+            throw new Exception($"Không tìm thấy thông báo chưa đọc với id {notificationId}");
             }
             if (!notificationDb.IsRead)
             {
@@ -118,7 +118,7 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
                 var accountDb = await accountRepository!.GetById(accountId);
                 if (accountDb == null)
                 {
-                    return BuildAppActionResultError(result, $"Không tìm thấy tài khoản với id {accountId}");
+                throw new Exception($"Không tìm thấy tài khoản với id {accountId}");
                 }
 
                 var tokenDb = await tokenRepository!.GetAllDataByExpression(p => p.AccountId == accountId, 0, 0, null, false, p => p.Account);
@@ -171,12 +171,12 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
             var roleDb = await roleRepository!.GetByExpression(p => p.Name == roleName);
             if (roleDb == null)
             {
-                return BuildAppActionResultError(result, $"Không tìm thấy vai trò {roleName}");
+            throw new Exception($"Không tìm thấy vai trò {roleName}");
             }
             var userRoleDb = await userRoleRepository!.GetAllDataByExpression(p => p.RoleId == roleDb!.Id, 0, 0, null, false, null);
             if (userRoleDb == null)
             {
-                return BuildAppActionResultError(result, $"Không tìm thấy danh sách user với role {roleDb.Id}");
+            throw new Exception($"Không tìm thấy danh sách user với role {roleDb.Id}");
             }
             foreach (var user in userRoleDb!.Items!)
             {
@@ -223,57 +223,58 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
     public async Task<AppActionResult> SendNotificationToShipperAsync(string accountId, string message)
     {
         var result = new AppActionResult();
-        using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+
+        try
         {
-            try
+            var utility = Resolve<Utility>();
+            var accountRepository = Resolve<IGenericRepository<Account>>();
+            var tokenRepository = Resolve<IGenericRepository<Token>>();
+            var fireBaseService = Resolve<IFirebaseService>();
+            var notificationMessageRepository = Resolve<IGenericRepository<NotificationMessage>>();
+            var currentTime = utility.GetCurrentDateTimeInTimeZone();
+
+            var accountDb = await accountRepository!.GetById(accountId);
+            if (accountDb == null)
             {
-                var utility = Resolve<Utility>();
-                var accountRepository = Resolve<IGenericRepository<Account>>();
-                var tokenRepository = Resolve<IGenericRepository<Token>>();
-                var fireBaseService = Resolve<IFirebaseService>();
-                var notificationMessageRepository = Resolve<IGenericRepository<NotificationMessage>>();
-                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                throw new Exception($"Không tìm thấy tài khoản với id {accountId}");
+            }
 
-                var accountDb = await accountRepository!.GetById(accountId);
-                if (accountDb == null)
+            var tokenDb = await tokenRepository!.GetAllDataByExpression(p => p.AccountId == accountId, 0, 0, null,
+                false, p => p.Account);
+            if (tokenDb.Items!.Count > 0 && tokenDb.Items != null)
+            {
+                var deviceTokenList = tokenDb.Items.Where(p => !string.IsNullOrEmpty(p.DeviceToken))
+                    .Select(p => p.DeviceToken).ToList();
+                if (deviceTokenList != null)
                 {
-                    return BuildAppActionResultError(result, $"Không tìm thấy tài khoản với id {accountId}");
-                }
 
-                var tokenDb = await tokenRepository!.GetAllDataByExpression(p => p.AccountId == accountId, 0, 0, null, false, p => p.Account);
-                if (tokenDb.Items!.Count > 0 && tokenDb.Items != null)
-                {
-                    var deviceTokenList = tokenDb.Items.Where(p => !string.IsNullOrEmpty(p.DeviceToken)).Select(p => p.DeviceToken).ToList();
-                    if (deviceTokenList != null)
+                    var notification = new NotificationMessage
                     {
+                        NotificationId = Guid.NewGuid(),
+                        NotificationName = "Bạn có thông báo mới từ nhà hàng",
+                        Messages = message,
+                        NotifyTime = currentTime,
+                        AccountId = accountDb.Id,
+                    };
 
-                        var notification = new NotificationMessage
-                        {
-                            NotificationId = Guid.NewGuid(),
-                            NotificationName = "Bạn có thông báo mới từ nhà hàng",
-                            Messages = message,
-                            NotifyTime = currentTime,
-                            AccountId = accountDb.Id,
-                        };
-
-                        await notificationMessageRepository!.Insert(notification);
-                        if (deviceTokenList.Count() > 0)
-                        {
-                            await fireBaseService!.SendMulticastAsync(deviceTokenList.ToList(), "Bạn có thông báo mới từ nhà hàng", message, result);
-                        }
+                    await notificationMessageRepository!.Insert(notification);
+                    if (deviceTokenList.Count() > 0)
+                    {
+                        await fireBaseService!.SendMulticastAsync(deviceTokenList.ToList(),
+                            "Bạn có thông báo mới từ nhà hàng", message, result);
                     }
                 }
-                if (!BuildAppActionResultIsError(result))
-                {
-                    await _unitOfWork.SaveChangesAsync();
-                }
-                scope.Complete();
+            }
 
-            }
-            catch (Exception ex)
+            if (!BuildAppActionResultIsError(result))
             {
-                result = BuildAppActionResultError(result, ex.Message);
+                await _unitOfWork.SaveChangesAsync();
             }
+
+        }
+        catch (Exception ex)
+        {
+            result = BuildAppActionResultError(result, ex.Message);
         }
         return result;
     }

@@ -88,8 +88,6 @@ public class MappingConfig
             .ForMember(dest => dest.EndDate, act => act.MapFrom(src => src.EndDate))
             .ForMember(dest => dest.IsAvailable, act => act.MapFrom(src => src.IsAvailable))
             .ForMember(dest => dest.IsDeleted, act => act.MapFrom(src => src.IsDeleted))
-            .ForMember(dest => dest.IsDeleted, act => act.MapFrom(src => src.IsDeleted))
-            .ForMember(dest => dest.IsDeleted, act => act.MapFrom(src => src.IsDeleted))
             .ForMember(dest => dest.PreparationTime, act => act.MapFrom(src => src.PreparationTime));
 
             config.CreateMap<Dish, DishReponse>()
