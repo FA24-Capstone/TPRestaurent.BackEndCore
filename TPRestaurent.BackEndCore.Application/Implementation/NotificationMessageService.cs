@@ -224,61 +224,58 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
     {
         var result = new AppActionResult();
 
-        await _unitOfWork.ExecuteInTransaction(async () =>
+        try
         {
-            try
+            var utility = Resolve<Utility>();
+            var accountRepository = Resolve<IGenericRepository<Account>>();
+            var tokenRepository = Resolve<IGenericRepository<Token>>();
+            var fireBaseService = Resolve<IFirebaseService>();
+            var notificationMessageRepository = Resolve<IGenericRepository<NotificationMessage>>();
+            var currentTime = utility.GetCurrentDateTimeInTimeZone();
+
+            var accountDb = await accountRepository!.GetById(accountId);
+            if (accountDb == null)
             {
-                var utility = Resolve<Utility>();
-                var accountRepository = Resolve<IGenericRepository<Account>>();
-                var tokenRepository = Resolve<IGenericRepository<Token>>();
-                var fireBaseService = Resolve<IFirebaseService>();
-                var notificationMessageRepository = Resolve<IGenericRepository<NotificationMessage>>();
-                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                throw new Exception($"Không tìm thấy tài khoản với id {accountId}");
+            }
 
-                var accountDb = await accountRepository!.GetById(accountId);
-                if (accountDb == null)
+            var tokenDb = await tokenRepository!.GetAllDataByExpression(p => p.AccountId == accountId, 0, 0, null,
+                false, p => p.Account);
+            if (tokenDb.Items!.Count > 0 && tokenDb.Items != null)
+            {
+                var deviceTokenList = tokenDb.Items.Where(p => !string.IsNullOrEmpty(p.DeviceToken))
+                    .Select(p => p.DeviceToken).ToList();
+                if (deviceTokenList != null)
                 {
-                    throw new Exception($"Không tìm thấy tài khoản với id {accountId}");
-                }
 
-                var tokenDb = await tokenRepository!.GetAllDataByExpression(p => p.AccountId == accountId, 0, 0, null,
-                    false, p => p.Account);
-                if (tokenDb.Items!.Count > 0 && tokenDb.Items != null)
-                {
-                    var deviceTokenList = tokenDb.Items.Where(p => !string.IsNullOrEmpty(p.DeviceToken))
-                        .Select(p => p.DeviceToken).ToList();
-                    if (deviceTokenList != null)
+                    var notification = new NotificationMessage
                     {
+                        NotificationId = Guid.NewGuid(),
+                        NotificationName = "Bạn có thông báo mới từ nhà hàng",
+                        Messages = message,
+                        NotifyTime = currentTime,
+                        AccountId = accountDb.Id,
+                    };
 
-                        var notification = new NotificationMessage
-                        {
-                            NotificationId = Guid.NewGuid(),
-                            NotificationName = "Bạn có thông báo mới từ nhà hàng",
-                            Messages = message,
-                            NotifyTime = currentTime,
-                            AccountId = accountDb.Id,
-                        };
-
-                        await notificationMessageRepository!.Insert(notification);
-                        if (deviceTokenList.Count() > 0)
-                        {
-                            await fireBaseService!.SendMulticastAsync(deviceTokenList.ToList(),
-                                "Bạn có thông báo mới từ nhà hàng", message, result);
-                        }
+                    await notificationMessageRepository!.Insert(notification);
+                    if (deviceTokenList.Count() > 0)
+                    {
+                        await fireBaseService!.SendMulticastAsync(deviceTokenList.ToList(),
+                            "Bạn có thông báo mới từ nhà hàng", message, result);
                     }
                 }
-
-                if (!BuildAppActionResultIsError(result))
-                {
-                    await _unitOfWork.SaveChangesAsync();
-                }
-
             }
-            catch (Exception ex)
+
+            if (!BuildAppActionResultIsError(result))
             {
-                result = BuildAppActionResultError(result, ex.Message);
+                await _unitOfWork.SaveChangesAsync();
             }
-        });
+
+        }
+        catch (Exception ex)
+        {
+            result = BuildAppActionResultError(result, ex.Message);
+        }
         return result;
     }
 }
