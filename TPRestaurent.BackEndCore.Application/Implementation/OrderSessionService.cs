@@ -560,7 +560,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                             else if (orderSessionDb.OrderSessionStatusId == OrderSessionStatus.Cancelled)
                             {
-                                await orderService.ChangeOrderStatus(orderId, false, null, false);
+                                await orderService.ChangeOrderStatusService(orderId, false, null, false);
                                 await orderService.UpdateCancelledOrderDishQuantity(orderDb, new List<DishSizeDetail>(),
                                     utility.GetCurrentDateTimeInTimeZone());
                             }
@@ -574,7 +574,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     o.OrderDetailStatusId == OrderDetailStatus.Cancelled ||
                                     o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe))
                             {
-                                await orderService.ChangeOrderStatus(orderId, true, OrderStatus.TemporarilyCompleted,
+                                await orderService.ChangeOrderStatusService(orderId, true, OrderStatus.TemporarilyCompleted,
                                     false);
 
                             }
