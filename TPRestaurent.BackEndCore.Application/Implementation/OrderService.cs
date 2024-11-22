@@ -3408,48 +3408,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         }
 
-        private async Task<OrderResponse> AssignEstimatedTimeToOrder(OrderResponse order)
-        {
-            try
-            {
-                var customerInfoRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
-                var customerAddressDb = await customerInfoRepository!.GetByExpression(p => p.CustomerInfoAddressId == order.AddressId);
-                if (customerAddressDb == null)
-                {
-                    return order;
-                }
-
-
-                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
-                var mapService = Resolve<IMapService>();
-                var startLatConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LATITUDE);
-                var startLngConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LNG);
-
-                var startLat = Double.Parse(startLatConfig.CurrentValue);
-                var startLng = Double.Parse(startLngConfig.CurrentValue);
-
-                double[] startDestination = new double[2];
-                startDestination[0] = startLat;
-                startDestination[1] = startLng;
-
-
-                double[] endDestination = new double[2];
-                endDestination[0] = customerAddressDb.Lat;
-                endDestination[1] = customerAddressDb.Lng;
-
-                var estimateDelivery = await mapService!.GetEstimateDeliveryResponse(startDestination, endDestination);
-                if (estimateDelivery.IsSuccess && estimateDelivery.Result is EstimatedDeliveryTimeDto.Response response)
-                {
-                    order.TotalDistance = response.Elements.FirstOrDefault().Distance.Text;
-                    order.TotalDuration = response.Elements.FirstOrDefault().Duration.Text;
-                }
-            }
-            catch (Exception ex)
-            {
-            }
-            return order;
-        }
-
         public async Task<AppActionResult> UpdateOrderDetailStatusForce(List<Guid> orderDetailIds, OrderDetailStatus status)
         {
             AppActionResult result = new AppActionResult();
