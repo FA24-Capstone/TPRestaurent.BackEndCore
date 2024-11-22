@@ -511,7 +511,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 message.Append($"đã giao thành công");
                             }
-                            await notificationMessageService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
+                            await notificationMessageService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message.ToString());
 
                         }
                     }
