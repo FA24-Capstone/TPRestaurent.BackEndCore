@@ -425,9 +425,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         [Hangfire.Queue("reset-user-rank")]
         public async Task ResetUserRank()
         {
+            var utility = Resolve<Utility>();
             var acocuntRepository = Resolve<IGenericRepository<Account>>();
             var orderRepository = Resolve<IGenericRepository<Order>>();
             var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+            var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+            var monthBefore = currentTime.AddMonths(-2); 
             try
             {
                 var accountDb = await acocuntRepository!.GetAllDataByExpression(null, 0, 0, null, false, null);
@@ -439,7 +442,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     foreach (var account in accountDb.Items)
                     {
-                        var orderDb = await orderRepository!.GetAllDataByExpression(p => p.AccountId == account.Id && p.StatusId == OrderStatus.Completed, 0, 0, null, false, null);
+                        var orderDb = await orderRepository!.GetAllDataByExpression(p => p.AccountId == account.Id && (p.OrderDate >= monthBefore && p.OrderDate <= currentTime) 
+                        && (p.MealTime >= monthBefore && p.MealTime <= currentTime) &&p.StatusId == OrderStatus.Completed, 0, 0, null, false, null);
                         var totalAmount = orderDb.Items!.Sum(p => p.TotalAmount);
                         if (account.UserRankId == UserRank.DIAMOND)
                         {
@@ -454,12 +458,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 account.UserRankId = UserRank.SILVER;
                             }
+                            else if (totalAmount >= double.Parse(diamondRankDb.CurrentValue))
+                            {
+                                account.UserRankId = UserRank.DIAMOND;
+                            }
                         }
                         else if (account.UserRankId == UserRank.SILVER)
                         {
                             if (totalAmount <= double.Parse(silverRankDb.CurrentValue))
                             {
                                 account.UserRankId = UserRank.BRONZE;
+                            }
+                            else if (totalAmount >= double.Parse(goldRankDb.CurrentValue))
+                            {
+                                account.UserRankId = UserRank.GOLD;
+                            }
+                        }
+                        else if(account.UserRankId == UserRank.BRONZE)
+                        {
+                            if (totalAmount >= double.Parse(silverRankDb.CurrentValue))
+                            {
+                                account.UserRankId = UserRank.SILVER;
                             }
                         }
                     }
