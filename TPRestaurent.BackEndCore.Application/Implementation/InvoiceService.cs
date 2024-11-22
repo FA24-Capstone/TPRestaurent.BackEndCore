@@ -25,7 +25,6 @@ using TPRestaurent.BackEndCore.Common.DTO.Response;
 using System.Diagnostics.Contracts;
 using Newtonsoft.Json;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
-using Aspose.Pdf;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {

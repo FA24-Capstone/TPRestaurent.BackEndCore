@@ -4035,7 +4035,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             catch (Exception ex)
             {
             }
-            Task.CompletedTask.Wait();
         }
 
         [Hangfire.Queue("cancel-over-reservation")]
@@ -4083,7 +4082,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 _logger.LogError(ex.Message, this);
             }
-            Task.CompletedTask.Wait();
         }
 
         public async Task<AppActionResult> UpdateCancelledOrderDishQuantity(Order order, List<DishSizeDetail> updateDishSizeDetailList, DateTime currentTime, bool refillAllow = true)
@@ -4299,7 +4297,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
 
             }
-            Task.CompletedTask.Wait();
         }
 
         public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful, OrderStatus? status, bool? asCustomer, bool? requireSignalR = true)
