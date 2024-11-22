@@ -6,6 +6,13 @@ using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Models;
+using static Humanizer.In;
+using static System.Collections.Specialized.BitVector32;
+using Twilio.TwiML.Messaging;
+using TPRestaurent.BackEndCore.Common.DTO.Response;
+using System.Diagnostics.Contracts;
+using Newtonsoft.Json;
+using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -369,7 +376,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                       <td>" + o.Quantity + @"</td>
                       <td>" + o.ComboDish.Combo.Price.ToString("#,0 VND") + @"</td>
                       <td>" + o.ComboDish.Combo.Discount + @"%</td>
-                      <td>" + (Math.Ceiling((1 - o.ComboDish.Combo.Discount / 100) * o.ComboDish.Combo.Price * o.Quantity / 1000) * 1000).ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td>
+                      <td>" + (Math.Ceiling(o.ComboDish.Combo.Price * o.Quantity / 1000) * 1000).ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td>
                     </tr>";
                 }
                 return @"
@@ -380,7 +387,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
               <td>" + o.Quantity + @"</td>
                   <td>" + o.DishSizeDetail.Price.ToString("#,0 VND") + @"</td>
                   <td>" + o.DishSizeDetail.Discount + @"%</td>
-                  <td>" + (Math.Ceiling((1 - o.DishSizeDetail.Discount) * o.DishSizeDetail.Price * o.Quantity / 1000) * 1000).ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td>
+                  <td>" + (Math.Ceiling(o.DishSizeDetail.Price * o.Quantity / 1000) * 1000).ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td>
                 </tr>";
             })) + @"
           </tbody>

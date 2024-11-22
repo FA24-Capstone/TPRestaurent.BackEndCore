@@ -61,6 +61,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if (!BuildAppActionResultIsError(result))
                 {
+
                     switch (paymentRequest.PaymentMethod)
                     {
                         case Domain.Enums.PaymentMethod.VNPAY:
@@ -159,7 +160,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
 
                             break;
-
                         case Domain.Enums.PaymentMethod.MOMO:
                             if (paymentRequest.OrderId.HasValue)
                             {
@@ -209,7 +209,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 string requestType = "payWithATM";
 
                                 string requestId = Guid.NewGuid().ToString();
-                                string extraData = transaction.OrderId.ToString();
+                                string extraData = transaction.Id.ToString();
 
                                 string rawHash = "accessKey=" + accessKey +
                                                  "&amount=" + (Math.Ceiling(transaction.Amount / 1000) * 1000)
@@ -333,7 +333,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
 
                             break;
-
                         case Domain.Enums.PaymentMethod.STORE_CREDIT:
                             if (paymentRequest.OrderId.HasValue)
                             {
@@ -401,7 +400,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
 
                             break;
-
                         default:
                             if (paymentRequest.PaymentMethod == PaymentMethod.ZALOPAY)
                             {
@@ -470,6 +468,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         Date = utility!.GetCurrentDateTimeInTimeZone(),
                                         TransationStatusId = TransationStatus.PENDING,
                                         TransactionTypeId = TransactionType.CreditStore
+
                                     };
                                     await _repository.Insert(transaction);
                                 }
