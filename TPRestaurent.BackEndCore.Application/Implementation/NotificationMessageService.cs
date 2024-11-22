@@ -241,6 +241,7 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
                     .Select(p => p.DeviceToken).ToList();
                 if (deviceTokenList != null)
                 {
+
                     var notification = new NotificationMessage
                     {
                         NotificationId = Guid.NewGuid(),
@@ -263,6 +264,7 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
             {
                 await _unitOfWork.SaveChangesAsync();
             }
+
         }
         catch (Exception ex)
         {

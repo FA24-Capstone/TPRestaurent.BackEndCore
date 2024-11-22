@@ -28,9 +28,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> MakeDineInOrderBill(OrderPaymentRequestDto orderRequestDto);
 
         public Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool IsSuccessful, OrderStatus? status, bool? asCustomer, bool? requireSignalR = true);
-
         public Task<AppActionResult> ChangeOrderStatusService(Guid orderId, bool IsSuccessful, OrderStatus? status, bool? asCustomer, bool? requireSignalR = true);
-
         public Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto);
 
         //public Task<AppActionResult> SuggestTable(SuggestTableDto dto);
