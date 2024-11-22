@@ -190,12 +190,12 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 
 
 
-using (var scope = app.Services.CreateScope())
-{
-    var serviceProvider = scope.ServiceProvider;
-    var workerService = serviceProvider.GetRequiredService<WorkerService>();
-    await workerService.Start();
-}
+//using (var scope = app.Services.CreateScope())
+//{
+//    var serviceProvider = scope.ServiceProvider;
+//    var workerService = serviceProvider.GetRequiredService<WorkerService>();
+//    await workerService.Start();
+//}
 app.Run();
 
 void ApplyMigration()
