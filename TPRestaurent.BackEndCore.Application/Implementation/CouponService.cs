@@ -101,7 +101,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (dto.BronzeCouponProgramIds != null && dto.BronzeCouponProgramIds.Count > 0)
                 {
                     var bronzeCouponList = await GetCouponListForCreation(dto.BronzeCouponProgramIds, UserRank.BRONZE, currentTime);
-                    if(bronzeCouponList.Count == 0)
+                    if (bronzeCouponList.Count == 0)
                     {
                         return BuildAppActionResultError(result, $"Có các chương trình giảm giá không hợp lệ cho hạng Đồng");
                     }
@@ -320,7 +320,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             IsUsedOrExpired = false
                         };
                         listCouponBirthday.Add(coupon);
-                        
+
                         var username = account.FirstName + " " + account.LastName;
                         emailService.SendEmail(account.Email, SD.SubjectMail.NOTIFY_RESERVATION,
                              TemplateMappingHelper.GetTemplateBirthdayCoupon(username, couponDb)
@@ -425,14 +425,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         [Hangfire.Queue("reset-user-rank")]
         public async Task ResetUserRank()
         {
-            var utility = Resolve<Utility>();
-            var acocuntRepository = Resolve<IGenericRepository<Account>>();
-            var orderRepository = Resolve<IGenericRepository<Order>>();
-            var configurationRepository = Resolve<IGenericRepository<Configuration>>();
-            var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-            var monthBefore = currentTime.AddMonths(-2); 
             try
             {
+                var utility = Resolve<Utility>();
+                var acocuntRepository = Resolve<IGenericRepository<Account>>();
+                var orderRepository = Resolve<IGenericRepository<Order>>();
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+                var monthBefore = currentTime.AddMonths(-2);
                 var accountDb = await acocuntRepository!.GetAllDataByExpression(null, 0, 0, null, false, null);
                 var bronzeRankDb = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.BRONZE_RANK);
                 var silverRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.SILVER_RANK);
@@ -442,8 +442,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     foreach (var account in accountDb.Items)
                     {
-                        var orderDb = await orderRepository!.GetAllDataByExpression(p => p.AccountId == account.Id && (p.OrderDate >= monthBefore && p.OrderDate <= currentTime) 
-                        && (p.MealTime >= monthBefore && p.MealTime <= currentTime) &&p.StatusId == OrderStatus.Completed, 0, 0, null, false, null);
+                        var orderDb = await orderRepository!.GetAllDataByExpression(p => p.AccountId == account.Id && (p.OrderDate >= monthBefore && p.OrderDate <= currentTime)
+                        && (p.MealTime >= monthBefore && p.MealTime <= currentTime) && p.StatusId == OrderStatus.Completed, 0, 0, null, false, null);
                         var totalAmount = orderDb.Items!.Sum(p => p.TotalAmount);
                         if (account.UserRankId == UserRank.DIAMOND)
                         {
@@ -474,7 +474,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 account.UserRankId = UserRank.GOLD;
                             }
                         }
-                        else if(account.UserRankId == UserRank.BRONZE)
+                        else if (account.UserRankId == UserRank.BRONZE)
                         {
                             if (totalAmount >= double.Parse(silverRankDb.CurrentValue))
                             {
@@ -490,7 +490,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             catch (Exception ex)
             {
             }
-            Task.CompletedTask.Wait();
         }
 
         public async Task<AppActionResult> UpdateCouponProgram(UpdateCouponProgramDto updateCouponDto)
@@ -555,7 +554,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 if (!string.IsNullOrEmpty(updateCouponDto.AccountId))
                 {
-                    couponDb.UpdateBy =  updateCouponDto.AccountId;     
+                    couponDb.UpdateBy = updateCouponDto.AccountId;
                 }
 
                 await _couponProgramRepository.Update(couponDb);
@@ -576,11 +575,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
                 var accountRepository = Resolve<IGenericRepository<Account>>();
                 var emailService = Resolve<IEmailService>();
-                var customerIds = await GetCustomerId(); 
-                var couponList = new List<Coupon>();    
+                var customerIds = await GetCustomerId();
+                var couponList = new List<Coupon>();
                 var accountDb = await accountRepository.GetAllDataByExpression(a => customerIds.Contains(a.Id) && !a.IsBanned && !a.IsDeleted && a.IsVerified, 0, 0, null, false, null);
                 var bronzeCoupons = await GetCouponListForCreation(accountDb.Items.Where(a => a.UserRankId == UserRank.BRONZE).Select(a => a.Id).ToList(), UserRank.BRONZE, currentTime, emailService);
-                if(bronzeCoupons.Count > 0)
+                if (bronzeCoupons.Count > 0)
                 {
                     couponList.AddRange(bronzeCoupons);
                 }
@@ -616,12 +615,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             List<Coupon> result = new List<Coupon>();
             try
             {
-                var couponProgramDb = await _couponProgramRepository.GetAllDataByExpression(c => c.ExpiryDate.Date.Month == currentTime.Month 
+                var couponProgramDb = await _couponProgramRepository.GetAllDataByExpression(c => c.ExpiryDate.Date.Month == currentTime.Month
                                                                                                  && c.ExpiryDate.Date.Year == currentTime.Year
                                                                                                  && !c.IsDeleted && c.UserRankId == rank
                                                                                                  , 0, 0, null, false, c => c.CreateByAccount);
                 var insufficientCouponProgramList = couponProgramDb.Items.Where(c => c.Quantity < accountIds.Count).ToList();
-                if(insufficientCouponProgramList.Count != couponProgramDb.Items.Count)
+                if (insufficientCouponProgramList.Count != couponProgramDb.Items.Count)
                 {
 
                     var html = GetInSufficientCouponProgramHtml(rank.ToString(), accountIds.Count, insufficientCouponProgramList);

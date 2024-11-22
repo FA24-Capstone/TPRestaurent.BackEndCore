@@ -22,9 +22,9 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GetRanks();
         Task<AppActionResult> GetUserByRank(UserRank userRank);
         Task<AppActionResult> AssignCouponToUserWithRank(AssignCouponToRankRequest dto);
-        Task AssignCouponToUserWithRank();
-        Task GetBirthdayUserForCoupon();
-        Task RemoveExpiredCoupon();
-        Task ResetUserRank();
+        public Task AssignCouponToUserWithRank();
+        public Task GetBirthdayUserForCoupon();
+        public Task RemoveExpiredCoupon();
+        public Task ResetUserRank();
     }
 }
