@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
@@ -11,6 +10,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class DataUploadController : ControllerBase
     {
         private IFirebaseService _service;
+
         public DataUploadController(IFirebaseService service)
         {
             _service = service;

@@ -1,20 +1,8 @@
-﻿using Castle.Core.Internal;
-using MailKit.Search;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
-using NPOI.SS.Formula.Functions;
-using OfficeOpenXml.Style;
 using RestSharp;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
-using TPRestaurent.BackEndCore.Application.IHubServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.ConfigurationModel;
 using TPRestaurent.BackEndCore.Common.DTO.Payment.PaymentLibrary;
@@ -25,7 +13,6 @@ using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
-using Twilio.Rest.Verify.V2.Service.Entity;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -47,7 +34,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _hubServices = hubServices;
             _momoConfiguration = Resolve<MomoConfiguration>();
         }
-
 
         public async Task<AppActionResult> CreatePayment(PaymentRequestDto paymentRequest)
         {
@@ -536,12 +522,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var transactionDb = await _repository.GetAllDataByExpression(t => (!transactionStatus.HasValue || (transactionStatus.HasValue && transactionStatus.Value == t.TransationStatusId))
-                                                                                  && (string.IsNullOrEmpty(phoneNumber) 
+                                                                                  && (string.IsNullOrEmpty(phoneNumber)
                                                                                         || (!string.IsNullOrEmpty(phoneNumber)
                                                                                             && (t.Order.Account.PhoneNumber.Contains(phoneNumber)
                                                                                             || t.Account.PhoneNumber.Contains(phoneNumber))))
-                                                                                   , pageNumber, pageSize, p => p.Date, false , 
-                    t => t.Account!, 
+                                                                                   , pageNumber, pageSize, p => p.Date, false,
+                    t => t.Account!,
                     t => t.Order!.Account!,
                     t => t.TransationStatus,
                     t => t.PaymentMethod!,
@@ -694,7 +680,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
-
             }
             return result;
         }
@@ -706,11 +691,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 if (order == null)
                 {
-                 throw new Exception (  $"Không tìm thấy đơn hàng");
+                    throw new Exception($"Không tìm thấy đơn hàng");
                 }
                 if (!order.CancelledTime.HasValue || order.StatusId != OrderStatus.Cancelled)
                 {
-                 throw new Exception (  $"Đơn hàng chưa được huỷ");
+                    throw new Exception($"Đơn hàng chưa được huỷ");
                 }
 
                 var utility = Resolve<Utility>();
@@ -718,7 +703,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var accountRepository = Resolve<IGenericRepository<Account>>();
                 var emailService = Resolve<IEmailService>();
                 var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
-
 
                 var paidDepositOrder = await _repository.GetAllDataByExpression(r => r.OrderId == order.OrderId
                                                                                      && (r.TransactionTypeId == TransactionType.Deposit && r.Order.OrderTypeId == OrderType.Reservation
@@ -730,22 +714,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return result;
                 }
 
-                var refundedOrderDb = await _repository.GetAllDataByExpression(r => r.OrderId == order.OrderId && r.TransactionTypeId == TransactionType.Refund 
+                var refundedOrderDb = await _repository.GetAllDataByExpression(r => r.OrderId == order.OrderId && r.TransactionTypeId == TransactionType.Refund
                                                                                     && r.TransationStatusId == TransationStatus.SUCCESSFUL, 0, 0, null, false, null);
 
-                if(refundedOrderDb.Items.Count() > 0)
+                if (refundedOrderDb.Items.Count() > 0)
                 {
-                 throw new Exception (  $"Đơn hàng đã được hàng tiền");
+                    throw new Exception($"Đơn hàng đã được hàng tiền");
                 }
 
                 var timeConfigurationDb = await configurationRepository.GetByExpression(t => t.Name.Equals(SD.DefaultValue.TIME_FOR_REFUND));
-                if(timeConfigurationDb == null)
+                if (timeConfigurationDb == null)
                 {
-                 throw new Exception (  $"không tìm thấy cấu hình tên {SD.DefaultValue.TIME_FOR_REFUND}");
+                    throw new Exception($"không tìm thấy cấu hình tên {SD.DefaultValue.TIME_FOR_REFUND}");
                 }
 
-
-                if(asCustomer && (order.MealTime - order.CancelledTime).Value.Hours > double.Parse(timeConfigurationDb.CurrentValue))
+                if (asCustomer && (order.MealTime - order.CancelledTime).Value.Hours > double.Parse(timeConfigurationDb.CurrentValue))
                 {
                     return result;
                 }
@@ -761,7 +744,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 if (percentageConfigurationDb == null)
                 {
-                 throw new Exception (  $"không tìm thấy cấu hình tên {SD.DefaultValue.REFUND_PERCENTAGE_AS_ADMIN}");
+                    throw new Exception($"không tìm thấy cấu hình tên {SD.DefaultValue.REFUND_PERCENTAGE_AS_ADMIN}");
                 }
 
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
@@ -771,7 +754,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     Id = Guid.NewGuid(),
                     TransactionTypeId = TransactionType.Refund,
                     Amount = Math.Ceiling((double)(order.Deposit * double.Parse(percentageConfigurationDb.CurrentValue.ToString())) / 1000) * 1000,
-                    AccountId = order.AccountId,    
+                    AccountId = order.AccountId,
                     Date = currentTime,
                     PaidDate = currentTime,
                     OrderId = order.OrderId,
@@ -829,7 +812,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if (request.PaymentMethod == PaymentMethod.Cash)
                 {
-                    refundTransaction.PaymentMethodId = PaymentMethod.Cash;                   
+                    refundTransaction.PaymentMethodId = PaymentMethod.Cash;
                 }
                 else
                 {
@@ -857,15 +840,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var transactionDb = await _repository.GetAllDataByExpression(p => p.TransationStatusId == TransationStatus.PENDING, 0, 0, null, false, null);
                 if (transactionDb!.Items!.Count > 0 && transactionDb.Items != null)
                 {
-                    await _repository.DeleteRange(transactionDb.Items); 
+                    await _repository.DeleteRange(transactionDb.Items);
                 }
                 await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
-
             }
-            Task.CompletedTask.Wait();  
+            Task.CompletedTask.Wait();
         }
     }
 }

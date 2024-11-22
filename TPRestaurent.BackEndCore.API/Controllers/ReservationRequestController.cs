@@ -1,8 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
-using TPRestaurent.BackEndCore.Common.DTO.Request;
-using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
@@ -11,8 +8,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class ReservationRequestController : ControllerBase
     {
         private IReservationRequestService _service;
-        public ReservationRequestController(IReservationRequestService service) 
-        { 
+
+        public ReservationRequestController(IReservationRequestService service)
+        {
             _service = service;
         }
 
@@ -33,6 +31,5 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         //{
         //    return await _service.UpdateStatus(reservationRequestId, status);
         //}
-
     }
 }

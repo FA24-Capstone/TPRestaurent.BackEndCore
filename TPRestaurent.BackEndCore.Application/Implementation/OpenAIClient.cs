@@ -1,11 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
 using OpenAI.Chat;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
@@ -22,7 +16,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                            .Build();
             string apiKey = config["OpenAI:Key"];
             _client = new ChatClient(
-                model: "ft:gpt-4o-mini-2024-07-18:personal:thienphu-test3:AT5tmeqy", 
+                model: "ft:gpt-4o-mini-2024-07-18:personal:thienphu-test3:AT5tmeqy",
                 apiKey: apiKey
                 );
         }

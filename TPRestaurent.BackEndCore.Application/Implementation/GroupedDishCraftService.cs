@@ -1,11 +1,5 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
-using TPRestaurent.BackEndCore.Application.IHubServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
@@ -19,7 +13,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     {
         private readonly IGenericRepository<GroupedDishCraft> _repository;
         private readonly IUnitOfWork _unitOfWork;
-        public GroupedDishCraftService(IGenericRepository<GroupedDishCraft> repository, IUnitOfWork unitOfWork, IServiceProvider provider): base(provider) 
+        public GroupedDishCraftService(IGenericRepository<GroupedDishCraft> repository, IUnitOfWork unitOfWork, IServiceProvider provider) : base(provider)
         {
             this._repository = repository;
             this._unitOfWork = unitOfWork;
@@ -42,7 +36,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         public async Task<AppActionResult> GetGroupedDishById(Guid groupedDishId, Guid? dishId, bool? isMutual)
         {
-            //tìm dish Id thuộc 
+            //tìm dish Id thuộc
             AppActionResult result = new AppActionResult();
             try
             {
@@ -59,11 +53,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (isMutual.Value)
                         {
                             result.Result = groupedDishes.MutualOrderDishes.FirstOrDefault(m => m.Dish.DishId == dishId.Value);
-                        } else
+                        }
+                        else
                         {
                             result.Result = groupedDishes.SingleOrderDishes.FirstOrDefault(m => m.Dish.DishId == dishId.Value);
                         }
-                    } 
+                    }
                 }
                 else
                 {
@@ -95,8 +90,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 groupedTime[0] = previousTimeStamp == null ? utility.GetCurrentDateInTimeZone().AddHours(8) : previousTimeStamp.EndTime;
                 groupedTime[1] = currentTime;
 
-
-                
                 var groupedDishResult = await orderSessionService.GetGroupedDish(groupedTime);
                 if (!groupedDishResult.IsSuccess)
                 {
@@ -104,7 +97,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var groupedDishData = groupedDishResult.Result as KitchenGroupedDishResponse;
-                if(groupedDishData == null || groupedDishData?.MutualOrderDishes?.Count == 0 && groupedDishData?.SingleOrderDishes?.Count == 0)
+                if (groupedDishData == null || groupedDishData?.MutualOrderDishes?.Count == 0 && groupedDishData?.SingleOrderDishes?.Count == 0)
                 {
                     return BuildAppActionResultError(result, $"Không có món mới.");
                 }
@@ -144,7 +137,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         groupedDishDb = await _repository.GetByExpression(g => g.OrderDetailidList.Contains(orderDetailId.ToString()), null);
                         groupedDishCrafts.Add(groupedDishDb);
                     }
-                    if (groupedDishDb == null) 
+                    if (groupedDishDb == null)
                     {
                         return BuildAppActionResultError(result, $"Cập nhật thông tin gộp món thất bại");
                     }
@@ -152,7 +145,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 foreach (var groupedDishCraft in groupedDishCrafts)
                 {
-                    if(!await UpdateGroupedDishJson(groupedDishCraft))
+                    if (!await UpdateGroupedDishJson(groupedDishCraft))
                     {
                         return BuildAppActionResultError(result, $"Cập nhật thông tin gộp món thất bại");
                     }
@@ -187,7 +180,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var groupedDishData = groupedDishResult.Result as KitchenGroupedDishResponse;
-                if(groupedDishData != null)
+                if (groupedDishData != null)
                 {
                     CheckAndSetLateStatus(groupedDishData.SingleOrderDishes, groupedDishDb, currentTime);
                     CheckAndSetLateStatus(groupedDishData.MutualOrderDishes, groupedDishDb, currentTime);
@@ -197,14 +190,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         groupedDishDb.IsFinished = true;
                     }
-                } else
+                }
+                else
                 {
                     groupedDishDb.GroupedDishJson = JsonConvert.SerializeObject(new KitchenGroupedDishResponse());
                     groupedDishDb.OrderDetailidList = "";
                     groupedDishDb.IsFinished = true;
                 }
                 isSuccessful = true;
-               
             }
             catch (Exception ex)
             {
@@ -308,8 +301,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 await _repository.DeleteById(groupedDish.GroupedDishCraftId);
                             }
                         }
-
-
                     }
 
                     await _unitOfWork.SaveChangesAsync();

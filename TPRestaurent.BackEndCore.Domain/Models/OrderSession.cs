@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TPRestaurent.BackEndCore.Domain.Enums;
 
 namespace TPRestaurent.BackEndCore.Domain.Models
 {
@@ -13,15 +7,16 @@ namespace TPRestaurent.BackEndCore.Domain.Models
     {
         [Key]
         public Guid OrderSessionId { get; set; }
+
         public double PreparationTime { get; set; }
         public DateTime OrderSessionTime { get; set; }
         public DateTime? StartProcessingTime { get; set; }
         public DateTime? ReadyToServeTime { get; set; }
         public DateTime? CancelTime { get; set; }
-        public int OrderSessionNumber { get; set; } 
+        public int OrderSessionNumber { get; set; }
         public Enums.OrderSessionStatus OrderSessionStatusId { get; set; }
-        [ForeignKey(nameof(OrderSessionStatusId))]
-        public EnumModels.OrderSessionStatus? OrderSessionStatus { get; set; }   
 
+        [ForeignKey(nameof(OrderSessionStatusId))]
+        public EnumModels.OrderSessionStatus? OrderSessionStatus { get; set; }
     }
 }

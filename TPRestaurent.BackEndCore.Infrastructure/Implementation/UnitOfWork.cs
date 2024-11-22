@@ -1,14 +1,10 @@
-﻿using TPRestaurent.BackEndCore.Application;
-using TPRestaurent.BackEndCore.Domain.Data;
-using System;
-using System.Transactions;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using TPRestaurent.BackEndCore.Application;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Domain.Data;
 
 namespace TPRestaurent.BackEndCore.Infrastructure.Implementation
 {
-    
     public class UnitOfWork : IUnitOfWork
     {
         private readonly IDBContext _context;
@@ -50,7 +46,6 @@ namespace TPRestaurent.BackEndCore.Infrastructure.Implementation
                     throw;
                 }
             });
-        
-    }
+        }
     }
 }

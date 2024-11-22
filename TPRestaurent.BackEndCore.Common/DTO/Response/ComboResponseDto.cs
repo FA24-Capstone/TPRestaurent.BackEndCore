@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TPRestaurent.BackEndCore.Domain.Models;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TPRestaurent.BackEndCore.Common.DTO.Response
 {
@@ -17,8 +11,10 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public double Price { get; set; }
         public double Discount { get; set; }
         public Domain.Enums.ComboCategory CategoryId { get; set; }
+
         [ForeignKey(nameof(CategoryId))]
         public Domain.Models.EnumModels.ComboCategory? Category { get; set; }
+
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public bool IsAvailable { get; set; }

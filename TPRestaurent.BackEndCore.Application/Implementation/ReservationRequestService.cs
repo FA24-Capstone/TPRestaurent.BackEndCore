@@ -1,17 +1,5 @@
 ﻿using AutoMapper;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
-using TPRestaurent.BackEndCore.Application.IRepositories;
-using TPRestaurent.BackEndCore.Common.DTO.Request;
-using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
-using TPRestaurent.BackEndCore.Common.Utils;
-using TPRestaurent.BackEndCore.Domain.Enums;
-using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -19,7 +7,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     {
         //private  IGenericRepository<ReservationRequest> _repository;
         private IUnitOfWork _unitOfWork;
+
         private IMapper _mapper;
+
         public ReservationRequestService(/*IGenericRepository<ReservationRequest> repository,*/
                                          IUnitOfWork unitOfWork,
                                          IMapper mapper, IServiceProvider service) : base(service)
@@ -39,7 +29,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //        {
         //            result = BuildAppActionResultError(result, "Thời gian đặt bàn không hợp lệ");
         //            return result;
-        //        }   
+        //        }
 
         //        if(dto.NumberOfPeople < 1)
         //        {
@@ -54,12 +44,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //            return result;
         //        }
 
-        //        if (dto.ReservationDishes.Count > 0) 
+        //        if (dto.ReservationDishes.Count > 0)
         //        {
         //            var dishRepository = Resolve<IGenericRepository<DishSizeDetail>>();
         //            var comboRepository = Resolve<IGenericRepository<Combo>>();
-        //            foreach (var item in dto.ReservationDishes) 
-        //            { 
+        //            foreach (var item in dto.ReservationDishes)
+        //            {
         //                if(item.DishSizeDetailId != null)
         //                {
         //                    if((await dishRepository!.GetByExpression(d => d.DishSizeDetailId == item.DishSizeDetailId && d.IsAvailable, null)) == null)
@@ -83,17 +73,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //                }
         //            }
 
-
         //            var reservationRequest = _mapper.Map<ReservationRequest>(dto);
         //            reservationRequest.ReservationRequestId = Guid.NewGuid();
         //            reservationRequest.StatusId = ReservationRequestStatus.PENDING;
-        //            reservationRequest.ReservationDishes = JsonConvert.SerializeObject(dto.ReservationDishes);  
+        //            reservationRequest.ReservationDishes = JsonConvert.SerializeObject(dto.ReservationDishes);
         //            await _repository.Insert(reservationRequest);
         //            await _unitOfWork.SaveChangesAsync();
         //        }
         //    }
-        //    catch (Exception ex) 
-        //    { 
+        //    catch (Exception ex)
+        //    {
         //        result = BuildAppActionResultError(result, ex.Message);
         //    }
         //    return result;
@@ -104,7 +93,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //    AppActionResult result = new AppActionResult();
         //    try
         //    {
-        //        if (status.HasValue) 
+        //        if (status.HasValue)
         //        {
         //            result.Result = await _repository.GetAllDataByExpression(null, pageNumber, pageSize, r => r.CreateDate, false, null);
         //        } else
@@ -112,7 +101,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //            result.Result = await _repository.GetAllDataByExpression(r => r.StatusId == status, pageNumber, pageSize, r => r.CreateDate, false, null);
         //        }
         //    }
-        //    catch (Exception ex) 
+        //    catch (Exception ex)
         //    {
         //        result = BuildAppActionResultError(result, ex.Message);
         //    }
@@ -131,7 +120,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //            return result;
         //        }
 
-        //        if (reservationRequestDb.StatusId != ReservationRequestStatus.PENDING) 
+        //        if (reservationRequestDb.StatusId != ReservationRequestStatus.PENDING)
         //        {
         //            result = BuildAppActionResultError(result, $"Yêu cầu đã được xử lý trước đó");
         //            return result;
@@ -139,9 +128,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         //        reservationRequestDb.StatusId = status;
         //        await _repository.Update(reservationRequestDb);
-        //        await _unitOfWork.SaveChangesAsync();   
+        //        await _unitOfWork.SaveChangesAsync();
         //    }
-        //    catch (Exception ex) 
+        //    catch (Exception ex)
         //    {
         //        result = BuildAppActionResultError(result, ex.Message);
         //    }

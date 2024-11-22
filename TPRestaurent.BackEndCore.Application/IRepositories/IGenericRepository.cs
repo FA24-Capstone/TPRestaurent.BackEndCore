@@ -23,6 +23,7 @@ public interface IGenericRepository<T> where T : class
     Task<List<T>> DeleteRange(IEnumerable<T> entities);
 
     Task<T> Update(T entity);
+
     Task<List<T>> UpdateRange(IEnumerable<T> entities);
 
     Task<T?> DeleteById(object id);

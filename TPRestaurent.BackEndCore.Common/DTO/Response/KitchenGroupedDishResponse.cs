@@ -1,25 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TPRestaurent.BackEndCore.Domain.Enums;
+﻿using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Common.DTO.Response
 {
     public class KitchenGroupedDishResponse
     {
-        public List<KitchenGroupedDishItemResponse> MutualOrderDishes { get; set; } = new List<KitchenGroupedDishItemResponse> ();
-        public List<KitchenGroupedDishItemResponse> SingleOrderDishes { get; set; } = new List<KitchenGroupedDishItemResponse> ();
-        public List<Guid> OrderDetailIds { get; set; } = new List<Guid> ();
+        public List<KitchenGroupedDishItemResponse> MutualOrderDishes { get; set; } = new List<KitchenGroupedDishItemResponse>();
+        public List<KitchenGroupedDishItemResponse> SingleOrderDishes { get; set; } = new List<KitchenGroupedDishItemResponse>();
+        public List<Guid> OrderDetailIds { get; set; } = new List<Guid>();
     }
 
     public class KitchenGroupedDishItemResponse
     {
         public DishQuantityResponse Dish { get; set; }
-        public bool IsLate {  get; set; } = false;
+        public bool IsLate { get; set; } = false;
         public double PreparationTime { get; set; }
         public List<DishFromTableOrder> UncheckedDishFromTableOrders { get; set; } = new List<DishFromTableOrder>();
         public List<DishFromTableOrder> ProcessingDishFromTableOrders { get; set; } = new List<DishFromTableOrder>();
@@ -38,7 +32,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public bool IsMainItem { get; set; }
         public int? PreparationTime { get; set; }
         public List<QuantityBySize> Total { get; set; } = new List<QuantityBySize>();
-
     }
 
     public class DishFromTableOrder

@@ -1,19 +1,10 @@
-using Castle.DynamicProxy.Generators;
-using NPOI.SS.Formula.Functions;
-using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
-using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
-using TPRestaurent.BackEndCore.Domain.Migrations;
 using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
@@ -31,6 +22,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private IMapService _mapService;
         private ITableService _tableService;
         private IOpenAIClient _client;
+
         public ChatBotService(IGenericRepository<Account> accountRepository,
                               IGenericRepository<Dish> dishRepository,
                               IGenericRepository<Combo> comboRepository,
@@ -129,7 +121,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 return result;
                             }
 
-
                             int numOfPeople = int.Parse(match.Groups[3].Value);
 
                             var findTable = await _tableService.FindTable(new Common.DTO.Request.FindTableDto
@@ -209,7 +200,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
-
             }
             return result;
         }
@@ -324,6 +314,5 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             return new SearchDishInfo { Name = dishName, Tags = tags, PriceRange = priceRange };
         }
-
     }
 }
