@@ -192,10 +192,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var comboDb = await _comboRepository.GetAllDataByExpression(
                     p => (string.IsNullOrEmpty(keyword) || p.Name.Contains(keyword)) 
                     && (!category.HasValue || category.HasValue && p.CategoryId == category.Value)
-                    && (!startPrice.HasValue || p.Price >= startPrice.Value)
-                    && (!endPrice.HasValue || p.Price <= endPrice.Value)
+                    && (!startPrice.HasValue || p.Price * (1 - p.Discount / 100) >= startPrice.Value)
+                    && (!endPrice.HasValue || p.Price * (1 - p.Discount / 100) <= endPrice.Value)
                     && p.EndDate > currentDateTime && !p.IsDeleted,
-                    pageNumber, pageSize, p => p.Price, false, c => c.Category
+                    pageNumber, pageSize, p => p.Price * (1 - p.Discount / 100), false, c => c.Category
                 );
 
                 if (comboDb.Items.Count > 0)
