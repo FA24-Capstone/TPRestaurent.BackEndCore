@@ -497,6 +497,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+
+
         private async Task<AppActionResult> UpdateKitchenQuantityAfterPayment(Order order)
         {
             AppActionResult result = new AppActionResult();
@@ -3978,7 +3980,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             catch (Exception ex)
             {
             }
-            Task.CompletedTask.Wait();
         }
 
         [Hangfire.Queue("cancel-over-reservation")]
@@ -4026,7 +4027,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 _logger.LogError(ex.Message, this);
             }
-            Task.CompletedTask.Wait();
         }
 
         public async Task<AppActionResult> UpdateCancelledOrderDishQuantity(Order order, List<DishSizeDetail> updateDishSizeDetailList, DateTime currentTime, bool refillAllow = true)
