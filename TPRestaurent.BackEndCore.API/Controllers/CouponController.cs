@@ -36,9 +36,15 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-user-by-rank")]
-        public async Task<AppActionResult> GetUserByRank(UserRank userRank)
+        public async Task<AppActionResult> GetUserByRank(UserRank userRank, Guid? couponprogramId, bool hasBeenProvided)
         {
-            return await _couponService.GetUserByRank(userRank);
+            return await _couponService.GetUserByRank(userRank, couponprogramId, hasBeenProvided);
+        }
+
+        [HttpGet("get-total-user-by-rank")]
+        public async Task<AppActionResult> GetTotalUserByRank()
+        {
+            return await _couponService.GetTotalUserByRank();
         }
 
         [HttpPost("create-coupon-program")]
