@@ -129,7 +129,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (tokenDto != null)
                 {
                     // Create Token object
-                    var tokenDb = await tokenRepository!.GetByExpression(p => p.DeviceName == deviceName && p.DeviceIP == deviceIp && p.ExpiryTimeAccessToken > currentTime && p.AccountId == user.Id);
+                    var tokenDb = await tokenRepository!.GetByExpression(p => p.DeviceName == deviceName && p.DeviceIP == deviceIp && p.ExpiryTimeAccessToken > currentTime && p.UserId.Equals(user.Id));
                     if (tokenDb != null)
                     {
                         _tokenDto.Token = tokenDb.AccessTokenValue;
@@ -137,24 +137,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     else
                     {
-                        var token = new Token
-                        {
-                            TokenId = Guid.NewGuid(),
-                            DeviceIP = GetClientIpAddress(httpContext),
-                            AccountId = user.Id,
-                            CreateDateAccessToken = utility.GetCurrentDateTimeInTimeZone(),
-                            CreateRefreshToken = utility.GetCurrentDateTimeInTimeZone(),
-                            ExpiryTimeAccessToken = utility.GetCurrentDateTimeInTimeZone().AddDays(30),
-                            ExpiryTimeRefreshToken = utility.GetCurrentDateTimeInTimeZone().AddDays(30),
-                            DeviceName = deviceName,
-                            DeviceToken = null,
-                            AccessTokenValue = tokenDto.Token!,
-                            RefreshTokenValue = tokenDto.RefreshToken!,
-                            IsActive = true,
-                            LastLogin = utility.GetCurrentDateTimeInTimeZone(),
-                        };
+                        //var token = new Token
+                        //{
+                        //    TokenId = Guid.NewGuid(),
+                        //    DeviceIP = GetClientIpAddress(httpContext),
+                        //    AccountId = user.Id,
+                        //    CreateDateAccessToken = utility.GetCurrentDateTimeInTimeZone(),
+                        //    CreateRefreshToken = utility.GetCurrentDateTimeInTimeZone(),
+                        //    ExpiryTimeAccessToken = utility.GetCurrentDateTimeInTimeZone().AddDays(30),
+                        //    ExpiryTimeRefreshToken = utility.GetCurrentDateTimeInTimeZone().AddDays(30),
+                        //    DeviceName = deviceName,
+                        //    DeviceToken = null,
+                        //    AccessTokenValue = tokenDto.Token!,
+                        //    RefreshTokenValue = tokenDto.RefreshToken!,
+                        //    IsActive = true,
+                        //    LastLogin = utility.GetCurrentDateTimeInTimeZone(),
+                        //};
 
-                        await tokenRepository!.Insert(token);
+                        //await tokenRepository!.Insert(token);
                     }
 
                     otpCodeDb!.IsUsed = true;
@@ -804,7 +804,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     throw new Exception("Tài khoản không tồn tại");
                 }
-                var token = await tokenRepository!.GetByExpression(p => p.AccountId == user.Id);
+                var token = await tokenRepository!.GetByExpression(p => p.UserId.Equals(user.Id));
                 if (token.RefreshTokenValue != refreshToken)
                 {
                     throw new Exception("Mã làm mới không chính xác");

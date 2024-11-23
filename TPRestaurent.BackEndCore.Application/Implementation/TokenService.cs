@@ -63,7 +63,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                result.Result = await _tokenRepository.GetAllDataByExpression(p => p.AccountId == accountId, pageNumber, pageSize, null, false, p => p.Account!);
+                result.Result = await _tokenRepository.GetAllDataByExpression(p => p.UserId.Equals(accountId), pageNumber, pageSize, null, false, p => p.Account!);
             }
             catch (Exception ex)
             {
@@ -98,7 +98,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var utility = Resolve<Utility>();
             try
             {
-                var accountTokenList = await _tokenRepository.GetAllDataByExpression(p => p.AccountId == accountId, 0, 0, null, false, p => p.Account!);
+                var accountTokenList = await _tokenRepository.GetAllDataByExpression(p => p.UserId.Equals(accountId), 0, 0, null, false, p => p.Account!);
                 if (accountTokenList == null)
                 {
                     result = BuildAppActionResultError(result, $"Danh sách token của tài khoản {accountId} không tồn tại");
@@ -125,7 +125,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                var tokenDb = await _tokenRepository.GetAllDataByExpression(p => p.AccountId == accountId, 0, 0, null, false, p => p.Account!);
+                var tokenDb = await _tokenRepository.GetAllDataByExpression(p => p.UserId.Equals(accountId), 0, 0, null, false, p => p.Account!);
                 if (tokenDb == null)
                 {
                     result = BuildAppActionResultError(result, $"Danh sách token của tài khoản {accountId} không tồn tại");
@@ -146,16 +146,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                var tokenDb = await _tokenRepository.GetByExpression(p => p.TokenId == tokenId);
-                if (tokenDb == null)
-                {
-                    throw new Exception($"Token với id {tokenId} không tồn tại");
-                }
-                else
-                {
-                    await _tokenRepository.DeleteById(tokenId);
-                    await _unitOfWork.SaveChangesAsync();
-                }
+                //var tokenDb = await _tokenRepository.GetByExpression(p => p.TokenId == tokenId);
+                //if (tokenDb == null)
+                //{
+                //    throw new Exception($"Token với id {tokenId} không tồn tại");
+                //}
+                //else
+                //{
+                //    await _tokenRepository.DeleteById(tokenId);
+                //    await _unitOfWork.SaveChangesAsync();
+                //}
             }
             catch (Exception ex)
             {

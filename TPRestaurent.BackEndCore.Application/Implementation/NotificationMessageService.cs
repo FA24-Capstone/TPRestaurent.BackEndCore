@@ -1,3 +1,4 @@
+using Firebase.Auth;
 using Microsoft.AspNetCore.Identity;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
@@ -116,7 +117,7 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
                 throw new Exception($"Không tìm thấy tài khoản với id {accountId}");
             }
 
-            var tokenDb = await tokenRepository!.GetAllDataByExpression(p => p.AccountId == accountId, 0, 0, null, false, p => p.Account);
+            var tokenDb = await tokenRepository!.GetAllDataByExpression(p => p.UserId.Equals(accountId), 0, 0, null, false, p => p.Account);
             if (tokenDb.Items!.Count > 0 && tokenDb.Items != null)
             {
                 var deviceTokenList = tokenDb.Items.Where(p => !string.IsNullOrEmpty(p.DeviceToken)).Select(p => p.DeviceToken);
@@ -174,7 +175,7 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
             }
             foreach (var user in userRoleDb!.Items!)
             {
-                var tokenDb = await tokenRepository!.GetAllDataByExpression(p => p.AccountId == user.UserId, 0, 0, null, false, p => p.Account);
+                var tokenDb = await tokenRepository!.GetAllDataByExpression(p => p.UserId.Equals(user.UserId), 0, 0, null, false, p => p.Account);
                 foreach (var token in tokenDb.Items)
                 {
                     if (!string.IsNullOrEmpty(token.DeviceToken))
@@ -233,7 +234,7 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
                 throw new Exception($"Không tìm thấy tài khoản với id {accountId}");
             }
 
-            var tokenDb = await tokenRepository!.GetAllDataByExpression(p => p.AccountId == accountId, 0, 0, null,
+            var tokenDb = await tokenRepository!.GetAllDataByExpression(p => p.UserId.Equals(accountId), 0, 0, null,
                 false, p => p.Account);
             if (tokenDb.Items!.Count > 0 && tokenDb.Items != null)
             {

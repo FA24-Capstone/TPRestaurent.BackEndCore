@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TPRestaurent.BackEndCore.Domain.Data;
 
@@ -11,9 +12,10 @@ using TPRestaurent.BackEndCore.Domain.Data;
 namespace TPRestaurent.BackEndCore.Domain.Migrations
 {
     [DbContext(typeof(TPRestaurentDBContext))]
-    partial class TPRestaurentDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241123023037_RemoveAccountDuplicateFromToken")]
+    partial class RemoveAccountDuplicateFromToken
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2948,14 +2950,14 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Navigation("TransationStatus");
                 });
 
-            //modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Token", b =>
-            //    {
-            //        b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "Account")
-            //            .WithMany()
-            //            .HasForeignKey("AccountId");
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Token", b =>
+                {
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId");
 
-            //        b.Navigation("Account");
-            //    });
+                    b.Navigation("Account");
+                });
 #pragma warning restore 612, 618
         }
     }

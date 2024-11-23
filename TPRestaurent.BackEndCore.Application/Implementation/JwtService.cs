@@ -131,7 +131,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var utility = Resolve<Common.Utils.Utility>();
 
                     var user = await accountRepository!.GetByExpression(u => u!.Id.ToLower() == accountId);
-                    var refreshTokenDb = await tokenRepository.GetByExpression(p => p.AccountId == user.Id);
+                    var refreshTokenDb = await tokenRepository.GetByExpression(p => p.UserId.Equals(user.Id));
 
                     if (user != null && refreshTokenDb != null && refreshTokenDb.RefreshTokenValue == refreshToken)
                     {
