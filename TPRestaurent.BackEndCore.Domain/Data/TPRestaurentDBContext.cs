@@ -166,6 +166,5 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             return configuration.GetSection("VietnameseNames");
         }
 
-       
     }
 }
