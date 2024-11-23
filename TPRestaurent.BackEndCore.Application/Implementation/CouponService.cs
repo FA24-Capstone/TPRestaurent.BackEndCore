@@ -3,6 +3,7 @@ using System.Text;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
+using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
@@ -366,14 +367,33 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> GetUserByRank(UserRank userRank)
+        public async Task<AppActionResult> GetUserByRank(UserRank userRank, Guid? couponprogramId, bool? hasBeenProvided)
         {
             var result = new AppActionResult();
             var accountRepository = Resolve<IGenericRepository<Account>>();
+            List<string> accountIds = null; 
             try
             {
-                var userByRankDb = await accountRepository!.GetAllDataByExpression(p => p.UserRankId == userRank, 0, 0, null, false, null);
-                if (userByRankDb == null)
+                if (couponprogramId.HasValue)
+                {
+                    var couponProgramDb = await _couponProgramRepository.GetById(couponprogramId.Value);
+                    if(couponProgramDb == null)
+                    {
+                        return BuildAppActionResultError(result, $"Không tìm thấy chương trình giảm giá với id {userRank}");
+                    }
+
+                    var couponDb = await _couponRepository.GetAllDataByExpression(c => c.CouponProgramId == couponprogramId.Value, 0, 0, null, false, null);
+                    accountIds = couponDb.Items.Select(c => c.AccountId).ToList();
+                }
+
+                var customerIds = await GetCustomerId();
+
+                var userByRankDb = await accountRepository!.GetAllDataByExpression(p => (userRank == 0 || p.UserRankId == userRank)
+                                                                                         && (accountIds == null
+                                                                                            || (hasBeenProvided.Value && accountIds.Contains(p.Id))
+                                                                                            || (!hasBeenProvided.Value && !accountIds.Contains(p.Id))
+                                                                                         && customerIds.Contains(p.Id)), 0, 0, null, false, null);
+                if (userByRankDb.Items.Count == 0)
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy người dùng với rank {userRank}");
                 }
@@ -678,6 +698,68 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             sb.AppendLine("</ul>");
             return sb.ToString();
+        }
+
+        public async Task<AppActionResult> GetTotalUserByRank()
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var accountRepository = Resolve<IGenericRepository<Account>>();
+                var customerIds = await GetCustomerId();
+                var accountDb = await accountRepository.GetAllDataByExpression(a => customerIds.Contains(a.Id), 0, 0, null, false, null);
+                List<TotalUserByRankResponseDto> data = new List<TotalUserByRankResponseDto>();
+                var bronzeSpent = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.BRONZE_RANK), null);
+                if(bronzeSpent != null)
+                {
+                    data.Add(new TotalUserByRankResponseDto
+                    {
+                        UserRank = UserRank.BRONZE,
+                        MinimumSpent = Double.Parse(bronzeSpent.CurrentValue),
+                        Total = accountDb.Items.Count(a => a.UserRankId == UserRank.BRONZE)
+                    });
+                }
+
+                var silverSpent = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.SILVER_RANK), null);
+                if (silverSpent != null)
+                {
+                    data.Add(new TotalUserByRankResponseDto
+                    {
+                        UserRank = UserRank.SILVER,
+                        MinimumSpent = Double.Parse(silverSpent.CurrentValue),
+                        Total = accountDb.Items.Count(a => a.UserRankId == UserRank.SILVER)
+                    });
+                }
+
+                var goldSpent = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.GOLD_RANK), null);
+                if (goldSpent != null)
+                {
+                    data.Add(new TotalUserByRankResponseDto
+                    {
+                        UserRank = UserRank.GOLD,
+                        MinimumSpent = Double.Parse(goldSpent.CurrentValue),
+                        Total = accountDb.Items.Count(a => a.UserRankId == UserRank.GOLD)
+                    });
+                }
+
+                var diamondRank = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.DIAMOND_RANK), null);
+                if (diamondRank != null)
+                {
+                    data.Add(new TotalUserByRankResponseDto
+                    {
+                        UserRank = UserRank.DIAMOND,
+                        MinimumSpent = Double.Parse(diamondRank.CurrentValue),
+                        Total = accountDb.Items.Count(a => a.UserRankId == UserRank.DIAMOND)
+                    });
+                }
+                result.Result = data;
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         }
     }
 }
