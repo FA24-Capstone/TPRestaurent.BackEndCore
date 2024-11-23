@@ -20,7 +20,6 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public DateTime LastLogin { get; set; }
         public bool IsActive { get; set; }
         public string? AccountId { get; set; }
-
         [ForeignKey(nameof(AccountId))]
         public Account? Account { get; set; }
     }
