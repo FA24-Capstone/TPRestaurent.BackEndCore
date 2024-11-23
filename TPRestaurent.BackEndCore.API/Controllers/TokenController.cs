@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 
@@ -10,9 +9,10 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class TokenController : ControllerBase
     {
         private ITokenService _tokenService;
+
         public TokenController(ITokenService tokenService)
         {
-            _tokenService = tokenService;       
+            _tokenService = tokenService;
         }
 
         [HttpGet("get-all-token-by-user/{accountId}/{pageNumber}/{pageSize}")]
@@ -24,7 +24,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPost("log-out-all-device")]
         public async Task<AppActionResult> LogOutAllDevice(string accountId)
         {
-            return await _tokenService.LogOutAllDevice(accountId);  
+            return await _tokenService.LogOutAllDevice(accountId);
         }
 
         [HttpPost("get-user-token-by-ip")]

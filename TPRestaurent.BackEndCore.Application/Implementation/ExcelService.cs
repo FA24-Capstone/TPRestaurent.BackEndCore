@@ -1,11 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
-using OfficeOpenXml.Style;
 using OfficeOpenXml;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using OfficeOpenXml.Style;
 using System.Text;
-using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.Utils;
 
@@ -13,7 +9,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 {
     public class ExcelService : GenericBackendService, IExcelService
     {
-
         private readonly BackEndLogger _logger;
 
         public ExcelService(BackEndLogger logger, IServiceProvider serviceProvider) : base(serviceProvider)

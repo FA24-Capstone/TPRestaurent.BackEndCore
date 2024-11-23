@@ -1,25 +1,10 @@
 using AutoMapper;
-using Castle.DynamicProxy.Generators;
-using Firebase.Auth;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
-using Hangfire.Common;
-using Humanizer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
-using NPOI.SS.Formula.Functions;
-using OfficeOpenXml.FormulaParsing.FormulaExpressions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
-using System.Transactions;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.ConfigurationModel;
@@ -29,11 +14,6 @@ using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
-using Twilio.Types;
-using static Org.BouncyCastle.Crypto.Engines.SM2Engine;
-using static System.Net.WebRequestMethods;
-using static TPRestaurent.BackEndCore.Common.DTO.Response.EstimatedDeliveryTimeDto;
-using static TPRestaurent.BackEndCore.Common.DTO.Response.MapInfo;
 using Utility = TPRestaurent.BackEndCore.Common.Utils.Utility;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
@@ -146,7 +126,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 string deviceName = ParseDeviceNameFromUserAgent(userAgent);
                 var deviceIp = GetClientIpAddress(httpContext);
 
-
                 if (tokenDto != null)
                 {
                     // Create Token object
@@ -176,13 +155,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         };
 
                         await tokenRepository!.Insert(token);
-
                     }
 
                     otpCodeDb!.IsUsed = true;
                     await _accountRepository.Update(user);
                     await _otpRepository.Update(otpCodeDb);
-
                 }
                 await _unitOfWork.SaveChangesAsync();
             }
@@ -192,7 +169,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-
 
         public string GetClientIpAddress(HttpContext context)
         {
@@ -262,7 +238,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 else if (user.IsVerified == false)
                     result = BuildAppActionResultError(result, "Tài khoản này chưa xác thực !");
 
-
                 if (!BuildAppActionResultIsError(result))
                 {
                     result = await LoginDefault(email, user);
@@ -317,7 +292,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         IsManuallyCreated = true,
                         RegisteredDate = utility.GetCurrentDateInTimeZone()
                     };
-
 
                     var resultCreateUser = await _userManager.CreateAsync(user);
                     if (resultCreateUser.Succeeded)
@@ -560,7 +534,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                 }
 
-
                 if (!BuildAppActionResultIsError(result))
                 {
                     var smsService = Resolve<ISmsService>();
@@ -604,7 +577,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
-
         }
 
         private async Task<AppActionResult> RegisterAccountByPhoneNumber(string phoneNumber)
@@ -912,7 +884,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-
         public async Task<AppActionResult> SendEmailForActiveCode(string email)
         {
             var result = new AppActionResult();
@@ -1108,7 +1079,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 result.Result = _tokenDto;
 
                 await _unitOfWork.SaveChangesAsync();
-
             }
             catch (Exception ex)
             {
@@ -1357,7 +1327,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result = await LoginDefault(phoneNumber, user);
                     user.IsVerified = true;
 
-
                     optUser.IsUsed = true;
                     await _otpRepository.Update(optUser);
                     await _unitOfWork.SaveChangesAsync();
@@ -1369,8 +1338,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
-
-
 
         public async Task<AppActionResult> GenerateCustomerOTP(Account customerDb, OTPType otpType)
         {
@@ -1509,7 +1476,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     if (updateAccountRequest.Image != null)
                     {
-
                         var pathName = SD.FirebasePathName.ACCOUNT_PREFIX +
                                        $"{updateAccountRequest.AccountId}{Guid.NewGuid()}.jpg";
                         var upload = await firebaseService!.UploadFileToFirebase(updateAccountRequest.Image!, pathName);
@@ -1540,8 +1506,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             });
             return result;
         }
-
-
 
         public async Task<AppActionResult> DeleteAccount(string customerId)
         {
@@ -1756,7 +1720,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 try
                 {
-
                     var newCustomerInfoAddress = new CustomerInfoAddress
                     {
                         CustomerInfoAddressId = Guid.NewGuid(),
@@ -1853,9 +1816,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
             });
             return result;
-
         }
-
 
         public async Task<AppActionResult> DeleteCustomerInfoAddress(Guid customerInfoAddressId)
         {
@@ -1985,7 +1946,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                  TemplateMappingHelper.GetTemplateOTPEmail(
                                      TemplateMappingHelper.ContentEmailType.VERIFICATION_CODE, verifyCode.Result.ToString(),
                                      accountDb.LastName));
-
             }
             catch (Exception ex)
             {
@@ -2007,7 +1967,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     throw new Exception($"Tài khoản với id {accountId} không tồn tại");
                 }
 
-
                 var currentTime = utility!.GetCurrentDateTimeInTimeZone();
                 var otpDb = await otpRepository!.GetAllDataByExpression(p => p.Code == otpCode && p.AccountId == accountId && p.Type == OTPType.ConfirmEmail && p.ExpiredTime > currentTime, 0, 0, p => p.ExpiredTime, false, null);
                 if (otpDb.Items!.FirstOrDefault() == null)
@@ -2019,7 +1978,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     accountDb.Email = email;
                     accountDb.NormalizedEmail = email.ToUpper();
                 }
-
 
                 await _accountRepository.Update(accountDb);
                 await _unitOfWork.SaveChangesAsync();
@@ -2084,7 +2042,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else
                 {
-                    accountDb.IsBanned = true;      
+                    accountDb.IsBanned = true;
                 }
                 await _accountRepository.Update(accountDb);
                 await _unitOfWork.SaveChangesAsync();
@@ -2106,7 +2064,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
             await _unitOfWork.ExecuteInTransaction(async () =>
             {
-
                 try
                 {
                     if (await _accountRepository.GetByExpression(r => r!.PhoneNumber == signUpRequestDto.PhoneNumber) !=

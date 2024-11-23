@@ -1,8 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
-using TPRestaurent.BackEndCore.Common.DTO.Request;
-using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
@@ -11,6 +8,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class TableSessionController : ControllerBase
     {
         private ITableSessionService _service;
+
         public TableSessionController(ITableSessionService service)
         {
             _service = service;

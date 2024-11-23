@@ -53,7 +53,7 @@
 //            _accountService = accountService;
 //            _unitOfWork = unitOfWork;
 //            _mapper = mapper;
-//            _logger = logger;       
+//            _logger = logger;
 //        }
 
 //        public async Task<AppActionResult> AddReservation(ReservationDto dto)
@@ -266,7 +266,6 @@
 //        //        }
 //        //        if (!endTime.HasValue)
 //        //        {
-
 //        //            endTime = startTime.AddHours(double.Parse(configurationDb.Items[0].PreValue));
 //        //        }
 
@@ -357,7 +356,7 @@
 //        //            }
 
 //        //            var reservationTableDb = await reservationTableDetailRepository!.GetAllDataByExpression(r => r.ReservationId == dto.ReservationId, 0, 0, null, false, null);
-//        //            //Not yet has table => first time add table from 
+//        //            //Not yet has table => first time add table from
 //        //            if (reservationTableDb.Items.Count == 0)
 //        //            {
 //        //                if (dto.ReservationTableIds.Count() == 0)
@@ -375,15 +374,12 @@
 //        //                }
 //        //            }
 
-
 //        //            reservationDb.NumberOfPeople = dto.NumberOfPeople;
 //        //            reservationDb.ReservationDate = dto.ReservationDate;
 //        //            reservationDb.EndTime = dto.EndTime;
 //        //            reservationDb.Deposit += Math.Max(0, (double)dto.AdditionalDeposit);
 
 //        //            await _reservationRepository.Update(reservationDb);
-
-
 
 //        //            if (dto.ReservationDishDtos.Count() > 0)
 //        //            {
@@ -399,7 +395,6 @@
 //        //                    }
 //        //                    await reservationDishRepository.DeleteRange(reservationDishDetailDb.Items);
 //        //                }
-
 
 //        //                var reservationDishes = new List<ReservationDish>();
 //        //                var dishComboComboDetailList = new List<ComboOrderDetail>();
@@ -477,8 +472,7 @@
 //        //            }
 //        //        }
 
-
-//        //        //Get Table with condition: 
+//        //        //Get Table with condition:
 //        //    }
 //        //    catch (Exception ex)
 //        //    {
@@ -584,7 +578,6 @@
 //        //    }
 //        //    return result;
 
-
 //        //}
 
 //        //public async Task<AppActionResult> GetAllReservation(int? time, ReservationStatus? status, int pageNumber, int pageSize)
@@ -619,7 +612,6 @@
 //        //    }
 //        //    catch (Exception ex)
 //        //    {
-
 //        //    }
 //        //    return result;
 //        //}
@@ -855,7 +847,7 @@
 //        //            time = utility.GetCurrentDateTimeInTimeZone();
 //        //        }
 //        //        var nearReservationDb = await reservationTableRepository.GetAllDataByExpression(r => r.TableId == tableId
-//        //                                                        && r.Reservation.ReservationDate <= time.Value.AddHours(double.Parse(configDb.PreValue)) 
+//        //                                                        && r.Reservation.ReservationDate <= time.Value.AddHours(double.Parse(configDb.PreValue))
 //        //                                                        && r.Reservation.ReservationDate.AddHours(double.Parse(configDb.PreValue)) >= time, 0, 0, r => r.Reservation.ReservationDate, true, null);
 //        //        if(nearReservationDb.Items.Count > 0)
 //        //        {
@@ -958,8 +950,8 @@
 //        //                await _reservationRepository.Update(reservation);
 //        //            }
 //        //        }
-//        //        await _unitOfWork.SaveChangesAsync();   
-//        //    }  
+//        //        await _unitOfWork.SaveChangesAsync();
+//        //    }
 //        //    catch(Exception ex)
 //        //    {
 //        //        _logger.LogError(ex.Message, this);

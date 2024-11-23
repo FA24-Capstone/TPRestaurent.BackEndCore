@@ -1,13 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using System.Transactions;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
@@ -88,7 +84,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if (device != null)
                 {
-
                     var claims = new List<Claim>
                     {
                         new(ClaimTypes.NameIdentifier, loginDeviceRequestDto.DeviceCode),

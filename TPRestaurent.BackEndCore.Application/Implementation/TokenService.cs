@@ -1,12 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Primitives;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using System.Transactions;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
@@ -64,7 +57,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             });
             return result;
         }
-
 
         public async Task<AppActionResult> GetAllTokenByUser(string accountId, int pageNumber, int pageSize)
         {
@@ -157,7 +149,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var tokenDb = await _tokenRepository.GetByExpression(p => p.TokenId == tokenId);
                 if (tokenDb == null)
                 {
-                 throw new Exception ( $"Token với id {tokenId} không tồn tại");
+                    throw new Exception($"Token với id {tokenId} không tồn tại");
                 }
                 else
                 {
@@ -188,7 +180,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var tokenDb = await _tokenRepository.GetByExpression(p => p.AccessTokenValue == accessToken && p.DeviceIP == userIP, p => p.Account!);
                 if (tokenDb == null)
                 {
-                 throw new Exception ( $"Không tìm thấy token ");
+                    throw new Exception($"Không tìm thấy token ");
                 }
 
                 result.Result = tokenDb;
@@ -222,7 +214,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 ip = context.Request.Headers["CF-Connecting-IP"].FirstOrDefault();
             }
-                                                                                                                                                                                                                                                                                                                                                
+
             // If still not found, use RemoteIpAddress
             if (string.IsNullOrEmpty(ip) && context.Connection.RemoteIpAddress != null)
             {
@@ -286,7 +278,5 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             return null;
         }
-
-     
     }
 }

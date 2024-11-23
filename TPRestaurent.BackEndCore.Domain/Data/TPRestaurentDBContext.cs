@@ -1,11 +1,8 @@
-﻿            using Castle.Core.Configuration;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 using TPRestaurent.BackEndCore.Domain.Models;
-using TPRestaurent.BackEndCore.Domain.Models.EnumModels;
 using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
 namespace TPRestaurent.BackEndCore.Domain.Data
@@ -48,7 +45,7 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.ConfigurationVersion> ConfigurationVersions { get; set; } = null!;
         public DbSet<Models.GroupedDishCraft> GroupedDishCrafts { get; set; } = null!;
         public DbSet<Models.NotificationMessage> NotificationMessages { get; set; } = null!;
-        public DbSet<Models.OrderAssignedRequest> OrderAssignedRequests { get; set; } = null!;  
+        public DbSet<Models.OrderAssignedRequest> OrderAssignedRequests { get; set; } = null!;
         public DbSet<Models.EnumModels.OrderStatus> OrderStatuses { get; set; } = null!;
         public DbSet<Models.EnumModels.OTPType> OTPTypes { get; set; } = null!;
         public DbSet<Models.EnumModels.PaymentMethod> PaymentMethods { get; set; } = null!;
@@ -66,12 +63,8 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.EnumModels.CouponProgramType> CouponProgramTypes { get; set; } = null!;
         public DbSet<Models.EnumModels.UserRank> UserRanks { get; set; } = null!;
 
-
-
-
         protected override void OnModelCreating(ModelBuilder builder)
         {
-           
             builder.Entity<IdentityRole>().HasData(new IdentityRole
             {
                 Id = "85b6791c-49d8-4a61-ad0b-8274ec27e764",
@@ -108,7 +101,6 @@ namespace TPRestaurent.BackEndCore.Domain.Data
                 NormalizedName = "device"
             });
 
-
             base.OnModelCreating(builder);
             IConfiguration enums = GetVietnameseNames();
             SeedEnumTable<Models.EnumModels.OrderStatus, Enums.OrderStatus>(builder, enums);
@@ -129,7 +121,6 @@ namespace TPRestaurent.BackEndCore.Domain.Data
             SeedEnumTable<Models.EnumModels.TableStatus, Enums.TableStatus>(builder, enums);
             SeedEnumTable<Models.EnumModels.CouponProgramType, Enums.CouponProgramType>(builder, enums);
             SeedEnumTable<Models.EnumModels.UserRank, Enums.UserRank>(builder, enums);
-
         }
 
         private static void SeedEnumTable<TEntity, TEnum>(ModelBuilder modelBuilder, IConfiguration enums)
@@ -165,6 +156,5 @@ namespace TPRestaurent.BackEndCore.Domain.Data
                      .Build();
             return configuration.GetSection("VietnameseNames");
         }
-
     }
 }

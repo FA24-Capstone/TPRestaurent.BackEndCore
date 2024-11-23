@@ -1,13 +1,6 @@
-using MailKit;
 using Newtonsoft.Json;
-using NPOI.POIFS.Storage;
-using NPOI.SS.Formula.Functions;
 using RestSharp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
@@ -65,7 +58,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             Compound = item.Compound,
                             Lat = placeDestination[0],
                             Lng = placeDestination[1]
-
                         });
                     }
                     result.Result = selectedData;
@@ -94,7 +86,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var restaurantLatConfig = await _configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LATITUDE);
                     var restaurantLngConfig = await _configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LNG);
                     var restaurantMaxDistanceToOrderConfig = await _configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DISTANCE_ORDER);
-
 
                     var restaurantLat = Double.Parse(restaurantLatConfig.CurrentValue);
                     var restaurantLng = Double.Parse(restaurantLngConfig.CurrentValue);
@@ -184,7 +175,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             catch (Exception e)
             {
                 result.Result = BuildAppActionResultError(result, e.Message);
-
             }
             return result;
         }
@@ -258,8 +248,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return result;
                 }
 
-
-
                 List<(double Lat, double Lng)> coordinates = new List<(double Lat, double Lng)>();
                 foreach (var order in orderToDeliver.Items)
                 {
@@ -271,7 +259,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     coordinates.Add((customerInfoAddressDb.Lat, customerInfoAddressDb.Lng));
                 }
-
 
                 string start = $"{startLat.CurrentValue.ToString()},{startLng.CurrentValue.ToString()}";
                 StringBuilder waypoints = new StringBuilder();
@@ -344,7 +331,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     result.Result = optimalTripResponseDTO.OptimalTrip.OrderBy(o => o.Index);
                 }
-
             }
             catch (Exception e)
             {
@@ -379,7 +365,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception e)
             {
-
             }
             return result;
         }

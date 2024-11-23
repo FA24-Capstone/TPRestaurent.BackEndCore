@@ -11,6 +11,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class ChatBotController : ControllerBase
     {
         private IChatBotService _service;
+
         public ChatBotController(IChatBotService service)
         {
             _service = service;
@@ -19,7 +20,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPost("ai-response")]
         public async Task<AppActionResult> ResponseCustomer(ChatbotRequestDto dto)
         {
-            return await _service.ResponseCustomer(dto);             
+            return await _service.ResponseCustomer(dto);
         }
     }
 }

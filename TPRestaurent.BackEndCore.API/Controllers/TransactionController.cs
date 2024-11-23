@@ -1,15 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using System.Security.Cryptography;
-using System.Text;
+﻿using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
-using TPRestaurent.BackEndCore.Application.IHubServices;
-using TPRestaurent.BackEndCore.Common.DTO.Payment.PaymentRequest;
 using TPRestaurent.BackEndCore.Common.DTO.Payment.PaymentRespone;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
-using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
@@ -19,6 +12,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class TransactionController : ControllerBase
     {
         private ITransactionService _service;
+
         public TransactionController(ITransactionService service)
         {
             _service = service;
@@ -85,7 +79,6 @@ namespace TPRestaurent.BackEndCore.API.Controllers
                     Success = true
                 };
 
-              
                 return Ok();
             }
             catch (Exception ex)
@@ -93,7 +86,6 @@ namespace TPRestaurent.BackEndCore.API.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
 
         [HttpPost("MomoIpn")]
         public async Task<IActionResult> MomoIPN(MomoResponseDto momo)
@@ -116,7 +108,5 @@ namespace TPRestaurent.BackEndCore.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
-        
     }
 }

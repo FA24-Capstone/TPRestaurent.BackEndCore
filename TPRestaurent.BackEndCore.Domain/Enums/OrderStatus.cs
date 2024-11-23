@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TPRestaurent.BackEndCore.Domain.Enums
+﻿namespace TPRestaurent.BackEndCore.Domain.Enums
 {
     public enum OrderStatus
     {
         TableAssigned = 1,
         DepositPaid = 2,
-        TemporarilyCompleted = 3, 
+        TemporarilyCompleted = 3,
         Pending = 4,
         Processing = 5,
         ReadyForDelivery = 6,
