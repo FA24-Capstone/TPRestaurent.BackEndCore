@@ -2291,6 +2291,7 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("AccountId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("CreateDateAccessToken")
@@ -2953,6 +2954,17 @@ namespace TPRestaurent.BackEndCore.Domain.Migrations
                     b.Navigation("TransactionType");
 
                     b.Navigation("TransationStatus");
+                });
+
+            modelBuilder.Entity("TPRestaurent.BackEndCore.Domain.Models.Token", b =>
+                {
+                    b.HasOne("TPRestaurent.BackEndCore.Domain.Models.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
                 });
 #pragma warning restore 612, 618
         }
