@@ -751,12 +751,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
-
+                var refundAmount = order.Deposit.HasValue ? Math.Ceiling((double)(order.Deposit * double.Parse(percentageConfigurationDb.CurrentValue.ToString())) / 1000) * 1000
+                                                          : Math.Ceiling((double)(order.TotalAmount * double.Parse(percentageConfigurationDb.CurrentValue.ToString())) / 1000) * 1000;
                 var refundTransaction = new Transaction
                 {
                     Id = Guid.NewGuid(),
                     TransactionTypeId = TransactionType.Refund,
-                    Amount = Math.Ceiling((double)(order.Deposit * double.Parse(percentageConfigurationDb.CurrentValue.ToString())) / 1000) * 1000,
+                    Amount = refundAmount,
                     AccountId = order.AccountId,
                     Date = currentTime,
                     PaidDate = currentTime,

@@ -1190,11 +1190,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             money -= discountMoney;
                             await couponRepository.UpdateRange(customerSavedCouponDb.Items);
                         }
-                        else
-                        {
-                            throw new Exception($"Có một số coupon không khả dụng");
-                        }
-
 
                         if (orderRequestDto.DeliveryOrder.LoyalPointToUse.HasValue && orderRequestDto.DeliveryOrder.LoyalPointToUse > 0)
                         {
@@ -3443,7 +3438,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         orderDb.CancelledTime = utility.GetCurrentDateTimeInTimeZone();
                         orderDb.CancelDeliveryReason = confirmedOrderRequest.CancelReason;
-                        await ChangeOrderStatusService(orderDb.OrderId, false, OrderStatus.Cancelled, false, true);
+                        await ChangeOrderStatusService(orderDb.OrderId, false, OrderStatus.Cancelled, false, false);
                     }
 
                     if (!BuildAppActionResultIsError(result))
