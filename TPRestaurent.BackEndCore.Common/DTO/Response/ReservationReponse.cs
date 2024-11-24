@@ -25,6 +25,8 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public DateTime? MealTime { get; set; }
         public DateTime? EndTime { get; set; }
         public double TotalAmount { get; set; }
+        public double? CouponDiscount { get; set; }
+        public double? LoyaltyPointDiscount { get; set; }
         public OrderStatus StatusId { get; set; }
 
         [ForeignKey(nameof(StatusId))]

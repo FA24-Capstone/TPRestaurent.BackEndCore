@@ -118,6 +118,8 @@ public class SD
         public static string SILVER_RANK = "SILVER_RANK";
         public static string GOLD_RANK = "GOLD_RANK";
         public static string DIAMOND_RANK = "DIAMOND_RANK";
+        public static string MAX_APPLY_COUPON_PERCENT = "MAX_APPLY_COUPON_PERCENT";
+        public static string MAX_APPLY_LOYALTY_POINT_PERCENT = "MAX_APPLY_LOYALTY_POINT_PERCENT";
     }
 
     public class SubjectMail

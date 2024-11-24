@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
+using NPOI.HSSF.Record;
 using RestSharp;
 using System.Net;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
@@ -577,7 +578,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var orderService = Resolve<IOrderService>();
                     var order = await orderService.GetAllOrderDetail(transactionDb.OrderId.Value);
-                    data.Order = order.Result as ReservationReponse;
+                    var orderResult = order.Result as ReservationReponse;
+                    await CalculateTotal(orderResult);
+                    data.Order = orderResult;
                 }
                 result.Result = data;
             }
@@ -848,6 +851,35 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
             }
             Task.CompletedTask.Wait();
+        }
+
+        private async Task CalculateTotal(ReservationReponse order)
+        {
+            try
+            {
+                var couponRepository = Resolve<IGenericRepository<Coupon>>();
+                var initialTotal = order.OrderDishes.Sum(o =>
+                {
+                    if (o.DishSizeDetail != null)
+                    {
+                        return Math.Ceiling(o.Quantity * o.DishSizeDetail.Price * (1 - o.DishSizeDetail.Discount) / 1000) * 1000;
+                    }
+                    return Math.Ceiling(o.Quantity * o.ComboDish.Combo.Price * (1 - o.ComboDish.Combo.Discount) / 1000) * 1000;
+                });
+                if (order.Order.Deposit.HasValue)
+                {
+                    initialTotal -= order.Order.Deposit.Value;
+                }
+                var couponDb = await couponRepository.GetAllDataByExpression(c => c.OrderId == order.Order.OrderId, 0, 0, null, false, c => c.CouponProgram);
+                var discountPercent = ((double)couponDb.Items.Sum(c => c.CouponProgram.DiscountPercent) / 100);
+                order.Order.CouponDiscount = Math.Ceiling(initialTotal * discountPercent / 1000) * 1000;
+                order.Order.LoyaltyPointDiscount = initialTotal - order.Order.CouponDiscount - order.Order.TotalAmount;
+            }
+            catch (Exception ex)
+            {
+
+            }
+
         }
     }
 }
