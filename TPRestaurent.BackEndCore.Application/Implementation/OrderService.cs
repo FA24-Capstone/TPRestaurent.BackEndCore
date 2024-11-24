@@ -1161,7 +1161,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                             double couponPercentage = double.Parse(maxCouponPercentage.CurrentValue);
 
-                            if (customerSavedCouponDb.Items.Sum(c => c.CouponProgram.DiscountPercent) > couponPercentage)
+                            if ((double)customerSavedCouponDb.Items.Sum(c => c.CouponProgram.DiscountPercent) / 100 > couponPercentage)
                             {
                                 throw new Exception($"Phần trăm giảm giá tối đa bằng coupon là {(couponPercentage * 100)}%. Vui lòng điều chỉnh số lượng coupon");
                             }
@@ -1540,7 +1540,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         accountDb = await accountRepository.GetById(orderRequestDto.AccountId);
                     }
-                    else if (!string.IsNullOrEmpty(orderDb.AccountId))
+                    else 
                     {
                         accountDb = await accountRepository.GetById(orderDb.AccountId);
                     }
@@ -1609,9 +1609,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                             double couponPercentage = double.Parse(maxCouponPercentage.CurrentValue);
 
-                            if(customerSavedCouponDb.Items.Sum(c => c.CouponProgram.DiscountPercent) > couponPercentage)
+                            if((double)customerSavedCouponDb.Items.Sum(c => c.CouponProgram.DiscountPercent) / 100 > couponPercentage)
                             {
-                                throw new Exception($"Phần trăm giảm giá tối đa bằng coupon là {(couponPercentage * 100)}%. Vui lòng điều chỉnh số lượng coupon");
+                                throw new Exception($"Phần trăm giảm giá tối đa bằng coupon là {(couponPercentage)}%. Vui lòng điều chỉnh số lượng coupon");
                             }
                             double discountMoney = 0;
                             foreach (var couponId in orderRequestDto.CouponIds)
@@ -1637,17 +1637,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                             money -= discountMoney;
                             await couponRepository.UpdateRange(customerSavedCouponDb.Items);
-                        } else
-                        {
-                            throw new Exception($"Có một số coupon không khả dụng");
-                        }
+                        } 
 
                         if (orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse > 0)
                         {
                             var maxLoyaltyPointPercentage = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.MAX_APPLY_LOYALTY_POINT_PERCENT), null);
                             if (maxLoyaltyPointPercentage == null)
                             {
-                                throw new Exception($"Không tìm thấy cấu hình hệ thống cho ử dụng điềm thưởng. Vui lòng kiểm tra lại thông tin cấu hình");
+                                throw new Exception($"Không tìm thấy cấu hình hệ thống cho sử dụng điềm thưởng. Vui lòng kiểm tra lại thông tin cấu hình");
                             }
                             double loyaltyPointPercentage = double.Parse(maxLoyaltyPointPercentage.CurrentValue);
                             if(loyaltyPointPercentage * money < orderRequestDto.LoyalPointsToUse)
