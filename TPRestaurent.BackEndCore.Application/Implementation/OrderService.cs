@@ -1329,7 +1329,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_CHEF, messageBody.ToString());
                     }
-                    await notificationService!.SendNotificationToAccountAsync(accountDb.Id, createSuccessfulMessage);
+                    if (accountDb != null)
+                    {
+                        await notificationService!.SendNotificationToAccountAsync(accountDb.Id, createSuccessfulMessage);
+                    }
                     await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
                     await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
                     await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
