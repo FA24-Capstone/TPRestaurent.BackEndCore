@@ -261,6 +261,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var otpRepository = Resolve<IGenericRepository<OTP>>();
             var couponRepository = Resolve<IGenericRepository<Coupon>>();
             var couponProgramRepository = Resolve<IGenericRepository<CouponProgram>>();
+            var emnailService = Resolve<EmailService>();
 
             try
             {
@@ -393,6 +394,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         IsUsedOrExpired = false
                     };
 
+                    string username = user.FirstName + " " + user.LastName;
+                    emailService.SendEmail(user.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateFirstRegistrationCoupon(username, couponProgramDb));
                     await couponRepository!.Insert(coupon);
                     await _unitOfWork.SaveChangesAsync();
                 }
@@ -591,6 +594,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var random = new Random();
                 var verifyCode = string.Empty;
                 verifyCode = random.Next(100000, 999999).ToString();
+                var emailService = Resolve<IEmailService>();
                 int accountRandomNumber = random.Next(1000000, 9999999);
                 var user = new Account
                 {
@@ -639,6 +643,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     IsUsedOrExpired = false
                 };
 
+                string username = user.FirstName + " " + user.LastName;
+                emailService.SendEmail(user.Email, SD.SubjectMail.NOTIFY_RESERVATION, TemplateMappingHelper.GetTemplateFirstRegistrationCoupon(username, couponProgramDb));
                 await couponRepository!.Insert(coupon);
                 await _unitOfWork.SaveChangesAsync();
             }

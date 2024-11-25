@@ -1348,4 +1348,111 @@ public class TemplateMappingHelper
 </html>";
         return content;
     }
+
+    public static string GetTemplateFirstRegistrationCoupon(string username, CouponProgram couponProgram)
+    {
+        var content = $@"
+<html>
+  <head>
+    <style>
+      * {{
+        margin: 0;
+        padding: 0;
+      }}
+
+      body {{
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4; /* Background color for the entire email */
+      }}
+
+      .container {{
+        max-width: 900px;
+        margin: 20px auto;
+        border-radius: 5px;
+        box-shadow: 0px 0px 5px 2px #ccc; /* Shadow for content */
+      }}
+
+      .header {{
+        text-align: center;
+        background-color: #ffba00; /* Header background color */
+        padding: 20px;
+      }}
+
+      .mainBody {{
+        background-color: #ffffff; /* Main content background */
+        padding: 20px;
+      }}
+
+      .emailBody {{
+        margin: 5px 5px;
+      }}
+
+      .support {{
+        font-size: 15px;
+        font-style: italic;
+        margin: 5px 5px;
+      }}
+
+      .footer {{
+        font-size: 14px;
+        text-align: center;
+        background-color: #ffba00; /* Footer background color */
+        padding: 10px;
+      }}
+
+      .signature {{
+        text-align: right;
+        font-size: 16px;
+        margin: 5px 5px;
+      }}
+    </style>
+  </head>
+  <body>
+    <div class=""container"">
+      <div class=""header"">
+        <h1 style=""color: #515151;"">Nhà hàng Thiên Phú</h1>
+      </div>
+      <div class=""mainBody"">
+        <h2 class=""emailBody"">Xin chào {username},</h2>
+
+        <p class=""emailBody"">
+          Chào mừng bạn đã đăng ký tài khoản tại <b><i>Nhà hàng Thiên Phú</i></b>! 🎉
+        </p>
+
+        <p class=""emailBody"">
+          Để chào đón bạn, chúng tôi xin gửi tặng bạn một coupon đặc biệt cho lần đăng ký đầu tiên của bạn!
+        </p>
+
+        <p class=""emailBody"">
+          Mã coupon: <b>{couponProgram.Code}</b><br>
+          Giảm giá: <b>{couponProgram.DiscountPercent:C}</b><br>
+          Ngày sử dụng: <b>{couponProgram.StartDate:dd/MM/yyyy}</b><br>
+          Hạn sử dụng: <b>{couponProgram.ExpiryDate:dd/MM/yyyy}</b>
+        </p>
+
+        <p class=""emailBody"">
+          Hãy sử dụng mã coupon này trong lần đến nhà hàng sắp tới để tận hưởng ưu đãi đặc biệt của chúng tôi!
+        </p>
+
+        <p class=""emailBody"">
+          Nếu bạn có bất kỳ câu hỏi nào hoặc cần thêm thông tin, vui lòng liên hệ với chúng tôi qua email <u><i>qk.backend@gmail.com</i></u>.
+        </p>
+
+        <p class=""support"">
+          Cảm ơn bạn đã chọn <b><i>Nhà hàng Thiên Phú</i></b>. Chúng tôi rất mong được phục vụ bạn!
+        </p>
+        <div class=""signature"">
+          <p>Trân trọng,</p>
+          <p>
+            <b><i>Đội ngũ Nhà hàng Thiên Phú</i></b>
+          </p>
+        </div>
+      </div>
+      <div style=""height: 100px""></div>
+    </div>
+  </body>
+</html>";
+        return content;
+    }
+
 }
