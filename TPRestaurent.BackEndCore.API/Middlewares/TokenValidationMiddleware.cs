@@ -69,7 +69,15 @@ namespace TPRestaurent.BackEndCore.API.Middlewares
                 await httpContext.Response.WriteAsync("Invalid device.");
                 return;
             }
-                    
+
+            var roleClaims = jwtToken!.Claims.Where(c => c.Type == "role").Select(c => c.Value).ToList();
+            if (!roleClaims.Contains(role))
+            {
+                httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+                await httpContext.Response.WriteAsync("Invalid or expired token.");
+                return;
+            }
+
             await next();
         }
     }
