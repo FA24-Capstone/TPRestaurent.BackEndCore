@@ -7,7 +7,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
     {
         Task<AppActionResult> GetUserToken(string token);
 
-        Task<AppActionResult> InvalidateTokensForUser(string accountId);
+        Task<AppActionResult> InvalidateTokensForUser(string accountId, string currentToken);
 
         Task<AppActionResult> GetAllTokenByUser(string accountId, int pageNumber, int pageSize);
 

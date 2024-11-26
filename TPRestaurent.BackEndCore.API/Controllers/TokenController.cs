@@ -44,5 +44,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _tokenService.DeleteTokenById(tokenId);
         }
+
+
     }
 }
