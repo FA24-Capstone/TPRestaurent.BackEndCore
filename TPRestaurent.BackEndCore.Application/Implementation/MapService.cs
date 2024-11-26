@@ -184,7 +184,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                string baseUrl = "https://www.google.com/maps?q=";
+                string baseUrl = "https://maps.goong.io/?location=";
                 if (orderId == null)
                 {
                     var configurationRepository = Resolve<IGenericRepository<Configuration>>();
