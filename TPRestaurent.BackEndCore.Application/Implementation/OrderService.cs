@@ -3038,7 +3038,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     orderResponse.OrderPaidDate = successfulOrderTransaction[0].PaidDate;
                 }
 
-                var data = new ReservationReponse
+                var data = new OrderWithDetailReponse
                 {
                     Order = orderResponse,
                     OrderTables = reservationTableDetails,
@@ -3156,12 +3156,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var reservationTableDetails = await GetReservationTableDetails(reservationId);
                 var reservationDishes = await GetReservationDishes2(reservationId);
-
-                var data = new ReservationReponse
+                var orderSessions = await GetOrderSessions(reservationDishes.Select(r => r.OrderDetailsId));
+                var data = new OrderWithDetailReponse
                 {
                     Order = orderResponse,
                     OrderTables = reservationTableDetails,
-                    OrderDishes = reservationDishes
+                    OrderDishes = reservationDishes,
+                    OrderSessions = orderSessions
                 };
 
                 return new AppActionResult { Result = data };
@@ -3170,6 +3171,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 return BuildAppActionResultError(new AppActionResult(), ex.Message);
             }
+        }
+
+        private async Task<List<OrderSession>> GetOrderSessions(IEnumerable<Guid> orderDetailIds)
+        {
+            List<OrderSession> sessions = new List<OrderSession>();
+            try
+            {
+                var orderDetailDb = await _detailRepository.GetAllDataByExpression(d => d.OrderSessionId.HasValue && orderDetailIds.Contains(d.OrderDetailId), 0, 0, null, false, o => o.OrderSession);
+                sessions = orderDetailDb.Items.DistinctBy(o => o.OrderSessionId).Select(o => o.OrderSession).OrderByDescending(o => o.OrderSessionNumber).ToList();
+            } 
+            catch (Exception ex)
+            {
+                sessions = new List<OrderSession>();
+            }
+            return sessions;
         }
 
         private async Task<List<Common.DTO.Response.OrderDishDto>> GetReservationDishes2(Guid reservationId, List<OrderDetail> orderDetails = null)
