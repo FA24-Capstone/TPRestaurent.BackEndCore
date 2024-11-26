@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
+using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
@@ -25,6 +26,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         public async Task<AppActionResult> GetGroupedDishById(Guid id, Guid? dishId, bool? isMutual)
         {
             return await _service.GetGroupedDishById(id, dishId, isMutual);
+        }
+
+        [HttpPost("update-grouped-dish")]
+        public async Task<AppActionResult> UpdateForceGroupedDish(List<UpdateGroupedDishDto> dto)
+        {
+            return await _service.UpdateForceGroupedDish(dto);
         }
 
         [HttpPost("add-grouped-dish")]
