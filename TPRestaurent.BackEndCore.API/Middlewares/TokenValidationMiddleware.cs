@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc.Filters;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using TPRestaurent.BackEndCore.Application;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
+using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.API.Middlewares
@@ -19,6 +21,12 @@ namespace TPRestaurent.BackEndCore.API.Middlewares
         {
             var httpContext = context.HttpContext;
             var token = httpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            if (string.IsNullOrEmpty(token))
+            {
+                httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await httpContext.Response.WriteAsync("Token can not be null");
+                return;
+            }
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadToken(token) as JwtSecurityToken;
 
@@ -34,26 +42,34 @@ namespace TPRestaurent.BackEndCore.API.Middlewares
 
             var serviceProvider = httpContext.RequestServices;
             var tokenService = serviceProvider.GetRequiredService<ITokenService>();
+            var tokenRepository = serviceProvider.GetRequiredService<IGenericRepository<Token>>();
+            var unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
             var checkUserToken = await tokenService.GetUserToken(token);
             var userToken = checkUserToken.Result as Token;
 
-            if (userToken == null || token == null || userToken.DeviceIP != deviceIp || userToken.IsActive == false)
+            if (userToken == null)
             {
                 httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 await httpContext.Response.WriteAsync("Invalid or expired token.");
                 return;
             }
-            else
+
+            if (userToken.ExpiryTimeAccessToken < DateTime.UtcNow.AddHours(7))
             {
-                var roleClaims = jwtToken!.Claims.Where(c => c.Type == "role").Select(c => c.Value).ToList();
-                if (!roleClaims.Contains(role))
-                {
-                    httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    await httpContext.Response.WriteAsync("Invalid or expired token.");
-                    return;
-                }
+                await tokenRepository.DeleteById(userToken.TokenId);
+                await unitOfWork.SaveChangesAsync();
+                httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await httpContext.Response.WriteAsync("Expired token.");
+                return;
             }
 
+            if (userToken.DeviceIP != deviceIp)
+            {
+                httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await httpContext.Response.WriteAsync("Invalid device.");
+                return;
+            }
+                    
             await next();
         }
     }

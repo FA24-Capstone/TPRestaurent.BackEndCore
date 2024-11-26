@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http;
 using TPRestaurent.BackEndCore.API.Middlewares;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
@@ -58,6 +59,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-account")]
+        //[TokenValidationMiddleware("ADMIN")]
         public async Task<AppActionResult> GetAllAccount(string? keyword, int pageIndex = 1, int pageSize = 10)
         {
             return await _accountService.GetAllAccount(keyword, pageIndex, pageSize);
@@ -84,7 +86,25 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [HttpPut("change-password")]
         public async Task<AppActionResult> ChangePassword(ChangePasswordDto dto)
         {
-            return await _accountService.ChangePassword(dto);
+            var headers = HttpContext.Request.Headers;
+
+            string userAgent = headers["User-Agent"].ToString();
+            string token = ExtractJwtToken(headers["Authorization"]);
+            if (token != null)
+            {
+                return await _accountService.ChangePassword(dto, token);
+            }
+            else
+            {
+                return new AppActionResult 
+                { 
+                    IsSuccess = false,
+                    Messages = new List<string?>
+                    {
+                        "Không tìm thấy token"
+                    },
+                };
+            }
         }
 
         [HttpPut("forgot-password")]
@@ -205,6 +225,22 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         public async Task<AppActionResult> BanUser(string accountId)
         {
             return await _accountService.BanUser(accountId);
+        }
+
+        private string ExtractJwtToken(string authorizationHeader)
+        {
+            if (string.IsNullOrEmpty(authorizationHeader))
+            {
+                return null;
+            }
+
+            string[] parts = authorizationHeader.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 2 && parts[0].Equals("Bearer", StringComparison.OrdinalIgnoreCase))
+            {
+                return parts[1];
+            }
+
+            return null;
         }
     }
 }
