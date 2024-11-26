@@ -87,10 +87,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 OrderTypeId = item.OrderTypeId,
                                 TotalAmount = item.TotalAmount,
                                 Date = currentDate.AddDays(-1).Date,
-                                OrderDetailJson = JsonConvert.SerializeObject(orderDetail.Result as ReservationReponse)
+                                OrderDetailJson = JsonConvert.SerializeObject(orderDetail.Result as OrderWithDetailReponse)
                             };
 
-                            var invoiceHtmlScript = GetInvoiceHtmlScript(orderDetail.Result as ReservationReponse, transactionInfo);
+                            var invoiceHtmlScript = GetInvoiceHtmlScript(orderDetail.Result as OrderWithDetailReponse, transactionInfo);
                             Console.WriteLine(invoiceHtmlScript);
                             var invoiceContent = _fileService.ConvertHtmlToPdf(invoiceHtmlScript, $"{invoice.InvoiceId}.pdf");
                             var upload = await _firebaseService.UploadFileToFirebase(invoiceContent, $"{SD.FirebasePathName.INVOICE_PREFIX}{invoice.InvoiceId}", false);
@@ -138,7 +138,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        private string GetInvoiceHtmlScript(ReservationReponse response, Transaction transaction)
+        private string GetInvoiceHtmlScript(OrderWithDetailReponse response, Transaction transaction)
         {
             int i = 1;
             string customerDetails = response.Order.Account != null

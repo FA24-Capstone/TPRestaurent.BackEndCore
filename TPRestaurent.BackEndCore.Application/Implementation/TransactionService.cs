@@ -578,7 +578,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var orderService = Resolve<IOrderService>();
                     var order = await orderService.GetAllOrderDetail(transactionDb.OrderId.Value);
-                    var orderResult = order.Result as ReservationReponse;
+                    var orderResult = order.Result as OrderWithDetailReponse;
                     await CalculateTotal(orderResult);
                     data.Order = orderResult;
                 }
@@ -854,7 +854,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             Task.CompletedTask.Wait();
         }
 
-        private async Task CalculateTotal(ReservationReponse order)
+        private async Task CalculateTotal(OrderWithDetailReponse order)
         {
             try
             {

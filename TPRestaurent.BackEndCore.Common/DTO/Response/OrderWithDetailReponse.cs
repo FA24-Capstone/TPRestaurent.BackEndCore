@@ -4,11 +4,12 @@ using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Common.DTO.Response
 {
-    public class ReservationReponse
+    public class OrderWithDetailReponse
     {
         public OrderResponse Order { get; set; }
         public List<OrderDishDto> OrderDishes { get; set; } = new List<OrderDishDto>();
         public List<TableDetail> OrderTables { get; set; } = new List<TableDetail>();
+        public List<OrderSession> OrderSessions { get; set; } = new List<OrderSession>();
     }
 
     public class OrderResponse
