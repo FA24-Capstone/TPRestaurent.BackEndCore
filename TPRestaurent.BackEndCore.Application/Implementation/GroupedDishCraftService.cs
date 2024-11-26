@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
+using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
@@ -78,16 +79,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var orderSessionService = Resolve<IOrderSessionService>();
-                var hubService = Resolve<IHubServices.IHubServices>();
                 var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var hubService = Resolve<IHubServices.IHubServices>();
                 var utility = Resolve<Utility>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
 
                 var groupedDishDb = await _repository.GetAllDataByExpression(null, 0, 0, null, false, null);
+                var openTimeConfig = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.OPEN_TIME), null);
+
                 var previousTimeStamp = groupedDishDb.Items.OrderByDescending(g => g.EndTime).FirstOrDefault();
 
                 DateTime?[] groupedTime = new DateTime?[2];
-                groupedTime[0] = previousTimeStamp == null ? utility.GetCurrentDateInTimeZone().AddHours(8) : previousTimeStamp.EndTime;
+                groupedTime[0] = previousTimeStamp == null ? utility.GetCurrentDateInTimeZone().AddHours(double.Parse(openTimeConfig.CurrentValue)) : previousTimeStamp.EndTime;
                 groupedTime[1] = currentTime;
 
                 var groupedDishResult = await orderSessionService.GetGroupedDish(groupedTime);
@@ -309,6 +312,92 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             catch (Exception ex)
             {
             }
+        }
+
+        public async Task<AppActionResult> UpdateForceGroupedDish(List<UpdateGroupedDishDto> dto)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var utility = Resolve<Utility>();
+                var orderService = Resolve<IOrderService>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                List< UpdateOrderDetailItemRequest> updateRequest = new List< UpdateOrderDetailItemRequest>();
+                foreach (var item in dto)
+                {
+                    var currentGroupedDishDb = await _repository.GetById(item.GroupedDishId);
+
+                    if (currentGroupedDishDb != null)
+                    {
+                        var groupDishFromJson = JsonConvert.DeserializeObject<KitchenGroupedDishResponse>(currentGroupedDishDb.GroupedDishJson);
+
+                        // Check late status for both SingleOrderDishes and MutualOrderDishes
+                        var listToUpdate = groupDishFromJson.SingleOrderDishes.Where(d => d.Dish.DishId == item.DishId).ToList();
+                        if (listToUpdate.Count == 0)
+                        {
+                            listToUpdate = groupDishFromJson.MutualOrderDishes.Where(d => d.Dish.DishId == item.DishId).ToList();
+                        }
+
+
+                        if (item.Size.HasValue)
+                        {
+                            foreach(var dish in listToUpdate)
+                            {
+                                if(dish.UncheckedDishFromTableOrders.Count > 0)
+                                {
+                                    dish.UncheckedDishFromTableOrders.Where(d => d.Quantity.DishSize.Id == item.Size.Value)
+                                                                     .ToList()
+                                                                     .ForEach(d => updateRequest.Add(new UpdateOrderDetailItemRequest
+                                                                     {
+                                                                         DishId = item.DishId,
+                                                                         OrderDetailId = d.OrderDetail.OrderDetailId
+                                                                     }));
+                                } 
+                                else if(dish.ProcessingDishFromTableOrders.Count > 0)
+                                {
+                                    dish.ProcessingDishFromTableOrders.Where(d => d.Quantity.DishSize.Id == item.Size.Value)
+                                                                     .ToList()
+                                                                     .ForEach(d => updateRequest.Add(new UpdateOrderDetailItemRequest
+                                                                     {
+                                                                         DishId = item.DishId,
+                                                                         OrderDetailId = d.OrderDetail.OrderDetailId
+                                                                     }));
+                                }
+                            }
+                        }
+                        else
+                        {
+                            foreach (var dish in listToUpdate)
+                            {
+                                if (dish.UncheckedDishFromTableOrders.Count > 0)
+                                {
+                                    dish.UncheckedDishFromTableOrders.ForEach(d => updateRequest.Add(new UpdateOrderDetailItemRequest
+                                                                     {
+                                                                         DishId = item.DishId,
+                                                                         OrderDetailId = d.OrderDetail.OrderDetailId
+                                                                     }));
+                                }
+                                if (dish.ProcessingDishFromTableOrders.Count > 0)
+                                {
+                                    dish.ProcessingDishFromTableOrders.ForEach(d => updateRequest.Add(new UpdateOrderDetailItemRequest
+                                                                     {
+                                                                         DishId = item.DishId,
+                                                                         OrderDetailId = d.OrderDetail.OrderDetailId
+                                                                     }));
+                                }
+                            }
+                        }
+
+                        await _unitOfWork.SaveChangesAsync();
+                    }
+                }
+                result.Result = await orderService.UpdateOrderDetailStatus(updateRequest, true);
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         }
     }
 }

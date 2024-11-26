@@ -3555,6 +3555,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
                 var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => orderDetailIds.Contains(p.OrderDetailId), 0, 0, null, false, null);
                 if (orderDetailDb.Items.Count != orderDetailIds.Count)
                 {
@@ -3567,6 +3568,25 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = status);
+                var comboOrderDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.StatusId != DishComboDetailStatus.Cancelled && c.StatusId != DishComboDetailStatus.ReadyToServe && orderDetailDb.Items.Where(c => c.ComboId.HasValue).Select(c => c.OrderDetailId).ToList().Contains(c.OrderDetailId.Value),
+                                                                                                      0, 0, null, false, null);
+                if(comboOrderDetailDb.Items.Count > 0)
+                {
+                    if (status == OrderDetailStatus.Processing)
+                    {
+                        comboOrderDetailDb.Items.ForEach(c => c.StatusId = DishComboDetailStatus.Processing);
+                    }
+                    else if (status == OrderDetailStatus.ReadyToServe)
+                    {
+                        comboOrderDetailDb.Items.ForEach(c => c.StatusId = DishComboDetailStatus.ReadyToServe);
+                    }
+                    else if (status == OrderDetailStatus.Cancelled)
+                    {
+                        comboOrderDetailDb.Items.ForEach(c => c.StatusId = DishComboDetailStatus.Cancelled);
+                    }
+                    await comboOrderDetailRepository.UpdateRange(comboOrderDetailDb.Items);
+                }
+
                 await orderDetailRepository.UpdateRange(orderDetailDb.Items);
                 await _unitOfWork.SaveChangesAsync();
             }

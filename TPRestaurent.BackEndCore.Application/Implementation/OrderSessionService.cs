@@ -277,7 +277,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
          return kitchenGroupedDishItemResponse;
      })
      .Where(g => g.UncheckedDishFromTableOrders.Count + g.ProcessingDishFromTableOrders.Count > 0)
-     .OrderByDescending(g => g.IsLate)
+     .OrderByDescending(g => g.IsLate).ThenBy(g => g.Dish.DishItemTypeId)
      .ToList();
             }
             catch (Exception ex)
@@ -492,6 +492,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> UpdateOrderSessionStatus(Guid orderSessionId, OrderSessionStatus orderSessionStatus, bool sendSignalR)
         {
             var result = new AppActionResult();
+            var dishManagementService = Resolve<IDishManagementService>();
             await _unitOfWork.ExecuteInTransaction(async () =>
             {
                 try
@@ -529,8 +530,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
 
                         var orderDetailToCompleteId = orderDetailDb.Items
-                            .Where(o => o.OrderDetailStatusId != OrderDetailStatus.Reserved &&
-                                        o.OrderDetailStatusId != OrderDetailStatus.Cancelled)
+                            .Where(o => 
+                                        //o.OrderDetailStatusId != OrderDetailStatus.Reserved &&
+                                        o.OrderDetailStatusId != OrderDetailStatus.Cancelled &&
+                                        o.OrderDetailStatusId != OrderDetailStatus.ReadyToServe)
                             .Select(o => o.OrderDetailId).ToList();
                         if (orderSessionStatus == OrderSessionStatus.Processing)
                         {
@@ -576,6 +579,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     false);
                             }
                         }
+
+                        await dishManagementService.UpdateComboAvailability();
+                        await dishManagementService.UpdateDishAvailability();
 
                         await _unitOfWork.SaveChangesAsync();
                         await groupedDishCraftService.UpdateGroupedDish(orderDetailDb.Items.Where(o =>
