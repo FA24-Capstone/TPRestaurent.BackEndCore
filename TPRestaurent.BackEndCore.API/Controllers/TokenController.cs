@@ -30,6 +30,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("get-user-token-by-ip")]
+        [TokenValidationMiddleware(Permission.ALL_ACTORS)]
         public async Task<AppActionResult> GetUserTokenByIp()
         {
             return await _tokenService.GetUserTokenByIp(HttpContext);
@@ -43,6 +44,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpDelete("delete-token")]
+        [TokenValidationMiddleware(Permission.ALL)]
         public async Task<AppActionResult> DeleteTokenById(Guid tokenId)
         {
             return await _tokenService.DeleteTokenById(tokenId);
