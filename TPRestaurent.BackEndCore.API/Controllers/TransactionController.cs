@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TPRestaurent.BackEndCore.API.Middlewares;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Payment.PaymentRespone;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
@@ -19,42 +21,49 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("create-payment")]
+        [TokenValidationMiddleware(Permission.PAYMENT)]
         public async Task<AppActionResult> CreatePayment([FromBody] PaymentRequestDto paymentRequest)
         {
             return await _service.CreatePayment(paymentRequest);
         }
 
         [HttpGet("get-all-payment/{pageIndex}/{pageSize}")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> GetAllPayment(Domain.Enums.TransationStatus? transationStatus, string? phoneNumber, int pageIndex = 1, int pageSize = 10)
         {
             return await _service.GetAllTransaction(transationStatus, phoneNumber, pageIndex, pageSize);
         }
 
         [HttpGet("get-payment-by-id/{paymentId}")]
+        [TokenValidationMiddleware(Permission.PAYMENT)]
         public async Task<AppActionResult> GetPaymentById(Guid paymentId)
         {
             return await _service.GetTransactionById(paymentId);
         }
 
         [HttpGet("get-loyalty-point-history-by-customer-id/{customerId}")]
+        [TokenValidationMiddleware(Permission.PAYMENT)]
         public async Task<AppActionResult> GetLoyaltyPointHistory(Guid customerId)
         {
             return await _service.GetLoyaltyPointHistory(customerId);
         }
 
         [HttpGet("get-transaction-history-by-customer-id/{customerId}")]
+        [TokenValidationMiddleware(Permission.PAYMENT)]
         public async Task<AppActionResult> GetTransactionHistory(Guid customerId, TransactionType? type)
         {
             return await _service.GetTransactionHistory(customerId, type);
         }
 
         [HttpGet("get-stored-credit-transaction-history-by-customer-id/{customerId}")]
+        [TokenValidationMiddleware(Permission.PAYMENT)]
         public async Task<AppActionResult> GetStoreCreditTransactionHistory(Guid customerId)
         {
             return await _service.GetStoreCreditTransactionHistory(customerId);
         }
 
         [HttpPut("update-transaction-Status/{transactionId}/{transactionStatus}")]
+        [TokenValidationMiddleware(Permission.PAYMENT)]
         public async Task<AppActionResult> UpdateTransactionStatus(Guid transactionId, Domain.Enums.TransationStatus transactionStatus)
         {
             return await _service.UpdateTransactionStatus(transactionId, transactionStatus);

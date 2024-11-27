@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using TPRestaurent.BackEndCore.API.Middlewares;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Common.Utils;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
@@ -19,6 +21,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-notification-by-account-id/{accountId}")]
+        [TokenValidationMiddleware(Permission.ALL)]
         public async Task<AppActionResult> GetNotificationByAccountId(string accountId)
         {
             return await _notificationMessageService.GetNotificationMessageByAccountId(accountId);
@@ -58,12 +61,14 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             }
         }
 
+        [TokenValidationMiddleware(Permission.ALL)]
         [HttpPost("mark-all-as-read/{accountId}")]
         public async Task<AppActionResult> MarkAllMessageAsRead(string accountId)
         {
             return await _notificationMessageService.MarkAllMessageAsRead(accountId);
         }
 
+        [TokenValidationMiddleware(Permission.ALL)]
         [HttpPost("mark-as-read/{notificationId}")]
         public async Task<AppActionResult> MarkMessageAsRead(Guid notificationId)
         {
