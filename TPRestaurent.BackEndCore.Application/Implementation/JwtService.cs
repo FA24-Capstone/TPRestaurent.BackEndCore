@@ -90,7 +90,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                         new("DeviceCode", device.DeviceCode.ToString())
                     };
-                    claims.Add(new(ClaimTypes.Role, "DEVICE"));
+                    claims.Add(new("role", "DEVICE"));
                     var authenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfiguration.Key!));
                     var token = new JwtSecurityToken(
                         _jwtConfiguration.Issuer,
