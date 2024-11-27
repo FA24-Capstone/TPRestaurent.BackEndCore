@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using System.Linq;
 using System.Net;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
@@ -92,7 +93,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> InvalidateTokensForUser(string accountId)
+        public async Task<AppActionResult> InvalidateTokensForUser(string accountId, string currentToken)
         {
             var result = new AppActionResult();
             var utility = Resolve<Utility>();
@@ -112,6 +113,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         token.ExpiryTimeRefreshToken = utility.GetCurrentDateTimeInTimeZone();
                     }
                 }
+
+                var tokenDb = accountTokenList.Items.FirstOrDefault(p => p.AccessTokenValue == currentToken);
+                if (tokenDb != null)
+                {
+                    tokenDb.IsActive = true;
+                    await _tokenRepository.Update(tokenDb);
+                }
+
+                await _tokenRepository.DeleteRange(accountTokenList.Items.Where(p => p.IsActive == false));
+                await _unitOfWork.SaveChangesAsync();   
             }
             catch (Exception ex)
             {

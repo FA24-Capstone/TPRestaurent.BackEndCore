@@ -734,7 +734,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> ChangePassword(ChangePasswordDto changePasswordDto)
+        public async Task<AppActionResult> ChangePassword(ChangePasswordDto changePasswordDto, string token)
         {
             var result = new AppActionResult();
 
@@ -784,7 +784,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (!changePassword.Succeeded)
                         result = BuildAppActionResultError(result, "Thay đổi mật khẩu thất bại");
 
-                    var userTokenDb = await tokenService!.InvalidateTokensForUser(user.Id);
+                    var userTokenDb = await tokenService!.InvalidateTokensForUser(user.Id, token);
                     otpCodeDb.IsUsed = true;
                     await _otpRepository.Update(otpCodeDb);
                 }
