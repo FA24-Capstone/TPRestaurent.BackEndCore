@@ -197,7 +197,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPut("cancel-order-detail-before-cooking")]
-        [TokenValidationMiddleware(Permission.DELIVERY)]
+        [TokenValidationMiddleware(Permission.CANCEL_DISH)]
         public async Task<AppActionResult> CancelOrderDetailBeforeCooking(List<Guid> orderDetailIds)
         {
             return await _service.CancelOrderDetailBeforeCooking(orderDetailIds);
