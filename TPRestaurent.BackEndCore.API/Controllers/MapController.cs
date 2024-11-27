@@ -38,7 +38,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-order-map")]
-        [TokenValidationMiddleware(Permission.ADMIN)]
+        [TokenValidationMiddleware(Permission.DELIVERY)]
         public async Task<AppActionResult> GetGoogleMapLink(Guid? orderId)
         {
             return await _service.GetGoogleMapLink(orderId);

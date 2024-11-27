@@ -19,7 +19,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-by-id/{id}")]
-        [TokenValidationMiddleware(Permission.OFFLINE)]
+        [TokenValidationMiddleware(Permission.PAYMENT)]
         public async Task<AppActionResult> GetById(Guid id)
         {
             return await _service.GetInvoiceById(id);

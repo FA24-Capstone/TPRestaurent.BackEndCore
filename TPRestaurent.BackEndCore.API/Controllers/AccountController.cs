@@ -204,6 +204,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPut("update-delivering-status/{shipperId}")]
+        [TokenValidationMiddleware(Permission.SHIPPER)]
         public async Task<AppActionResult> UpdateDeliveringStatus(string shipperId, bool isDelivering)
         {
             return await _accountService.UpdateDeliveringStatus(shipperId, isDelivering);
