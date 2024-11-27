@@ -64,14 +64,14 @@ namespace TPRestaurent.BackEndCore.API.Middlewares
                 return;
             }
 
-            var roleClaims = jwtToken!.Claims.Where(c => c.Type == "role").Select(c => c.Value).ToList();
-            if (!roleClaims.Contains(role))
+            var roleClaims = jwtToken!.Claims.Where(c => c.Type == "role").Select(c => c.Value).SingleOrDefault();
+            var roleValid = role.Split(",");
+            if (!roleValid.Contains(roleClaims))
             {
                 httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
                 await httpContext.Response.WriteAsync("Invalid or expired token.");
                 return;
             }
-
             await next();
         }
 
