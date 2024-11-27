@@ -4,6 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <UserSecretsId>896767d9-1a7e-4f2c-a4ef-0ab04aa4e49d</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +13,7 @@
 	  <PackageReference Include="FirebaseAdmin" Version="2.0.0" />
 	  <PackageReference Include="Google.Apis.Auth" Version="1.65.0" />
 	  <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
+	  <PackageReference Include="Microsoft.Azure.SignalR" Version="1.29.0" />
 	  <PackageReference Include="RestSharp" Version="110.2.0" />
 	  <PackageReference Include="FirebaseStorage.net" Version="1.0.3" />
 	  <PackageReference Include="Hangfire" Version="1.8.6" />
