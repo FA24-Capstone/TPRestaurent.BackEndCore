@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TPRestaurent.BackEndCore.API.Middlewares;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
@@ -30,18 +32,21 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("create-dish")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> CreateDish([FromForm] DishDto dishDto)
         {
             return await _dishService.CreateDish(dishDto);
         }
 
         [HttpPost("delete-dish")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> DeleteDish(Guid dishId)
         {
             return await _dishService.DeleteDish(dishId);
         }
 
         [HttpPut("update-dish")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> UpdateDish([FromBody] UpdateDishRequestDto dto)
         {
             return await _dishService.UpdateDish(dto);
@@ -66,12 +71,14 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPut("update-inactive-dish")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> UpdateInactiveADish(Guid dishId)
         {
             return await _dishService.UpdateInactiveDish(dishId);
         }
 
         [HttpPut("update-dish-image")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> UpdateDishImage([FromForm] UpdateDishImageRequest imageRequest)
         {
             return await _dishService.UpdateDishImage(imageRequest);

@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TPRestaurent.BackEndCore.API.Middlewares;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Common.Utils;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
@@ -16,12 +18,14 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-statistic-report-for-number-report")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> GetStatisticReportForNumberReport(DateTime startDate, DateTime endDate)
         {
             return await _dashboardService.GetStatisticReportForNumberReport(startDate, endDate);
         }
 
         [HttpGet("get-statistic-report-for-dashboard-report")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> GetStatisticReportForDashboardReport(DateTime startDate, DateTime endDate)
         {
             return await _dashboardService.GetStatisticReportForDashboardReport(startDate, endDate);
