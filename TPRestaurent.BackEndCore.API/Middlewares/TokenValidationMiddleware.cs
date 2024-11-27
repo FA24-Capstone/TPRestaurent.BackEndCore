@@ -31,14 +31,8 @@ namespace TPRestaurent.BackEndCore.API.Middlewares
             var jwtToken = handler.ReadToken(token) as JwtSecurityToken;
 
             var deviceIp = string.Empty;
-            var host = Dns.GetHostEntry(Dns.GetHostName());
-            foreach (var ipAddress in host.AddressList)
-            {
-                if (ipAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-                {
-                    deviceIp = ipAddress.ToString();
-                }
-            }
+            deviceIp = GetClientIpAddress(httpContext);
+
 
             var serviceProvider = httpContext.RequestServices;
             var tokenService = serviceProvider.GetRequiredService<ITokenService>();
@@ -79,6 +73,63 @@ namespace TPRestaurent.BackEndCore.API.Middlewares
             }
 
             await next();
+        }
+
+        public string GetClientIpAddress(HttpContext context)
+        {
+            string ip = null;
+
+            // Try to get IP from X-Forwarded-For header
+            var forwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(forwardedFor))
+            {
+                ip = forwardedFor.Split(',')[0].Trim();
+            }
+
+            // If not found, try X-Real-IP header
+            if (string.IsNullOrEmpty(ip) && context.Request.Headers.ContainsKey("X-Real-IP"))
+            {
+                ip = context.Request.Headers["X-Real-IP"].FirstOrDefault();
+            }
+
+            // If not found, try CF-Connecting-IP header (Cloudflare)
+            if (string.IsNullOrEmpty(ip) && context.Request.Headers.ContainsKey("CF-Connecting-IP"))
+            {
+                ip = context.Request.Headers["CF-Connecting-IP"].FirstOrDefault();
+            }
+
+            // If still not found, use RemoteIpAddress
+            if (string.IsNullOrEmpty(ip) && context.Connection.RemoteIpAddress != null)
+            {
+                ip = context.Connection.RemoteIpAddress.ToString();
+            }
+
+            // If IP is a loopback address, try to get the local IP
+            if (string.IsNullOrEmpty(ip) || ip == "::1")
+            {
+                ip = GetLocalIpAddress();
+            }
+
+            // If still empty, return UNKNOWN
+            if (string.IsNullOrEmpty(ip))
+            {
+                ip = "UNKNOWN";
+            }
+
+            return ip;
+        }
+
+        private string GetLocalIpAddress()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ipAddress in host.AddressList)
+            {
+                if (ipAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                {
+                    return ipAddress.ToString();
+                }
+            }
+            return string.Empty;
         }
     }
 }
