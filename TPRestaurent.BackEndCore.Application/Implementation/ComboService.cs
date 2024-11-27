@@ -382,10 +382,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     foreach (var orderDetail in orderDetailDb.Items)
                     {
-                        var ratingDb = await ratingRepository!.GetByExpression(p => p.OrderDetailId == orderDetail.OrderDetailId);
-                        if (ratingDb != null)
+                        var ratingDb = await ratingRepository!.GetAllDataByExpression(p => p.OrderDetailId == orderDetail.OrderDetailId, 0, 0, null, false, p => p.CreateByAccount);
+                        if (ratingDb.Items != null)
                         {
-                            ratingListDb.Add(ratingDb);
+                            ratingListDb.AddRange(ratingDb.Items);
                         }
                     }
                 }

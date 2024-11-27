@@ -119,6 +119,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> GetAllRatingBetweenFourAndFiveStars(int pageNumber, int pageSize)
+        {
+            var result = new AppActionResult();
+            try
+            {
+                result.Result = await _ratingRepository.GetAllDataByExpression
+                    (p => p.PointId == RatingPoint.Four || p.PointId == RatingPoint.Five, 
+                    pageNumber, pageSize, p => p.CreateDate, false , p => p.OrderDetail!.DishSizeDetail!.Dish!, p => p.CreateByAccount!);
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
         public async Task<AppActionResult> GetAllRatingOfDish(Guid dishId, RatingPoint? ratingPoint, int pageNumber, int pageSize)
         {
             var result = new AppActionResult();
