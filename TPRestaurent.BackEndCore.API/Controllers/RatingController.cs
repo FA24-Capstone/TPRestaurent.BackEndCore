@@ -25,6 +25,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _ratingService.GetAllRatingOfDish(dishId, ratingPoint, pageNumber, pageSize);
         }
 
+        [HttpGet("get-all-rating-of-between-four-and-five-stars/{pageNumber}/{pageSize}")]
+        public async Task<AppActionResult> GetAllRatingBetweenFourAndFiveStars(int pageNumber = 1, int pageSize = 10)
+        {
+            return await _ratingService.GetAllRatingBetweenFourAndFiveStars(pageNumber, pageSize);
+        }
+
         [HttpGet("get-rating-by-id/{ratingId}")]
         public async Task<AppActionResult> GetRatingById(Guid ratingId)
         {
