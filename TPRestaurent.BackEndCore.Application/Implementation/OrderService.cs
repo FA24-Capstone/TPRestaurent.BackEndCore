@@ -4412,5 +4412,114 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+        public async Task<AppActionResult> CancelOrderDetailBeforeCooking(List<Guid> orderDetailIds)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
+                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+                var updateDishSizeDetailList = new List<DishSizeDetail>();
+                var orderDetailDb = await _detailRepository.GetAllDataByExpression(d => orderDetailIds.Contains(d.OrderDetailId) && d.OrderDetailStatusId == OrderDetailStatus.Unchecked, 0, 0, null, false, null);
+                if(orderDetailDb.Items.Count > 0)
+                {
+                    orderDetailDb.Items.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Cancelled);
+                    foreach (var orderDetail in orderDetailDb.Items.Where(o => o.DishSizeDetailId.HasValue))
+                    {
+                        var existedDishSizeDetail = updateDishSizeDetailList.FirstOrDefault(u => u.DishSizeDetailId == orderDetail.DishSizeDetailId);
+                        if (existedDishSizeDetail != null)
+                        {
+                            existedDishSizeDetail.QuantityLeft += orderDetail.Quantity;
+                            if (!existedDishSizeDetail.IsAvailable && existedDishSizeDetail.QuantityLeft > 0)
+                            {
+                                existedDishSizeDetail.IsAvailable = true;
+                            }
+                        }
+                        else
+                        {
+                            var dishSizeDetailDb = await dishSizeDetailRepository.GetById(orderDetail.DishSizeDetailId);
+                            dishSizeDetailDb.QuantityLeft += orderDetail.Quantity;
+                            if (!dishSizeDetailDb.IsAvailable && dishSizeDetailDb.QuantityLeft > 0)
+                            {
+                                dishSizeDetailDb.IsAvailable = true;
+                            }
+                            updateDishSizeDetailList.Add(dishSizeDetailDb);
+                        }
+                        await dishSizeDetailRepository.UpdateRange(updateDishSizeDetailList);
+                        orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
+                    }
+                    foreach (var orderDetail in orderDetailDb.Items.Where(o => o.ComboId.HasValue))
+                    {
+                        var comboOrderDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId, 0, 0, null, false, o => o.OrderDetail, o => o.DishCombo);
+                        if (comboOrderDetailDb.Items.Any(c => c.StatusId != DishComboDetailStatus.ReadyToServe && c.StatusId != DishComboDetailStatus.Cancelled))
+                        {
+                            foreach (var comboOrderDetail in comboOrderDetailDb.Items.Where(c => c.StatusId == DishComboDetailStatus.Reserved || c.StatusId == DishComboDetailStatus.Unchecked))
+                            {
+                                var existedDishSizeDetail = updateDishSizeDetailList.FirstOrDefault(u => u.DishSizeDetailId == comboOrderDetail.DishCombo.DishSizeDetailId);
+                                if (existedDishSizeDetail != null)
+                                {
+                                    existedDishSizeDetail.QuantityLeft += orderDetail.Quantity * comboOrderDetail.DishCombo.Quantity;
+                                    if (!existedDishSizeDetail.IsAvailable && existedDishSizeDetail.QuantityLeft > 0)
+                                    {
+                                        existedDishSizeDetail.IsAvailable = true;
+                                    }
+                                }
+                                else
+                                {
+                                    var dishSizeDetailDb = await dishSizeDetailRepository.GetById(comboOrderDetail.DishCombo.DishSizeDetailId);
+                                    dishSizeDetailDb.QuantityLeft += orderDetail.Quantity * comboOrderDetail.DishCombo.Quantity;
+                                    if (!dishSizeDetailDb.IsAvailable && dishSizeDetailDb.QuantityLeft > 0)
+                                    {
+                                        dishSizeDetailDb.IsAvailable = true;
+                                    }
+                                    updateDishSizeDetailList.Add(dishSizeDetailDb);
+                                }
+                            }
+                            comboOrderDetailDb.Items.Where(c => c.StatusId != DishComboDetailStatus.ReadyToServe).ToList().ForEach(c => c.StatusId = DishComboDetailStatus.Cancelled);
+                            await comboOrderDetailRepository.UpdateRange(comboOrderDetailDb.Items);
+                        }
+                        orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
+                    }
+                    await _detailRepository.UpdateRange(orderDetailDb.Items);
+
+                    //Update Order and Order Session
+                    // OrderSession: RecalculateTime, Check Status=> if(all cancelled -> cancelled, else completed)
+                    var orderSessionIds = orderDetailDb.Items.DistinctBy(o => o.OrderSessionId).Select(o => o.OrderSessionId);
+                    //Recalculate
+                    var orderSessionDb = await _sessionRepository.GetAllDataByExpression(o => orderDetailIds.Contains(o.OrderSessionId), 0, 0, null, false, null);
+                    foreach (var orderSession in orderSessionDb.Items)
+                    {
+                        if(orderDetailDb.Items.Where(o => o.OrderSessionId == orderSession.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
+                        {
+                            orderSession.OrderSessionStatusId = OrderSessionStatus.Cancelled;
+                        } else if(orderDetailDb.Items.Where(o => o.OrderSessionId == orderSession.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled || o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe))
+                        {
+                            orderSession.OrderSessionStatusId = OrderSessionStatus.Completed;
+                        }
+                    }
+
+                    //order: Total, if !(uncheck or processing) -> temporarily completed(+type), else, the same
+                    var orderIds = orderDetailDb.Items.DistinctBy(o => o.OrderId).Select(o => o.OrderId);
+                    var orderDb = await _repository.GetAllDataByExpression(o => orderIds.Contains(o.OrderId) && o.OrderTypeId != OrderType.Delivery, 0, 0, null, false, null);
+                    foreach(var order in orderDb.Items)
+                    {
+                        if(orderDetailDb.Items.Where(o => o.OrderId == order.OrderId).All(o => !(o.OrderDetailStatusId == OrderDetailStatus.Unchecked || o.OrderDetailStatusId == OrderDetailStatus.Processing)))
+                        {
+                            order.StatusId = OrderStatus.TemporarilyCompleted;
+                        }
+                    }
+
+                    await _sessionRepository.UpdateRange(orderSessionDb.Items);
+                    await _repository.UpdateRange(orderDb.Items);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
     }
 }
