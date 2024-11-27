@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TPRestaurent.BackEndCore.API.Middlewares;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Common.Utils;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
@@ -29,18 +31,21 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("get-estimate-delivery-response")]
+        [TokenValidationMiddleware(Permission.DELIVERY_WITH_CUSTOMER)]
         public async Task<AppActionResult> GetEstimateDeliveryTime([FromBody] GetEstimateTimeRequest dto)
         {
             return await _service.GetEstimateDeliveryResponse(dto.desc, dto.start);
         }
 
         [HttpGet("get-order-map")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> GetGoogleMapLink(Guid? orderId)
         {
             return await _service.GetGoogleMapLink(orderId);
         }
 
         [HttpPost("get-optimal-path")]
+        [TokenValidationMiddleware(Permission.SHIPPER)]
         public async Task<AppActionResult> GetOptimalPath(List<Guid> orderIdList)
         {
             return await _service.GetOptimalPath(orderIdList);

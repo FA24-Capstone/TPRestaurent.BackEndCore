@@ -67,12 +67,14 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-accounts-by-role-name/{roleName}/{pageIndex:int}/{pageSize:int}")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> GetAccountsByRoleName(string roleName, int pageIndex = 1, int pageSize = 10)
         {
             return await _accountService.GetAccountsByRoleName(roleName, pageIndex, pageSize);
         }
 
         [HttpGet("get-accounts-by-role-id/{roleId}/{pageIndex:int}/{pageSize:int}")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> GetAccountsByRoleId(Guid roleId, int pageIndex = 1, int pageSize = 10)
         {
             return await _accountService.GetAccountsByRoleId(roleId, pageIndex, pageSize);
@@ -85,6 +87,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPut("change-password")]
+        [TokenValidationMiddleware(Permission.ALL)]
         public async Task<AppActionResult> ChangePassword(ChangePasswordDto dto)
         {
             var headers = HttpContext.Request.Headers;
@@ -133,12 +136,14 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPut("update-account")]
+        [TokenValidationMiddleware(Permission.ALL_ACTORS)]
         public async Task<AppActionResult> UpdateAccount([FromForm] UpdateAccountInfoRequest updateAccountRequest)
         {
             return await _accountService.UpdateAccount(updateAccountRequest);
         }
 
         [HttpDelete("delete-account")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> DeleteAccount(string customerId)
         {
             return await _accountService.DeleteAccount(customerId);
@@ -157,36 +162,42 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         //}
 
         [HttpGet("get-account-by-phone-number-keyword/{pageNumber}/{pageSize}")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> GetAccountByPhoneNumberKeyword(string phoneNumber, int pageNumber = 1, int pageSize = 10)
         {
             return await _accountService.GetAccountByPhoneNumberKeyword(phoneNumber, pageNumber, pageSize);
         }
 
         [HttpGet("get-account-by-phone-number")]
+        [TokenValidationMiddleware(Permission.ALL)]
         public async Task<AppActionResult> GetCustomerInfoByPhoneNumber(string phoneNumber)
         {
             return await _accountService.GetAccountByPhoneNumber(phoneNumber);
         }
 
         [HttpPost("create-customer-info-address")]
+        [TokenValidationMiddleware(Permission.CUSTOMER)]
         public async Task<AppActionResult> CreateCustomerInfoAddress(CustomerInfoAddressRequest customerInfoAddressRequest)
         {
             return await _accountService.CreateCustomerInfoAddress(customerInfoAddressRequest);
         }
 
         [HttpPut("update-customer-info-address")]
+        [TokenValidationMiddleware(Permission.CUSTOMER)]
         public async Task<AppActionResult> UpdateCustomerInfoAddress(UpdateCustomerInforAddressRequest updateCustomerInforAddress)
         {
             return await _accountService.UpdateCustomerInfoAddress(updateCustomerInforAddress);
         }
 
         [HttpPut("delete-customer-info-address")]
+        [TokenValidationMiddleware(Permission.CUSTOMER)]
         public async Task<AppActionResult> DeleteCustomerInfoAddress(Guid customerInfoAddresId)
         {
             return await _accountService.DeleteCustomerInfoAddress(customerInfoAddresId);
         }
 
         [HttpGet("load-available-shipper")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> LoadAvailableShipper()
         {
             return await _accountService.LoadAvailableShipper();
@@ -199,30 +210,35 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("change-email-request")]
+        [TokenValidationMiddleware(Permission.ALL_ACTORS)]
         public async Task<AppActionResult> ChangeEmailRequest(string accountId, string newEmail)
         {
             return await _accountService.ChangeEmailRequest(accountId, newEmail);
         }
 
         [HttpPost("verify-change-email")]
+        [TokenValidationMiddleware(Permission.ALL_ACTORS)]
         public async Task<AppActionResult> VerifyChangeEmail(string email, string accountId, string otpCode)
         {
             return await _accountService.VerifyChangeEmail(email, accountId, otpCode);
         }
 
         [HttpPost("up-role")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> UpLevel(string accountId, string roleName)
         {
             return await _accountService.UpRole(accountId, roleName);
         }
 
         [HttpPost("create-account-for-restaurant-employees")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> CreateAccountForRestaurantEmployees(EmployeeSignUpRequest request)
         {
             return await _accountService.CreateAccountForRestaurantEmployees(request, false);
         }
 
         [HttpPost("ban-user/{accountId}")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> BanUser(string accountId)
         {
             return await _accountService.BanUser(accountId);

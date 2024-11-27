@@ -87,21 +87,38 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result.Messages.Add("Không tìm thấy bàn cho yêu cầu đặt bàn");
                     return result;
                 }
-
-                var bestCaseFindTableResult = await FindTableWithCase(dto, availableTables, false);
-                if (bestCaseFindTableResult.IsSuccess && bestCaseFindTableResult.Result != null)
+                // Handle private table finding -> 1 table allowed
+                if (dto.IsPrivate)
                 {
-                    result.Result = bestCaseFindTableResult.Result as List<TableArrangementResponseItem>;
+                    if(dto.NumOfPeople > 11)
+                    {
+                        result.Messages.Add("Không tìm thấy bàn cho yêu cầu đặt bàn. Nhà hàng gợi ý quý khách có thể thử với bàn ở không gian chung.");
+                        return result;
+                    }
+
+                    var data = _mapper.Map<TableArrangementResponseItem>(availableTables.FirstOrDefault());
+                    result.Result = new List<TableArrangementResponseItem> { data };
+                    if(dto.NumOfPeople < 4)
+                    {
+                        result.Messages.Add("Số người đang khá ít so với kích thước phòng riêng tư nhà hiện có. Nhà hàng gợi ý quý khách có thể thử với bàn ở không gian chung.");
+                    }
+                    return result;                    
+                }
+                //handle public table finding -> Mulpltiple tables allowed
+                var bestCaseFindPublicTableResult = await FindPublicTableWithCase(dto, availableTables, false);
+                if (bestCaseFindPublicTableResult.IsSuccess && bestCaseFindPublicTableResult.Result != null)
+                {
+                    result.Result = bestCaseFindPublicTableResult.Result as List<TableArrangementResponseItem>;
                     return result;
                 }
 
-                var badCaseFindTableResult = await FindTableWithCase(dto, availableTables, true);
-                if (badCaseFindTableResult.IsSuccess && badCaseFindTableResult.Result != null)
+                var badCaseFindPublicTableResult = await FindPublicTableWithCase(dto, availableTables, true);
+                if (badCaseFindPublicTableResult.IsSuccess && badCaseFindPublicTableResult.Result != null)
                 {
-                    result.Result = badCaseFindTableResult.Result as List<TableArrangementResponseItem>;
-                    if (badCaseFindTableResult.Messages.Count > 0)
+                    result.Result = badCaseFindPublicTableResult.Result as List<TableArrangementResponseItem>;
+                    if (badCaseFindPublicTableResult.Messages.Count > 0)
                     {
-                        result.Messages.AddRange(badCaseFindTableResult.Messages);
+                        result.Messages.AddRange(badCaseFindPublicTableResult.Messages);
                     }
                     return result;
                 }
@@ -109,10 +126,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (dto.NumOfPeople < 4)
                 {
                     dto.NumOfPeople = 4;
-                    var exceedingCaseFindTableResult = await FindTableWithCase(dto, availableTables, false);
-                    if (exceedingCaseFindTableResult.IsSuccess && exceedingCaseFindTableResult.Result != null)
+                    var exceedingCaseFindPublicTableResult = await FindPublicTableWithCase(dto, availableTables, false);
+                    if (exceedingCaseFindPublicTableResult.IsSuccess && exceedingCaseFindPublicTableResult.Result != null)
                     {
-                        result.Result = exceedingCaseFindTableResult.Result as List<TableArrangementResponseItem>;
+                        result.Result = exceedingCaseFindPublicTableResult.Result as List<TableArrangementResponseItem>;
                         return result;
                     }
                 }
@@ -120,10 +137,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (dto.NumOfPeople < 6)
                 {
                     dto.NumOfPeople = 6;
-                    var exceedingCaseFindTableResult = await FindTableWithCase(dto, availableTables, false);
-                    if (exceedingCaseFindTableResult.IsSuccess && exceedingCaseFindTableResult.Result != null)
+                    var exceedingCaseFindPublicTableResult = await FindPublicTableWithCase(dto, availableTables, false);
+                    if (exceedingCaseFindPublicTableResult.IsSuccess && exceedingCaseFindPublicTableResult.Result != null)
                     {
-                        result.Result = exceedingCaseFindTableResult.Result as List<TableArrangementResponseItem>;
+                        result.Result = exceedingCaseFindPublicTableResult.Result as List<TableArrangementResponseItem>;
                         return result;
                     }
                 }
@@ -131,10 +148,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (dto.NumOfPeople < 8)
                 {
                     dto.NumOfPeople = 8;
-                    var exceedingCaseFindTableResult = await FindTableWithCase(dto, availableTables, false);
-                    if (exceedingCaseFindTableResult.IsSuccess && exceedingCaseFindTableResult.Result != null)
+                    var exceedingCaseFindPublicTableResult = await FindPublicTableWithCase(dto, availableTables, false);
+                    if (exceedingCaseFindPublicTableResult.IsSuccess && exceedingCaseFindPublicTableResult.Result != null)
                     {
-                        result.Result = exceedingCaseFindTableResult.Result as List<TableArrangementResponseItem>;
+                        result.Result = exceedingCaseFindPublicTableResult.Result as List<TableArrangementResponseItem>;
                         return result;
                     }
                 }
@@ -142,10 +159,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (dto.NumOfPeople < 10)
                 {
                     dto.NumOfPeople = 10;
-                    var exceedingCaseFindTableResult = await FindTableWithCase(dto, availableTables, false);
-                    if (exceedingCaseFindTableResult.IsSuccess && exceedingCaseFindTableResult.Result != null)
+                    var exceedingCaseFindPublicTableResult = await FindPublicTableWithCase(dto, availableTables, false);
+                    if (exceedingCaseFindPublicTableResult.IsSuccess && exceedingCaseFindPublicTableResult.Result != null)
                     {
-                        result.Result = exceedingCaseFindTableResult.Result as List<TableArrangementResponseItem>;
+                        result.Result = exceedingCaseFindPublicTableResult.Result as List<TableArrangementResponseItem>;
                         return result;
                     }
                 }
@@ -158,7 +175,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        private async Task<AppActionResult> FindTableWithCase(FindTableDto dto, List<Table> availableTables, bool allowAddChair)
+        private async Task<AppActionResult> FindPublicTableWithCase(FindTableDto dto, List<Table> availableTables, bool allowAddChair)
         {
             AppActionResult result = new AppActionResult();
             try

@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TPRestaurent.BackEndCore.API.Middlewares;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Common.Utils;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
@@ -34,6 +36,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("enable-notification")]
+        [TokenValidationMiddleware(Permission.ALL_ACTORS)]
         public async Task<AppActionResult> EnableNotification(string? deviceToken)
         {
             return await _tokenService.EnableNotification(deviceToken, HttpContext);

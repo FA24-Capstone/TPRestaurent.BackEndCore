@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TPRestaurent.BackEndCore.API.Middlewares;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Common.Utils;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
@@ -28,6 +30,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("refund-reservation")]
+        [TokenValidationMiddleware(Permission.PAYMENT)]
         public async Task<AppActionResult> RefundReservation(Guid reservationId)
         {
             return await _service.RefundReservation(reservationId);
