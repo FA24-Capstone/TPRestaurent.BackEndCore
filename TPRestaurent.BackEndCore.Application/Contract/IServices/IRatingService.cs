@@ -15,5 +15,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> UpdateRating(UpdateRatingRequestDto updateRatingRequestDto);
 
         Task<AppActionResult> DeleteRating(Guid ratingId);
+
+        Task<AppActionResult> GetAllRatingBetweenFourAndFiveStars( int pageNumber, int pageSize);
     }
 }
