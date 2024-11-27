@@ -27,6 +27,7 @@ namespace TPRestaurent.BackEndCore.API.Middlewares
                 await httpContext.Response.WriteAsync("Token can not be null");
                 return;
             }
+
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadToken(token) as JwtSecurityToken;
 
@@ -72,6 +73,7 @@ namespace TPRestaurent.BackEndCore.API.Middlewares
                 await httpContext.Response.WriteAsync("Invalid or expired token.");
                 return;
             }
+
             await next();
         }
 
@@ -129,6 +131,7 @@ namespace TPRestaurent.BackEndCore.API.Middlewares
                     return ipAddress.ToString();
                 }
             }
+
             return string.Empty;
         }
     }
