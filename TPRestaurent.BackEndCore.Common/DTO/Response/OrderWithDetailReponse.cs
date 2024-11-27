@@ -77,6 +77,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public Domain.Enums.OrderDetailStatus StatusId { get; set; }
         public bool IsRated { get; set; }
         public Domain.Models.EnumModels.OrderDetailStatus Status { get; set; }
+        public OrderSession OrderSession { get; set; }
     }
 
     public class ComboDishDto

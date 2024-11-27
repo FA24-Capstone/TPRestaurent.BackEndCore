@@ -3206,7 +3206,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     o => o.DishSizeDetail.Dish,
                     o => o.DishSizeDetail.DishSize,
                     o => o.Combo,
-                    o => o.OrderDetailStatus
+                    o => o.OrderDetailStatus,
+                    o => o.OrderSession.OrderSessionStatus
+
                 );
             }
 
@@ -3228,6 +3230,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         OrderTime = r.OrderTime,
                         Note = r.Note,
                         IsRated = r.IsRated,
+                        OrderSession = r.OrderSession
                     });
                 }
                 else
@@ -3244,7 +3247,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         Status = r.OrderDetailStatus,
                         OrderTime = r.OrderTime,
                         Note = r.Note,
-                        IsRated = r.IsRated
+                        IsRated = r.IsRated,
+                        OrderSession = r.OrderSession
                     });
                 }
             }
