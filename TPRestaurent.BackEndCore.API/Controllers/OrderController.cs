@@ -68,6 +68,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("calculate-deliver-order")]
+        [TokenValidationMiddleware(Permission.DELIVERY_WITH_CUSTOMER)]
         public async Task<AppActionResult> CalculateDeliveryOrder(Guid customerInfoAddressId)
         {
             return await _service.CalculateDeliveryOrder(customerInfoAddressId);
@@ -81,6 +82,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("create-order")]
+        [TokenValidationMiddleware(Permission.CREATE_ORDER)]
         public async Task<AppActionResult> CreateOrder([FromBody] OrderRequestDto dto)
         {
             return await _service.CreateOrder(dto);
@@ -126,14 +128,14 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         //}
 
         [HttpGet("get-table-reservation-with-time")]
-        [TokenValidationMiddleware(Permission.ADMIN)]
+        [TokenValidationMiddleware(Permission.RESERVATION_TIME_VIEW)]
         public async Task<AppActionResult> GetTableReservationWithTime(Guid tableId, DateTime? time)
         {
             return await _service.GetTableReservationWithTime(tableId, time);
         }
 
         [HttpPut("update-order-status/{orderId}")]
-        [TokenValidationMiddleware(Permission.DELIVERY)]
+        [TokenValidationMiddleware(Permission.ORDER_STATUS_MANAGEMENT)]
         public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool isSuccessful, OrderStatus? status, bool? asCustomer)
         {
             return await _service.ChangeOrderStatus(orderId, isSuccessful, status, asCustomer, true);
@@ -161,7 +163,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("get-order-with-filter")]
-        [TokenValidationMiddleware(Permission.ADMIN)]
+        [TokenValidationMiddleware(Permission.ALL)]
         public async Task<AppActionResult> GetOrderWithFilter([FromBody] ReservationTableRequest request)
         {
             return await _service.GetOrderWithFilter(request);
