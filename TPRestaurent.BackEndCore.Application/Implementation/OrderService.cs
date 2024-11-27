@@ -4225,7 +4225,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                             updateDishSizeDetailList.Add(dishSizeDetailDb);
                         }
-                        await dishSizeDetailRepository.UpdateRange(updateDishSizeDetailList);
                     }
                     orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
                 }
@@ -4276,6 +4275,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                 }
 
+                await dishSizeDetailRepository.UpdateRange(updateDishSizeDetailList);
                 await orderSessionRepository.UpdateRange(orderSessionDb.Items);
                 await _detailRepository.UpdateRange(orderDetailDb.Items);
             }
@@ -4446,9 +4446,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                             updateDishSizeDetailList.Add(dishSizeDetailDb);
                         }
-                        await dishSizeDetailRepository.UpdateRange(updateDishSizeDetailList);
                         orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
                     }
+
                     foreach (var orderDetail in orderDetailDb.Items.Where(o => o.ComboId.HasValue))
                     {
                         var comboOrderDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId, 0, 0, null, false, o => o.OrderDetail, o => o.DishCombo);
@@ -4510,6 +4510,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                     }
 
+                    await dishSizeDetailRepository.UpdateRange(updateDishSizeDetailList);
                     await _sessionRepository.UpdateRange(orderSessionDb.Items);
                     await _repository.UpdateRange(orderDb.Items);
                     await _unitOfWork.SaveChangesAsync();
