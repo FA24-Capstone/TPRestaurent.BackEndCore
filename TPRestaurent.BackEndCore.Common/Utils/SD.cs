@@ -291,26 +291,14 @@ public class SD
             {
                 return response.ToString();
             }
-            int greetingRandom = random.Next(0, 7);
 
-            if (greetingRandom == 1)
+            if(!string.IsNullOrEmpty(dishName))
             {
-                response.Append(", em có thể giúp gì cho mình ạ?");
-            }
-            else if (greetingRandom == 2)
-            {
-                response.Append(", hôm nay quý khách muốn dùng món nào ạ?");
+                response.Append($", hôm nay em gợi ý cho mình dùng món {dishName} hôm trước quý khách rất thích ạ");
             }
             else
             {
-                if (!string.IsNullOrEmpty(dishName))
-                {
-                    response.Append($", hôm nay em gợi ý cho mình dùng món {dishName} hôm trước quý khách rất thích ạ");
-                }
-                else
-                {
-                    response.Append(", hôm nay quý khách muốn dùng món nào ạ?");
-                }
+                response.Append(", hôm nay quý khách muốn dùng món nào ạ?");
             }
             return response.ToString();
         }
