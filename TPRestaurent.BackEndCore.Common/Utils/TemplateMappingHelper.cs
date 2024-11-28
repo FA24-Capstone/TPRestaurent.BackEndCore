@@ -1117,7 +1117,7 @@ public class TemplateMappingHelper
         </p>
 
         <p class=""emailBody"">
-          Vui lòng chuẩn bị thanh toán số tiền trên khi bạn đến nhà hàng. Chúng tôi mong rằng bạn sẽ có một trải nghiệm tuyệt vời tại Nhà hàng Thiên Phú.
+          Chúng tôi mong rằng bạn sẽ có một trải nghiệm tuyệt vời tại Nhà hàng Thiên Phú.
         </p>
 
         <p class=""emailBody"">

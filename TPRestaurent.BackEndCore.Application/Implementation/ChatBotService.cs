@@ -61,8 +61,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var accountDb = await _accountRepository.GetById(dto.CustomerId);
                     if (accountDb != null)
                     {
-                        var dishDb = await _ratingRepository.GetAllDataByExpression(r => r.OrderDetail.Order.AccountId.Equals(dto.CustomerId), 1, 2, o => o.PointId, false, o => o.OrderDetail.DishSizeDetail.Dish, o => o.OrderDetail.Combo);
-                        var dishName = string.Join(", ", dishDb.Items.Select(c =>
+                        var dishDb = await _ratingRepository.GetAllDataByExpression(r => r.OrderDetail.Order.AccountId.Equals(dto.CustomerId), 1, 6, o => o.PointId, false, o => o.OrderDetail.DishSizeDetail.Dish, o => o.OrderDetail.Combo);
+                        var dishName = string.Join(", ", dishDb.Items.OrderByDescending(d => d.CreateDate).Take(2).Select(c =>
                         {
                             if (c.OrderDetail.DishSizeDetailId.HasValue)
                             {

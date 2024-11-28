@@ -262,9 +262,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var accountRepository = Resolve<IGenericRepository<Account>>();
                 var transactionService = Resolve<ITransactionService>();
                 var dishManagementService = Resolve<IDishManagementService>();
                 var notificationMessageService = Resolve<INotificationMessageService>();
+                var emailService = Resolve<IEmailService>();
                 var orderDb = await _repository.GetById(orderId);
                 var updateDishSizeDetailList = new List<DishSizeDetail>();
                 var utility = Resolve<Utility>();
@@ -484,6 +486,30 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     await dishManagementService.UpdateComboAvailability();
                     await dishManagementService.UpdateDishAvailability();
+
+                    if(orderDb.StatusId == OrderStatus.DepositPaid || orderDb.StatusId == OrderStatus.Processing)
+                    {
+                        var accountDb = await accountRepository.GetById(orderDb.AccountId); 
+                        if (!string.IsNullOrEmpty(accountDb.Email))
+                        {
+                            var username = accountDb.FirstName + " " + accountDb.LastName;
+                            emailService.SendEmail(accountDb.Email, SD.SubjectMail.NOTIFY_RESERVATION,
+                                                     TemplateMappingHelper.GetTemplateOrderConfirmation(
+                                                     username, orderDb)
+                            );
+                            string notificationEmailMessage = "Nhà hàng đã gửi thông báo mới tới email của bạn";
+                            await notificationMessageService!.SendNotificationToAccountAsync(accountDb.Id, notificationEmailMessage, true);
+                        }
+                        else
+                        {
+                            var smsMessage = $"[NHÀ HÀNG THIÊN PHÚ] Đơn hàng của bạn vào lúc {orderDb.OrderDate} đã thành công. " +
+                                   $"Xin chân trọng cảm ơn quý khách.";
+                            //await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
+                            string notificationSmsMessage = "Nhà hàng đã gửi thông báo mới tới số điện thoại của bạn";
+                            await notificationMessageService!.SendNotificationToAccountAsync(accountDb.Id, notificationSmsMessage, true);
+                        }
+                    }
+
                     if ((!requireSignalR.HasValue || requireSignalR.Value))
                     {
                         if(orderDb.StatusId == OrderStatus.Processing || orderDb.StatusId == OrderStatus.ReadyForDelivery)
@@ -1255,29 +1281,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
 
                         await orderDetailRepository.InsertRange(orderDetails);
-
-                        if (orderRequestDto.CustomerId.HasValue)
-                        {
-                            if (!string.IsNullOrEmpty(accountDb.Email))
-                            {
-                                var username = accountDb.FirstName + " " + accountDb.LastName;
-                                emailService.SendEmail(accountDb.Email, SD.SubjectMail.NOTIFY_RESERVATION,
-                                                         TemplateMappingHelper.GetTemplateOrderConfirmation(
-                                                         username, order)
-                                );
-                                string notificationEmailMessage = "Nhà hàng đã gửi thông báo mới tới email của bạn";
-                                await notificationService!.SendNotificationToAccountAsync(accountDb.Id, notificationEmailMessage, true);
-                            }
-                            else
-                            {
-                                var smsMessage = $"[NHÀ HÀNG THIÊN PHÚ] Đơn hàng của bạn vào lúc {order.OrderDate} đã thành công. " +
-                                       $"Vui lòng thanh toán {order.TotalAmount} VND" +
-                                       $"Xin chân trọng cảm ơn quý khách.";
-                                //await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
-                                string notificationSmsMessage = "Nhà hàng đã gửi thông báo mới tới số điện thoại của bạn";
-                                await notificationService!.SendNotificationToAccountAsync(accountDb.Id, notificationSmsMessage, true);
-                            }
-                        }
 
                         if (!BuildAppActionResultIsError(result))
                         {
