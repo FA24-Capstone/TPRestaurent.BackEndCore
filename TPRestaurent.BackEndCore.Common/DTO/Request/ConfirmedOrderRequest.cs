@@ -6,6 +6,8 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
     {
         public Guid OrderId { get; set; }
         public bool? IsSuccessful { get; set; } = true;
+        public double Lat { get; set; }
+        public double Lng { get; set; }
         public string? CancelReason { get; set; } = string.Empty;
         public IFormFile? Image { get; set; } = null!;
     }

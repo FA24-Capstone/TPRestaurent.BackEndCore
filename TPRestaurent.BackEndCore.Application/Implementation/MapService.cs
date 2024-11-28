@@ -121,6 +121,41 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+        public async Task<AppActionResult> CheckValidShipperDistance(double[] shipperLocation, double[] deliveryDestination)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var client = new RestClient();
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                double[] start = shipperLocation;
+                var endpoint = $"https://rsapi.goong.io/DistanceMatrix?origins={start[0]},{start[1]}&destinations={deliveryDestination[0]},{deliveryDestination[1]}&vehicle=bike&api_key={APIKEY}";
+                var findDestinationRequest = new RestRequest(endpoint);
+
+                var destinationResponse = await client.ExecuteAsync(findDestinationRequest);
+                if (destinationResponse.IsSuccessStatusCode)
+                {
+                    var apiData = destinationResponse.Content;
+                    if (!BuildAppActionResultIsError(result))
+                    {
+                        var estimatedTimeList = JsonConvert.DeserializeObject<EstimatedDeliveryTimeDto.Root>(apiData);
+                        var currentDistance = (double)estimatedTimeList.Rows[0].Elements.Sum(e => e.Distance.Value) / 1000;
+                        var minimumDistanceToDeliver = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.MAXIMUM_DISTANCE_TO_DELIVER));
+                        var minDistance = minimumDistanceToDeliver == null ? 0.3 : double.Parse(minimumDistanceToDeliver.CurrentValue);
+                        if(currentDistance > minDistance)
+                        {
+                            return BuildAppActionResultError(result, $"Bạn còn cách địa điểm cần giao {currentDistance} km");
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                result.Result = BuildAppActionResultError(result, e.Message);
+            }
+            return result;
+        }
+
         public async Task<AppActionResult> Geocode(string address)
         {
             AppActionResult result = new();
