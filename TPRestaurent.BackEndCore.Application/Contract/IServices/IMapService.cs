@@ -12,6 +12,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> AutoComplete(MapAutoCompleteRequestDto dto);
 
         public Task<AppActionResult> GetEstimateDeliveryResponse(double[] endCoordinate, double[]? startCoordinate);
+        public Task<AppActionResult> CheckValidShipperDistance(double[] shipperLocation, double[] deliveryDistance);
 
         public Task<AppActionResult> GetOptimalPath(List<Guid> orderIds);
 

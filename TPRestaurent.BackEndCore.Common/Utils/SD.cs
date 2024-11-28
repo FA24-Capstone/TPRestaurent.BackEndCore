@@ -120,6 +120,7 @@ public class SD
         public static string DIAMOND_RANK = "DIAMOND_RANK";
         public static string MAX_APPLY_COUPON_PERCENT = "MAX_APPLY_COUPON_PERCENT";
         public static string MAX_APPLY_LOYALTY_POINT_PERCENT = "MAX_APPLY_LOYALTY_POINT_PERCENT";
+        public static string MAXIMUM_DISTANCE_TO_DELIVER = "MAXIMUM_DISTANCE_TO_DELIVER";
     }
 
     public class SubjectMail
