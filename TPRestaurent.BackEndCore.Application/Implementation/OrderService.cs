@@ -3428,53 +3428,74 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         public async Task<AppActionResult> UploadConfirmedOrderImage(ConfirmedOrderRequest confirmedOrderRequest)
         {
             var result = new AppActionResult();
-            await _unitOfWork.ExecuteInTransaction(async () =>
+            try
             {
-                try
+                var firebaseService = Resolve<IFirebaseService>();
+                var mapService = Resolve<IMapService>();
+                var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+                var utility = Resolve<Utility>();
+                var orderDb = await _repository.GetByExpression(p =>
+                    p.OrderId == confirmedOrderRequest.OrderId && p.StatusId == OrderStatus.Delivering);
+                if (orderDb == null)
                 {
-                    var firebaseService = Resolve<IFirebaseService>();
-                    var utility = Resolve<Utility>();
-                    var orderDb = await _repository.GetByExpression(p =>
-                        p.OrderId == confirmedOrderRequest.OrderId && p.StatusId == OrderStatus.Delivering);
-                    if (orderDb == null)
-                    {
-                        throw new Exception($"Không tìm thấy đơn hàng với id {confirmedOrderRequest.OrderId}");
-                    }
-
-                    if (!confirmedOrderRequest.IsSuccessful.HasValue || confirmedOrderRequest.IsSuccessful.Value)
-                    {
-                        var pathName = SD.FirebasePathName.ORDER_PREFIX +
-                                       $"{confirmedOrderRequest.OrderId}{Guid.NewGuid()}.jpg";
-                        var upload = await firebaseService!.UploadFileToFirebase(confirmedOrderRequest.Image, pathName);
-
-                        if (!upload.IsSuccess)
-                        {
-                            throw new Exception("Upload hình ảnh không thành công");
-                        }
-
-                        orderDb.ValidatingImg = upload.Result!.ToString();
-
-                        orderDb.DeliveredTime = utility.GetCurrentDateTimeInTimeZone();
-                        orderDb.StatusId = OrderStatus.Completed;
-                    }
-                    else
-                    {
-                        orderDb.CancelledTime = utility.GetCurrentDateTimeInTimeZone();
-                        orderDb.CancelDeliveryReason = confirmedOrderRequest.CancelReason;
-                        await ChangeOrderStatusService(orderDb.OrderId, false, OrderStatus.Cancelled, false, false);
-                    }
-
-                    if (!BuildAppActionResultIsError(result))
-                    {
-                        await _repository.Update(orderDb);
-                        await _unitOfWork.SaveChangesAsync();
-                    }
+                    return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {confirmedOrderRequest.OrderId}");
                 }
-                catch (Exception ex)
+
+                var customerInfoDb = await customerInfoAddressRepository.GetByExpression(c => c.CustomerInfoAddressId == orderDb.AddressId, null);
+                if (customerInfoDb == null)
                 {
-                    throw new Exception(ex.Message);
+                    return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ đơn hàng");
                 }
-            });
+                var deliveryDestination = new double[]
+                {
+                        customerInfoDb.Lat,
+                        customerInfoDb.Lng
+                };
+
+                var shipperLocation = new double[]
+                {
+                        confirmedOrderRequest.Lat,
+                        confirmedOrderRequest.Lng
+                };
+                var validDistance = await mapService.CheckValidShipperDistance(shipperLocation, deliveryDestination);
+                if (!validDistance.IsSuccess)
+                {
+                    return BuildAppActionResultError(result, validDistance.Messages.FirstOrDefault());
+                }
+
+                if (!confirmedOrderRequest.IsSuccessful.HasValue || confirmedOrderRequest.IsSuccessful.Value)
+                {
+                    var pathName = SD.FirebasePathName.ORDER_PREFIX +
+                                   $"{confirmedOrderRequest.OrderId}{Guid.NewGuid()}.jpg";
+                    var upload = await firebaseService!.UploadFileToFirebase(confirmedOrderRequest.Image, pathName);
+
+                    if (!upload.IsSuccess)
+                    {
+                        return BuildAppActionResultError(result, "Upload hình ảnh không thành công");
+                    }
+
+                    orderDb.ValidatingImg = upload.Result!.ToString();
+
+                    orderDb.DeliveredTime = utility.GetCurrentDateTimeInTimeZone();
+                    orderDb.StatusId = OrderStatus.Completed;
+                }
+                else
+                {
+                    orderDb.CancelledTime = utility.GetCurrentDateTimeInTimeZone();
+                    orderDb.CancelDeliveryReason = confirmedOrderRequest.CancelReason;
+                    await ChangeOrderStatusService(orderDb.OrderId, false, OrderStatus.Cancelled, false, false);
+                }
+
+                if (!BuildAppActionResultIsError(result))
+                {
+                    await _repository.Update(orderDb);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
             return result;
         }
 
