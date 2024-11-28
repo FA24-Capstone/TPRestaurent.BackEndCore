@@ -149,7 +149,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                                     && groupedTime[1] > o.OrderSession.OrderSessionTime
                                                                                                    )
                                                                                             )
-                                                                                            && o.OrderSession.OrderSessionStatusId != OrderSessionStatus.Completed
                                                                                             && o.OrderSession.OrderSessionStatusId != OrderSessionStatus.Cancelled
                                                                                             && o.OrderSession.OrderSessionStatusId != OrderSessionStatus.PreOrder
                                                                                             && (o.OrderDetailStatusId == OrderDetailStatus.Unchecked
@@ -529,25 +528,25 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
                         }
 
-                        var orderDetailToCompleteId = orderDetailDb.Items
+                        var orderDetailToUpdate = orderDetailDb.Items
                             .Where(o => 
                                         //o.OrderDetailStatusId != OrderDetailStatus.Reserved &&
                                         o.OrderDetailStatusId != OrderDetailStatus.Cancelled &&
                                         o.OrderDetailStatusId != OrderDetailStatus.ReadyToServe)
-                            .Select(o => o.OrderDetailId).ToList();
+                            .ToList();
                         if (orderSessionStatus == OrderSessionStatus.Processing)
                         {
-                            await orderService.UpdateOrderDetailStatusForce(orderDetailToCompleteId,
+                            await orderService.UpdateOrderDetailStatusForce(orderDetailToUpdate,
                                 OrderDetailStatus.Processing);
                         }
                         else if (orderSessionStatus == OrderSessionStatus.Completed)
                         {
-                            await orderService.UpdateOrderDetailStatusForce(orderDetailToCompleteId,
+                            await orderService.UpdateOrderDetailStatusForce(orderDetailToUpdate,
                                 OrderDetailStatus.ReadyToServe);
                         }
                         else if (orderSessionStatus == OrderSessionStatus.Cancelled)
                         {
-                            await orderService.UpdateOrderDetailStatusForce(orderDetailToCompleteId,
+                            await orderService.UpdateOrderDetailStatusForce(orderDetailToUpdate,
                                 OrderDetailStatus.Cancelled);
                         }
 

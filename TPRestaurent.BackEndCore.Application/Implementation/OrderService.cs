@@ -3572,26 +3572,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> UpdateOrderDetailStatusForce(List<Guid> orderDetailIds, OrderDetailStatus status)
+        public async Task<AppActionResult> UpdateOrderDetailStatusForce(List<OrderDetail> orderDetails, OrderDetailStatus status)
         {
             AppActionResult result = new AppActionResult();
             try
             {
                 var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
-                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
-                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(p => orderDetailIds.Contains(p.OrderDetailId), 0, 0, null, false, null);
-                if (orderDetailDb.Items.Count != orderDetailIds.Count)
-                {
-                    throw new Exception($"Tồn tại id gọi món hông nằm trong hệ thống");
-                }
+                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();                
 
-                if (orderDetailDb.Items.All(o => o.OrderDetailStatusId == OrderDetailStatus.Reserved || o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
+                if (orderDetails.All(o => o.OrderDetailStatusId == OrderDetailStatus.Reserved || o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
                 {
                     throw new Exception($"Các chi tiết đơn hàng không thể cập nhật trạng thái vì đều không ở trạn thái chờ hay đang xừ lí");
                 }
 
-                orderDetailDb.Items.ForEach(p => p.OrderDetailStatusId = status);
-                var comboOrderDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.StatusId != DishComboDetailStatus.Cancelled && c.StatusId != DishComboDetailStatus.ReadyToServe && orderDetailDb.Items.Where(c => c.ComboId.HasValue).Select(c => c.OrderDetailId).ToList().Contains(c.OrderDetailId.Value),
+                orderDetails.ForEach(p => p.OrderDetailStatusId = status);
+                var comboOrderDetailIds = orderDetails.Where(c => c.ComboId != null).Select(c => c.OrderDetailId).ToList();
+                var comboOrderDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.StatusId != DishComboDetailStatus.Cancelled && c.StatusId != DishComboDetailStatus.ReadyToServe && comboOrderDetailIds.Contains(c.OrderDetailId.Value),
                                                                                                       0, 0, null, false, null);
                 if(comboOrderDetailDb.Items.Count > 0)
                 {
@@ -3610,7 +3606,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await comboOrderDetailRepository.UpdateRange(comboOrderDetailDb.Items);
                 }
 
-                await orderDetailRepository.UpdateRange(orderDetailDb.Items);
+                await orderDetailRepository.UpdateRange(orderDetails);
                 await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
