@@ -34,7 +34,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-order-by-phone-number/{pageNumber}/{pageSize}")]
-        [TokenValidationMiddleware(Permission.ADMIN)]
+        [TokenValidationMiddleware(Permission.ALL)]
         public async Task<AppActionResult> GetAllOrderByPhoneNumber(string phoneNumber, OrderStatus? status, OrderType? orderType, int pageNumber = 1, int pageSize = 10)
         {
             return await _service.GetAllOrderByPhoneNumber(phoneNumber, status, orderType, pageNumber, pageSize);
