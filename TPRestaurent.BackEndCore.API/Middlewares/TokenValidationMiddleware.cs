@@ -4,6 +4,7 @@ using System.Net;
 using TPRestaurent.BackEndCore.Application;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
+using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.API.Middlewares
@@ -41,32 +42,36 @@ namespace TPRestaurent.BackEndCore.API.Middlewares
             var unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
             var checkUserToken = await tokenService.GetUserToken(token);
             var userToken = checkUserToken.Result as Token;
-
-            if (userToken == null)
-            {
-                httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                await httpContext.Response.WriteAsync("Invalid or expired token.");
-                return;
-            }
-
-            if (userToken.ExpiryTimeAccessToken < DateTime.UtcNow.AddHours(7))
-            {
-                await tokenRepository.DeleteById(userToken.TokenId);
-                await unitOfWork.SaveChangesAsync();
-                httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                await httpContext.Response.WriteAsync("Expired token.");
-                return;
-            }
-
-            if (userToken.DeviceIP != deviceIp)
-            {
-                httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                await httpContext.Response.WriteAsync("Invalid device.");
-                return;
-            }
-
             var roleClaims = jwtToken!.Claims.Where(c => c.Type == "role").Select(c => c.Value).SingleOrDefault();
             var roleValid = role.Split(",");
+
+            if (!roleClaims.Contains(Permission.DEVICE))
+            {
+                if (userToken == null)
+                {
+                    httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    await httpContext.Response.WriteAsync("Invalid or expired token.");
+                    return;
+                }
+
+                if (userToken.ExpiryTimeAccessToken < DateTime.UtcNow.AddHours(7))
+                {
+                    await tokenRepository.DeleteById(userToken.TokenId);
+                    await unitOfWork.SaveChangesAsync();
+                    httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    await httpContext.Response.WriteAsync("Expired token.");
+                    return;
+                }
+
+                if (userToken.DeviceIP != deviceIp)
+                {
+                    httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    await httpContext.Response.WriteAsync("Invalid device.");
+                    return;
+                }
+    
+            }
+            
             if (!roleValid.Contains(roleClaims))
             {
                 httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
