@@ -4624,7 +4624,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     //Check if order has been refunded
                     var refundTransaction = orderTransaction.Value.FirstOrDefault(t => t.TransactionTypeId == TransactionType.Refund && t.TransationStatusId == TransationStatus.SUCCESSFUL && t.PaidDate >= failedAfterSuccessfulTransaction.PaidDate);
-                    if (failedAfterSuccessfulTransaction != null)
+                    if (refundTransaction != null)
                     {
                         continue;
                     }
