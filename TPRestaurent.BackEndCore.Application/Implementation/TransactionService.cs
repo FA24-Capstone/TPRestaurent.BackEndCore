@@ -78,6 +78,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         $"Đơn hàng đã hủy hoặc đã được thanh toán thành công");
                                 }
 
+                                //Has pending order payement
+                                var existingTransaction = await _repository.GetByExpression(p =>
+                                    p.OrderId == orderDb.OrderId && p.TransationStatusId != TransationStatus.FAILED && p.TransactionTypeId == TransactionType.Order, null);
+                                if(existingTransaction != null)
+                                {
+                                    result = BuildAppActionResultError(result,
+                                        $"Đơn hàng đang có giao dịch hoặc đã có giao dịch thanh toán thành công");
+                                }
+
                                 if ((orderDb.OrderTypeId != OrderType.Delivery &&
                                      (orderDb.StatusId == OrderStatus.TemporarilyCompleted ||
                                       orderDb.StatusId == OrderStatus.Processing))
@@ -881,6 +890,74 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
             }
 
+        }
+
+        public async Task<AppActionResult> CreateDuplicatedPaidOrderRefund(DuplicatedPaidOrderRefundRequest request)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                //varlidate order
+                var orderRepository = Resolve<IGenericRepository<Order>>();
+                var utility = Resolve<Utility>();
+                var orderDb = await orderRepository.GetByExpression(p => p.OrderId == request.OrderId & p.StatusId == OrderStatus.Completed, o => o.Account);
+
+                if (orderDb == null)
+                {
+                    return BuildAppActionResultError(result, $"Đơn hàng không tồn tại hoặc chưa được thanh toán");
+                }
+
+                var transactionDb = await _repository.GetAllDataByExpression(p => p.OrderId == request.OrderId, 0, 0, null, false, null);
+
+                var successfulTransaction = transactionDb.Items.FirstOrDefault(t => t.TransactionTypeId == TransactionType.Order && t.TransationStatusId == TransationStatus.SUCCESSFUL);
+                if (successfulTransaction == null)
+                {
+                    return BuildAppActionResultError(result, $"Đơn hàng không có lịch sử thanh toán thành công");
+                }
+                //One failed after that as order is paid
+                var failedAfterSuccessfulTransaction = transactionDb.Items.FirstOrDefault(t => t.TransactionTypeId == TransactionType.Order && t.TransationStatusId == TransationStatus.FAILED && t.PaidDate >= successfulTransaction.PaidDate);
+                if (failedAfterSuccessfulTransaction == null)
+                {
+                    return BuildAppActionResultError(result, $"Đơn hàng không có giao dịch thất bại sau thanh toán thành công");
+                }
+                //Check if order has been refunded
+                var existedRefundTransaction = transactionDb.Items.FirstOrDefault(t => t.TransactionTypeId == TransactionType.Refund && t.TransationStatusId == TransationStatus.SUCCESSFUL && t.PaidDate >= failedAfterSuccessfulTransaction.PaidDate);
+                if (failedAfterSuccessfulTransaction != null)
+                {
+                    return BuildAppActionResultError(result, $"Đơn hàng đã được hoàn tiền");
+                }
+
+                if (orderDb.Account == null && request.PaymentMethod == PaymentMethod.STORE_CREDIT)
+                {
+                    return BuildAppActionResultError(result, $"Đơn hàng không có thông tin tài khoản dể dùng phương thức hoàn tiền vào số dư");
+                }
+
+                var refundTransaction = new Transaction
+                {
+                    Id = Guid.NewGuid(),
+                    Amount = successfulTransaction.Amount,
+                    Date = utility.GetCurrentDateTimeInTimeZone(),
+                    PaidDate = utility.GetCurrentDateTimeInTimeZone(),
+                    OrderId = request.OrderId,
+                    TransationStatusId = TransationStatus.SUCCESSFUL,
+                    TransactionTypeId = TransactionType.Refund,
+                    PaymentMethodId = request.PaymentMethod
+                };
+
+                if(request.PaymentMethod == PaymentMethod.STORE_CREDIT)
+                {
+                    var accountRepository = Resolve < IGenericRepository<Account>>();
+                    orderDb.Account.StoreCreditAmount += refundTransaction.Amount;
+                    await accountRepository.Update(orderDb.Account);
+                }
+                await _repository.Insert(refundTransaction);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         }
     }
 }
