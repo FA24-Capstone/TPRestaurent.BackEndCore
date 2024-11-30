@@ -4604,7 +4604,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var transactionRepository = Resolve<IGenericRepository<Transaction>>();
                 var data = new List<OrderWithPaymentHistory>();
-                var orderDb = await _repository.GetAllDataByExpression(o => o.StatusId == OrderStatus.Completed, 0, 0, null, false, null);
+                var orderDb = await _repository.GetAllDataByExpression(o => o.StatusId == OrderStatus.Completed, 0, 0, null, false, o=> o.OrderType);
                 var orderIds = orderDb.Items.Select(o => o.OrderId).ToList();
                 var transactionDb = await transactionRepository.GetAllDataByExpression(t => t.OrderId.HasValue && orderIds.Contains(t.OrderId.Value), 0, 0, null, false, null);
                 var transactionGrouped = transactionDb.Items.GroupBy(t => t.OrderId).ToDictionary(t => t.Key, t => t.ToList());
