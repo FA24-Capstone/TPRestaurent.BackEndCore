@@ -941,7 +941,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     OrderId = request.OrderId,
                     TransationStatusId = TransationStatus.SUCCESSFUL,
                     TransactionTypeId = TransactionType.Refund,
-                    PaymentMethodId = request.PaymentMethod
+                    PaymentMethodId = request.PaymentMethod,
+                    AccountId = orderDb.AccountId
                 };
 
                 if(request.PaymentMethod == PaymentMethod.STORE_CREDIT)
