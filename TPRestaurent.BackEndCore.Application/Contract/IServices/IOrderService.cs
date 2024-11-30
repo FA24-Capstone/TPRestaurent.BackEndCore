@@ -77,7 +77,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 
         public Task<AppActionResult> UpdateCancelledOrderDishQuantity(Order order, List<DishSizeDetail> updateDishSizeDetailList, DateTime currentTime, bool refillAllow = true);
         public Task<AppActionResult> CancelOrderDetailBeforeCooking(List<Guid> orderDetailIds);
-
+        public Task<AppActionResult> GetAllOrdersRequireRefund();
         public Task CancelOrder();
     }
 }

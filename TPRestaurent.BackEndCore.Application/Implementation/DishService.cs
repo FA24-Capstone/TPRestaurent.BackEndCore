@@ -84,6 +84,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 $"Món ăn tồn tại kích thước trùng. Vui lòng kiểm tra lại");
                         }
 
+                        //Check price by size
+                        double checkPrice = 0;
+                        foreach(var dishSizeDetail in dto.DishSizeDetailDtos.OrderBy(o => o.DishSize))
+                        {
+                            if(checkPrice == 0)
+                            {
+                                checkPrice = dishSizeDetail.Price;
+                                continue;
+                            }
+
+                            if(checkPrice > dishSizeDetail.Price)
+                            {
+                                result = BuildAppActionResultError(result,
+                                    $"Giá tiền của size {dishSizeDetail.DishSize} đang nhỏ hơn món có size nhỏ hơn");
+                            }
+                            checkPrice = dishSizeDetail.Price;
+                        }
+
                         dto.DishSizeDetailDtos.ForEach(d =>
                             dishSizeDetails.Add(new DishSizeDetail
                             {

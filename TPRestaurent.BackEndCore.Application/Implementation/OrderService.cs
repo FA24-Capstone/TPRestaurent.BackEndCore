@@ -4440,8 +4440,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
                 var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+                var groupedDishCraftService = Resolve<IGroupedDishCraftService>();
                 var updateDishSizeDetailList = new List<DishSizeDetail>();
-                var orderDetailDb = await _detailRepository.GetAllDataByExpression(d => orderDetailIds.Contains(d.OrderDetailId) && d.OrderDetailStatusId == OrderDetailStatus.Unchecked, 0, 0, null, false, null);
+                var orderDetailDb = await _detailRepository.GetAllDataByExpression(d => d.Order.OrderTypeId != OrderType.Delivery && orderDetailIds.Contains(d.OrderDetailId) && d.OrderDetailStatusId == OrderDetailStatus.Unchecked, 0, 0, null, false, null);
                 if(orderDetailDb.Items.Count > 0)
                 {
                     orderDetailDb.Items.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Cancelled);
@@ -4507,7 +4508,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     // OrderSession: RecalculateTime, Check Status=> if(all cancelled -> cancelled, else completed)
                     var orderSessionIds = orderDetailDb.Items.DistinctBy(o => o.OrderSessionId).Select(o => o.OrderSessionId);
                     //Recalculate
-                    var orderSessionDb = await _sessionRepository.GetAllDataByExpression(o => orderDetailIds.Contains(o.OrderSessionId), 0, 0, null, false, null);
+                    var orderSessionDb = await _sessionRepository.GetAllDataByExpression(o => orderSessionIds.Contains(o.OrderSessionId), 0, 0, null, false, null);
                     foreach (var orderSession in orderSessionDb.Items)
                     {
                         if(orderDetailDb.Items.Where(o => o.OrderSessionId == orderSession.OrderSessionId).All(o => o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
@@ -4534,7 +4535,52 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await _sessionRepository.UpdateRange(orderSessionDb.Items);
                     await _repository.UpdateRange(orderDb.Items);
                     await _unitOfWork.SaveChangesAsync();
+                    await groupedDishCraftService.UpdateGroupedDish(orderDetailIds);
                 }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> GetAllOrdersRequireRefund()
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var transactionRepository = Resolve<IGenericRepository<Transaction>>();
+                var data = new List<OrderWithPaymentHistory>();
+                var orderDb = await _repository.GetAllDataByExpression(o => o.StatusId == OrderStatus.Completed, 0, 0, null, false, null);
+                var orderIds = orderDb.Items.Select(o => o.OrderId).ToList();
+                var transactionDb = await transactionRepository.GetAllDataByExpression(t => t.OrderId.HasValue && orderIds.Contains(t.OrderId.Value), 0, 0, null, false, null);
+                var transactionGrouped = transactionDb.Items.GroupBy(t => t.OrderId).ToDictionary(t => t.Key, t => t.ToList());
+                foreach(var orderTransaction in transactionGrouped.Where(t => t.Value.Count > 1))
+                {
+                    //Has a successful payment
+                    var successfulTransaction = orderTransaction.Value.FirstOrDefault(t => t.TransactionTypeId == TransactionType.Order && t.TransationStatusId == TransationStatus.SUCCESSFUL);
+                    if (successfulTransaction == null)
+                    {
+                        continue;
+                    }
+                    //One failed after that as order is paid
+                    var failedAfterSuccessfulTransaction = orderTransaction.Value.FirstOrDefault(t => t.TransactionTypeId == TransactionType.Order && t.TransationStatusId == TransationStatus.FAILED && t.PaidDate >= successfulTransaction.PaidDate);
+                    if (failedAfterSuccessfulTransaction == null)
+                    {
+                        continue;
+                    }
+                    //Check if order has been refunded
+                    var refundTransaction = orderTransaction.Value.FirstOrDefault(t => t.TransactionTypeId == TransactionType.Refund && t.TransationStatusId == TransationStatus.SUCCESSFUL && t.PaidDate >= failedAfterSuccessfulTransaction.PaidDate);
+                    if (failedAfterSuccessfulTransaction != null)
+                    {
+                        continue;
+                    }
+                    var orderWithPaymentHistory = _mapper.Map<OrderWithPaymentHistory>(orderDb.Items.FirstOrDefault(o => o.OrderId == orderTransaction.Key));
+                    orderWithPaymentHistory.PaymentHistories = orderTransaction.Value;
+                    data.Add(orderWithPaymentHistory);
+                }
+                result.Result = data;
             }
             catch (Exception ex)
             {

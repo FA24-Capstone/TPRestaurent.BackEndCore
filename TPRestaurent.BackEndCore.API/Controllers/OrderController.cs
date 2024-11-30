@@ -202,6 +202,13 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _service.CancelOrderDetailBeforeCooking(orderDetailIds);
         }
+
+        [HttpGet("get-all-orders-require-refund")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
+        public async Task<AppActionResult> GetAllOrdersRequireRefund()
+        {
+            return await _service.GetAllOrdersRequireRefund();
+        }
         //[HttpPut("over")]
         //public async Task CancelOverReservation()
         //{

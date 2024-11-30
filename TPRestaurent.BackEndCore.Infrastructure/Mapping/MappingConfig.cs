@@ -208,7 +208,45 @@ public class MappingConfig
             .ForMember(dest => dest.RoomId, opt => opt.MapFrom(src => src.RoomId))
             .ForMember(dest => dest.Room, opt => opt.MapFrom(src => src.Room))
             .ReverseMap();
+
+            config.CreateMap<OrderWithPaymentHistory, Order>()
+            .ForMember(dest => dest.OrderId, act => act.MapFrom(src => src.OrderId))
+            .ForMember(dest => dest.OrderDate, act => act.MapFrom(src => src.OrderDate))
+            .ForMember(dest => dest.AssignedTime, act => act.MapFrom(src => src.AssignedTime))
+            .ForMember(dest => dest.StartDeliveringTime, act => act.MapFrom(src => src.StartDeliveringTime))
+            .ForMember(dest => dest.DeliveredTime, act => act.MapFrom(src => src.DeliveredTime))
+            .ForMember(dest => dest.ReservationDate, act => act.MapFrom(src => src.ReservationDate))
+            .ForMember(dest => dest.MealTime, act => act.MapFrom(src => src.MealTime))
+            .ForMember(dest => dest.EndTime, act => act.MapFrom(src => src.EndTime))
+            .ForMember(dest => dest.CancelledTime, act => act.MapFrom(src => src.CancelledTime))
+            .ForMember(dest => dest.TotalAmount, act => act.MapFrom(src => src.TotalAmount))
+            .ForMember(dest => dest.CashReceived, act => act.MapFrom(src => src.CashReceived))
+            .ForMember(dest => dest.ChangeReturned, act => act.MapFrom(src => src.ChangeReturned))
+            .ForMember(dest => dest.StatusId, act => act.MapFrom(src => src.StatusId))
+            .ForMember(dest => dest.Status, act => act.MapFrom(src => src.Status))
+            .ForMember(dest => dest.AccountId, act => act.MapFrom(src => src.AccountId))
+            .ForMember(dest => dest.Account, act => act.MapFrom(src => src.Account))
+            .ForMember(dest => dest.AddressId, act => act.MapFrom(src => src.AddressId))
+            .ForMember(dest => dest.CustomerInfoAddress, act => act.MapFrom(src => src.CustomerInfoAddress))
+            .ForMember(dest => dest.LoyalPointsHistoryId, act => act.MapFrom(src => src.LoyalPointsHistoryId))
+            .ForMember(dest => dest.LoyalPointsHistory, act => act.MapFrom(src => src.LoyalPointsHistory))
+            .ForMember(dest => dest.Note, act => act.MapFrom(src => src.Note))
+            .ForMember(dest => dest.OrderTypeId, act => act.MapFrom(src => src.OrderTypeId))
+            .ForMember(dest => dest.OrderType, act => act.MapFrom(src => src.OrderType))
+            .ForMember(dest => dest.NumOfPeople, act => act.MapFrom(src => src.NumOfPeople))
+            .ForMember(dest => dest.Deposit, act => act.MapFrom(src => src.Deposit))
+            .ForMember(dest => dest.IsPrivate, act => act.MapFrom(src => src.IsPrivate))
+            .ForMember(dest => dest.ValidatingImg, act => act.MapFrom(src => src.ValidatingImg))
+            .ForMember(dest => dest.ShipperId, act => act.MapFrom(src => src.ShipperId))
+            .ForMember(dest => dest.Shipper, act => act.MapFrom(src => src.Shipper))
+            .ForMember(dest => dest.TotalDistance, act => act.MapFrom(src => src.TotalDistance))
+            .ForMember(dest => dest.TotalDuration, act => act.MapFrom(src => src.TotalDuration))
+            .ForMember(dest => dest.CancelDeliveryReason, act => act.MapFrom(src => src.CancelDeliveryReason))
+            .ReverseMap();
+
         });
+
+
 
         return mappingConfig;
     }

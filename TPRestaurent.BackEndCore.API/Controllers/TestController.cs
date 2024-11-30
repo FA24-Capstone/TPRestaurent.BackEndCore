@@ -80,5 +80,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             await _orderSessionService.ClearOrderSessionDaily();
         }
+
+
+        [HttpPut("nofitfy-dishes-to-kitchen")]
+        public async Task NotifyReservationDishToKitchen()
+        {
+            await _orderService.NotifyReservationDishToKitchen();
+        }
     }
 }
