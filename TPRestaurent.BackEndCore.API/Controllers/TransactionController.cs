@@ -68,6 +68,13 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _service.UpdateTransactionStatus(transactionId, transactionStatus);
         }
 
+        [HttpPut("create-duplicated-paid-order-refund")]
+        [TokenValidationMiddleware(Permission.ADMIN)]
+        public async Task<AppActionResult> CreateDuplicatedPaidOrderRefund(DuplicatedPaidOrderRefundRequest dto)
+        {
+            return await _service.CreateDuplicatedPaidOrderRefund(dto);
+        }
+
         [HttpGet("VNPayIpn")]
         public async Task<IActionResult> VNPayIPN()
         {
