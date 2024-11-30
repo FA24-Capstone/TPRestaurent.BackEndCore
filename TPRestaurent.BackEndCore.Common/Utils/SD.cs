@@ -123,6 +123,7 @@ public class SD
         public static string MAXIMUM_DISTANCE_TO_DELIVER = "MAXIMUM_DISTANCE_TO_DELIVER";
         public static string MIN_PEOPLE_FOR_RESERVATION = "MIN_PEOPLE_FOR_RESERVATION";
         public static string MAX_PEOPLE_FOR_RESERVATION = "MAX_PEOPLE_FOR_RESERVATION";
+        public static string TIME_TO_NOTIFY_DISHES_TO_KITCHEN = "TIME_TO_NOTIFY_DISHES_TO_KITCHEN";
     }
 
     public class SubjectMail

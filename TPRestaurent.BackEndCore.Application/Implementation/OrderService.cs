@@ -712,12 +712,61 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 await _unitOfWork.ExecuteInTransaction(async () =>
                 {
 
-                order = new Order()
-                {
-                    OrderId = Guid.NewGuid(),
-                    OrderTypeId = orderRequestDto.OrderType,
-                    Note = orderRequestDto.Note,
-                };
+                    // Fetch configuration values
+                    var openTime = double.Parse((await configurationRepository
+                        .GetByExpression(c => c.Name.Equals(SD.DefaultValue.OPEN_TIME), null))?.CurrentValue ?? "0");
+                    var closedTime = double.Parse((await configurationRepository
+                        .GetByExpression(c => c.Name.Equals(SD.DefaultValue.CLOSED_TIME), null))?.CurrentValue ?? "0");
+                    var minPeople = int.Parse((await configurationRepository
+                        .GetByExpression(c => c.Name.Equals(SD.DefaultValue.MIN_PEOPLE_FOR_RESERVATION), null))?.CurrentValue ?? "0");
+                    var maxPeople = int.Parse((await configurationRepository
+                        .GetByExpression(c => c.Name.Equals(SD.DefaultValue.MAX_PEOPLE_FOR_RESERVATION), null))?.CurrentValue ?? "0");
+
+                    // Get current time in time zone
+                    DateTime orderTime = utility.GetCurrentDateTimeInTimeZone();
+
+                    // Validate order time
+                    bool isInvalidOrderTime = orderTime.Date.AddDays(openTime) > orderTime ||
+                                              orderTime.Date.AddDays(closedTime) < orderTime;
+
+                    bool isInvalidReservationTime = orderRequestDto.ReservationOrder.MealTime.AddHours(openTime) > orderRequestDto.ReservationOrder.MealTime ||
+                                                    orderRequestDto.ReservationOrder.MealTime.AddHours(closedTime) < orderRequestDto.ReservationOrder.MealTime;
+
+                    if ((isInvalidOrderTime && orderRequestDto.OrderType != OrderType.Reservation) ||
+                        (isInvalidReservationTime && orderRequestDto.OrderType == OrderType.Reservation))
+                    {
+                        throw new Exception("Thời gian đặt không hợp lệ");
+                    }
+
+                    // Validate number of people
+                    bool isInvalidNumberOfPeople = false;
+
+                    if (orderRequestDto.OrderType != OrderType.Delivery)
+                    {
+                        if (orderRequestDto.OrderType == OrderType.Reservation)
+                        {
+                            isInvalidNumberOfPeople = orderRequestDto.ReservationOrder.NumberOfPeople < minPeople ||
+                                                      orderRequestDto.ReservationOrder.NumberOfPeople > maxPeople;
+                        }
+                        else
+                        {
+                            isInvalidNumberOfPeople = orderRequestDto.MealWithoutReservation.NumberOfPeople < minPeople ||
+                                                      orderRequestDto.MealWithoutReservation.NumberOfPeople > maxPeople;
+                        }
+
+                        if (isInvalidNumberOfPeople)
+                        {
+                            throw new Exception("Số người không hợp lệ");
+                        }
+                    }
+
+
+                    order = new Order()
+                    {
+                        OrderId = Guid.NewGuid(),
+                        OrderTypeId = orderRequestDto.OrderType,
+                        Note = orderRequestDto.Note,
+                    };
 
                 if (orderRequestDto.CustomerId.HasValue)
                 {
@@ -760,14 +809,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var orderSessionDb = await orderSessionRepository!.GetAllDataByExpression(null, 0, 0, null, false, null);
                     var latestOrderSession = orderSessionDb.Items!.Count() + 1;
                     var estimatedPreparationTime = new List<CalculatePreparationTime>();
+                    var notifyTime = int.Parse((await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TIME_TO_NOTIFY_DISHES_TO_KITCHEN), null))?.CurrentValue);
                     var orderSession = new OrderSession()
                     {
                         OrderSessionId = Guid.NewGuid(),
-                        OrderSessionTime = utility!.GetCurrentDateTimeInTimeZone(),
+                        OrderSessionTime = orderRequestDto.ReservationOrder.MealTime.AddHours(-notifyTime) > orderTime ? orderTime : orderRequestDto.ReservationOrder.MealTime.AddHours(-notifyTime),
                         OrderSessionStatusId = orderRequestDto.OrderType == OrderType.MealWithoutReservation ? OrderSessionStatus.Confirmed : OrderSessionStatus.PreOrder,
                         OrderSessionNumber = latestOrderSession
                     };
-                    DateTime orderTime = utility.GetCurrentDateTimeInTimeZone();
                     if (orderRequestDto.OrderType != OrderType.Reservation && orderRequestDto.ReservationOrder != null && orderRequestDto?.ReservationOrder?.MealTime > orderTime)
                     {
                         orderTime = (DateTime)(orderRequestDto?.ReservationOrder?.MealTime);
@@ -2421,7 +2470,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var currentTime = utility!.GetCurrentDateTimeInTimeZone();
                 var orderSessionRepository = Resolve<IGenericRepository<OrderSession>>();
                 var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
-                var orderListDb = await _repository.GetAllDataByExpression(p => p.MealTime!.Value.AddHours(-1) <= currentTime && p.StatusId == OrderStatus.DepositPaid, 0, 0, null, false, null);
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var notifyTime = int.Parse((await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TIME_TO_NOTIFY_DISHES_TO_KITCHEN), null))?.CurrentValue);
+
+                var orderListDb = await _repository.GetAllDataByExpression(p => p.MealTime!.Value.AddHours(-notifyTime) <= currentTime && p.StatusId == OrderStatus.DepositPaid, 0, 0, null, false, null);
                 if (orderListDb!.Items!.Count > 0 && orderListDb.Items != null)
                 {
                     var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => orderListDb.Items.Select(or => or.OrderId).ToList().Contains(o.OrderId) && o.OrderDetailStatusId == OrderDetailStatus.Reserved, 0, 0, null, false, o => o.OrderSession);

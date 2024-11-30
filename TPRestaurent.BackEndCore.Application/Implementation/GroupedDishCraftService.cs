@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
+using TPRestaurent.BackEndCore.Application.IHubServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
@@ -14,9 +15,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     {
         private readonly IGenericRepository<GroupedDishCraft> _repository;
         private readonly IUnitOfWork _unitOfWork;
-        public GroupedDishCraftService(IGenericRepository<GroupedDishCraft> repository, IUnitOfWork unitOfWork, IServiceProvider provider) : base(provider)
+        private IHubServices.IHubServices _hubServices;
+        public GroupedDishCraftService(IGenericRepository<GroupedDishCraft> repository, IUnitOfWork unitOfWork, IServiceProvider provider, IHubServices.IHubServices hubServices) : base(provider)
         {
             this._repository = repository;
+            _hubServices = hubServices;
             this._unitOfWork = unitOfWork;
         }
 
@@ -233,6 +236,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     await _repository.UpdateRange(currentGroupedDishDb.Items);
                     await _unitOfWork.SaveChangesAsync();
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
+
+
                 }
             }
             catch (Exception ex)

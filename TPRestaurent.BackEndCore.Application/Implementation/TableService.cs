@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.IdentityModel.Tokens;
 using System.Linq.Expressions;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
@@ -7,6 +8,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
+using Utility = TPRestaurent.BackEndCore.Common.Utils.Utility;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -81,6 +83,42 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var orderService = Resolve<IOrderService>();
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                // Fetch configuration values
+                var openTime = double.Parse((await configurationRepository
+                    .GetByExpression(c => c.Name.Equals(SD.DefaultValue.OPEN_TIME), null))?.CurrentValue ?? "0");
+                var closedTime = double.Parse((await configurationRepository
+                    .GetByExpression(c => c.Name.Equals(SD.DefaultValue.CLOSED_TIME), null))?.CurrentValue ?? "0");
+                var minPeople = int.Parse((await configurationRepository
+                    .GetByExpression(c => c.Name.Equals(SD.DefaultValue.MIN_PEOPLE_FOR_RESERVATION), null))?.CurrentValue ?? "0");
+                var maxPeople = int.Parse((await configurationRepository
+                    .GetByExpression(c => c.Name.Equals(SD.DefaultValue.MAX_PEOPLE_FOR_RESERVATION), null))?.CurrentValue ?? "0");
+
+                // Ensure EndTime is set
+                if (!dto.EndTime.HasValue)
+                {
+                    dto.EndTime = dto.StartTime.AddHours(1); // Default to 1 hour duration
+                }
+
+                // Validate booking time
+                bool isInvalidTime =
+                    dto.StartTime.Date.AddHours(openTime) > dto.StartTime ||
+                    dto.StartTime.Date.AddHours(closedTime) < dto.EndTime.Value;
+
+                if (isInvalidTime)
+                {
+                    throw new Exception("Thời gian đặt không hợp lệ");
+                }
+
+                // Validate number of people
+                bool isInvalidPeopleCount = dto.NumOfPeople < minPeople || dto.NumOfPeople > maxPeople;
+
+                if (isInvalidPeopleCount)
+                {
+                    throw new Exception("Số người không hợp lệ");
+                }
+
+
                 var availableTables = await GetAvailableTable(dto.StartTime, dto.EndTime, dto.IsPrivate, dto.NumOfPeople, 0, 0);
                 if (availableTables.Count == 0)
                 {
