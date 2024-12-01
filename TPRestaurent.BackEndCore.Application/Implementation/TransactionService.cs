@@ -74,13 +74,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 if (orderDb.StatusId == OrderStatus.Completed ||
                                     orderDb.StatusId == OrderStatus.Cancelled)
                                 {
-                                    result = BuildAppActionResultError(result,
+                                 return BuildAppActionResultError(result,
                                         $"Đơn hàng đã hủy hoặc đã được thanh toán thành công");
                                 }
 
                                 //Has pending order payement
                                 var existingTransaction = await _repository.GetByExpression(p =>
-                                    p.OrderId == orderDb.OrderId && p.TransationStatusId != TransationStatus.FAILED && p.TransactionTypeId == TransactionType.Order, null);
+                                    p.OrderId == orderDb.OrderId && p.TransationStatusId == TransationStatus.SUCCESSFUL && p.TransactionTypeId == TransactionType.Order, null);
                                 if(existingTransaction != null)
                                 {
                                     result = BuildAppActionResultError(result,
