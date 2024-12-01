@@ -26,6 +26,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 
         Task<AppActionResult> CreateDepositRefund(DepositRefundRequest request);
         Task<AppActionResult> CreateDuplicatedPaidOrderRefund(DuplicatedPaidOrderRefundRequest request);
+        Task<AppActionResult> SendDuplicatedRefundEmail(Guid orderId);
 
         Task CancelPendingTransaction();
     }
