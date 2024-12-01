@@ -1,5 +1,6 @@
 ﻿using RestSharp;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Common.Utils;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation;
 
@@ -72,4 +73,5 @@ public class GenericBackendService
         RestResponse response = await client.ExecuteAsync(request);
         return response;
     }
+  
 }

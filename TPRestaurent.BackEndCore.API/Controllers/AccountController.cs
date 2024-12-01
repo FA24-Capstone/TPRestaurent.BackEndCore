@@ -244,6 +244,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _accountService.BanUser(accountId);
         }
+        [HttpGet("is-exist-account/{phoneNumber}")]
+        public async Task<AppActionResult> IsExistAccount(string phoneNumber)
+        {
+            return await _accountService.IsExistAccount(phoneNumber);
+        }
 
         private string ExtractJwtToken(string authorizationHeader)
         {
