@@ -74,7 +74,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 if (orderDb.StatusId == OrderStatus.Completed ||
                                     orderDb.StatusId == OrderStatus.Cancelled)
                                 {
-                                    result = BuildAppActionResultError(result,
+                                 return BuildAppActionResultError(result,
                                         $"Đơn hàng đã hủy hoặc đã được thanh toán thành công");
                                 }
 
