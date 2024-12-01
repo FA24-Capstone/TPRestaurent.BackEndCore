@@ -80,7 +80,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 //Has pending order payement
                                 var existingTransaction = await _repository.GetByExpression(p =>
-                                    p.OrderId == orderDb.OrderId && p.TransationStatusId != TransationStatus.FAILED && p.TransactionTypeId == TransactionType.Order, null);
+                                    p.OrderId == orderDb.OrderId && p.TransationStatusId == TransationStatus.SUCCESSFUL && p.TransactionTypeId == TransactionType.Order, null);
                                 if(existingTransaction != null)
                                 {
                                     result = BuildAppActionResultError(result,
