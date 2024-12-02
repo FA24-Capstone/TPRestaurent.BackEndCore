@@ -24,6 +24,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 key = config["PaymentSecurity:StoreCredit"];
             }
+            if (string.IsNullOrEmpty(accountId))
+            {
+                return Hashing($"{amount}", key);
+
+            }
             return Hashing($"{accountId}_{amount}", key);
         }
 
