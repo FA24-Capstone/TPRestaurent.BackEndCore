@@ -86,36 +86,6 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return await _accountService.GetNewToken(refreshToken, userId);
         }
 
-        [HttpPut("change-password")]
-        [TokenValidationMiddleware(Permission.ALL)]
-        public async Task<AppActionResult> ChangePassword(ChangePasswordDto dto)
-        {
-            var headers = HttpContext.Request.Headers;
-
-            string userAgent = headers["User-Agent"].ToString();
-            string token = ExtractJwtToken(headers["Authorization"]);
-            if (token != null)
-            {
-                return await _accountService.ChangePassword(dto, token);
-            }
-            else
-            {
-                return new AppActionResult 
-                { 
-                    IsSuccess = false,
-                    Messages = new List<string?>
-                    {
-                        "Không tìm thấy token"
-                    },
-                };
-            }
-        }
-
-        [HttpPut("forgot-password")]
-        public async Task<AppActionResult> ForgotPassword(ForgotPasswordDto dto)
-        {
-            return await _accountService.ForgotPassword(dto);
-        }
 
         [HttpPost("google-callback")]
         public async Task<AppActionResult> GoogleCallBack([FromBody] string accessTokenFromGoogle)

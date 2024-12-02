@@ -1,4 +1,5 @@
 using AutoMapper;
+using Firebase.Auth;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Http;
@@ -30,7 +31,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly UserManager<Account> _userManager;
         private readonly IEmailService _emailService;
         private readonly IExcelService _excelService;
-        private readonly IGenericRepository<OTP> _otpRepository;
         private readonly IMapService _mapService;
         public AccountService(
             IGenericRepository<Account> accountRepository,
@@ -42,7 +42,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             IExcelService excelService,
             IMapper mapper,
             IServiceProvider serviceProvider,
-            IGenericRepository<OTP> otpRepository,
             IMapService mapService
         ) : base(serviceProvider)
         {
@@ -52,11 +51,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _signInManager = signInManager;
             _emailService = emailService;
             _excelService = excelService;
-            _otpRepository = otpRepository;
             _tokenDto = new TokenDto();
             _mapper = mapper;
             _userRoleRepository = userRoleRepository;
-            _otpRepository = otpRepository;
             _mapService = mapService;
         }
 
@@ -75,20 +72,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return result;
                 }
 
-                var otpCodeListDb = await _otpRepository.GetAllDataByExpression(p => p.Code == loginRequest.OTPCode && (p.Type == OTPType.Login || p.Type == OTPType.ConfirmPhone) && p.ExpiredTime > currentTime && !p.IsUsed, 0, 0, null, false, null);
+                //var otpCodeListDb = await _otpRepository.GetAllDataByExpression(p => p.Code == loginRequest.OTPCode && (p.Type == OTPType.Login || p.Type == OTPType.ConfirmPhone) && p.ExpiredTime > currentTime && !p.IsUsed, 0, 0, null, false, null);
 
-                if (otpCodeListDb.Items.Count > 1)
-                {
-                    result = BuildAppActionResultError(result, "Xảy ra lỗi trong quá trình xử lí, có nhiều hơn 1 otp khả dụng. Vui lòng thử lại sau ít phút");
-                    return result;
-                }
+                //if (otpCodeListDb.Items.Count > 1)
+                //{
+                //    result = BuildAppActionResultError(result, "Xảy ra lỗi trong quá trình xử lí, có nhiều hơn 1 type khả dụng. Vui lòng thử lại sau ít phút");
+                //    return result;
+                //}
 
-                if (otpCodeListDb.Items.Count == 0)
-                {
-                    result = BuildAppActionResultError(result, "Mã otp đã nhập không khả dụng. Vui lòng thử lại");
-                    return result;
-                }
-                var otpCodeDb = otpCodeListDb.Items[0];
+                //if (otpCodeListDb.Items.Count == 0)
+                //{
+                //    result = BuildAppActionResultError(result, "Mã type đã nhập không khả dụng. Vui lòng thử lại");
+                //    return result;
+                //}
+                //var otpCodeDb = otpCodeListDb.Items[0];
 
                 var user = await _accountRepository.GetByExpression(u =>
                     u!.PhoneNumber!.ToLower() == loginRequest.PhoneNumber.ToLower() && u.IsDeleted == false);
@@ -103,20 +100,25 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     throw new Exception($"Tài khoản của bạn đã bị khóa bởi hệ thống. Vui lòng liên hệ với hệ thống của nhà hàng");
                 }
-                if (otpCodeDb!.IsUsed == true)
+
+                var otp = JsonConvert.DeserializeObject<OTP>(user.OTP);
+                if (otp == null)
                 {
-                    result = BuildAppActionResultError(result, $"Mã OTP đã được sử dụng");
-                }
-                if (otpCodeDb!.ExpiredTime < currentTime)
-                {
-                    result = BuildAppActionResultError(result, $"Mã OTP đã hết hạn");
-                }
-                if (otpCodeDb == null)
-                {
-                    result = BuildAppActionResultError(result, $"Mã OTP không tồn tại");
+                    return BuildAppActionResultError(result, $"Không tìm thấy mã OTP");
                 }
 
-                if (otpCodeDb!.Code != loginRequest.OTPCode) result = BuildAppActionResultError(result, "Đăng nhâp thất bại");
+                if (otp!.Type != OTPType.Login)
+                {
+                    return BuildAppActionResultError(result, $"Mã OTP hiện tại không thuộc loại Đăng nhập");
+                }
+
+                if (otp!.ExpiredTime < currentTime)
+                {
+                    return BuildAppActionResultError(result, $"Mã OTP đã hết hạn");
+                }
+                
+
+                if (otp!.Code != loginRequest.OTPCode) return BuildAppActionResultError(result, "Đăng nhâp thất bại");
                 if (!BuildAppActionResultIsError(result)) result = await LoginDefault(loginRequest.PhoneNumber, user);
 
                 var tokenDto = result.Result as TokenDto;
@@ -156,10 +158,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         await tokenRepository!.Insert(token);
                     }
-
-                    otpCodeDb!.IsUsed = true;
+                    user.OTP = "";
                     await _accountRepository.Update(user);
-                    await _otpRepository.Update(otpCodeDb);
                 }
                 await _unitOfWork.SaveChangesAsync();
             }
@@ -234,9 +234,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var user = await _accountRepository.GetByExpression(u =>
                     u!.Email.ToLower() == email.ToLower() && u.IsDeleted == false);
                 if (user == null)
-                    result = BuildAppActionResultError(result, $"Email này không tồn tại");
+                    return BuildAppActionResultError(result, $"Email này không tồn tại");
                 else if (user.IsVerified == false)
-                    result = BuildAppActionResultError(result, "Tài khoản này chưa xác thực !");
+                    return BuildAppActionResultError(result, "Tài khoản này chưa xác thực !");
 
                 if (!BuildAppActionResultIsError(result))
                 {
@@ -258,20 +258,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var utility = Resolve<Utility>();
             var jwtService = Resolve<IJwtService>();
             var tokenRepository = Resolve<IGenericRepository<Token>>();
-            var otpRepository = Resolve<IGenericRepository<OTP>>();
             var couponRepository = Resolve<IGenericRepository<Coupon>>();
             var couponProgramRepository = Resolve<IGenericRepository<CouponProgram>>();
-            var emnailService = Resolve<EmailService>();
+            var emnailService = Resolve<IEmailService>();
+            var hashingService = Resolve<IHashingService>();
 
             try
             {
                 if (!utility.IsValidPhoneNumberInput(signUpRequest.PhoneNumber))
                 {
-                    result = BuildAppActionResultError(result, "Số điện thoại không hợp lệ. Vui lòng kiểm tra lại.");
-                    return result;
+                    return BuildAppActionResultError(result, "Số điện thoại không hợp lệ. Vui lòng kiểm tra lại.");
                 }
-                if (await _accountRepository.GetByExpression(r => r!.PhoneNumber == signUpRequest.PhoneNumber) != null)
-                    result = BuildAppActionResultError(result, "Số điện thoại đã tồn tại!");
+
+                var existedAccount = await _accountRepository.GetByExpression(r => r!.PhoneNumber == signUpRequest.PhoneNumber && !r.IsDeleted && !r.IsBanned);
+                if (existedAccount != null)
+                    return BuildAppActionResultError(result, "Số điện thoại đã tồn tại!");
 
                 if (!BuildAppActionResultIsError(result))
                 {
@@ -288,11 +289,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         LastName = signUpRequest.LastName,
                         PhoneNumber = signUpRequest.PhoneNumber,
                         Gender = signUpRequest.Gender,
-                        LoyaltyPoint = 0,
                         IsVerified = isGoogle ? true : false,
                         IsManuallyCreated = true,
                         RegisteredDate = utility.GetCurrentDateInTimeZone()
                     };
+
+                    var loyaltyPoint = hashingService.Hashing(user.Id, 0, true);
+                    if (loyaltyPoint.IsSuccess)
+                    {
+                        user.LoyaltyPoint = loyaltyPoint.Result.ToString();
+                    }
 
                     var resultCreateUser = await _userManager.CreateAsync(user);
                     if (resultCreateUser.Succeeded)
@@ -313,48 +319,33 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 var otpsDb = new OTP
                                 {
-                                    OTPId = Guid.NewGuid(),
                                     Type = OTPType.Register,
-                                    AccountId = user.Id,
                                     Code = verifyCode,
                                     ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
-                                    IsUsed = false,
                                 };
-                                await _otpRepository.Insert(otpsDb);
+                                user.OTP = JsonConvert.SerializeObject(otpsDb);
+                                await _accountRepository.Update(user);
                                 await _unitOfWork.SaveChangesAsync();
                             }
                         }
-                        else
-                        {
-                            var availableOtp = await _otpRepository.GetAllDataByExpression(o => o.Account.PhoneNumber.
-                            Equals(user.PhoneNumber) && o.Type == OTPType.Register && o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && !o.IsUsed, 0, 0, null, false, null);
-                            if (availableOtp.Items.Count > 1)
-                            {
-                                result = BuildAppActionResultError(result, "Xảy ra lỗi trong quá trình xử lí, có nhiều hơn 1 otp khả dụng. Vui lòng thử lại sau ít phút");
-                                return result;
-                            }
+                        //else
+                        //{
+                        //    var otp = JsonConvert.DeserializeObject<OTP>(existedAccount.OTP);
 
-                            if (availableOtp.Items.Count == 1)
-                            {
-                                result.Result = availableOtp.Items[0];
-                                return result;
-                            }
-                            if (!BuildAppActionResultIsError(result))
-                            {
-                                string code = await GenerateVerifyCodeSms(user.PhoneNumber, true); ;
-                                var otpsDb = new OTP
-                                {
-                                    OTPId = Guid.NewGuid(),
-                                    Type = OTPType.Register,
-                                    AccountId = user.Id,
-                                    Code = code,
-                                    ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
-                                    IsUsed = false,
-                                };
-                                await _otpRepository.Insert(otpsDb);
-                                await _unitOfWork.SaveChangesAsync();
-                            }
-                        }
+                        //    if (!BuildAppActionResultIsError(result))
+                        //    {
+                        //        string code = await GenerateVerifyCodeSms(user.PhoneNumber, true); ;
+                        //        var otpsDb = new OTP
+                        //        {
+                        //            Type = OTPType.Register,
+                        //            Code = code,
+                        //            ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
+                        //            IsUsed = false,
+                        //        };
+                        //        await _otpRepository.Insert(otpsDb);
+                        //        await _unitOfWork.SaveChangesAsync();
+                        //    }
+                        //}
                     }
                     else
                     {
@@ -450,27 +441,29 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 var account =
                     await _accountRepository.GetByExpression(
-                        a => a!.PhoneNumber == accountRequest.PhoneNumber!.ToLower());
-                var otpCodeDb = await _otpRepository.GetByExpression(p => p.Code == accountRequest.OTPCode && p.Type == OTPType.ChangePhone);
-                if (otpCodeDb!.IsUsed == true)
-                {
-                    result = BuildAppActionResultError(result, $"Mã OTP đã được sử dụng");
-                }
-                if (otpCodeDb!.ExpiredTime < currentTime)
-                {
-                    result = BuildAppActionResultError(result, $"Mã OTP đã hết hạn");
-                }
+                        a => a!.PhoneNumber == accountRequest.PhoneNumber!.ToLower() && !a.IsBanned && !a.IsDeleted);
+                var otpCodeDb = JsonConvert.DeserializeObject<OTP>(account.OTP);
+
                 if (otpCodeDb == null)
                 {
                     result = BuildAppActionResultError(result, $"Mã OTP không tồn tại");
                 }
+
+                if (otpCodeDb.Type != OTPType.ChangePhone)
+                {
+                    result = BuildAppActionResultError(result, $"Mã OTP hiện tại không thuộc loại Cập nhật số điện thoại");
+                }
+
+                if (otpCodeDb!.ExpiredTime < currentTime)
+                {
+                    result = BuildAppActionResultError(result, $"Mã OTP đã hết hạn");
+                }
+                
                 if (!BuildAppActionResultIsError(result))
                 {
                     account.PhoneNumber = accountRequest.PhoneNumber;
+                    account.OTP = "";
                     result.Result = await _accountRepository.Update(account);
-
-                    otpCodeDb.IsUsed = true;
-                    await _otpRepository.Update(otpCodeDb);
                 }
 
                 await _unitOfWork.SaveChangesAsync();
@@ -483,65 +476,55 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> SendOTP(string phoneNumber, OTPType otp)
+        public async Task<AppActionResult> SendOTP(string phoneNumber, OTPType type)
         {
             var result = new AppActionResult();
             try
             {
                 var utility = Resolve<Utility>();
-                var otpRepository = Resolve<IGenericRepository<OTP>>();
                 if (!utility.IsValidPhoneNumberInput(phoneNumber))
                 {
                     result = BuildAppActionResultError(result, "Số điện thoại không hợp lệ. Vui lòng kiểm tra lại.");
                     return result;
                 }
-                var availableOtp = await _otpRepository.GetAllDataByExpression(o => o.Account.PhoneNumber.Equals(phoneNumber) && otp == o.Type && o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && !o.IsUsed, 0, 0, null, false, null);
-                if (availableOtp.Items.Count > 1)
+                var accountDb = await _accountRepository.GetByExpression(o => o.PhoneNumber.Equals(phoneNumber) && !o.IsDeleted && !o.IsBanned, null);
+                if (accountDb == null)
                 {
-                    result = BuildAppActionResultError(result, "Xảy ra lỗi trong quá trình xử lí, có nhiều hơn 1 otp khả dụng. Vui lòng thử lại sau ít phút");
+                    result = BuildAppActionResultError(result, $"Không tìm thấy tài khoản khách hàng với số điện thoại {phoneNumber}.");
                     return result;
                 }
 
-                if (availableOtp.Items.Count == 1)
+                if (!string.IsNullOrEmpty(accountDb.OTP))
                 {
-                    result.Result = availableOtp.Items[0];
-                    return result;
+                    var otp = JsonConvert.DeserializeObject<OTP>(accountDb.OTP);
+                    if(otp != null && otp.ExpiredTime > utility.GetCurrentDateTimeInTimeZone())
+                    {
+                        //Has valid OTP
+                        if(otp.Type == type)
+                        {
+                            result.Result = otp;
+                            return result;
+                        } 
+                        
+                        return BuildAppActionResultError(result, $"Hiện tại đang có OTP khả dụng khác lo.");
+                    }
                 }
 
-                var user = await _accountRepository.GetAllDataByExpression(a =>
-                  a!.PhoneNumber == phoneNumber && !a.IsDeleted, 0, 0, null, false, null);
-                if (user.Items.Count() == 0)
+                if (!(type == OTPType.Login || type == OTPType.Register) && !accountDb.IsVerified)
                 {
-                    if (!(otp == OTPType.Login || otp == OTPType.Register))
-                    {
-                        throw new Exception($"Tài khoản với sđt {phoneNumber} không tồn tại. Vui lòng thử lại");
-                    }
+                    return BuildAppActionResultError(result, $"Tài khoản với sđt {phoneNumber} chưa đuọc xác thực. Vui lòng thử lại");
                 }
-                else
-                {
-                    if (user.Items.Count() == 1)
-                    {
-                        if (!(otp == OTPType.Login || otp == OTPType.Register) && !user.Items.FirstOrDefault().IsVerified)
-                        {
-                            throw new Exception($"Tài khoản với sđt {phoneNumber} chưa đuọc xác thực. Vui lòng thử lại");
-                        }
 
-                        if (otp == OTPType.Register)
-                        {
-                            throw new Exception($"Tài khoản với sđt {phoneNumber} đã tồn tại. Vui lòng dùng số điện thoại khác");
-                        }
-                    }
-                    else
-                    {
-                        throw new Exception($"Nhiều hơn 1 tài khoản với sđt {phoneNumber} đã tồn tại. Vui lòng dùng số điện thoại khác");
-                    }
+                if (type == OTPType.Register)
+                {
+                    return BuildAppActionResultError(result, $"Tài khoản với sđt {phoneNumber} đã tồn tại. Vui lòng dùng số điện thoại khác");
                 }
 
                 if (!BuildAppActionResultIsError(result))
                 {
                     var smsService = Resolve<ISmsService>();
                     string code = "";
-                    var createdUser = user.Items.FirstOrDefault();
+                    var createdUser = accountDb;
                     if (createdUser == null)
                     {
                         var createAccountResult = await RegisterAccountByPhoneNumber(phoneNumber);
@@ -562,16 +545,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     code = await GenerateVerifyCodeSms(phoneNumber, true);
                     var otpsDb = new OTP
                     {
-                        OTPId = Guid.NewGuid(),
-                        Type = otp,
-                        AccountId = createdUser.Id,
+                        Type = type,
                         Code = code,
                         ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
-                        IsUsed = false,
                     };
-                    await _otpRepository.Insert(otpsDb);
+
+                    createdUser.OTP = JsonConvert.SerializeObject(otpsDb);
+                    await _accountRepository.Update(createdUser);
                     await _unitOfWork.SaveChangesAsync();
-                    otpsDb.Account = null;
                     result.Result = otpsDb;
                 }
             }
@@ -734,71 +715,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> ChangePassword(ChangePasswordDto changePasswordDto, string token)
-        {
-            var result = new AppActionResult();
-
-            try
-            {
-                var utility = Resolve<Utility>();
-                var tokenService = Resolve<ITokenService>();
-                if (!utility.IsValidPhoneNumberInput(changePasswordDto.PhoneNumber))
-                {
-                    result = BuildAppActionResultError(result, "Số điện thoại không hợp lệ. Vui lòng kiểm tra lại.");
-                    return result;
-                }
-                var otpCodeListDb = await _otpRepository.GetAllDataByExpression(p => p.Code == changePasswordDto.OTPCode && p.Type == OTPType.ChangePassword && p.ExpiredTime > utility.GetCurrentDateTimeInTimeZone(), 0, 0, null, false, null);
-                if (otpCodeListDb.Items.Count == 0)
-                {
-                    result = BuildAppActionResultError(result, "Không tìm thấy mã xác nhận");
-                    return result;
-                }
-                else if (otpCodeListDb.Items.Count > 1)
-                {
-                    result = BuildAppActionResultError(result, "Có nhiều hơn 1 mã xác nhận còn hiệu lực. Vui lòng thử lại sau 5 phút");
-                    return result;
-                }
-                var otpCodeDb = otpCodeListDb.Items.FirstOrDefault();
-                if (await _accountRepository.GetByExpression(c =>
-                        c!.PhoneNumber == changePasswordDto.PhoneNumber && c.IsDeleted == false) == null)
-                    result = BuildAppActionResultError(result,
-                        $"Tài khoản có số điện thoại {changePasswordDto.PhoneNumber} không tồn tại!");
-                if (otpCodeDb!.IsUsed == true)
-                {
-                    result = BuildAppActionResultError(result, $"Mã OTP đã được sử dụng");
-                }
-                if (otpCodeDb!.ExpiredTime < utility.GetCurrentDateTimeInTimeZone())
-                {
-                    result = BuildAppActionResultError(result, $"Mã OTP đã hết hạn");
-                }
-                if (otpCodeDb == null)
-                {
-                    result = BuildAppActionResultError(result, $"Mã OTP không tồn tại");
-                }
-                if (!BuildAppActionResultIsError(result))
-                {
-                    var user = await _accountRepository.GetByExpression(c =>
-                        c!.PhoneNumber == changePasswordDto.PhoneNumber && c.IsDeleted == false);
-                    var changePassword = await _userManager.ChangePasswordAsync(user!, changePasswordDto.OldPassword,
-                        changePasswordDto.NewPassword);
-                    if (!changePassword.Succeeded)
-                        result = BuildAppActionResultError(result, "Thay đổi mật khẩu thất bại");
-
-                    var userTokenDb = await tokenService!.InvalidateTokensForUser(user.Id, token);
-                    otpCodeDb.IsUsed = true;
-                    await _otpRepository.Update(otpCodeDb);
-                }
-
-                await _unitOfWork.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-
-            return result;
-        }
-
         public async Task<AppActionResult> GetNewToken(string refreshToken, string userId)
         {
             var result = new AppActionResult();
@@ -820,64 +736,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var jwtService = Resolve<IJwtService>();
                     result.Result = await jwtService!.GetNewToken(refreshToken, userId);
-                }
-
-                await _unitOfWork.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-
-            return result;
-        }
-
-        public async Task<AppActionResult> ForgotPassword(ForgotPasswordDto dto)
-        {
-            var result = new AppActionResult();
-            try
-            {
-                var utility = Resolve<Utility>();
-                if (!utility.IsValidPhoneNumberInput(dto.PhoneNumber))
-                {
-                    result = BuildAppActionResultError(result, "Số điện thoại không hợp lệ. Vui lòng kiểm tra lại.");
-                    return result;
-                }
-                var user = _userManager.Users.FirstOrDefault(a =>
-                    a!.PhoneNumber == dto.PhoneNumber && a.IsDeleted == false && a.IsVerified == true);
-                if (user == null)
-                {
-                    result = BuildAppActionResultError(result, "Tài khoản không tồn tại hoặc chưa được xác thực!");
-                    return result;
-                }
-                var otpCodeListDb = await _otpRepository.GetAllDataByExpression(p => p!.AccountId == user!.Id && p.Type == OTPType.ForgotPassword && p.ExpiredTime > utility.GetCurrentDateTimeInTimeZone(), 0, 0, null, false, null);
-                if (otpCodeListDb.Items.Count == 0)
-                {
-                    result = BuildAppActionResultError(result, "Không tìm thấy mã xác nhận");
-                    return result;
-                }
-                else if (otpCodeListDb.Items.Count > 1)
-                {
-                    result = BuildAppActionResultError(result, "Có nhiều hơn 1 mã xác nhận còn hiệu lực. Vui lòng thử lại sau 5 phút");
-                    return result;
-                }
-                var otpCodeDb = otpCodeListDb.Items.FirstOrDefault();
-                DateTime currentTime = utility.GetCurrentDateTimeInTimeZone();
-                if (otpCodeDb!.Code != dto.RecoveryCode)
-                    throw new Exception("Mã xác nhận sai");
-                else if (otpCodeDb.IsUsed == true)
-                    throw new Exception("Mã xác nhận đã sử dụng");
-                else if (otpCodeDb.ExpiredTime < currentTime)
-                    throw new Exception("Mã xác nhận đã hết hạn sử dụng");
-
-                if (!BuildAppActionResultIsError(result))
-                {
-                    await _userManager.RemovePasswordAsync(user!);
-                    var addPassword = await _userManager.AddPasswordAsync(user!, dto.NewPassword);
-                    throw new Exception("Thay đổi mật khẩu thất bại. Vui lòng thử lại");
-
-                    otpCodeDb.IsUsed = true;
-                    await _otpRepository.Update(otpCodeDb);
                 }
 
                 await _unitOfWork.SaveChangesAsync();
@@ -1314,27 +1172,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     throw new Exception($"Số điện thoại này không tồn tại!");
                 }
 
-                var optUser = await _otpRepository.GetByExpression(p => p!.Code == optCode && p.Type == OTPType.ConfirmPhone, p => p.Account!);
+                var optUser = JsonConvert.DeserializeObject<OTP>(user.OTP);
                 if (optUser == null)
                 {
                     throw new Exception($"Mã Otp không tồn tại!");
                 }
-                else if (optUser.IsUsed == true)
-                {
-                    throw new Exception($"Mã Otp này đã được sử dụng!");
-                }
-                else if (optUser.Code != optCode)
+                if (optUser.Code != optCode)
                 {
                     throw new Exception($"Mã Otp không đúng!");
+                }
+
+                if (optUser.Type != OTPType.ConfirmPhone)
+                {
+                    throw new Exception($"Mã Otp không thuộc loại Xác nhận số điện thoại!");
                 }
 
                 if (!BuildAppActionResultIsError(result))
                 {
                     result = await LoginDefault(phoneNumber, user);
                     user.IsVerified = true;
-
-                    optUser.IsUsed = true;
-                    await _otpRepository.Update(optUser);
+                    user.OTP = "";
+                    await _accountRepository.Update(user);
                     await _unitOfWork.SaveChangesAsync();
                 }
             }
@@ -1368,14 +1226,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var otpsDb = new OTP
                 {
-                    OTPId = Guid.NewGuid(),
                     Type = otpType,
-                    AccountId = customerDb.Id,
                     Code = code,
                     ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
-                    IsUsed = false,
                 };
-                await _otpRepository.Insert(otpsDb);
+                customerDb.OTP = JsonConvert.SerializeObject(otpsDb);
+                await _accountRepository.Update(customerDb);
                 await _unitOfWork.SaveChangesAsync();
                 result.Result = otpsDb.Code;
             }
@@ -1552,24 +1408,30 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     throw new Exception($"Số điện thoại này không tồn tại!");
                 }
 
-                var optUser = await _otpRepository.GetByExpression(p => p!.Code == code && p.Type == OTPType.VerifyForReservation, p => p.Account!);
+                var optUser = JsonConvert.DeserializeObject<OTP>(user.OTP);
                 if (optUser == null)
                 {
                     throw new Exception($"Mã Otp không tồn tại!");
                 }
-                else if (optUser.IsUsed == true)
+
+                if (optUser.Type == OTPType.VerifyForReservation)
+                {
+                    throw new Exception($"Mã Otp không tồn tại!");
+                }
+
+                if (optUser.ExpiredTime < utility.GetCurrentDateTimeInTimeZone())
                 {
                     throw new Exception($"Mã Otp này đã được sử dụng!");
                 }
-                else if (optUser.Code != code)
+
+                if (optUser.Code != code)
                 {
                     throw new Exception($"Mã Otp không đúng!");
                 }
 
                 if (!BuildAppActionResultIsError(result))
                 {
-                    optUser.IsUsed = true;
-                    await _otpRepository.Update(optUser);
+                    user.OTP = "";
                     await _accountRepository.Update(user);
                     await _unitOfWork.SaveChangesAsync();
                 }
@@ -1598,20 +1460,29 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     throw new Exception($"Số điện thoại này không tồn tại!");
                 }
 
-                var optUser = await _otpRepository.GetByExpression(p => p!.Code == code && p.Type == otpType && !p.IsUsed && p.ExpiredTime > utility.GetCurrentDateTimeInTimeZone(), p => p.Account!);
+                var optUser = JsonConvert.DeserializeObject<OTP>(user.OTP);
+
                 if (optUser == null)
                 {
                     throw new Exception($"Mã Otp không tồn tại!");
                 }
-                else if (optUser.IsUsed == true)
+
+                if (optUser.Type != otpType)
                 {
-                    throw new Exception($"Mã Otp này đã được sử dụng!");
+                    throw new Exception($"Loại OTP không phù hợp");
                 }
-                else if (optUser.Type != OTPType.Register && !user.IsVerified)
+
+                if (optUser.ExpiredTime < utility.GetCurrentDateTimeInTimeZone())
+                {
+                    throw new Exception($"Mã Otp này đã hết hạn");
+                }
+
+
+                 if (optUser.Type != OTPType.Register && !user.IsVerified)
                 {
                     throw new Exception($"Thông tin người dùng chưa được xác thực");
                 }
-                else if (optUser.Code != code)
+                 if (optUser.Code != code)
                 {
                     throw new Exception($"Mã Otp không đúng!");
                 }
@@ -1622,10 +1493,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         user.IsVerified = true;
                     }
+                    user.OTP = "";
                     await _accountRepository.Update(user);
 
-                    optUser.IsUsed = true;
-                    await _otpRepository.Update(optUser);
                     await _unitOfWork.SaveChangesAsync();
                 }
             }
@@ -1702,14 +1572,25 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var utility = Resolve<Utility>();
-                var otpRepository = Resolve<IGenericRepository<OTP>>();
                 var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-                var otpDb = await otpRepository!.GetAllDataByExpression(p => p.ExpiredTime < currentTime, 0, 0, null, false, null);
-                if (otpDb!.Items!.Count > 0 && otpDb.Items != null)
+                var accountDb = await _accountRepository!.GetAllDataByExpression(null, 0, 0, null, false, null);
+                if (accountDb!.Items!.Count > 0)
                 {
-                    await otpRepository.DeleteRange(otpDb.Items);
+                    OTP accountOtp = null;
+                    foreach(var account in accountDb.Items)
+                    {
+                        if (!string.IsNullOrEmpty(account.OTP))
+                        {
+                            accountOtp = JsonConvert.DeserializeObject<OTP>(account.OTP);
+                            if(!string.IsNullOrEmpty(accountOtp.Code) && account.ExpiredDate > currentTime)
+                            {
+                                account.OTP = "";
+                            }
+                        }
+                    }
+                    await _accountRepository.UpdateRange(accountDb.Items);
+                    await _unitOfWork.SaveChangesAsync();
                 }
-                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -1965,7 +1846,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                var otpRepository = Resolve<IGenericRepository<OTP>>();
                 var utility = Resolve<Utility>();
                 var accountDb = await _accountRepository.GetById(accountId);
                 if (accountDb == null)
@@ -1973,16 +1853,31 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     throw new Exception($"Tài khoản với id {accountId} không tồn tại");
                 }
 
-                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
-                var otpDb = await otpRepository!.GetAllDataByExpression(p => p.Code == otpCode && p.AccountId == accountId && p.Type == OTPType.ConfirmEmail && p.ExpiredTime > currentTime, 0, 0, p => p.ExpiredTime, false, null);
-                if (otpDb.Items!.FirstOrDefault() == null)
+                var existedAccountWithEmail = await _accountRepository.GetByExpression(a => a.Email.Equals(email.ToLower()) && !a.IsDeleted && !a.IsBanned, null);
+                if(existedAccountWithEmail != null)
                 {
-                    throw new Exception($"Mã OTP không tồn tại");
+                    return BuildAppActionResultError(result, $"Tồn tại tài khoản với email {email}");
+                }
+
+                var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+                var otp = JsonConvert.DeserializeObject<OTP>(accountDb.OTP);
+                if (otp == null)
+                {
+                    return BuildAppActionResultError(result, $"Mã OTP không tồn tại");
                 }
                 else
                 {
-                    accountDb.Email = email;
-                    accountDb.NormalizedEmail = email.ToUpper();
+                    if(otp.Code == otpCode && accountDb.Id.Equals(accountId) && otp.Type == OTPType.ConfirmEmail && otp.ExpiredTime > currentTime)
+                    {
+                        accountDb.Email = email;
+                        accountDb.NormalizedEmail = email.ToUpper();
+                        accountDb.UserName = email;
+                        accountDb.NormalizedUserName = email.ToUpper();
+                        accountDb.OTP = "";
+                    } else 
+                    {
+                        return BuildAppActionResultError(result, $"Mã OTP không tồn tại");
+                    }
                 }
 
                 await _accountRepository.Update(accountDb);
@@ -2066,8 +1961,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var utility = Resolve<Utility>();
             var jwtService = Resolve<IJwtService>();
             var tokenRepository = Resolve<IGenericRepository<Token>>();
-            var otpRepository = Resolve<IGenericRepository<OTP>>();
             var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
+            var hashingService = Resolve<IHashingService>();
             await _unitOfWork.ExecuteInTransaction(async () =>
             {
                 try
@@ -2099,11 +1994,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             LastName = signUpRequestDto.LastName,
                             PhoneNumber = signUpRequestDto.PhoneNumber,
                             Gender = signUpRequestDto.Gender,
-                            LoyaltyPoint = 0,
                             IsVerified = isGoogle ? true : false,
                             IsManuallyCreated = true,
                             RegisteredDate = utility.GetCurrentDateInTimeZone()
                         };
+
+                        var loyaltyPoint = hashingService.Hashing(user.Id, 0, true);
+                        if (loyaltyPoint.IsSuccess)
+                        {
+                            user.LoyaltyPoint = loyaltyPoint.Result.ToString();
+                        }
 
                         var resultCreateUser = await _userManager.CreateAsync(user);
                         if (resultCreateUser.Succeeded)
@@ -2126,50 +2026,46 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                     var otpsDb = new OTP
                                     {
-                                        OTPId = Guid.NewGuid(),
                                         Type = OTPType.Register,
-                                        AccountId = user.Id,
                                         Code = verifyCode,
                                         ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
-                                        IsUsed = false,
                                     };
-                                    await _otpRepository.Insert(otpsDb);
+
+                                    user.OTP = JsonConvert.SerializeObject(otpsDb);
+                                    await _userManager.UpdateAsync(user);
                                     await _unitOfWork.SaveChangesAsync();
                                 }
                             }
                             else
                             {
-                                var availableOtp = await _otpRepository.GetAllDataByExpression(
-                                    o => o.Account.PhoneNumber.Equals(user.PhoneNumber) && o.Type == OTPType.Register &&
-                                         o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && !o.IsUsed, 0, 0,
-                                    null, false, null);
-                                if (availableOtp.Items.Count > 1)
-                                {
-                                    result = BuildAppActionResultError(result,
-                                        "Xảy ra lỗi trong quá trình xử lí, có nhiều hơn 1 otp khả dụng. Vui lòng thử lại sau ít phút");
-                                }
+                                //var availableOtp = await _otpRepository.GetAllDataByExpression(
+                                //    o => o.Account.PhoneNumber.Equals(user.PhoneNumber) && o.Type == OTPType.Register &&
+                                //         o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && !o.IsUsed, 0, 0,
+                                //    null, false, null);
+                                //if (availableOtp.Items.Count > 1)
+                                //{
+                                //    throw new Exception ("Xảy ra lỗi trong quá trình xử lí, có nhiều hơn 1 type khả dụng. Vui lòng thử lại sau ít phút");
+                                //}
 
-                                if (availableOtp.Items.Count == 1)
-                                {
-                                    result.Result = availableOtp.Items[0];
-                                }
+                                //if (availableOtp.Items.Count == 1)
+                                //{
+                                //    result.Result = availableOtp.Items[0];
+                                //}
 
-                                if (!BuildAppActionResultIsError(result))
-                                {
-                                    string code = await GenerateVerifyCodeSms(user.PhoneNumber, true);
-                                    ;
-                                    var otpsDb = new OTP
-                                    {
-                                        OTPId = Guid.NewGuid(),
-                                        Type = OTPType.Register,
-                                        AccountId = user.Id,
-                                        Code = code,
-                                        ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
-                                        IsUsed = false,
-                                    };
-                                    await _otpRepository.Insert(otpsDb);
-                                    await _unitOfWork.SaveChangesAsync();
-                                }
+                                //if (!BuildAppActionResultIsError(result))
+                                //{
+                                //    string code = await GenerateVerifyCodeSms(user.PhoneNumber, true);
+                                //    ;
+                                //    var otpsDb = new OTP
+                                //    {
+                                //        Type = OTPType.Register,
+                                //        Code = code,
+                                //        ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
+                                //        IsUsed = false,
+                                //    };
+                                //    await _otpRepository.Insert(otpsDb);
+                                //    await _unitOfWork.SaveChangesAsync();
+                                //}
                             }
                         }
                         else
@@ -2185,7 +2081,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         var resultCreateRole = await _userManager.AddToRoleAsync(user, roleDb.Name);
                         if (!resultCreateRole.Succeeded)
-                            result = BuildAppActionResultError(result, $"Cấp quyền khách hàng không thành công");
+                           throw new Exception($"Cấp quyền khách hàng không thành công");
 
                         if (!BuildAppActionResultIsError(result))
                         {

@@ -11,13 +11,14 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public DateTime? DOB { get; set; }
         public bool? Gender { get; set; }
         public string? Address { get; set; } = null!;
+        public string? OTP { get; set; } = null!;
         public bool IsVerified { get; set; }
         public bool IsDeleted { get; set; } = false;
-        public int LoyaltyPoint { get; set; }
+        public string LoyaltyPoint { get; set; }
         public string? Avatar { get; set; }
         public bool IsManuallyCreated { get; set; }
         public bool IsDelivering { get; set; }
-        public double StoreCreditAmount { get; set; }
+        public string StoreCreditAmount { get; set; }
         public DateTime ExpiredDate { get; set; }
         public DateTime RegisteredDate { get; set; }
         public bool IsBanned { get; set; }

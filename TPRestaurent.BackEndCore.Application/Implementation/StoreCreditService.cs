@@ -29,6 +29,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             AppActionResult result = new AppActionResult();
             var utility = Resolve<Utility>();
+            var hashingService = Resolve<IHashingService>();
             try
             {
                 var currentTime = utility!.GetCurrentDateTimeInTimeZone();
@@ -37,7 +38,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     foreach (var account in accountDb!.Items!)
                     {
-                        account.StoreCreditAmount = 0;
+                        account.StoreCreditAmount = hashingService.Hashing(account.Id, 0, false).Result.ToString();
                         await _repository.Update(account);
                     }
                 }
@@ -57,6 +58,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 //Validate in transaction
                 var transactionRepository = Resolve<IGenericRepository<Transaction>>();
+                var hashingService = Resolve<IHashingService>();
                 var transactionDb = await transactionRepository.GetByExpression(
                     t => t.Id == transactionId && t.TransationStatusId == Domain.Enums.TransationStatus.SUCCESSFUL,
                     t => t.Account);
@@ -70,8 +72,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     throw new Exception($"Giao dịch với id {transactionId} đã được cập nhật vào ví");
                 }
 
-                transactionDb.Account.StoreCreditAmount += transactionDb.Amount;
+                var storeCreditAmountResult = hashingService.UnHashing(transactionDb.Account.StoreCreditAmount, false);
+                var storeCreditAmount = int.Parse(storeCreditAmountResult.Result.ToString().Split('_')[1]);
 
+                var transactionAmountResult = hashingService.UnHashing(transactionDb.Amount, false);
+                var transactionAmount = int.Parse(transactionAmountResult.Result.ToString());
+                storeCreditAmount += transactionAmount;
+                
                 var utility = Resolve<Utility>();
                 var configurationRepository = Resolve<IGenericRepository<Configuration>>();
                 var configurationDb =
@@ -86,6 +93,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var expireTimeInDay = double.Parse(configurationDb.CurrentValue);
 
                 transactionDb.Account!.ExpiredDate = utility.GetCurrentDateInTimeZone().AddDays(expireTimeInDay);
+                transactionDb.Account.StoreCreditAmount = hashingService.Hashing(transactionDb.AccountId, storeCreditAmount, false).Result.ToString();
                 transactionDb.TransationStatusId = Domain.Enums.TransationStatus.APPLIED;
                 await transactionRepository.Update(transactionDb);
                 await _repository.Update(transactionDb.Account!);
