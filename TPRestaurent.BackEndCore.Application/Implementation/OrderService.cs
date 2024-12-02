@@ -1,6 +1,8 @@
 using AutoMapper;
 using MailKit.Search;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
+using NPOI.SS.Formula.Functions;
 using System.Linq.Expressions;
 using System.Text;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
@@ -641,27 +643,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        private async Task ApplyLoyalTyPoint(Order order)
-        {
-            try
-            {
-                var loyaltyPointRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
-                var accountRepository = Resolve<IGenericRepository<Account>>();
-                var accountDb = order.Account;
-                var loyaltyPointDb = await loyaltyPointRepository.GetAllDataByExpression(l => l.OrderId == order.OrderId, 0, 0, l => l.PointChanged, true, null);
-                foreach (var loyaltyPoint in loyaltyPointDb.Items)
-                {
-                    accountDb.LoyaltyPoint += loyaltyPoint.PointChanged;
-                    loyaltyPoint.NewBalance = accountDb.LoyaltyPoint;
-                }
-                await accountRepository.Update(accountDb);
-                await loyaltyPointRepository.UpdateRange(loyaltyPointDb.Items);
-                await _unitOfWork.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-            }
-        }
+        //private async Task ApplyLoyalTyPoint(Order order)
+        //{
+        //    try
+        //    {
+        //        var loyaltyPointRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
+        //        var accountRepository = Resolve<IGenericRepository<Account>>();
+        //        var accountDb = order.Account;
+        //        var loyaltyPointDb = await loyaltyPointRepository.GetAllDataByExpression(l => l.OrderId == order.OrderId, 0, 0, l => l.PointChanged, true, null);
+        //        foreach (var loyaltyPoint in loyaltyPointDb.Items)
+        //        {
+        //            accountDb.LoyaltyPoint += loyaltyPoint.PointChanged;
+        //            loyaltyPoint.NewBalance = accountDb.LoyaltyPoint;
+        //        }
+        //        await accountRepository.Update(accountDb);
+        //        await loyaltyPointRepository.UpdateRange(loyaltyPointDb.Items);
+        //        await _unitOfWork.SaveChangesAsync();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //    }
+        //}
 
         public async Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto)
         {
@@ -695,6 +697,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var hubService = Resolve<IHubServices.IHubServices>();
                 var tableService = Resolve<ITableService>();
                 var dishManagementService = Resolve<IDishManagementService>();
+                var hashingService = Resolve<IHashingService>();
                 var mapService = Resolve<IMapService>();
                 var smsService = Resolve<ISmsService>();
                 var emailService = Resolve<IEmailService>();
@@ -1266,6 +1269,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await couponRepository.UpdateRange(customerSavedCouponDb.Items);
                         }
 
+                        int loyaltyPoint = 0;
+
                         if (orderRequestDto.DeliveryOrder.LoyalPointToUse.HasValue && orderRequestDto.DeliveryOrder.LoyalPointToUse > 0)
                         {
                             var maxLoyaltyPointPercentage = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.MAX_APPLY_LOYALTY_POINT_PERCENT), null);
@@ -1273,14 +1278,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 throw new Exception($"Không tìm thấy cấu hình hệ thống cho ử dụng điềm thưởng. Vui lòng kiểm tra lại thông tin cấu hình");
                             }
-                            double loyaltyPointPercentage = double.Parse(maxLoyaltyPointPercentage.CurrentValue);
+                            double loyaltyPointPercentage = int.Parse(maxLoyaltyPointPercentage.CurrentValue);
                             if (loyaltyPointPercentage * money < orderRequestDto.DeliveryOrder.LoyalPointToUse)
                             {
                                 throw new Exception($"Phần trăm giảm giá tối đa bằng điểm thưởng là {(loyaltyPointPercentage * 100)}%. Vui lòng điều chỉnh điểm tưởng sử dụng");
                             }
 
+                            var customerLoyaltyPoint = hashingService.UnHashing(accountDb.LoyaltyPoint, true);
+                            if (!customerLoyaltyPoint.IsSuccess)
+                            {
+                                throw new Exception("Xảy ra lỗi khi tính điểm thưởng. Vui lòng thử lại.");
+                            }
+
+                            var decodedLoyaltyPoint = customerLoyaltyPoint.Result.ToString();
+                            if (!decodedLoyaltyPoint.Contains(accountDb.Id))
+                            {
+                                throw new Exception("Không đồng bộ dữ liễu điểm thưởng. Vui lòng thử lại sau.");
+                            }
+                            loyaltyPoint = int.Parse(decodedLoyaltyPoint.Split('_')[1]);
+
                             // Check if the user has enough points
-                            if (accountDb!.LoyaltyPoint >= orderRequestDto.DeliveryOrder.LoyalPointToUse)
+                            if (loyaltyPoint >= orderRequestDto.DeliveryOrder.LoyalPointToUse)
                             {
                                 // Calculate the discount (assuming 1 point = 1 currency unit)
                                 double loyaltyDiscount = Math.Min(orderRequestDto.DeliveryOrder.LoyalPointToUse.Value, money);
@@ -1290,7 +1308,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 money = Math.Max(0, money);
 
                                 // Update the customer's loyalty points
-                                accountDb.LoyaltyPoint -= (int)loyaltyDiscount;
+
+                                loyaltyPoint -= (int)loyaltyDiscount;
 
                                 // Create a new loyalty point history entry for the point usage
                                 var loyalPointUsageHistory = new LoyalPointsHistory
@@ -1298,8 +1317,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     LoyalPointsHistoryId = Guid.NewGuid(),
                                     TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
                                     OrderId = order.OrderId,
-                                    PointChanged = -(int)loyaltyDiscount,
-                                    NewBalance = accountDb.LoyaltyPoint,
+                                    PointChanged = hashingService.Hashing(accountDb.Id, -(int)loyaltyDiscount, true).Result.ToString(),
+                                    NewBalance = hashingService.Hashing(accountDb.Id, loyaltyPoint, true).Result.ToString(),
                                     IsApplied = false
                                 };
 
@@ -1311,14 +1330,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 throw new Exception("Không đủ điểm tích lũy để sử dụng.");
                             }
                         }
-
+                        loyaltyPoint += (int)(money / 100);
                         var newLoyalPointHistory = new LoyalPointsHistory
                         {
                             LoyalPointsHistoryId = Guid.NewGuid(),
                             TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
                             OrderId = order.OrderId,
-                            PointChanged = (int)money / 100,
-                            NewBalance = accountDb.LoyaltyPoint + (int)money / 100
+                            PointChanged = hashingService.Hashing(accountDb.Id, (int)(money / 100), true).Result.ToString(),
+                            NewBalance = hashingService.Hashing(accountDb.Id, loyaltyPoint, true).Result.ToString()
                         };
 
                         await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
@@ -1563,6 +1582,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                     var configurationRepository = Resolve<IGenericRepository<Configuration>>();
                     var dishManagementService = Resolve<IDishManagementService>();
+                    var hashingService = Resolve<IHashingService>();
                     var utility = Resolve<Utility>();
                     var orderDb = await _repository.GetByExpression(o => o.OrderId == orderRequestDto.OrderId, null);
                     Transaction refundTransaction = null;
@@ -1684,7 +1704,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                             money -= discountMoney;
                             await couponRepository.UpdateRange(customerSavedCouponDb.Items);
-                        } 
+                        }
+
+                        int loyaltyPoint = 0;
 
                         if (orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse > 0)
                         {
@@ -1699,8 +1721,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 throw new Exception($"Phần trăm giảm giá tối đa bằng điểm thưởng là {(loyaltyPointPercentage * 100)}%. Vui lòng điều chỉnh điểm tưởng sử dụng");
                             }
 
+                            var customerLoyaltyPoint = hashingService.UnHashing(accountDb.LoyaltyPoint, true);
+                            if (!customerLoyaltyPoint.IsSuccess)
+                            {
+                                throw new Exception("Xảy ra lỗi khi tính điểm thưởng. Vui lòng thử lại.");
+                            }
+
+                            var decodedLoyaltyPoint = customerLoyaltyPoint.Result.ToString();
+                            if (!decodedLoyaltyPoint.Contains(accountDb.Id))
+                            {
+                                throw new Exception("Không đồng bộ dữ liễu điểm thưởng. Vui lòng thử lại sau.");
+                            }
+                            loyaltyPoint = int.Parse(decodedLoyaltyPoint.Split('_')[1]);
+
                             // Check if the user has enough points
-                            if (accountDb!.LoyaltyPoint >= orderRequestDto.LoyalPointsToUse)
+                            if (loyaltyPoint >= orderRequestDto.LoyalPointsToUse)
                             {
                                 // Calculate the discount (assuming 1 point = 1 currency unit)
                                 double loyaltyDiscount = Math.Min(orderRequestDto.LoyalPointsToUse.Value, money);
@@ -1710,7 +1745,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 money = Math.Max(0, money);
 
                                 // Update the customer's loyalty points
-                                accountDb.LoyaltyPoint -= (int)loyaltyDiscount;
+                                loyaltyPoint -= (int)loyaltyDiscount;
 
                                 // Create a new loyalty point history entry for the point usage
                                 var loyalPointUsageHistory = new LoyalPointsHistory
@@ -1718,8 +1753,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     LoyalPointsHistoryId = Guid.NewGuid(),
                                     TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
                                     OrderId = orderDb.OrderId,
-                                    PointChanged = -(int)loyaltyDiscount,
-                                    NewBalance = accountDb.LoyaltyPoint,
+                                    PointChanged = hashingService.Hashing(accountDb.Id, -(int)loyaltyDiscount, true).Result.ToString(),
+                                    NewBalance = hashingService.Hashing(accountDb.Id, loyaltyPoint, true).Result.ToString(),
                                     IsApplied = false
                                 };
 
@@ -1732,13 +1767,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                         }
 
+                        loyaltyPoint += (int)(money / 100);
                         var newLoyalPointHistory = new LoyalPointsHistory
                         {
                             LoyalPointsHistoryId = Guid.NewGuid(),
                             TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
                             OrderId = orderDb.OrderId,
-                            PointChanged = (int)money / 100,
-                            NewBalance = accountDb.LoyaltyPoint + (int)money / 100,
+                            PointChanged = hashingService.Hashing(accountDb.Id, (int)(money / 100), true).Result.ToString(),
+                            NewBalance = hashingService.Hashing(accountDb.Id, loyaltyPoint, true).Result.ToString(),
                             IsApplied = false
                         };
 
@@ -3934,108 +3970,109 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
             var notificationService = Resolve<INotificationMessageService>();
             var orderAssignedRequestRepository = Resolve<IGenericRepository<OrderAssignedRequest>>();
+            var hashingService = Resolve<IHashingService>();
 
-            try
-            {
-                var orderDb = await _repository.GetAllDataByExpression(
-                    p => p.OrderId == cancelDeliveringOrderRequest.OrderId,
-                    0, 0, null, false,
-                    p => p.Status!, p => p.OrderType!,
-                    p => p.Account!, p => p.Shipper!,
-                    p => p.LoyalPointsHistory!
-                );
+            //try
+            //{
+            //    var orderDb = await _repository.GetAllDataByExpression(
+            //        p => p.OrderId == cancelDeliveringOrderRequest.OrderId,
+            //        0, 0, null, false,
+            //        p => p.Status!, p => p.OrderType!,
+            //        p => p.Account!, p => p.Shipper!,
+            //        p => p.LoyalPointsHistory!
+            //    );
 
-                if (orderDb!.Items!.Count <= 0)
-                {
-                    throw new Exception($"Không tìm thấy đơn hàng với id {cancelDeliveringOrderRequest.OrderId}");
-                }
+            //    if (orderDb!.Items!.Count <= 0)
+            //    {
+            //        throw new Exception($"Không tìm thấy đơn hàng với id {cancelDeliveringOrderRequest.OrderId}");
+            //    }
 
-                var order = orderDb.Items!.FirstOrDefault();
-                if (order == null)
-                {
-                    throw new Exception("Order is null.");
-                }
+            //    var order = orderDb.Items!.FirstOrDefault();
+            //    if (order == null)
+            //    {
+            //        throw new Exception("Order is null.");
+            //    }
 
-                var accountDb = await accountRepository!.GetById(order.AccountId);
-                if (accountDb == null)
-                {
-                    throw new Exception($"Không tìm thấy khách hàng với id {order.AccountId}");
-                }
+            //    var accountDb = await accountRepository!.GetById(order.AccountId);
+            //    if (accountDb == null)
+            //    {
+            //        throw new Exception($"Không tìm thấy khách hàng với id {order.AccountId}");
+            //    }
 
-                if (cancelDeliveringOrderRequest.isCancelledByAdmin == true)
-                {
-                    order.CancelDeliveryReason = SD.CancelledReason.CANCELLED_BY_SYSTEM;
+            //    if (cancelDeliveringOrderRequest.isCancelledByAdmin == true)
+            //    {
+            //        order.CancelDeliveryReason = SD.CancelledReason.CANCELLED_BY_SYSTEM;
 
-                    var newTransaction = new Transaction
-                    {
-                        Id = Guid.NewGuid(),
-                        AccountId = order.AccountId,
-                        PaymentMethodId = PaymentMethod.STORE_CREDIT,
-                        TransactionTypeId = TransactionType.Refund,
-                        Date = currentTime,
-                        Amount = order.TotalAmount,
-                        OrderId = order.OrderId,
-                        TransationStatusId = TransationStatus.SUCCESSFUL
-                    };
+            //        var newTransaction = new Transaction
+            //        {
+            //            Id = Guid.NewGuid(),
+            //            AccountId = order.AccountId,
+            //            PaymentMethodId = PaymentMethod.STORE_CREDIT,
+            //            TransactionTypeId = TransactionType.Refund,
+            //            Date = currentTime,
+            //            Amount = order.TotalAmount,
+            //            OrderId = order.OrderId,
+            //            TransationStatusId = TransationStatus.SUCCESSFUL
+            //        };
 
-                    await transactionRepository!.Insert(newTransaction);
+            //        await transactionRepository!.Insert(newTransaction);
 
-                    accountDb.LoyaltyPoint += (int)order.TotalAmount;
-                    var newLoyaltyPointHistory = new LoyalPointsHistory
-                    {
-                        LoyalPointsHistoryId = Guid.NewGuid(),
-                        OrderId = order.OrderId,
-                        TransactionDate = currentTime,
-                        PointChanged = (int)order.TotalAmount,
-                        NewBalance = accountDb.LoyaltyPoint
-                    };
+            //        accountDb.LoyaltyPoint += (int)order.TotalAmount;
+            //        var newLoyaltyPointHistory = new LoyalPointsHistory
+            //        {
+            //            LoyalPointsHistoryId = Guid.NewGuid(),
+            //            OrderId = order.OrderId,
+            //            TransactionDate = currentTime,
+            //            PointChanged = hashingService.Hashing(accountDb.Id, (int)order.TotalAmount, true).Result.ToString(),
+            //            NewBalance = accountDb.LoyaltyPoint
+            //        };
 
-                    await loyalPointsHistoryRepository!.Insert(newLoyaltyPointHistory);
+            //        await loyalPointsHistoryRepository!.Insert(newLoyaltyPointHistory);
 
-                    string message = $"Đơn hàng ID {order.OrderId} đã bị hủy và chúng tôi đã hoàn tiền {order.TotalAmount} cho bạn.";
-                    await notificationService!.SendNotificationToAccountAsync(accountDb.Id, message, true);
-                }
-                else
-                {
-                    var shipperDb = await accountRepository.GetById(cancelDeliveringOrderRequest.ShipperRequestId);
-                    if (shipperDb == null)
-                    {
-                        throw new Exception($"Không tìm thấy tài khoản shipper với id {cancelDeliveringOrderRequest.ShipperRequestId}");
-                    }
+            //        string message = $"Đơn hàng ID {order.OrderId} đã bị hủy và chúng tôi đã hoàn tiền {order.TotalAmount} cho bạn.";
+            //        await notificationService!.SendNotificationToAccountAsync(accountDb.Id, message, true);
+            //    }
+            //    else
+            //    {
+            //        var shipperDb = await accountRepository.GetById(cancelDeliveringOrderRequest.ShipperRequestId);
+            //        if (shipperDb == null)
+            //        {
+            //            throw new Exception($"Không tìm thấy tài khoản shipper với id {cancelDeliveringOrderRequest.ShipperRequestId}");
+            //        }
 
-                    var orderAssignedRequest = new OrderAssignedRequest
-                    {
-                        OrderAssignedRequestId = Guid.NewGuid(),
-                        RequestTime = currentTime,
-                        OrderId = order.OrderId,
-                        ShipperAssignedId = shipperDb.Id,
-                        StatusId = OrderAssignedStatus.Pending,
-                        Reasons = cancelDeliveringOrderRequest.CancelledReasons
-                    };
+            //        var orderAssignedRequest = new OrderAssignedRequest
+            //        {
+            //            OrderAssignedRequestId = Guid.NewGuid(),
+            //            RequestTime = currentTime,
+            //            OrderId = order.OrderId,
+            //            ShipperAssignedId = shipperDb.Id,
+            //            StatusId = OrderAssignedStatus.Pending,
+            //            Reasons = cancelDeliveringOrderRequest.CancelledReasons
+            //        };
 
-                    await orderAssignedRequestRepository!.Insert(orderAssignedRequest);
+            //        await orderAssignedRequestRepository!.Insert(orderAssignedRequest);
 
-                    order.CancelDeliveryReason = cancelDeliveringOrderRequest.CancelledReasons;
+            //        order.CancelDeliveryReason = cancelDeliveringOrderRequest.CancelledReasons;
 
-                    string message = $"Đơn hàng ID {order.OrderId} đã được yêu cầu hủy bởi Shipper {shipperDb.FirstName} {shipperDb.LastName}";
-                    await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
-                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_RE_DELIVERING_REQUEST);
-                }
+            //        string message = $"Đơn hàng ID {order.OrderId} đã được yêu cầu hủy bởi Shipper {shipperDb.FirstName} {shipperDb.LastName}";
+            //        await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
+            //        await _hubServices.SendAsync(SD.SignalMessages.LOAD_RE_DELIVERING_REQUEST);
+            //    }
 
-                order.StatusId = OrderStatus.Cancelled;
-                order.CancelledTime = currentTime;
+            //    order.StatusId = OrderStatus.Cancelled;
+            //    order.CancelledTime = currentTime;
 
-                if (!BuildAppActionResultIsError(result))
-                {
-                    await accountRepository.Update(accountDb);
-                    await _repository.Update(order);
-                    await _unitOfWork.SaveChangesAsync();
-                }
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
+            //    if (!BuildAppActionResultIsError(result))
+            //    {
+            //        await accountRepository.Update(accountDb);
+            //        await _repository.Update(order);
+            //        await _unitOfWork.SaveChangesAsync();
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    result = BuildAppActionResultError(result, ex.Message);
+            //}
 
             return result;
         }
@@ -4639,6 +4676,46 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
+        }
+
+        private AppActionResult Hashing(string accountId, double amount, bool isLoyaltyPoint)
+        {
+            var hashingService = Resolve<IHashingService>();
+            IConfiguration config = new ConfigurationBuilder()
+                           .SetBasePath(Directory.GetCurrentDirectory())
+                           .AddJsonFile("appsettings.json", true, true)
+                           .Build();
+            string key = "";
+            if (isLoyaltyPoint)
+            {
+                key = config["PaymentSecurity:LoyaltyPoint"];
+            } 
+            else
+            {
+                key = config["PaymentSecurity:StoreCredit"];
+            }
+            return hashingService.Hashing($"{accountId}_{amount}", key);
+        }
+
+        private AppActionResult UnHashing(string text, bool isLoyaltyPoint)
+        {
+            var hashingService = Resolve<IHashingService>();
+
+            IConfiguration config = new ConfigurationBuilder()
+                           .SetBasePath(Directory.GetCurrentDirectory())
+                           .AddJsonFile("appsettings.json", true, true)
+                           .Build();
+            string key = "";
+            if (isLoyaltyPoint)
+            {
+                key = config["PaymentSecurity:LoyaltyPoint"];
+            }
+            else
+            {
+                key = config["PaymentSecurity:StoreCredit"];
+            }
+            return hashingService.DeHashing(text, key);
+
         }
     }
 }

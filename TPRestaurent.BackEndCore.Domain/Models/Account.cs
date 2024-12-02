@@ -14,7 +14,7 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public string? OTP { get; set; } = null!;
         public bool IsVerified { get; set; }
         public bool IsDeleted { get; set; } = false;
-        public int LoyaltyPoint { get; set; }
+        public string LoyaltyPoint { get; set; }
         public string? Avatar { get; set; }
         public bool IsManuallyCreated { get; set; }
         public bool IsDelivering { get; set; }

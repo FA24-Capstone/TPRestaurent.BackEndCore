@@ -9,6 +9,5 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public OTPType Type { get; set; }
         public string Code { get; set; } = null!;
         public DateTime ExpiredTime { get; set; }
-        public bool IsUsed { get; set; }
     }
 }

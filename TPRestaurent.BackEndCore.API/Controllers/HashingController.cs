@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
+using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
@@ -15,13 +16,13 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("hashing")]
-        public string GetHashedHMAC(string value, string key)
+        public AppActionResult GetHashedHMAC(string value, string key)
         {
             return _hashingService.Hashing(value, key);
         }
 
         [HttpGet("decode-hashing")]
-        public string GetUnHashedHMAC(string value, string key)
+        public AppActionResult GetUnHashedHMAC(string value, string key)
         {
             return _hashingService.DeHashing(value, key);
         }
