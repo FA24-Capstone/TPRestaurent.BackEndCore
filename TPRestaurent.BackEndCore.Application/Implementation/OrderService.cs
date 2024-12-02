@@ -726,16 +726,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     DateTime orderTime = utility.GetCurrentDateTimeInTimeZone();
 
                     // Validate order time
-                    bool isInvalidOrderTime = orderTime.Date.AddDays(openTime) > orderTime ||
-                                              orderTime.Date.AddDays(closedTime) < orderTime;
 
-                    bool isInvalidReservationTime = orderRequestDto.ReservationOrder.MealTime.AddHours(openTime) > orderRequestDto.ReservationOrder.MealTime ||
-                                                    orderRequestDto.ReservationOrder.MealTime.AddHours(closedTime) < orderRequestDto.ReservationOrder.MealTime;
-
-                    if ((isInvalidOrderTime && orderRequestDto.OrderType != OrderType.Reservation) ||
-                        (isInvalidReservationTime && orderRequestDto.OrderType == OrderType.Reservation))
+                    if (orderRequestDto.OrderType != OrderType.Reservation)
                     {
-                        throw new Exception("Thời gian đặt không hợp lệ");
+                        bool isInvalidOrderTime = orderTime.Date.AddHours(openTime) > orderTime ||
+                                                  orderTime.Date.AddHours(closedTime) < orderTime;
+                        if (isInvalidOrderTime)
+                        {
+                            throw new Exception("Thời gian đặt không hợp lệ");
+                        }
+                    }
+
+
+                    if (orderRequestDto.OrderType == OrderType.Reservation)
+                    {
+                        bool isInvalidReservationTime = orderRequestDto.ReservationOrder.MealTime.AddHours(openTime) > orderRequestDto.ReservationOrder.MealTime ||
+                                                        orderRequestDto.ReservationOrder.MealTime.AddHours(closedTime) < orderRequestDto.ReservationOrder.MealTime;
+                        if (isInvalidReservationTime)
+                        {
+                            throw new Exception("Thời gian đặt không hợp lệ");
+                        }
                     }
 
                     // Validate number of people
@@ -810,10 +820,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var latestOrderSession = orderSessionDb.Items!.Count() + 1;
                     var estimatedPreparationTime = new List<CalculatePreparationTime>();
                     var notifyTime = int.Parse((await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TIME_TO_NOTIFY_DISHES_TO_KITCHEN), null))?.CurrentValue);
+                    var orderSessionTime = new DateTime();
+                    if(orderRequestDto.ReservationOrder != null)
+                    {
+                        if(orderRequestDto.ReservationOrder.MealTime.AddHours(-notifyTime) > orderTime)
+                            {
+                                orderSessionTime = orderTime;
+                            } else
+                            {
+                                orderSessionTime = orderRequestDto.ReservationOrder.MealTime.AddHours(-notifyTime);
+                            }
+                    } else
+                        {
+                            orderSessionTime = orderTime;
+                        }
                     var orderSession = new OrderSession()
                     {
                         OrderSessionId = Guid.NewGuid(),
-                        OrderSessionTime = orderRequestDto.ReservationOrder.MealTime.AddHours(-notifyTime) > orderTime ? orderTime : orderRequestDto.ReservationOrder.MealTime.AddHours(-notifyTime),
+                        OrderSessionTime = orderSessionTime,
                         OrderSessionStatusId = orderRequestDto.OrderType == OrderType.MealWithoutReservation ? OrderSessionStatus.Confirmed : OrderSessionStatus.PreOrder,
                         OrderSessionNumber = latestOrderSession
                     };
