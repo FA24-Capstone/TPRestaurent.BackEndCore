@@ -9,8 +9,8 @@ namespace TPRestaurent.BackEndCore.Domain.Models
         public Guid LoyalPointsHistoryId { get; set; }
 
         public DateTime TransactionDate { get; set; }
-        public int PointChanged { get; set; }
-        public int NewBalance { get; set; }
+        public string PointChanged { get; set; }
+        public string NewBalance { get; set; }
         public bool IsApplied { get; set; }
         public Guid? OrderId { get; set; }
 

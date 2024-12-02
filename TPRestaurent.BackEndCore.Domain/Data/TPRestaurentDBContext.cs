@@ -25,7 +25,6 @@ namespace TPRestaurent.BackEndCore.Domain.Data
         public DbSet<Models.LoyalPointsHistory> LoyalPointsHistories { get; set; } = null!;
         public DbSet<Models.Order> Orders { get; set; } = null!;
         public DbSet<Models.OrderDetail> OrderDetails { get; set; } = null!;
-        public DbSet<Models.OTP> OTPs { get; set; } = null!;
         public DbSet<Models.Rating> Ratings { get; set; } = null!;
         public DbSet<Models.TableDetail> ReservationTableDetail { get; set; } = null!;
         public DbSet<Models.Image> StaticFiles { get; set; } = null!;

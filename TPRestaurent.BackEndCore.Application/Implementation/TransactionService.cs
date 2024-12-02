@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using MailKit.Search;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using NPOI.HSSF.Record;
 using RestSharp;
@@ -45,7 +46,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderRepository = Resolve<IGenericRepository<Order>>();
                 var accountRepository = Resolve<IGenericRepository<Account>>();
                 var orderService = Resolve<IOrderService>();
-                var hasingService = Resolve<IHashingService>();
+                var hashingService = Resolve<IHashingService>();
                 var utility = Resolve<Utility>();
                 var transaction = new Transaction();
                 IConfiguration config = new ConfigurationBuilder()
@@ -110,7 +111,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 transaction = new Transaction
                                 {
                                     Id = Guid.NewGuid(),
-                                    Amount = amount,
+                                    Amount = hashingService.Hashing("", orderDb.TotalAmount, false).Result.ToString(),
                                     PaymentMethodId = Domain.Enums.PaymentMethod.VNPAY,
                                     OrderId = orderDb.OrderId,
                                     Date = utility!.GetCurrentDateTimeInTimeZone(),
@@ -143,7 +144,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
-                                        Amount = (double)(paymentRequest.StoreCreditAmount),
+                                        Amount = hashingService.Hashing(paymentRequest.AccountId, paymentRequest.StoreCreditAmount.Value, false).Result.ToString(),
                                         PaymentMethodId = Domain.Enums.PaymentMethod.VNPAY,
                                         AccountId = paymentRequest.AccountId,
                                         Date = utility!.GetCurrentDateTimeInTimeZone(),
@@ -199,7 +200,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 transaction = new Transaction
                                 {
                                     Id = Guid.NewGuid(),
-                                    Amount = amount,
+                                    Amount = hashingService.Hashing("", amount, false).Result.ToString(),
                                     PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
                                     OrderId = orderDb.OrderId,
                                     Date = utility!.GetCurrentDateTimeInTimeZone(),
@@ -213,7 +214,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 string partnerCode = _momoConfiguration.PartnerCode;
                                 string accessKey = _momoConfiguration.AccessKey;
                                 string secretkey = _momoConfiguration.Secretkey;
-                                string orderInfo = hasingService.Hashing("OR", key);
+                                string orderInfo = hashingService.Hashing("OR", key).Result.ToString();
                                 string redirectUrl = $"{_momoConfiguration.RedirectUrl}";
                                 string ipnUrl = _momoConfiguration.IPNUrl;
                                 string requestType = "payWithATM";
@@ -221,8 +222,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 string requestId = Guid.NewGuid().ToString();
                                 string extraData = transaction.Id.ToString();
 
+                                var transactionAmountResult = hashingService.UnHashing(transaction.Amount, false);
+                                var transactionAmount = double.Parse(transactionAmountResult.Result.ToString());
                                 string rawHash = "accessKey=" + accessKey +
-                                                 "&amount=" + (Math.Ceiling(transaction.Amount / 1000) * 1000)
+                                                 "&amount=" + (Math.Ceiling(transactionAmount / 1000) * 1000)
                                                  .ToString() +
                                                  "&extraData=" + extraData +
                                                  "&ipnUrl=" + ipnUrl +
@@ -273,7 +276,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         transaction = new Transaction
                                         {
                                             Id = Guid.NewGuid(),
-                                            Amount = (double)(paymentRequest.StoreCreditAmount),
+                                            Amount = hashingService.Hashing("", (double)(paymentRequest.StoreCreditAmount), false).Result.ToString(),
                                             PaymentMethodId = Domain.Enums.PaymentMethod.MOMO,
                                             AccountId = accountDb.Id,
                                             Date = utility!.GetCurrentDateTimeInTimeZone(),
@@ -285,7 +288,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         string partnerCode = _momoConfiguration.PartnerCode;
                                         string accessKey = _momoConfiguration.AccessKey;
                                         string secretkey = _momoConfiguration.Secretkey;
-                                        string orderInfo = hasingService.Hashing("OR", key);
+                                        string orderInfo = hashingService.Hashing("OR", key).Result.ToString();
                                         string redirectUrl = $"{_momoConfiguration.RedirectUrl}";
                                         string ipnUrl = _momoConfiguration.IPNUrl;
                                         string requestType = "payWithATM";
@@ -293,9 +296,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         string requestId = Guid.NewGuid().ToString();
                                         string extraData = transaction.OrderId.ToString();
 
+                                        var transactionAmountResult = hashingService.UnHashing(transaction.Amount, false);
+                                        var transactionAmount = double.Parse(transactionAmountResult.Result.ToString());
                                         string rawHash = "accessKey=" + accessKey +
                                                          "&amount=" +
-                                                         (Math.Ceiling(transaction.Amount / 1000) * 1000)
+                                                         (Math.Ceiling(transactionAmount / 1000) * 1000)
                                                          .ToString() +
                                                          "&extraData=" + extraData +
                                                          "&ipnUrl=" + ipnUrl +
@@ -383,17 +388,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                            $"Không tìm thấy số dư tài khoản khách hàng");
                                 }
 
-                                if (accountDb.StoreCreditAmount < amount)
+                                var storeCreditAmountResult = hashingService.UnHashing(accountDb.StoreCreditAmount, false);
+                                var storeCreditAmount = int.Parse(storeCreditAmountResult.Result.ToString().Split('_')[1]);
+
+                                if (storeCreditAmount < amount)
                                 {
                                     throw new Exception(
                                            $"Số dư tài khoản của quý khách không đủ");
                                 }
 
-                                accountDb.StoreCreditAmount -= amount;
+                                storeCreditAmount -= (int)amount;
+                                accountDb.StoreCreditAmount = hashingService.Hashing(accountDb.Id, storeCreditAmount, false).Result.ToString();
                                 transaction = new Transaction
                                 {
                                     Id = Guid.NewGuid(),
-                                    Amount = amount,
+                                    Amount = hashingService.Hashing("", amount, false).Result.ToString(),
                                     PaymentMethodId = Domain.Enums.PaymentMethod.STORE_CREDIT,
                                     OrderId = orderDb.OrderId,
                                     Date = utility!.GetCurrentDateTimeInTimeZone(),
@@ -445,7 +454,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 transaction = new Transaction
                                 {
                                     Id = Guid.NewGuid(),
-                                    Amount = amount,
+                                    Amount = hashingService.Hashing("", amount, false).Result.ToString(),
                                     PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
                                     OrderId = orderDb.OrderId,
                                     Date = utility!.GetCurrentDateTimeInTimeZone(),
@@ -472,7 +481,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
-                                        Amount = paymentRequest.StoreCreditAmount.Value,
+                                        Amount = hashingService.Hashing("", paymentRequest.StoreCreditAmount.Value, false).Result.ToString(),
                                         PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
                                         AccountId = storeCreditDb.Id,
                                         Date = utility!.GetCurrentDateTimeInTimeZone(),
@@ -701,6 +710,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
+                var hashingService = Resolve<IHashingService>();
                 if (order == null)
                 {
                     throw new Exception($"Không tìm thấy đơn hàng");
@@ -766,7 +776,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     Id = Guid.NewGuid(),
                     TransactionTypeId = TransactionType.Refund,
-                    Amount = refundAmount,
+                    Amount = hashingService.Hashing("", refundAmount, false).Result.ToString(),
                     AccountId = order.AccountId,
                     Date = currentTime,
                     PaidDate = currentTime,
@@ -812,11 +822,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var utility = Resolve<Utility>();
                 var accountRepository = Resolve<IGenericRepository<Account>>();
+                var hashingService = Resolve<IHashingService>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
                 var refundTransaction = new Transaction
                 {
                     OrderId = request.OrderId,
-                    Amount = request.RefundAmount,
+                    Amount = hashingService.Hashing("", request.RefundAmount, false).Result.ToString(),
                     Date = currentTime,
                     PaidDate = currentTime,
                     TransactionTypeId = TransactionType.Refund,
