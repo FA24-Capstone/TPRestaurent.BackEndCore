@@ -76,5 +76,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task<AppActionResult> GetAccountByPhoneNumberKeyword(string phoneNumber, int pageNumber, int pageSize);
 
         Task DeleteOverdueOTP();
+        Task<AppActionResult> IsExistAccount(string phoneNumber);
     }
 }

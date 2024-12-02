@@ -2154,5 +2154,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+        public async Task<AppActionResult> IsExistAccount(string phoneNumber)
+        {
+            AppActionResult result = new AppActionResult();
+            try { 
+            
+             result.Result = await _accountRepository.GetByExpression(p => p.PhoneNumber.Equals(phoneNumber.Trim()));
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
     }
 }
