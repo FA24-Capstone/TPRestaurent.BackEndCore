@@ -1306,7 +1306,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 throw new Exception($"Không tìm thấy cấu hình hệ thống cho ử dụng điềm thưởng. Vui lòng kiểm tra lại thông tin cấu hình");
                             }
-                            double loyaltyPointPercentage = double.Parse(maxLoyaltyPointPercentage.CurrentValue);
+                            double loyaltyPointPercentage = int.Parse(maxLoyaltyPointPercentage.CurrentValue);
                             if (loyaltyPointPercentage * money < orderRequestDto.DeliveryOrder.LoyalPointToUse)
                             {
                                 throw new Exception($"Phần trăm giảm giá tối đa bằng điểm thưởng là {(loyaltyPointPercentage * 100)}%. Vui lòng điều chỉnh điểm tưởng sử dụng");

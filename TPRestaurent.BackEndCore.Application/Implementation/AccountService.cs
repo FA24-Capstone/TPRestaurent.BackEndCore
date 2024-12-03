@@ -1434,6 +1434,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if (optUser.ExpiredTime < utility.GetCurrentDateTimeInTimeZone())
                 {
+                    throw new Exception($"Mã Otp không tồn tại!");
+                }
+
+                if (optUser.ExpiredTime < utility.GetCurrentDateTimeInTimeZone())
+                {
                     throw new Exception($"Mã Otp này đã được sử dụng!");
                 }
 
