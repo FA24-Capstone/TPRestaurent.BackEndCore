@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using NPOI.HSSF.Record;
 using RestSharp;
+using System.Collections.Generic;
 using System.Net;
 using System.Text;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
@@ -60,7 +61,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 double amount = 0;
                 if (!paymentRequest.OrderId.HasValue && string.IsNullOrEmpty(paymentRequest.AccountId))
                 {
-                    result = BuildAppActionResultError(result, $"Đơn hàng/Đặt bàn/Ví này không tồn tại");
+                    return BuildAppActionResultError(result, $"Đơn hàng/Đặt bàn/Ví này không tồn tại");
                 }
 
                 if (!BuildAppActionResultIsError(result))
@@ -86,7 +87,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     p.OrderId == orderDb.OrderId && p.TransationStatusId == TransationStatus.SUCCESSFUL && p.TransactionTypeId == TransactionType.Order, null);
                                 if(existingTransaction != null)
                                 {
-                                    result = BuildAppActionResultError(result,
+                                    return BuildAppActionResultError(result,
                                         $"Đơn hàng đang có giao dịch hoặc đã có giao dịch thanh toán thành công");
                                 }
 
@@ -225,7 +226,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 string extraData = transaction.Id.ToString();
 
                                 var transactionAmountResult = hashingService.UnHashing(transaction.Amount, false);
-                                var transactionAmount = double.Parse(transactionAmountResult.Result.ToString());
+                                var transactionAmount = double.Parse(transactionAmountResult.Result.ToString().Split('_')[1]);
                                 string rawHash = "accessKey=" + accessKey +
                                                  "&amount=" + (Math.Ceiling(transactionAmount / 1000) * 1000)
                                                  .ToString() +
@@ -299,7 +300,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         string extraData = transaction.OrderId.ToString();
 
                                         var transactionAmountResult = hashingService.UnHashing(transaction.Amount, false);
-                                        var transactionAmount = double.Parse(transactionAmountResult.Result.ToString());
+                                        var transactionAmount = double.Parse(transactionAmountResult.Result.ToString().Split('_')[1]);
                                         string rawHash = "accessKey=" + accessKey +
                                                          "&amount=" +
                                                          (Math.Ceiling(transactionAmount / 1000) * 1000)
@@ -404,7 +405,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 transaction = new Transaction
                                 {
                                     Id = Guid.NewGuid(),
-                                    Amount = hashingService.Hashing("", amount, false).Result.ToString(),
+                                    Amount = hashingService.Hashing(accountDb.Id, amount, false).Result.ToString(),
                                     PaymentMethodId = Domain.Enums.PaymentMethod.STORE_CREDIT,
                                     OrderId = orderDb.OrderId,
                                     Date = utility!.GetCurrentDateTimeInTimeZone(),
@@ -476,14 +477,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                     if (storeCreditDb == null)
                                     {
-                                        result = BuildAppActionResultError(result,
+                                        return BuildAppActionResultError(result,
                                             $"Khong tìm thấy thông tin ví với id {paymentRequest.AccountId}");
                                     }
 
                                     transaction = new Transaction
                                     {
                                         Id = Guid.NewGuid(),
-                                        Amount = hashingService.Hashing("", paymentRequest.StoreCreditAmount.Value, false).Result.ToString(),
+                                        Amount = hashingService.Hashing(storeCreditDb.Id, paymentRequest.StoreCreditAmount.Value, false).Result.ToString(),
                                         PaymentMethodId = Domain.Enums.PaymentMethod.Cash,
                                         AccountId = storeCreditDb.Id,
                                         Date = utility!.GetCurrentDateTimeInTimeZone(),
@@ -554,7 +555,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     t => t.PaymentMethod!,
                     t => t.TransactionType
                     );
-                result.Result = transactionDb;
+                result.Result = new PagedResult<Transaction>
+                {
+                    Items = GetDecodedTransactionList(transactionDb.Items),
+                    TotalPages = transactionDb.TotalPages
+                };
             }
             catch (Exception ex)
             {
@@ -577,11 +582,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                     t => t.TransactionType,
                                                                                     t => t.TransationStatus);
 
-                result.Result = transactionDb;
+                result.Result = new PagedResult<Transaction>
+                {
+                    Items = GetDecodedTransactionList(transactionDb.Items),
+                    TotalPages = transactionDb.TotalPages,
+                };
             }
             catch (Exception ex)
             {
-                result.Result = BuildAppActionResultError(result, ex.Message);
+                result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
@@ -591,8 +600,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
+                var hashingService = Resolve<IHashingService>();
                 var data = new TransactionReponse();
                 var transactionDb = await _repository.GetByExpression(t => t.Id == paymentId, t => t.TransactionType, t => t.TransationStatus);
+                var decodedTransactionAmountResult = hashingService.UnHashing(transactionDb.Amount, false).Result.ToString();
+                transactionDb.Amount = decodedTransactionAmountResult.Split('_')[decodedTransactionAmountResult.Split('_').Length - 1];
                 data.Transaction = transactionDb;
                 if (transactionDb.OrderId.HasValue)
                 {
@@ -658,7 +670,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     else
                     {
-                        result = BuildAppActionResultError(result, $"Để cập nhật, Trạn thanh toán phải chờ xử lí và trạng thái mong muốn phải khác chờ xử lí");
+                        throw new Exception($"Để cập nhật, Trạn thanh toán phải chờ xử lí và trạng thái mong muốn phải khác chờ xử lí");
                     }
                 }
                 catch (Exception ex)
@@ -676,7 +688,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var loyaltyPointHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
                 var loyaltyPointHistory = await loyaltyPointHistoryRepository.GetAllDataByExpression(l => l.Order.AccountId.Equals(customerId.ToString()), 0, 0, l => l.TransactionDate, false, l => l.Order);
-                result.Result = loyaltyPointHistory;
+                result.Result = new PagedResult<LoyalPointsHistory>
+                {
+                    Items = GetDecodedLoyaltyPointHistoryList(loyaltyPointHistory.Items),
+                    TotalPages = loyaltyPointHistory.TotalPages
+                };
             }
             catch (Exception ex)
             {
@@ -699,7 +715,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                     t => t.TransactionType,
                                                                                     t => t.TransationStatus,
                                                                                     t => t.PaymentMethod);
-                result.Result = transactionDb;
+                result.Result = new PagedResult<Transaction>
+                {
+                    Items = GetDecodedTransactionList(transactionDb.Items),
+                    TotalPages = transactionDb.TotalPages
+                };
             }
             catch (Exception ex)
             {
@@ -789,12 +809,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var accountDb = await accountRepository.GetById(order.AccountId);
 
-                accountDb.StoreCreditAmount += refundTransaction.Amount;
+                var storeCreditAmountResult = hashingService.UnHashing(accountDb.StoreCreditAmount, false);
+                var storeCreditAmount = int.Parse(storeCreditAmountResult.Result.ToString().Split('_')[1]);
+                storeCreditAmount += (int)refundAmount;
 
+                accountDb.StoreCreditAmount = hashingService.Hashing(accountDb.Id, storeCreditAmount, false).Result.ToString();
                 var configurationDb = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.EXPIRE_TIME_FOR_STORE_CREDIT), null);
                 if (configurationDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"Xảy ra lỗi khi ghi lại thông tin nạp tiền. Vui lòng thử lại");
+                    return BuildAppActionResultError(result, $"Xảy ra lỗi khi ghi lại thông tin nạp tiền. Vui lòng thử lại");
                 }
                 var expireTimeInDay = double.Parse(configurationDb.CurrentValue);
 
@@ -842,8 +865,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else
                 {
+
                     refundTransaction.PaymentMethodId = PaymentMethod.STORE_CREDIT;
-                    request.Account.StoreCreditAmount += request.RefundAmount;
+                    var storeCreditAmountResult = hashingService.UnHashing(request.Account.StoreCreditAmount, false);
+                    var storeCreditAmount = int.Parse(storeCreditAmountResult.Result.ToString().Split('_')[1]);
+                    storeCreditAmount += (int)request.RefundAmount;
+
+                    request.Account.StoreCreditAmount = hashingService.Hashing(request.Account.Id, storeCreditAmount, false).Result.ToString();
                     await accountRepository.Update(request.Account);
                 }
 
@@ -912,6 +940,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 //varlidate order
                 var orderRepository = Resolve<IGenericRepository<Order>>();
+                var hashingService = Resolve<IHashingService>();
                 var utility = Resolve<Utility>();
                 var orderDb = await orderRepository.GetByExpression(p => p.OrderId == request.OrderId & p.StatusId == OrderStatus.Completed, o => o.Account);
 
@@ -961,7 +990,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if(request.PaymentMethod == PaymentMethod.STORE_CREDIT)
                 {
                     var accountRepository = Resolve < IGenericRepository<Account>>();
-                    orderDb.Account.StoreCreditAmount += refundTransaction.Amount;
+                    var storeCreditAmountResult = hashingService.UnHashing(orderDb.Account.StoreCreditAmount, false);
+                    var storeCreditAmount = int.Parse(storeCreditAmountResult.Result.ToString().Split('_')[1]);
+                    storeCreditAmount += (int)orderDb.TotalAmount;
+
+                    orderDb.Account.StoreCreditAmount = hashingService.Hashing(orderDb.AccountId, storeCreditAmount, false).Result.ToString();
                     await accountRepository.Update(orderDb.Account);
                 }
                 await _repository.Insert(refundTransaction);
@@ -1030,8 +1063,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         string accountLogMessage = await CheckHacked(account, hashingService, loyaltyPointRepository);
                         if (!string.IsNullOrEmpty(accountLogMessage))
                         {
-                            logMessage.Append($"Thông tin số dư và điểm thưởng của account với {account.Id} có dấu hiệu bất thường. |");
-                            logMessage.Append(accountLogMessage);
+                            logMessage.AppendLine($"Thông tin số dư và điểm thưởng của account với {account.Id} có dấu hiệu bất thường");
+                            logMessage.AppendLine(accountLogMessage);
+                            logMessage.AppendLine("____________________________________________________________________________________");
                         }
                     }
                     Logger.WriteLog(new LogDto
@@ -1061,13 +1095,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if (!storeCredit.IsSuccess)
                 {
-                    logMessage.Append($"{i++}. Không thể giải mã số dư ví cho tài khoản. |");
+                    logMessage.AppendLine($"{i++}. Không thể giải mã số dư ví cho tài khoản.");
                     return logMessage.ToString();
                 }
 
                 if (!storeCredit.Result.ToString().Contains(account.Id))
                 {
-                    logMessage.Append($"{i++}. Số dư không thuộc về tài khoản. |");
+                    logMessage.AppendLine($"{i++}. Số dư không thuộc về tài khoản");
                 }
                 var storeCreditAmount = int.Parse(storeCredit.Result.ToString().Split('_')[1]);
                 var storeCreditDb = await _repository.GetAllDataByExpression(t => t.PaymentMethodId == PaymentMethod.STORE_CREDIT
@@ -1079,12 +1113,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     storeCreditRecord = hashingService.UnHashing(item.Amount, false).Result.ToString();
                     if (string.IsNullOrEmpty(storeCreditRecord))
                     {
-                        logMessage.Append($"{i++}. Không thể giải mã lịch sử dùng/nạp ví cho tài khoản (id record {item.Id}) |");
+                        logMessage.AppendLine($"{i++}. Không thể giải mã lịch sử dùng/nạp ví cho tài khoản (id record {item.Id})");
                         continue;
                     }
                     if (!storeCreditRecord.Contains(account.Id))
                     {
-                        logMessage.Append($"{i++}. Lịch sử dùng/nạp ví không thuộc về tài khoản (id record {item.Id}) |");
+                        logMessage.AppendLine($"{i++}. Lịch sử dùng/nạp ví không thuộc về tài khoản (id record {item.Id})");
                         continue;
                     }
 
@@ -1093,18 +1127,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if(storeCreditAmount != 0)
                 {
-                    logMessage.Append($"{i++}. Tổng số dư ví hiện tại không khớp với lịch sử. |");
+                    logMessage.AppendLine($"{i++}. Tổng số dư ví hiện tại không khớp với lịch sử");
                 }
 
                 if (!loyalPoint.IsSuccess)
                 {
-                    logMessage.Append($"{i++}Không thể giải mã điểm thành viên cho tài khoản. |");
+                    logMessage.AppendLine($"{i++}Không thể giải mã điểm thành viên cho tài khoản.");
                     return logMessage.ToString();
                 }
 
                 if (!loyalPoint.Result.ToString().Contains(account.Id))
                 {
-                    logMessage.Append($"{i++}. Số điểm thành viên không thuộc về tài khoản. |");
+                    logMessage.AppendLine($"{i++}. Số điểm thành viên không thuộc về tài khoản");
 
                 }
                 var loyaltyPointAmount = int.Parse(loyalPoint.Result.ToString().Split('_')[1]);
@@ -1119,31 +1153,31 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     newBalanceRecord = hashingService.UnHashing(item.NewBalance, true).Result.ToString();
                     if (string.IsNullOrEmpty(loyaltyPointRecord))
                     {
-                        logMessage.Append($"{i++}. Không thể giải mã lịch sử dùng/cộng điểm thưởng cho tài khoản (id record {item.LoyalPointsHistoryId}) |");
+                        logMessage.AppendLine($"{i++}. Không thể giải mã lịch sử dùng/cộng điểm thưởng cho tài khoản (id record {item.LoyalPointsHistoryId})");
                         continue;
                     }
 
                     if (string.IsNullOrEmpty(newBalanceRecord))
                     {
-                        logMessage.Append($"{i++}. Không thể giải mã lịch sử tổng điểm thưởng mới cho tài khoản (id record {item.LoyalPointsHistoryId}) |");
+                        logMessage.AppendLine($"{i++}. Không thể giải mã lịch sử tổng điểm thưởng mới cho tài khoản (id record {item.LoyalPointsHistoryId})");
                         continue;
                     }
 
                     if (!loyaltyPointRecord.Contains(account.Id))
                     {
-                        logMessage.Append($"{i++}. Lịch sử dùng/cộng điểm thưởng không thuộc về tài khoản (id record {item.LoyalPointsHistoryId}) |");
+                        logMessage.AppendLine($"{i++}. Lịch sử dùng/cộng điểm thưởng không thuộc về tài khoản (id record {item.LoyalPointsHistoryId})");
                         continue;
                     }
 
                     if (!newBalanceRecord.Contains(account.Id))
                     {
-                        logMessage.Append($"{i++}. Lịch sử tổng điểm thưởng mới không thuộc về tài khoản (id record {item.LoyalPointsHistoryId}) |");
+                        logMessage.AppendLine($"{i++}. Lịch sử tổng điểm thưởng mới không thuộc về tài khoản (id record {item.LoyalPointsHistoryId})");
                         continue;
                     }
 
                     if (previousBalance != int.Parse(newBalanceRecord.Split('_')[1]) - int.Parse(loyaltyPointRecord.Split('_')[1]))
                     {
-                        logMessage.Append($"{i++}. Lịch sử tổng điểm thưởng không khớp (id record {item.LoyalPointsHistoryId}) |");
+                        logMessage.AppendLine($"{i++}. Lịch sử tổng điểm thưởng mới không thuộc về tài khoản (id record {item.LoyalPointsHistoryId})");
                     }
 
                     previousBalance = int.Parse(newBalanceRecord.Split('_')[1]);
@@ -1151,12 +1185,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if(previousBalance != loyaltyPointAmount)
                 {
-                    logMessage.Append($"{i++}. Tổng số điểm thưởng hiện tại không khớp với lịch sử |");
+                    logMessage.AppendLine($"{i++}. Tổng số điểm thưởng hiện tại không khớp với lịch sử");
                 }
             }
             catch (Exception ex)
             {
-                logMessage.Append($"Xảy ra lỗi khi kiểm tra thông tin tài khoản với id {account.Id} |");
+                logMessage.Append($"Xảy ra lỗi khi kiểm tra thông tin tài khoản với id {account.Id}");
             }
             return logMessage.ToString();
         }
@@ -1192,20 +1226,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var accountDb = await accountRepository.GetAllDataByExpression(a => !a.IsDeleted && customerIds.Contains(a.Id), 0, 0, null, false, null);
                 if (accountDb.Items.Count > 0)
                 {
-                    foreach (var account in accountDb.Items)
-                    {
-                        var storeCredit = hashingService.UnHashing(account.StoreCreditAmount, false);
-                        var loyalPoint = hashingService.UnHashing(account.LoyaltyPoint, true);
-                        if (!storeCredit.IsSuccess)
-                        {
-                            account.StoreCreditAmount = hashingService.Hashing(account.Id, double.Parse(account.StoreCreditAmount), false).Result.ToString();
-                        }
+                    //foreach (var account in accountDb.Items)
+                    //{
+                    //    var storeCredit = hashingService.UnHashing(account.StoreCreditAmount, false);
+                    //    var loyalPoint = hashingService.UnHashing(account.LoyaltyPoint, true);
+                    //    if (!storeCredit.IsSuccess)
+                    //    {
+                    //        account.StoreCreditAmount = hashingService.Hashing(account.Id, double.Parse(account.StoreCreditAmount), false).Result.ToString();
+                    //    }
 
-                        if (!loyalPoint.IsSuccess)
-                        {
-                            account.LoyaltyPoint = hashingService.Hashing(account.Id, double.Parse(account.LoyaltyPoint), true).Result.ToString();
-                        }
-                    }
+                    //    if (!loyalPoint.IsSuccess)
+                    //    {
+                    //        account.LoyaltyPoint = hashingService.Hashing(account.Id, double.Parse(account.LoyaltyPoint), true).Result.ToString();
+                    //    }
+                    //}
                     var loyaltyPointDb = await loyaltyPointRepository.GetAllDataByExpression(l => !string.IsNullOrEmpty(l.Order.AccountId), 0, 0, null, false, l => l.Order);
                     foreach (var loyaltyPoint in loyaltyPointDb.Items)
                     {

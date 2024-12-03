@@ -63,9 +63,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result.Result = selectedData;
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                result = BuildAppActionResultError(result, $"Có lỗi xảy ra khi sử dụng API với GoongMap {e.Message} ");
+                return BuildAppActionResultError(result, $"Có lỗi xảy ra khi sử dụng API với GoongMap {ex.Message} ");
             }
             return result;
         }
@@ -114,9 +114,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                result.Result = e;
+                result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
@@ -149,9 +149,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                result.Result = BuildAppActionResultError(result, e.Message);
+                result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
@@ -174,9 +174,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result.Result = obj;
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                result = BuildAppActionResultError(result, $"Có lỗi xảy ra khi sử dụng API với GoongMap {e.Message} ");
+                return BuildAppActionResultError(result, $"Có lỗi xảy ra khi sử dụng API với GoongMap {ex.Message} ");
             }
 
             return result;
@@ -207,9 +207,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                result.Result = BuildAppActionResultError(result, e.Message);
+                result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
@@ -279,7 +279,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     );
                 if (orderToDeliver.Items.Count() != orderIds.Count())
                 {
-                    result = BuildAppActionResultError(result, $"Tồn tại ít nhất 1 id đơn hàng không tồn tại");
+                    return BuildAppActionResultError(result, $"Tồn tại ít nhất 1 id đơn hàng không tồn tại");
                     return result;
                 }
 
@@ -367,9 +367,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     result.Result = optimalTripResponseDTO.OptimalTrip.OrderBy(o => o.Index);
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                result = BuildAppActionResultError(result, e.Message);
+                return BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
@@ -398,7 +398,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
             }
             return result;

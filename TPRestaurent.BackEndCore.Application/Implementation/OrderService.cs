@@ -1,8 +1,6 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
-using NPOI.OpenXmlFormats.Encryption;
-using NPOI.POIFS.Crypt.Dsig;
 using NPOI.SS.Formula.Functions;
 using System.Linq.Expressions;
 using System.Text;
@@ -68,7 +66,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var orderCombo = false;
                         if (orderDb == null)
                         {
-                            result = BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {dto.OrderId}");
+                            throw new Exception($"Không tìm thấy đơn hàng với id {dto.OrderId}");
                         }
 
                         var orderSessionDb =
@@ -283,7 +281,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if (orderDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"Đơn hàng với id {orderId} không tồn tại");
+                    return BuildAppActionResultError(result, $"Đơn hàng với id {orderId} không tồn tại");
                 }
                 else
                 {
@@ -297,7 +295,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.SUCCESSFUL && t.TransactionTypeId == TransactionType.Deposit, null);
                                 if (reservationTransactionDb == null)
                                 {
-                                    result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch thành công cho đơn hàng với id {orderId}");
+                                    return BuildAppActionResultError(result, $"Không tìm thấy giao dịch thành công cho đơn hàng với id {orderId}");
                                 }
                                 orderDb.StatusId = OrderStatus.DepositPaid;
                                 //UPDATE ACCOUNT DISH QUANTITY
@@ -342,7 +340,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.SUCCESSFUL && t.TransactionTypeId == TransactionType.Order, null);
                                     if (reservationTransactionDb == null)
                                     {
-                                        result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch thành công cho đơn hàng với id {orderId}");
+                                        return BuildAppActionResultError(result, $"Không tìm thấy giao dịch thành công cho đơn hàng với id {orderId}");
                                     }
 
                                     orderDb.StatusId = OrderStatus.Completed;
@@ -357,7 +355,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                         else
                         {
-                            result = BuildAppActionResultError(result, $"Đơn hàng không thể cập nhật những trạng thái khác");
+                            return BuildAppActionResultError(result, $"Đơn hàng không thể cập nhật những trạng thái khác");
                         }
                     }
                     else if (orderDb.OrderTypeId == OrderType.Delivery)
@@ -371,7 +369,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.SUCCESSFUL && t.TransactionTypeId == TransactionType.Order, null);
                                 if (reservationTransactionDb == null)
                                 {
-                                    result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch thành công cho đơn hàng với id {orderId}");
+                                    return BuildAppActionResultError(result, $"Không tìm thấy giao dịch thành công cho đơn hàng với id {orderId}");
                                 }
                                 orderDb.StatusId = OrderStatus.Processing;
                                 var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == orderId, 0, 0, null, false, null);
@@ -440,7 +438,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                         else
                         {
-                            result = BuildAppActionResultError(result, $"Đơn hàng không thể cập nhật những trạng thái khác");
+                            return BuildAppActionResultError(result, $"Đơn hàng không thể cập nhật những trạng thái khác");
                         }
                     }
                     else
@@ -459,7 +457,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.OrderId == orderId && t.TransationStatusId == TransationStatus.SUCCESSFUL && t.TransactionTypeId == TransactionType.Order, null);
                                     if (reservationTransactionDb == null)
                                     {
-                                        result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch thành công cho đơn hàng với id {orderId}");
+                                        return BuildAppActionResultError(result, $"Không tìm thấy giao dịch thành công cho đơn hàng với id {orderId}");
                                     }
                                     orderDb.StatusId = OrderStatus.Completed;
                                 }
@@ -473,7 +471,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                         else
                         {
-                            result = BuildAppActionResultError(result, $"Đơn hàng không thể cập nhật những trạng thái khác");
+                            return BuildAppActionResultError(result, $"Đơn hàng không thể cập nhật những trạng thái khác");
                         }
                     }
 
@@ -1560,7 +1558,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 orderDb.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
                 if (orderDb.Items! == null && orderDb.Items.Count == 0)
                 {
-                    result = BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {orderId}");
+                    return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {orderId}");
                     return result;
                 }
 
@@ -2213,7 +2211,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             comboDb = await comboRepository!.GetByExpression(c => c.ComboId == reservationDish.Combo.ComboId && c.EndDate > utility.GetCurrentDateTimeInTimeZone(), null);
                             if (comboDb == null)
                             {
-                                result = BuildAppActionResultError(result, $"Không tìm thấy combo với id {reservationDish.Combo.ComboId}");
+                                return BuildAppActionResultError(result, $"Không tìm thấy combo với id {reservationDish.Combo.ComboId}");
                             }
                             total += Math.Ceiling((1 - comboDb.Discount / 100) * reservationDish.Quantity * comboDb.Price / 1000) * 1000;
                         }
@@ -2222,7 +2220,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             dishSizeDetailDb = await dishRepository!.GetByExpression(c => c.DishSizeDetailId == reservationDish.DishSizeDetailId.Value && c.IsAvailable, null);
                             if (dishSizeDetailDb == null)
                             {
-                                result = BuildAppActionResultError(result, $"Không tìm thấy món ăn với id {reservationDish.DishSizeDetailId}");
+                                return BuildAppActionResultError(result, $"Không tìm thấy món ăn với id {reservationDish.DishSizeDetailId}");
                             }
                             total += Math.Ceiling((1 - dishSizeDetailDb.Discount / 100) * reservationDish.Quantity * dishSizeDetailDb.Price / 1000) * 1000;
                         }
@@ -4449,7 +4447,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var accountDb = await accountRepository.GetById(accountId);
                 if (accountDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"Không tìm thấy tài khoản với id {accountId}");
+                    return BuildAppActionResultError(result, $"Không tìm thấy tài khoản với id {accountId}");
                 }
                 var orderDetailDb = await _detailRepository.GetAllDataByExpression(o => !string.IsNullOrEmpty(o.Order.AccountId)
                                                                                         && o.Order.AccountId.Equals(accountId)
