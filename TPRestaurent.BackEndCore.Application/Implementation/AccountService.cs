@@ -666,6 +666,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 list = await _accountRepository.GetAllDataByExpression(null, pageIndex, pageSize, null, false, null);
             }
 
+            list.Items = DecodeStoreCreditAndLoyaltyPointOfAccount(list.Items);
+
             var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
             var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
             var listRole = await roleRepository!.GetAllDataByExpression(null, 1, 100, null, false, null);
@@ -1088,6 +1090,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var accountDb = await _accountRepository.GetAllDataByExpression(a => accountIds.Contains(a.Id), pageNumber, pageSize, null, false, null);
+                accountDb.Items = DecodeStoreCreditAndLoyaltyPointOfAccount(accountDb.Items);
                 result.Result = accountDb;
             }
             catch (Exception ex)
@@ -1113,6 +1116,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         var accountIds = userRoleDb.Items.Select(u => u.UserId).Distinct().ToList();
                         var accountDb = await _accountRepository.GetAllDataByExpression(a => accountIds.Contains(a.Id), pageNumber, pageSize, null, false, null);
+                        accountDb.Items = DecodeStoreCreditAndLoyaltyPointOfAccount(accountDb.Items);
                         result.Result = accountDb;
                     }
                 }
@@ -1489,6 +1493,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                  if (optUser.Type != OTPType.Register && !user.IsVerified)
                 {
+                    throw new Exception($"Mã Otp này đã hết hạn");
+                }
+
+
+                 if (optUser.Type != OTPType.Register && !user.IsVerified)
+                {
                     throw new Exception($"Thông tin người dùng chưa được xác thực");
                 }
                  if (optUser.Code != code)
@@ -1524,6 +1534,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
                 var listRole = await roleRepository!.GetAllDataByExpression(null, 1, 100, null, false, null);
                 var customerInfoDb = await _accountRepository.GetByExpression(c => c.PhoneNumber.Equals(phoneNumber));
+                customerInfoDb = DecodeStoreCreditAndLoyaltyPointOfAccount(new List<Account> { customerInfoDb }).FirstOrDefault();
                 var listMap = _mapper.Map<AccountResponse>(customerInfoDb);
 
                 if (customerInfoDb == null)
@@ -2113,6 +2124,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var accountDb = await _accountRepository.GetAllDataByExpression(p => p.PhoneNumber.Contains(phoneNumber), pageNumber, pageSize, null, false, null);
+                accountDb.Items = DecodeStoreCreditAndLoyaltyPointOfAccount(accountDb.Items);
                 var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
                 var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
                 var listRole = await roleRepository!.GetAllDataByExpression(null, 1, 100, null, false, null);
@@ -2176,6 +2188,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
+        }
+
+        private List<Account> DecodeStoreCreditAndLoyaltyPointOfAccount(List<Account> accounts)
+        {
+            try
+            {
+                var hashingService = Resolve<IHashingService>();
+                foreach (var account in accounts)
+                {
+                    account.StoreCreditAmount = hashingService.UnHashing(account.StoreCreditAmount, false).Result.ToString().Split('_')[1];
+                    account.LoyaltyPoint = hashingService.UnHashing(account.LoyaltyPoint, true).Result.ToString().Split('_')[1];
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+            return accounts;
         }
     }
 }

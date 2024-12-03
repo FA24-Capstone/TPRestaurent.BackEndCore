@@ -27,8 +27,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly IMapper _mapper;
         private BackEndLogger _logger;
         private IHubServices.IHubServices _hubServices;
+        private IHashingService _hashingService;
 
-        public OrderService(IGenericRepository<Order> repository, IGenericRepository<OrderDetail> detailRepository, IGenericRepository<TableDetail> tableDetailRepository, IGenericRepository<OrderSession> sessionRepository, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service, BackEndLogger logger, IHubServices.IHubServices hubServices
+        public OrderService(IGenericRepository<Order> repository, IGenericRepository<OrderDetail> detailRepository, IGenericRepository<TableDetail> tableDetailRepository, IGenericRepository<OrderSession> sessionRepository, IHashingService hashingService, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service, BackEndLogger logger, IHubServices.IHubServices hubServices
         ) : base(service)
         {
             _repository = repository;
@@ -38,6 +39,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _logger = logger;
+            _hashingService = hashingService;
             _hubServices = hubServices;
         }
 
@@ -1515,6 +1517,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         p => p.Shipper
                         );
                 }
+                data.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
                 data.Items = data.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                 var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(data.Items);
                 foreach (var order in mappedData)
@@ -1552,6 +1555,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         p => p.CustomerInfoAddress
 
                     );
+                orderDb.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
                 if (orderDb.Items! == null && orderDb.Items.Count == 0)
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {orderId}");
@@ -1984,6 +1988,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                      p => p.Shipper,
                                                                      p => p.CustomerInfoAddress
                      );
+                    orderListDb.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
                     orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
                     foreach (var order in mappedData)
@@ -2007,6 +2012,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                      p => p.Shipper,
                                                                      p => p.CustomerInfoAddress
                      );
+                    orderListDb.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
                     orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
                     foreach (var order in mappedData)
@@ -2031,6 +2037,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                      p => p.Shipper,
                                                                      p => p.CustomerInfoAddress
                      );
+                    orderListDb.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
                     orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
                     foreach (var order in mappedData)
@@ -2055,7 +2062,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             p => p.Shipper,
                             p => p.CustomerInfoAddress
                         );
-
+                    orderListDb.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
                     orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
                     foreach (var order in mappedData)
@@ -2133,6 +2140,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 data.Items = data.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
+                data.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
                 var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(data.Items);
                 foreach (var order in mappedData)
                 {
@@ -2171,6 +2179,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         p => p.OrderType!,
                         p => p.CustomerInfoAddress
                     );
+                orderDb.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
                 result.Result = orderDb;
             }
             catch (Exception ex)
@@ -3252,6 +3261,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     return BuildAppActionResultError(new AppActionResult(), $"Không tìm thấy thông tin đặt bàn với id {reservationId}");
                 }
+
+                if(order.Account != null)
+                {
+                    order.Account = _hashingService.GetDecodedAccount(order.Account);
+                }
+
                 var transactionRepository = Resolve<IGenericRepository<Transaction>>();
                 var orderResponse = _mapper.Map<OrderResponse>(order);
                 var orderTransactionDb = await transactionRepository.GetAllDataByExpression(o => o.OrderId.HasValue && o.OrderId == reservationId, 0, 0, null, false, o => o.TransactionType);
@@ -3660,7 +3675,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 double[] startDestination = new double[2];
                 startDestination[0] = startLat;
                 startDestination[1] = startLng;
-
+                data.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
                 data.Items = data.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                 var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(data.Items);
                 foreach (var order in mappedData)
@@ -3823,6 +3838,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return result;
                 }
 
+
                 var orderIds = orderDiningTableDb.Items.DistinctBy(o => o.OrderId).Select(o => o.OrderId).ToList();
                 if (request.TableId.HasValue)
                 {
@@ -3832,6 +3848,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderDiningDb = await _repository.GetAllDataByExpression(o => orderIds.Contains(o.OrderId), request.pageNumber, request.pageSize, null, false, o => o.Status,
                                                                                                                                     o => o.OrderType,
                                                                                                                                     o => o.Account);
+                orderDiningDb.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
                 if (orderDiningDb.Items!.Count > 0)
                 {
                     orderDb = orderDiningDb.Items;
