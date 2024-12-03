@@ -23,7 +23,7 @@ namespace TPRestaurent.BackEndCore.Common.Utils
             try
             {
                 log.Id = Guid.NewGuid();
-                string logMessage = $"{log.Id} - {log.Timestamp:yyyy-MM-dd HH:mm:ss} - {log.Message}";
+                string logMessage = $"{log.Id} - {log.Timestamp:yyyy-MM-dd HH:mm:ss} - {log.Message}\n";
                 File.AppendAllText(LogFilePath, logMessage + Environment.NewLine);
             }
             catch (Exception ex)
@@ -51,8 +51,7 @@ namespace TPRestaurent.BackEndCore.Common.Utils
                             {
                                 Id= Guid.Parse(parts[0]),
                                 Timestamp = DateTime.Parse(parts[1]),
-                                Message = parts[2],
-
+                                Message = string.Join("\n", parts[2].Split(" |")),
                             };
                         })
                         .ToList();

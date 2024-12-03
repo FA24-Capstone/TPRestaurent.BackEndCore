@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -133,6 +134,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
+        }
+
+        public Account GetDecodedAccount(Account account)
+        {
+            account.StoreCreditAmount = UnHashing(account.StoreCreditAmount, false).Result.ToString().Split('_')[1];
+            account.LoyaltyPoint = UnHashing(account.LoyaltyPoint, true).Result.ToString().Split('_')[1];
+            return account; 
         }
     }
 }
