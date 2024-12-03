@@ -47,7 +47,7 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
         }
         catch (Exception ex)
         {
-            result = BuildAppActionResultError(result, $"Có lỗi xảy ra khi sử dụng API với GoongMap {ex.Message} ");
+            return BuildAppActionResultError(result, $"Có lỗi xảy ra khi sử dụng API với GoongMap {ex.Message} ");
         }
         return result;
     }
@@ -69,7 +69,7 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
         }
         catch (Exception ex)
         {
-            result = BuildAppActionResultError(result, $"Có lỗi xảy ra khi sử dụng API với GoongMap {ex.Message} ");
+            return BuildAppActionResultError(result, $"Có lỗi xảy ra khi sử dụng API với GoongMap {ex.Message} ");
         }
         return result;
     }

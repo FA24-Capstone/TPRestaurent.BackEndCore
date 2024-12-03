@@ -32,9 +32,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 result.Result = apiResponsse.Status;
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                result = BuildAppActionResultError(result, e.Message);
+                return BuildAppActionResultError(result, ex.Message);
             }
 
             return result;

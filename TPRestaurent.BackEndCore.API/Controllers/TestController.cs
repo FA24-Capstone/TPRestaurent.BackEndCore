@@ -14,16 +14,19 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         public IInvoiceService _invoiceService;
         public IGroupedDishCraftService _groupedDishCraftService;
         public IOrderSessionService _orderSessionService;
+        public ITransactionService _transactionService;
         private IHubServices _hubServices;
 
         public TestController(IOrderService orderService, IInvoiceService invoiceService,
-                              IHubServices hubServices, IGroupedDishCraftService groupedDishCraftService, IOrderSessionService orderSessionService)
+                              IHubServices hubServices, IGroupedDishCraftService groupedDishCraftService, 
+                              IOrderSessionService orderSessionService, ITransactionService transactionService)
         {
             _orderService = orderService;
             _invoiceService = invoiceService;
             _hubServices = hubServices;
             _groupedDishCraftService = groupedDishCraftService;
             _orderSessionService = orderSessionService;
+            _transactionService = transactionService;
         }
 
         [HttpPut("update-order-status")]
@@ -86,6 +89,18 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         public async Task NotifyReservationDishToKitchen()
         {
             await _orderService.NotifyReservationDishToKitchen();
+        }
+
+        [HttpPost("add-check-hacked")]
+        public async Task<string> LogMoneyInformationHacked()
+        {
+           return await _transactionService.LogMoneyInformationHacked();
+        }
+
+        [HttpPut("hashed-all-data")]
+        public async Task<string> HashingData()
+        {
+            return await _transactionService.HashingData();
         }
     }
 }

@@ -82,7 +82,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var tokenDb = await _tokenRepository.GetByExpression(p => p.AccessTokenValue == token, p => p.Account!);
                 if (tokenDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"Token này không tồn tại");
+                    return BuildAppActionResultError(result, $"Token này không tồn tại");
                 }
                 result.Result = tokenDb;
             }
@@ -102,7 +102,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var accountTokenList = await _tokenRepository.GetAllDataByExpression(p => p.AccountId == accountId, 0, 0, null, false, p => p.Account!);
                 if (accountTokenList == null)
                 {
-                    result = BuildAppActionResultError(result, $"Danh sách token của tài khoản {accountId} không tồn tại");
+                    return BuildAppActionResultError(result, $"Danh sách token của tài khoản {accountId} không tồn tại");
                 }
                 if (accountTokenList!.Items!.Count < 0 && accountTokenList.Items != null)
                 {
@@ -139,7 +139,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var tokenDb = await _tokenRepository.GetAllDataByExpression(p => p.AccountId == accountId, 0, 0, null, false, p => p.Account!);
                 if (tokenDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"Danh sách token của tài khoản {accountId} không tồn tại");
+                    return BuildAppActionResultError(result, $"Danh sách token của tài khoản {accountId} không tồn tại");
                 }
 
                 await _tokenRepository.DeleteRange(tokenDb!.Items!);
