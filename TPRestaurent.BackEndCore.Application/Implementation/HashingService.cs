@@ -26,7 +26,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             if (string.IsNullOrEmpty(accountId))
             {
-                return Hashing($"{amount}", key);
+                return Hashing($"_{amount}", key);
 
             }
             return Hashing($"{accountId}_{amount}", key);

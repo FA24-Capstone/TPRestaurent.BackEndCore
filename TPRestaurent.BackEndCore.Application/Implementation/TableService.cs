@@ -34,20 +34,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 //Name validation (if needed)
                 if (string.IsNullOrEmpty(dto.TableName))
                 {
-                    result = BuildAppActionResultError(result, "Tên bàn không được để trống");
+                    return BuildAppActionResultError(result, "Tên bàn không được để trống");
                     return result;
                 }
 
                 if ((int)dto.TableSizeId < 1)
                 {
-                    result = BuildAppActionResultError(result, "Số ghế ngồi phải lớn hơn 0");
+                    return BuildAppActionResultError(result, "Số ghế ngồi phải lớn hơn 0");
                     return result;
                 }
 
                 var tableRatingRepository = Resolve<IGenericRepository<Room>>();
                 if ((await tableRatingRepository.GetById(dto.TableRatingId) == null))
                 {
-                    result = BuildAppActionResultError(result, $"Không tìm thấy phòng với id {dto.TableRatingId}");
+                    return BuildAppActionResultError(result, $"Không tìm thấy phòng với id {dto.TableRatingId}");
                     return result;
                 }
 
@@ -204,7 +204,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         return result;
                     }
                 }
-                result = BuildAppActionResultError(result, $"Nhà hàng không xếp bàn cho quý khách. Xin lỗi và xin hẹn quý khách lần sau");
+                return BuildAppActionResultError(result, $"Nhà hàng không xếp bàn cho quý khách. Xin lỗi và xin hẹn quý khách lần sau");
             }
             catch (Exception ex)
             {
@@ -718,7 +718,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 //Name validation (if needed)
                 if (string.IsNullOrEmpty(dto.TableName) || string.IsNullOrEmpty(dto.DeviceCode) || string.IsNullOrEmpty(dto.DevicePassword))
                 {
-                    result = BuildAppActionResultError(result, "Thông tin không được để trống");
+                    return BuildAppActionResultError(result, "Thông tin không được để trống");
                     return result;
                 }
 

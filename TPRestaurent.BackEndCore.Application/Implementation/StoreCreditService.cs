@@ -76,7 +76,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var storeCreditAmount = int.Parse(storeCreditAmountResult.Result.ToString().Split('_')[1]);
 
                 var transactionAmountResult = hashingService.UnHashing(transactionDb.Amount, false);
-                var transactionAmount = int.Parse(transactionAmountResult.Result.ToString());
+                var transactionAmount = int.Parse(transactionAmountResult.Result.ToString().Split('_')[1]);
                 storeCreditAmount += transactionAmount;
                 
                 var utility = Resolve<Utility>();
@@ -86,7 +86,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         c => c.Name.Equals(SD.DefaultValue.EXPIRE_TIME_FOR_STORE_CREDIT), null);
                 if (configurationDb == null)
                 {
-                    result = BuildAppActionResultError(result,
+                    return BuildAppActionResultError(result,
                         $"Xảy ra lỗi khi ghi lại thông tin nạp tiền. Vui lòng thử lại");
                 }
 

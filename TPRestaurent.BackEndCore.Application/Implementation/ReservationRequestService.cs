@@ -27,20 +27,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //        var utility = Resolve<Utility>();
         //        if(dto.ReservationDate.AddHours(1) < utility.GetCurrentDateTimeInTimeZone())
         //        {
-        //            result = BuildAppActionResultError(result, "Thời gian đặt bàn không hợp lệ");
+        //            return BuildAppActionResultError(result, "Thời gian đặt bàn không hợp lệ");
         //            return result;
         //        }
 
         //        if(dto.NumberOfPeople < 1)
         //        {
-        //            result = BuildAppActionResultError(result, "Cần ít nhất 1 người dùng bữa để đặt bàn");
+        //            return BuildAppActionResultError(result, "Cần ít nhất 1 người dùng bữa để đặt bàn");
         //            return result;
         //        }
 
         //        var accountRepository = Resolve<IGenericRepository<Account>>();
         //        if((await accountRepository!.GetById(dto.CustomerAccountId.ToString())) == null)
         //        {
-        //            result = BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng với id {dto.CustomerAccountId}");
+        //            return BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng với id {dto.CustomerAccountId}");
         //            return result;
         //        }
 
@@ -54,21 +54,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //                {
         //                    if((await dishRepository!.GetByExpression(d => d.DishSizeDetailId == item.DishSizeDetailId && d.IsAvailable, null)) == null)
         //                    {
-        //                        result = BuildAppActionResultError(result, $"Không tìm thấy món ăn với id {item.DishSizeDetailId}");
+        //                        return BuildAppActionResultError(result, $"Không tìm thấy món ăn với id {item.DishSizeDetailId}");
         //                        return result;
         //                    }
         //                } else
         //                {
         //                    if ((await comboRepository!.GetByExpression(d => d.ComboId == item.Combo.ComboId && d.EndDate < utility.GetCurrentDateTimeInTimeZone(), null)) == null)
         //                    {
-        //                        result = BuildAppActionResultError(result, $"Không tìm thấy combo với id {item.Combo.ComboId}");
+        //                        return BuildAppActionResultError(result, $"Không tìm thấy combo với id {item.Combo.ComboId}");
         //                        return result;
         //                    }
         //                }
 
         //                if(item.Quantity < 1)
         //                {
-        //                    result = BuildAppActionResultError(result, $"Số lượng phài lớn hơn 0");
+        //                    return BuildAppActionResultError(result, $"Số lượng phài lớn hơn 0");
         //                    return result;
         //                }
         //            }
@@ -116,13 +116,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         //        var reservationRequestDb = await _repository.GetById(reservationRequestId);
         //        if (reservationRequestDb == null)
         //        {
-        //            result = BuildAppActionResultError(result, $"Không tìm thấy yêu cầu đặt bàn với id {reservationRequestId}");
+        //            return BuildAppActionResultError(result, $"Không tìm thấy yêu cầu đặt bàn với id {reservationRequestId}");
         //            return result;
         //        }
 
         //        if (reservationRequestDb.StatusId != ReservationRequestStatus.PENDING)
         //        {
-        //            result = BuildAppActionResultError(result, $"Yêu cầu đã được xử lý trước đó");
+        //            return BuildAppActionResultError(result, $"Yêu cầu đã được xử lý trước đó");
         //            return result;
         //        }
 

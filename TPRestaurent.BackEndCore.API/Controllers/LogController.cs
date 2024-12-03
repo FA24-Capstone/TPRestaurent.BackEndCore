@@ -21,5 +21,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             return Logger.ReadLogById(id);
         }
 
+        [HttpPost("add-log")]
+        public void Write([FromBody]LogDto dto)
+        {
+            Logger.WriteLog(dto);
+        }
+
     }
 }

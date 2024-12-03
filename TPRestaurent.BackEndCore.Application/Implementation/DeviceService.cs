@@ -54,7 +54,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
-                return BuildAppActionResultError(result, ex.Message);
+                result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
@@ -73,7 +73,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
-                return BuildAppActionResultError(result, ex.Message);
+                result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
@@ -92,7 +92,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
-                return BuildAppActionResultError(result, ex.Message);
+                result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }
@@ -114,7 +114,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
-                return BuildAppActionResultError(result, ex.Message);
+                result = BuildAppActionResultError(result, ex.Message);
             }
             return result;
         }

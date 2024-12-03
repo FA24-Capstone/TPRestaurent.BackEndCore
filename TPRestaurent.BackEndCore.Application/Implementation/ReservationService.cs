@@ -66,7 +66,7 @@
 //                    //Validate
 //                    if (dto.Deposit < 0)
 //                    {
-//                        result = BuildAppActionResultError(result, $"Số tiền cọc không hợp lệ");
+//                        return BuildAppActionResultError(result, $"Số tiền cọc không hợp lệ");
 //                        return result;
 //                    }
 
@@ -81,7 +81,7 @@
 //                    var suitableTable = await GetSuitableTable(suggestTableDto);
 //                    if (suitableTable == null)
 //                    {
-//                        result = BuildAppActionResultError(result, $"Không có bàn trống cho {dto.NumberOfPeople} người " +
+//                        return BuildAppActionResultError(result, $"Không có bàn trống cho {dto.NumberOfPeople} người " +
 //                                                                   $"vào lúc {dto.ReservationDate.Hour}h{dto.ReservationDate.Minute}p " +
 //                                                                   $"ngày {dto.ReservationDate.Date}");
 //                        return result;
@@ -90,7 +90,7 @@
 //                    var utility = Resolve<Utility>();
 //                    if (dto.ReservationDate < utility!.GetCurrentDateTimeInTimeZone())
 //                    {
-//                        result = BuildAppActionResultError(result, "Thời gian đặt bàn không hợp lệ");
+//                        return BuildAppActionResultError(result, "Thời gian đặt bàn không hợp lệ");
 //                        return result;
 //                    }
 
@@ -100,7 +100,7 @@
 
 //                    if (customerInfoDb == null || !customerInfoDb.IsVerified)
 //                    {
-//                        result = BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng với id {dto.CustomerInfoId}");
+//                        return BuildAppActionResultError(result, $"Không tìm thấy thông tin khách hàng với id {dto.CustomerInfoId}");
 //                        return result;
 //                    }
 
@@ -201,7 +201,7 @@
 //        //                    comboDb = await comboRepository!.GetByExpression(c => c.ComboId == reservationDish.Combo.ComboId && c.EndDate > utility.GetCurrentDateTimeInTimeZone(), null);
 //        //                    if (comboDb == null)
 //        //                    {
-//        //                        result = BuildAppActionResultError(result, $"Không tìm thấy combo với id {reservationDish.Combo.ComboId}");
+//        //                        return BuildAppActionResultError(result, $"Không tìm thấy combo với id {reservationDish.Combo.ComboId}");
 //        //                        return result;
 //        //                    }
 //        //                    total += reservationDish.Quantity * comboDb.Price;
@@ -211,7 +211,7 @@
 //        //                    dishDb = await dishRepository!.GetByExpression(c => c.DishSizeDetailId == reservationDish.DishSizeDetailId.Value && c.IsAvailable, null);
 //        //                    if (dishDb == null)
 //        //                    {
-//        //                        result = BuildAppActionResultError(result, $"Không tìm thấy món ăn với id {reservationDish.DishSizeDetailId}");
+//        //                        return BuildAppActionResultError(result, $"Không tìm thấy món ăn với id {reservationDish.DishSizeDetailId}");
 //        //                        return result;
 //        //                    }
 //        //                    total += reservationDish.Quantity * dishDb.Price;
@@ -246,7 +246,7 @@
 //        //    }
 //        //    catch (Exception ex)
 //        //    {
-//        //        result = BuildAppActionResultError(result, ex?.Message);
+//        //        return BuildAppActionResultError(result, ex?.Message);
 //        //    }
 //        //    return result;
 //        //}
@@ -321,13 +321,13 @@
 //        //            var reservationDb = await reservationRepository!.GetById(dto.ReservationId);
 //        //            if (reservationDb == null)
 //        //            {
-//        //                result = BuildAppActionResultError(result, $"Không tìm thấy lịch đặt bàn với id {reservationDb!.ReservationId}");
+//        //                return BuildAppActionResultError(result, $"Không tìm thấy lịch đặt bàn với id {reservationDb!.ReservationId}");
 //        //                return result;
 //        //            }
 
 //        //            if (dto.AdditionalDeposit.HasValue && dto.AdditionalDeposit < 0)
 //        //            {
-//        //                result = BuildAppActionResultError(result, $"Số tiền cọc không hợp lệ");
+//        //                return BuildAppActionResultError(result, $"Số tiền cọc không hợp lệ");
 //        //                return result;
 //        //            }
 
@@ -335,14 +335,14 @@
 //        //            var utility = Resolve<Utility>();
 //        //            if (dto.ReservationDate < utility!.GetCurrentDateTimeInTimeZone())
 //        //            {
-//        //                result = BuildAppActionResultError(result, "Thời gian đặt bàn không hợp lệ");
+//        //                return BuildAppActionResultError(result, "Thời gian đặt bàn không hợp lệ");
 //        //                return result;
 //        //            }
 
 //        //            var accountRepository = Resolve<IGenericRepository<CustomerInfo>>();
 //        //            if ((await accountRepository!.GetById(reservationDb.CustomerInfoId!)) == null)
 //        //            {
-//        //                result = BuildAppActionResultError(result, $"Không tìm thấy  thông tin khách hàng với id {reservationDb.CustomerInfoId}");
+//        //                return BuildAppActionResultError(result, $"Không tìm thấy  thông tin khách hàng với id {reservationDb.CustomerInfoId}");
 //        //                return result;
 //        //            }
 
@@ -350,7 +350,7 @@
 //        //            {
 //        //                if ((await tableRepository!.GetById(tableId)) == null)
 //        //                {
-//        //                    result = BuildAppActionResultError(result, $"Không tìm thấy bàn với id {tableId}");
+//        //                    return BuildAppActionResultError(result, $"Không tìm thấy bàn với id {tableId}");
 //        //                    return result;
 //        //                }
 //        //            }
@@ -361,7 +361,7 @@
 //        //            {
 //        //                if (dto.ReservationTableIds.Count() == 0)
 //        //                {
-//        //                    result = BuildAppActionResultError(result, $"Danh sách đặt bàn không được phép trống");
+//        //                    return BuildAppActionResultError(result, $"Danh sách đặt bàn không được phép trống");
 //        //                    return result;
 //        //                }
 //        //            }
@@ -740,7 +740,7 @@
 //        //        var reservationDb = await _reservationRepository.GetById(reservationId);
 //        //        if (reservationDb == null)
 //        //        {
-//        //            result = BuildAppActionResultError(result, $"Không tìm thấy yêu cầu đặt bàn với id {reservationId}");
+//        //            return BuildAppActionResultError(result, $"Không tìm thấy yêu cầu đặt bàn với id {reservationId}");
 //        //            return result;
 //        //        }
 //        //        bool updated = false;
@@ -748,7 +748,7 @@
 //        //        {
 //        //            if (status != ReservationStatus.TABLEASSIGNED && status != ReservationStatus.CANCELLED)
 //        //            {
-//        //                result = BuildAppActionResultError(result, $"Yêu cầu đặt bàn với id {reservationId} chưa được xử lí, không thể diễn ra");
+//        //                return BuildAppActionResultError(result, $"Yêu cầu đặt bàn với id {reservationId} chưa được xử lí, không thể diễn ra");
 //        //                return result;
 //        //            }
 //        //            reservationDb.StatusId = status;
@@ -758,7 +758,7 @@
 //        //        {
 //        //            if (status != ReservationStatus.PAID && status != ReservationStatus.CANCELLED)
 //        //            {
-//        //                result = BuildAppActionResultError(result, $"Yêu cầu đặt bàn với id {reservationId} chưa được thanh toán cọc, không thể diễn ra");
+//        //                return BuildAppActionResultError(result, $"Yêu cầu đặt bàn với id {reservationId} chưa được thanh toán cọc, không thể diễn ra");
 //        //                return result;
 //        //            }
 
@@ -767,14 +767,14 @@
 //        //                var reservationTransactionDb = await transactionRepository.GetByExpression(t => t.ReservationId == reservationId && t.TransationStatusId == TransationStatus.PENDING, null);
 //        //                if (reservationTransactionDb == null)
 //        //                {
-//        //                    result = BuildAppActionResultError(result, $"Không tìm thấy giao dịch cho đặt bàn với id {reservationId}");
+//        //                    return BuildAppActionResultError(result, $"Không tìm thấy giao dịch cho đặt bàn với id {reservationId}");
 //        //                    return result;
 //        //                }
 
 //        //                var transactionUpdatedSuccessFully = await transactionService.UpdateTransactionStatus(reservationTransactionDb.Id, TransationStatus.SUCCESSFUL);
 //        //                if (!transactionUpdatedSuccessFully.IsSuccess)
 //        //                {
-//        //                    result = BuildAppActionResultError(result, $"Cập nhật trạng thái giao dịch {reservationTransactionDb.Id} cho đặt bàn {reservationId} thất bại. Vui lòng cập nhật lại sau");
+//        //                    return BuildAppActionResultError(result, $"Cập nhật trạng thái giao dịch {reservationTransactionDb.Id} cho đặt bàn {reservationId} thất bại. Vui lòng cập nhật lại sau");
 //        //                }
 //        //            }
 //        //            reservationDb.StatusId = status;
@@ -784,7 +784,7 @@
 //        //        {
 //        //            if (status != ReservationStatus.DINING && status != ReservationStatus.CANCELLED)
 //        //            {
-//        //                result = BuildAppActionResultError(result, $"Yêu cầu đặt bàn với id {reservationId} đã được thanh toán cọc,không thể diễn ra");
+//        //                return BuildAppActionResultError(result, $"Yêu cầu đặt bàn với id {reservationId} đã được thanh toán cọc,không thể diễn ra");
 //        //                return result;
 //        //            }
 //        //            reservationDb.StatusId = status;
@@ -899,7 +899,7 @@
 //        //    }
 //        //    catch (Exception ex)
 //        //    {
-//        //        result = BuildAppActionResultError(result, ex.Message );
+//        //        return BuildAppActionResultError(result, ex.Message );
 //        //    }
 //        //    return result;
 //        //}
