@@ -41,7 +41,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var comboIsExisted = await _comboRepository.GetByExpression(p => p.Name == comboDto.Name);
                     if (comboIsExisted != null)
                     {
-                        result = BuildAppActionResultError(result, $"Combo này với {comboDto.Name} đã tồn tại");
+                        throw new Exception($"Combo này với {comboDto.Name} đã tồn tại");
                     }
 
                     var comboDb = new Combo
@@ -88,8 +88,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             var dishExisted = await dishSizeDetailRepository!.GetById(dishId.DishSizeDetailId);
                             if (dishExisted == null)
                             {
-                                result = BuildAppActionResultError(result,
-                                    $"size món ăn với id {dishId.DishSizeDetailId} không tồn tại");
+                                throw new Exception($"size món ăn với id {dishId.DishSizeDetailId} không tồn tại");
                             }
 
                             var dishCombo = new DishCombo
@@ -107,7 +106,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var mainFile = comboDto.MainImg;
                     if (mainFile == null)
                     {
-                        result = BuildAppActionResultError(result, $"The main picture of the dish is empty");
+                        throw new Exception($"The main picture of the dish is empty");
                     }
 
                     var mainPathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDb.ComboId}_main.jpg";
@@ -160,7 +159,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var comboDb = await _comboRepository.GetById(comboId);
                 if (comboDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"Combo với id {comboId} không tồn tại");
+                    return BuildAppActionResultError(result, $"Combo với id {comboId} không tồn tại");
                 }
                 comboDb.IsDeleted = true;
                 await _comboRepository.Update(comboDb);
@@ -260,7 +259,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var comboDb = await _comboRepository.GetByExpression(p => p!.ComboId == comboId, p => p.Category);
                 if (comboDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"Combo với id {comboId} không tồn tại");
+                    return BuildAppActionResultError(result, $"Combo với id {comboId} không tồn tại");
                 }
                 var dishComboDb = await dishComboRepository!.GetAllDataByExpression(p => p.ComboOptionSet.ComboId == comboId, 0, 0, null, false, p => p.DishSizeDetail.Dish!, p => p.DishSizeDetail.DishSize, p => p.ComboOptionSet.DishItemType);
                 var staticFileDb = await staticFileRepository!.GetAllDataByExpression(p => p.ComboId == comboId, 0, 0, null, false, null);
@@ -349,7 +348,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var comboDb = await _comboRepository.GetByExpression(p => p!.ComboId == comboId, p => p.Category);
                 if (comboDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"Combo với id {comboId} không tồn tại");
+                    return BuildAppActionResultError(result, $"Combo với id {comboId} không tồn tại");
                 }
 
                 var dishTagDb = await dishTagRepository!.GetAllDataByExpression(d => d.ComboId == comboId, 0, 0, null, false, d => d.Tag);
@@ -500,7 +499,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var comboDb = await _comboRepository.GetByExpression(p => p.ComboId == comboDto.ComboId);
                     if (comboDb == null)
                     {
-                        result = BuildAppActionResultError(result, $"Combo với id {comboDto.ComboId} không tồn tại");
+                        throw new Exception($"Combo với id {comboDto.ComboId} không tồn tại");
                     }
 
                     comboDb.Name = comboDto.Name;
@@ -563,8 +562,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     var dishExisted = await dishSizeDetailRepository!.GetById(dishId.DishSizeDetailId);
                                     if (dishExisted == null)
                                     {
-                                        result = BuildAppActionResultError(result,
-                                            $"size món ăn với id {dishId.DishSizeDetailId} không tồn tại");
+                                        throw new Exception($"size món ăn với id {dishId.DishSizeDetailId} không tồn tại");
                                     }
 
                                     var existedComboDishDb = await dishComboRepository.GetByExpression(
@@ -605,8 +603,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     var dishExisted = await dishSizeDetailRepository!.GetById(dishId.DishSizeDetailId);
                                     if (dishExisted == null)
                                     {
-                                        result = BuildAppActionResultError(result,
-                                            $"size món ăn với id {dishId.DishSizeDetailId} không tồn tại");
+                                        throw new Exception($"size món ăn với id {dishId.DishSizeDetailId} không tồn tại");
                                     }
 
                                     var dishCombo = new DishCombo
@@ -670,7 +667,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var comboDb = await _comboRepository.GetById(comboId);
                 if (comboDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"Combo với id {comboId} không tồn tại");
+                    return BuildAppActionResultError(result, $"Combo với id {comboId} không tồn tại");
                 }
                 comboDb!.IsDeleted = false;
                 var utility = Resolve<Utility>();

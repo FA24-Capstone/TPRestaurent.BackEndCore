@@ -43,8 +43,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var dishExsted = await _dishRepository.GetByExpression(p => p.Name == dto.Name);
                     if (dishExsted != null)
                     {
-                        result = BuildAppActionResultError(result,
-                            $"This dish with the name {dto.Name} is already exsited");
+                        throw new Exception($"This dish with the name {dto.Name} is already exsited");
                     }
 
                     var dish = new Dish
@@ -80,8 +79,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             || dto.DishSizeDetailDtos.Count(d => d.DishSize == DishSize.MEDIUM) > 1
                             || dto.DishSizeDetailDtos.Count(d => d.DishSize == DishSize.LARGE) > 1)
                         {
-                            result = BuildAppActionResultError(result,
-                                $"Món ăn tồn tại kích thước trùng. Vui lòng kiểm tra lại");
+                            throw new Exception($"Món ăn tồn tại kích thước trùng. Vui lòng kiểm tra lại");
                         }
 
                         //Check price by size
@@ -96,8 +94,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                             if(checkPrice > dishSizeDetail.Price)
                             {
-                                result = BuildAppActionResultError(result,
-                                    $"Giá tiền của size {dishSizeDetail.DishSize} đang nhỏ hơn món có size nhỏ hơn");
+                                throw new Exception($"Giá tiền của size {dishSizeDetail.DishSize} đang nhỏ hơn món có size nhỏ hơn");
                             }
                             checkPrice = dishSizeDetail.Price;
                         }
@@ -122,7 +119,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var mainFile = dto.MainImageFile;
                     if (mainFile == null)
                     {
-                        result = BuildAppActionResultError(result, $"The main picture of the dish is empty");
+                        throw new Exception($"The main picture of the dish is empty");
                     }
 
                     var mainPathName = SD.FirebasePathName.DISH_PREFIX + $"{dish.DishId}_main.jpg";
@@ -149,7 +146,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         staticList.Add(staticImg);
                         if (!upload.IsSuccess)
                         {
-                            result = BuildAppActionResultError(result, "Upload hình ảnh không thành công");
+                            throw new Exception("Upload hình ảnh không thành công");
                         }
                     }
 
@@ -179,10 +176,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
+                var dishComboRepository = Resolve<IGenericRepository<DishCombo>>();
                 var dishDb = await _dishRepository.GetById(dishId);
                 if (dishDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"This dish with id {dishId} doesn't existed");
+                    return BuildAppActionResultError(result, $"Không tồn tại món ăn với id {dishId}");
+                }
+
+                var dishComboDb = await dishComboRepository.GetAllDataByExpression(d => d.DishSizeDetail.DishId == dishId && !d.IsDeleted, 0, 0, null, false, null);
+                if(dishComboDb.Items.Count > 0)
+                {
+                    return BuildAppActionResultError(result, $"Có combo khả dụng đang có món ăn này. Không thể xoá món");
                 }
 
                 dishDb!.IsDeleted = true;
@@ -294,7 +298,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var dishDb = await _dishRepository.GetByExpression(p => p.DishId == dishId, p => p.DishItemType);
                 if (dishDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"Món ăn với id {dishId} không tồn tại");
+                    return BuildAppActionResultError(result, $"Món ăn với id {dishId} không tồn tại");
                 }
 
                 var dishTagDb =
@@ -306,7 +310,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         false, p => p.DishSize!);
                 if (dishSizeDetailsDb!.Items!.Count < 0 && dishSizeDetailsDb.Items == null)
                 {
-                    result = BuildAppActionResultError(result, $"size món ăn với id {dishId} không tồn tại");
+                    return BuildAppActionResultError(result, $"size món ăn với id {dishId} không tồn tại");
                 }
 
                 dishResponse.Dish = new DishSizeResponse();
@@ -401,7 +405,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var dishDb = await _dishRepository.GetById(dto.DishId);
                     if (dishDb == null)
                     {
-                        result = BuildAppActionResultError(result, $"Món ăn với id {dto.DishId} không tồn tại");
+                        throw new Exception($"Món ăn với id {dto.DishId} không tồn tại");
                     }
 
                     dishDb.Name = dto.Name;
@@ -426,8 +430,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 || dto.UpdateDishSizeDetailDtos.Count(d => d.DishSize == DishSize.MEDIUM) > 1
                                 || dto.UpdateDishSizeDetailDtos.Count(d => d.DishSize == DishSize.LARGE) > 1)
                             {
-                                result = BuildAppActionResultError(result,
-                                    $"Món ăn tồn tại kích thước trùng. Vui lòng kiểm tra lại");
+                                throw new Exception($"Món ăn tồn tại kích thước trùng. Vui lòng kiểm tra lại");
                             }
 
                             if (dishSizeDetail.DishSizeDetailId.HasValue)
@@ -453,8 +456,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
                                 else
                                 {
-                                    result = BuildAppActionResultError(result,
-                                        $"Không tìm thấy size món ăn chi tiết với id {dishSizeDetail.DishSizeDetailId.Value}");
+                                    throw new Exception($"Không tìm thấy size món ăn chi tiết với id {dishSizeDetail.DishSizeDetailId.Value}");
                                 }
                             }
                             else
@@ -516,7 +518,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var dishDb = await _dishRepository.GetById(dishId);
                 if (dishDb == null)
                 {
-                    result = BuildAppActionResultError(result, $"Món ăn với id {dishId} không tồn tại");
+                    return BuildAppActionResultError(result, $"Món ăn với id {dishId} không tồn tại");
                 }
 
                 dishDb!.IsDeleted = false;

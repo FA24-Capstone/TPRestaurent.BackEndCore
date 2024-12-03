@@ -152,7 +152,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 else
                 {
-                    result = BuildAppActionResultError(result, $"Không tìm thấy thông số cấu hình với tên {name}");
+                    return BuildAppActionResultError(result, $"Không tìm thấy thông số cấu hình với tên {name}");
                 }
             }
             catch (Exception ex)
