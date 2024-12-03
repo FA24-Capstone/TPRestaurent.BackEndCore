@@ -1,9 +1,11 @@
 ﻿using MailKit.Search;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using NPOI.HSSF.Record;
 using RestSharp;
 using System.Net;
+using System.Text;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.ConfigurationModel;
