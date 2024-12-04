@@ -749,8 +749,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     if (orderRequestDto.OrderType == OrderType.Reservation)
                     {
-                        bool isInvalidReservationTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.MealTime.Date ||
-                                                        orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.MealTime.Date;
+                        bool isInvalidReservationTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.MealTime ||
+                                                        orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.MealTime;
                         if (isInvalidReservationTime)
                         {
                             throw new Exception("Thời gian đặt không hợp lệ");
