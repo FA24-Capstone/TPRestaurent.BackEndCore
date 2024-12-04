@@ -142,9 +142,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 return null;
             }
+            var storeCreditAmountResult = UnHashing(account.StoreCreditAmount, false).Result;
+            if (storeCreditAmountResult != null) {
+                account.StoreCreditAmount = storeCreditAmountResult.ToString().Split('_')[1];
+            }
 
-            account.StoreCreditAmount = UnHashing(account.StoreCreditAmount, false).Result.ToString().Split('_')[1];
-            account.LoyaltyPoint = UnHashing(account.LoyaltyPoint, true).Result.ToString().Split('_')[1];
+            var loyaltyPointResult = UnHashing(account.LoyaltyPoint, true).Result;
+            if (loyaltyPointResult != null)
+            {
+                account.LoyaltyPoint = loyaltyPointResult.ToString().Split('_')[1];
+            }
             return account;
         }
     }
