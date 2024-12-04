@@ -4287,12 +4287,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                                                                           p => p.Combo
                     );
                 }
-                var bestSellerDishesList = orderDetailsList.Items.Where(p => p.DishSizeDetailId.HasValue).GroupBy(p => p.DishSizeDetail.DishId).ToDictionary(p => p.Key, p => p.ToList());
+                var bestSellerDishesList = orderDetailsList.Items.Where(p => p.DishSizeDetailId.HasValue && p.DishSizeDetail.Dish.IsDeleted == false).GroupBy(p => p.DishSizeDetail.DishId).ToDictionary(p => p.Key, p => p.ToList());
                 foreach (var bestSellerDish in bestSellerDishesList)
                 {
                     bestSellerDishDictionary.Add(bestSellerDish.Key, bestSellerDish.Value.Sum(p => p.Quantity));
                 }
-                var bestSellerComboList = orderDetailsList.Items.Where(p => p.ComboId.HasValue).GroupBy(p => p.ComboId).ToDictionary(p => p.Key, p => p.ToList());
+                var bestSellerComboList = orderDetailsList.Items.Where(p => p.ComboId.HasValue && p.Combo.IsDeleted == false).GroupBy(p => p.ComboId).ToDictionary(p => p.Key, p => p.ToList());
                 foreach (var bestComboSeller in bestSellerComboList)
                 {
                     bestSellerComboDictionary.Add(bestComboSeller.Key, bestComboSeller.Value.Sum(p => p.Quantity));
