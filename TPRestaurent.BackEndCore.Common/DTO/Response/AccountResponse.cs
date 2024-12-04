@@ -16,8 +16,8 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public string Email { get; set; } = null!;
         public string? Avatar { get; set; }
         public List<CustomerInfoAddress> Addresses { get; set; } = new List<CustomerInfoAddress>();
-        public double LoyalPoint { get; set; }
-        public double Amount { get; set; }
+        public string LoyalPoint { get; set; }
+        public string Amount { get; set; }
         public bool IsDeleted { get; set; } = false;
         public bool IsDelivering { get; set; }
         public DateTime StoreCreditExpireDay { get; set; }
