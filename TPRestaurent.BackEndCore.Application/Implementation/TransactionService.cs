@@ -1223,36 +1223,36 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var hashingService = Resolve<IHashingService>();
                 var utility = Resolve<Utility>();
                 var customerIds = await GetCustomerId();
-                var accountDb = await accountRepository.GetAllDataByExpression(a => !a.IsDeleted && customerIds.Contains(a.Id), 0, 0, null, false, null);
+                var accountDb = await accountRepository.GetAllDataByExpression(a => !a.IsDeleted && customerIds.Contains(a.Id) && a.Id.Equals("01f3d7a4-199e-453d-b0ff-74fbe508f260"), 0, 0, null, false, null);
                 if (accountDb.Items.Count > 0)
                 {
-                    //foreach (var account in accountDb.Items)
-                    //{
-                    //    var storeCredit = hashingService.UnHashing(account.StoreCreditAmount, false);
-                    //    var loyalPoint = hashingService.UnHashing(account.LoyaltyPoint, true);
-                    //    if (!storeCredit.IsSuccess)
-                    //    {
-                    //        account.StoreCreditAmount = hashingService.Hashing(account.Id, double.Parse(account.StoreCreditAmount), false).Result.ToString();
-                    //    }
-
-                    //    if (!loyalPoint.IsSuccess)
-                    //    {
-                    //        account.LoyaltyPoint = hashingService.Hashing(account.Id, double.Parse(account.LoyaltyPoint), true).Result.ToString();
-                    //    }
-                    //}
-                    var loyaltyPointDb = await loyaltyPointRepository.GetAllDataByExpression(l => !string.IsNullOrEmpty(l.Order.AccountId), 0, 0, null, false, l => l.Order);
-                    foreach (var loyaltyPoint in loyaltyPointDb.Items)
+                    foreach (var account in accountDb.Items)
                     {
-                        var newBalanceHashed = hashingService.UnHashing(loyaltyPoint.NewBalance, true);
-                        if (!newBalanceHashed.IsSuccess)
+                        var storeCredit = hashingService.UnHashing(account.StoreCreditAmount, false);
+                        var loyalPoint = hashingService.UnHashing(account.LoyaltyPoint, true);
+                        if (!storeCredit.IsSuccess)
                         {
-                            loyaltyPoint.NewBalance = hashingService.Hashing(loyaltyPoint.Order.AccountId, double.Parse(loyaltyPoint.NewBalance), true).Result.ToString();
-                            loyaltyPoint.PointChanged = hashingService.Hashing(loyaltyPoint.Order.AccountId, double.Parse(loyaltyPoint.PointChanged), true).Result.ToString();
-                        } else
-                        {
+                            account.StoreCreditAmount = hashingService.Hashing(account.Id, double.Parse(account.StoreCreditAmount), false).Result.ToString();
+                        }
 
+                        if (!loyalPoint.IsSuccess)
+                        {
+                            account.LoyaltyPoint = hashingService.Hashing(account.Id, double.Parse(account.LoyaltyPoint), true).Result.ToString();
                         }
                     }
+                    //var loyaltyPointDb = await loyaltyPointRepository.GetAllDataByExpression(l => !string.IsNullOrEmpty(l.Order.AccountId), 0, 0, null, false, l => l.Order);
+                    //foreach (var loyaltyPoint in loyaltyPointDb.Items)
+                    //{
+                    //    var newBalanceHashed = hashingService.UnHashing(loyaltyPoint.NewBalance, true);
+                    //    if (!newBalanceHashed.IsSuccess)
+                    //    {
+                    //        loyaltyPoint.NewBalance = hashingService.Hashing(loyaltyPoint.Order.AccountId, double.Parse(loyaltyPoint.NewBalance), true).Result.ToString();
+                    //        loyaltyPoint.PointChanged = hashingService.Hashing(loyaltyPoint.Order.AccountId, double.Parse(loyaltyPoint.PointChanged), true).Result.ToString();
+                    //    } else
+                    //    {
+
+                    //    }
+                    //}
 
                     //var storeCreditDb = await _repository.GetAllDataByExpression(null, 0, 0, null, false, s => s.Order);
                     //foreach(var storeCredit in storeCreditDb.Items)
@@ -1264,9 +1264,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     //    }
                     //}
 
-                    //await accountRepository.UpdateRange(accountDb.Items);
+                    await accountRepository.UpdateRange(accountDb.Items);
                     //await _repository.UpdateRange(storeCreditDb.Items);
-                    await loyaltyPointRepository.UpdateRange(loyaltyPointDb.Items);
+                    //await loyaltyPointRepository.UpdateRange(loyaltyPointDb.Items);
                     await _unitOfWork.SaveChangesAsync();
                 }
             }

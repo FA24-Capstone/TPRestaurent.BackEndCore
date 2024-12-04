@@ -28,35 +28,35 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-payment/{pageIndex}/{pageSize}")]
-        [TokenValidationMiddleware(Permission.ADMIN)]
+        //[TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> GetAllPayment(Domain.Enums.TransationStatus? transationStatus, string? phoneNumber, int pageIndex = 1, int pageSize = 10)
         {
             return await _service.GetAllTransaction(transationStatus, phoneNumber, pageIndex, pageSize);
         }
 
         [HttpGet("get-payment-by-id/{paymentId}")]
-        [TokenValidationMiddleware(Permission.PAYMENT)]
+        //[TokenValidationMiddleware(Permission.PAYMENT)]
         public async Task<AppActionResult> GetPaymentById(Guid paymentId)
         {
             return await _service.GetTransactionById(paymentId);
         }
 
         [HttpGet("get-loyalty-point-history-by-customer-id/{customerId}")]
-        [TokenValidationMiddleware(Permission.PAYMENT)]
+        //[TokenValidationMiddleware(Permission.PAYMENT)]
         public async Task<AppActionResult> GetLoyaltyPointHistory(Guid customerId)
         {
             return await _service.GetLoyaltyPointHistory(customerId);
         }
 
         [HttpGet("get-transaction-history-by-customer-id/{customerId}")]
-        [TokenValidationMiddleware(Permission.PAYMENT)]
+        //[TokenValidationMiddleware(Permission.PAYMENT)]
         public async Task<AppActionResult> GetTransactionHistory(Guid customerId, TransactionType? type)
         {
             return await _service.GetTransactionHistory(customerId, type);
         }
 
         [HttpGet("get-stored-credit-transaction-history-by-customer-id/{customerId}")]
-        [TokenValidationMiddleware(Permission.PAYMENT)]
+        //[TokenValidationMiddleware(Permission.PAYMENT)]
         public async Task<AppActionResult> GetStoreCreditTransactionHistory(Guid customerId)
         {
             return await _service.GetStoreCreditTransactionHistory(customerId);
