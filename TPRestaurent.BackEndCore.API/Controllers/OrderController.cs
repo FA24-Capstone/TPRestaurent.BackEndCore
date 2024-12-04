@@ -82,7 +82,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("create-order")]
-        [TokenValidationMiddleware(Permission.CREATE_ORDER)]
+        //[TokenValidationMiddleware(Permission.CREATE_ORDER)]
         public async Task<AppActionResult> CreateOrder([FromBody] OrderRequestDto dto)
         {
             return await _service.CreateOrder(dto);
@@ -163,7 +163,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("get-order-with-filter")]
-        [TokenValidationMiddleware(Permission.ALL)]
+        //[TokenValidationMiddleware(Permission.ALL)]
         public async Task<AppActionResult> GetOrderWithFilter([FromBody] ReservationTableRequest request)
         {
             return await _service.GetOrderWithFilter(request);

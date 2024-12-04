@@ -138,19 +138,32 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         public Account GetDecodedAccount(Account account)
         {
-            if(account == null)
+            try
             {
-                return null;
-            }
-            var storeCreditAmountResult = UnHashing(account.StoreCreditAmount, false).Result;
-            if (storeCreditAmountResult != null) {
-                account.StoreCreditAmount = storeCreditAmountResult.ToString().Split('_')[1];
-            }
+                if (account == null)
+                {
+                    return null;
+                }
+                var storeCreditAmountResult = UnHashing(account.StoreCreditAmount, false).Result;
+                if (storeCreditAmountResult != null)
+                {
+                    account.StoreCreditAmount = storeCreditAmountResult.ToString().Split('_')[1];
+                } else
+                {
 
-            var loyaltyPointResult = UnHashing(account.LoyaltyPoint, true).Result;
-            if (loyaltyPointResult != null)
+                }
+
+                var loyaltyPointResult = UnHashing(account.LoyaltyPoint, true).Result;
+                if (loyaltyPointResult != null)
+                {
+                    account.LoyaltyPoint = loyaltyPointResult.ToString().Split('_')[1];
+                } else
+                {
+
+                }
+            }
+            catch (Exception ex)
             {
-                account.LoyaltyPoint = loyaltyPointResult.ToString().Split('_')[1];
             }
             return account;
         }
