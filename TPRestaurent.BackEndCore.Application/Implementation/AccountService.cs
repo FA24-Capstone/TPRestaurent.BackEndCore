@@ -896,6 +896,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 _tokenDto.Token = token;
                 _tokenDto.RefreshToken = refreshToken;
+                user = DecodeStoreCreditAndLoyaltyPointOfAccount(new List<Account>{
+                    user
+                }).FirstOrDefault();
                 _tokenDto.Account = _mapper.Map<AccountResponse>(user);
                 var customerInfoAddressDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.AccountId.Equals(user.Id) && !c.IsDeleted, 0, 0, null, false, null);
                 if (customerInfoAddressDb.Items.Count() > 0)
@@ -1428,6 +1431,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 if (optUser.Type == OTPType.VerifyForReservation)
+                {
+                    throw new Exception($"Mã Otp không tồn tại!");
+                }
+
+                if (optUser.ExpiredTime < utility.GetCurrentDateTimeInTimeZone())
                 {
                     throw new Exception($"Mã Otp không tồn tại!");
                 }

@@ -52,11 +52,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var hashingService = Resolve<IHashingService>();
                 var utility = Resolve<Utility>();
                 var transaction = new Transaction();
-                IConfiguration config = new ConfigurationBuilder()
-                    .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json", true, true)
-                    .Build();
-                string key = config["HashingKeys:PaymentLink"];
+             
+                string key = _configuration["HashingKeys:PaymentLink"];
                 string paymentUrl = "";
                 double amount = 0;
                 if (!paymentRequest.OrderId.HasValue && string.IsNullOrEmpty(paymentRequest.AccountId))
@@ -710,6 +707,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                         (t.OrderId.HasValue && t.Order.AccountId.Equals(customerId.ToString())
                                                                                         || (!string.IsNullOrEmpty(t.AccountId) && t.AccountId.Equals(customerId.ToString()))
                                                                                         )
+                                                                                        && (t.TransationStatusId == TransationStatus.SUCCESSFUL || t.TransationStatusId == TransationStatus.APPLIED)
                                                                                         , 0, 0, t => t.Date, false,
                                                                                     t => t.Order,
                                                                                     t => t.TransactionType,
@@ -1222,18 +1220,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var hashingService = Resolve<IHashingService>();
                 var utility = Resolve<Utility>();
                 var customerIds = await GetCustomerId();
-                var accountDb = await accountRepository.GetAllDataByExpression(a => !a.IsDeleted && customerIds.Contains(a.Id) && a.Id.Equals("07da3284-5a4c-4509-9302-b619cfe72513"), 0, 0, null, false, null);
+                var accountDb = await accountRepository.GetAllDataByExpression(a => customerIds.Contains(a.Id), 0, 0, null, false, null);
                 if (accountDb.Items.Count > 0)
                 {
                     foreach (var account in accountDb.Items)
                     {
-                        //var storeCredit = hashingService.UnHashing(account.StoreCreditAmount, false);
+                        var storeCredit = hashingService.UnHashing(account.StoreCreditAmount, false);
                         var loyalPoint = hashingService.UnHashing(account.LoyaltyPoint, true);
-                        //if (!storeCredit.IsSuccess)
-                        //{
-                        //    account.StoreCreditAmount = hashingService.Hashing(account.Id, double.Parse(account.StoreCreditAmount), false).Result.ToString();
-                        //}
-                        //account.StoreCreditAmount = hashingService.Hashing(account.Id, 0, false).Result.ToString();
+                        if (!storeCredit.IsSuccess)
+                        {
+                            account.StoreCreditAmount = hashingService.Hashing(account.Id, double.Parse(account.StoreCreditAmount), false).Result.ToString();
+                        }
 
                         if (!loyalPoint.IsSuccess)
                         {

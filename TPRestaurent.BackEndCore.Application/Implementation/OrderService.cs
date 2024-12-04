@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using NPOI.POIFS.Crypt.Dsig;
 using NPOI.SS.Formula.Functions;
 using System.Linq.Expressions;
 using System.Text;
@@ -28,8 +29,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private BackEndLogger _logger;
         private IHubServices.IHubServices _hubServices;
         private IHashingService _hashingService;
+        private IConfiguration _configuration;
 
-        public OrderService(IGenericRepository<Order> repository, IGenericRepository<OrderDetail> detailRepository, IGenericRepository<TableDetail> tableDetailRepository, IGenericRepository<OrderSession> sessionRepository, IHashingService hashingService, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service, BackEndLogger logger, IHubServices.IHubServices hubServices
+        public OrderService(IGenericRepository<Order> repository, IGenericRepository<OrderDetail> detailRepository, IGenericRepository<TableDetail> tableDetailRepository, IGenericRepository<OrderSession> sessionRepository, IHashingService hashingService, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service, BackEndLogger logger, IHubServices.IHubServices hubServices,
+            IConfiguration configuration
         ) : base(service)
         {
             _repository = repository;
@@ -41,6 +44,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _logger = logger;
             _hashingService = hashingService;
             _hubServices = hubServices;
+            _configuration = configuration;
         }
 
         public async Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto)
@@ -745,8 +749,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     if (orderRequestDto.OrderType == OrderType.Reservation)
                     {
-                        bool isInvalidReservationTime = orderRequestDto.ReservationOrder.MealTime.AddHours(openTime) > orderRequestDto.ReservationOrder.MealTime ||
-                                                        orderRequestDto.ReservationOrder.MealTime.AddHours(closedTime) < orderRequestDto.ReservationOrder.MealTime;
+                        bool isInvalidReservationTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.MealTime ||
+                                                        orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.MealTime;
                         if (isInvalidReservationTime)
                         {
                             throw new Exception("Thời gian đặt không hợp lệ");
@@ -762,11 +766,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             isInvalidNumberOfPeople = orderRequestDto.ReservationOrder.NumberOfPeople < minPeople ||
                                                       orderRequestDto.ReservationOrder.NumberOfPeople > maxPeople;
-                        }
-                        else
-                        {
-                            isInvalidNumberOfPeople = orderRequestDto.MealWithoutReservation.NumberOfPeople < minPeople ||
-                                                      orderRequestDto.MealWithoutReservation.NumberOfPeople > maxPeople;
                         }
 
                         if (isInvalidNumberOfPeople)
@@ -1114,7 +1113,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         order.OrderTypeId = OrderType.MealWithoutReservation;
                         order.StatusId = OrderStatus.Processing;
                         order.MealTime = utility.GetCurrentDateTimeInTimeZone();
-                        order.NumOfPeople = 0;
+                        order.NumOfPeople = orderRequestDto.MealWithoutReservation.NumberOfPeople;
                         order.TotalAmount = Math.Ceiling(money / 1000) * 1000;
 
                         orderWithPayment.Order = order;
@@ -1517,7 +1516,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         p => p.Shipper
                         );
                 }
-                data.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
+
+                var decodedAccount = new Dictionary<string, Account>();
+                foreach (var order in data.Items.Where(o => o.Account != null).ToList())
+                {
+                    if (decodedAccount.ContainsKey(order.AccountId))
+                    {
+                        order.Account = decodedAccount[order.AccountId];
+                    } else
+                    {
+                        order.Account = _hashingService.GetDecodedAccount(order.Account);
+                        decodedAccount.Add(order.AccountId, order.Account);
+                    }
+
+                }
                 data.Items = data.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                 var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(data.Items);
                 foreach (var order in mappedData)
@@ -1555,7 +1567,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         p => p.CustomerInfoAddress
 
                     );
-                orderDb.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
+                var decodedAccount = new Dictionary<string, Account>();
+                foreach (var order in orderDb.Items.Where(o => o.Account != null).ToList())
+                {
+                    if (decodedAccount.ContainsKey(order.AccountId))
+                    {
+                        order.Account = decodedAccount[order.AccountId];
+                    }
+                    else
+                    {
+                        order.Account = _hashingService.GetDecodedAccount(order.Account);
+                        decodedAccount.Add(order.AccountId, order.Account);
+                    }
+
+                }
                 if (orderDb.Items! == null && orderDb.Items.Count == 0)
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy đơn hàng với id {orderId}");
@@ -1988,7 +2013,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                      p => p.Shipper,
                                                                      p => p.CustomerInfoAddress
                      );
-                    orderListDb.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
+                    var decodedAccount = new Dictionary<string, Account>();
+                    foreach (var order in orderListDb.Items.Where(o => o.Account != null).ToList())
+                    {
+                        if (decodedAccount.ContainsKey(order.AccountId))
+                        {
+                            order.Account = decodedAccount[order.AccountId];
+                        }
+                        else
+                        {
+                            order.Account = _hashingService.GetDecodedAccount(order.Account);
+                            decodedAccount.Add(order.AccountId, order.Account);
+                        }
+
+                    }
                     orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
                     foreach (var order in mappedData)
@@ -2012,7 +2050,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                      p => p.Shipper,
                                                                      p => p.CustomerInfoAddress
                      );
-                    orderListDb.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
+                    var decodedAccount = new Dictionary<string, Account>();
+                    foreach (var order in orderListDb.Items.Where(o => o.Account != null).ToList())
+                    {
+                        if (decodedAccount.ContainsKey(order.AccountId))
+                        {
+                            order.Account = decodedAccount[order.AccountId];
+                        }
+                        else
+                        {
+                            order.Account = _hashingService.GetDecodedAccount(order.Account);
+                            decodedAccount.Add(order.AccountId, order.Account);
+                        }
+
+                    }
                     orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
                     foreach (var order in mappedData)
@@ -2037,7 +2088,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                      p => p.Shipper,
                                                                      p => p.CustomerInfoAddress
                      );
-                    orderListDb.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
+                    var decodedAccount = new Dictionary<string, Account>();
+                    foreach (var order in orderListDb.Items.Where(o => o.Account != null).ToList())
+                    {
+                        if (decodedAccount.ContainsKey(order.AccountId))
+                        {
+                            order.Account = decodedAccount[order.AccountId];
+                        }
+                        else
+                        {
+                            order.Account = _hashingService.GetDecodedAccount(order.Account);
+                            decodedAccount.Add(order.AccountId, order.Account);
+                        }
+
+                    }
                     orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
                     foreach (var order in mappedData)
@@ -2062,7 +2126,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             p => p.Shipper,
                             p => p.CustomerInfoAddress
                         );
-                    orderListDb.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
+                    var decodedAccount = new Dictionary<string, Account>();
+                    foreach (var order in orderListDb.Items.Where(o => o.Account != null).ToList())
+                    {
+                        if (decodedAccount.ContainsKey(order.AccountId))
+                        {
+                            order.Account = decodedAccount[order.AccountId];
+                        }
+                        else
+                        {
+                            order.Account = _hashingService.GetDecodedAccount(order.Account);
+                            decodedAccount.Add(order.AccountId, order.Account);
+                        }
+
+                    }
                     orderListDb.Items = orderListDb.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                     var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(orderListDb.Items);
                     foreach (var order in mappedData)
@@ -2139,8 +2216,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                       );
                 }
 
-                data.Items = data.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
-                data.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
+                var decodedAccount = new Dictionary<string, Account>();
+                foreach (var order in data.Items.Where(o => o.Account != null).ToList())
+                {
+                    if (decodedAccount.ContainsKey(order.AccountId))
+                    {
+                        order.Account = decodedAccount[order.AccountId];
+                    }
+                    else
+                    {
+                        order.Account = _hashingService.GetDecodedAccount(order.Account);
+                        decodedAccount.Add(order.AccountId, order.Account);
+                    }
+
+                }
                 var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(data.Items);
                 foreach (var order in mappedData)
                 {
@@ -2179,7 +2268,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         p => p.OrderType!,
                         p => p.CustomerInfoAddress
                     );
-                orderDb.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
+                var decodedAccount = new Dictionary<string, Account>();
+                foreach (var order in orderDb.Items.Where(o => o.Account != null).ToList())
+                {
+                    if (decodedAccount.ContainsKey(order.AccountId))
+                    {
+                        order.Account = decodedAccount[order.AccountId];
+                    }
+                    else
+                    {
+                        order.Account = _hashingService.GetDecodedAccount(order.Account);
+                        decodedAccount.Add(order.AccountId, order.Account);
+                    }
+
+                }
                 result.Result = orderDb;
             }
             catch (Exception ex)
@@ -3675,7 +3777,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 double[] startDestination = new double[2];
                 startDestination[0] = startLat;
                 startDestination[1] = startLng;
-                data.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
+                var decodedAccount = new Dictionary<string, Account>();
+                foreach (var order in data.Items.Where(o => o.Account != null).ToList())
+                {
+                    if (decodedAccount.ContainsKey(order.AccountId))
+                    {
+                        order.Account = decodedAccount[order.AccountId];
+                    }
+                    else
+                    {
+                        order.Account = _hashingService.GetDecodedAccount(order.Account);
+                        decodedAccount.Add(order.AccountId, order.Account);
+                    }
+
+                }
                 data.Items = data.Items.OrderByDescending(o => o.MealTime).ThenByDescending(o => o.OrderDate).ToList();
                 var mappedData = _mapper.Map<List<OrderWithFirstDetailResponse>>(data.Items);
                 foreach (var order in mappedData)
@@ -3848,7 +3963,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderDiningDb = await _repository.GetAllDataByExpression(o => orderIds.Contains(o.OrderId), request.pageNumber, request.pageSize, null, false, o => o.Status,
                                                                                                                                     o => o.OrderType,
                                                                                                                                     o => o.Account);
-                orderDiningDb.Items.Where(o => o.Account != null).ToList().ForEach(o => o.Account = _hashingService.GetDecodedAccount(o.Account));
+                var decodedAccount = new Dictionary<string, Account>();
+                foreach (var order in orderDiningDb.Items.Where(o => o.Account != null).ToList())
+                {
+                    if (decodedAccount.ContainsKey(order.AccountId))
+                    {
+                        order.Account = decodedAccount[order.AccountId];
+                    }
+                    else
+                    {
+                        order.Account = _hashingService.GetDecodedAccount(order.Account);
+                        decodedAccount.Add(order.AccountId, order.Account);
+                    }
+
+                }
                 if (orderDiningDb.Items!.Count > 0)
                 {
                     orderDb = orderDiningDb.Items;
@@ -4159,12 +4287,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                                                                           p => p.Combo
                     );
                 }
-                var bestSellerDishesList = orderDetailsList.Items.Where(p => p.DishSizeDetailId.HasValue).GroupBy(p => p.DishSizeDetail.DishId).ToDictionary(p => p.Key, p => p.ToList());
+                var bestSellerDishesList = orderDetailsList.Items.Where(p => p.DishSizeDetailId.HasValue && p.DishSizeDetail.Dish.IsDeleted == false).GroupBy(p => p.DishSizeDetail.DishId).ToDictionary(p => p.Key, p => p.ToList());
                 foreach (var bestSellerDish in bestSellerDishesList)
                 {
                     bestSellerDishDictionary.Add(bestSellerDish.Key, bestSellerDish.Value.Sum(p => p.Quantity));
                 }
-                var bestSellerComboList = orderDetailsList.Items.Where(p => p.ComboId.HasValue).GroupBy(p => p.ComboId).ToDictionary(p => p.Key, p => p.ToList());
+                var bestSellerComboList = orderDetailsList.Items.Where(p => p.ComboId.HasValue && p.Combo.IsDeleted == false).GroupBy(p => p.ComboId).ToDictionary(p => p.Key, p => p.ToList());
                 foreach (var bestComboSeller in bestSellerComboList)
                 {
                     bestSellerComboDictionary.Add(bestComboSeller.Key, bestComboSeller.Value.Sum(p => p.Quantity));
@@ -4725,18 +4853,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private AppActionResult Hashing(string accountId, double amount, bool isLoyaltyPoint)
         {
             var hashingService = Resolve<IHashingService>();
-            IConfiguration config = new ConfigurationBuilder()
-                           .SetBasePath(Directory.GetCurrentDirectory())
-                           .AddJsonFile("appsettings.json", true, true)
-                           .Build();
+          
             string key = "";
             if (isLoyaltyPoint)
             {
-                key = config["PaymentSecurity:LoyaltyPoint"];
+                key = _configuration["PaymentSecurity:LoyaltyPoint"];
             } 
             else
             {
-                key = config["PaymentSecurity:StoreCredit"];
+                key = _configuration["PaymentSecurity:StoreCredit"];
             }
             return hashingService.Hashing($"{accountId}_{amount}", key);
         }
@@ -4745,18 +4870,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             var hashingService = Resolve<IHashingService>();
 
-            IConfiguration config = new ConfigurationBuilder()
-                           .SetBasePath(Directory.GetCurrentDirectory())
-                           .AddJsonFile("appsettings.json", true, true)
-                           .Build();
+           
             string key = "";
             if (isLoyaltyPoint)
             {
-                key = config["PaymentSecurity:LoyaltyPoint"];
+                key = _configuration["PaymentSecurity:LoyaltyPoint"];
             }
             else
             {
-                key = config["PaymentSecurity:StoreCredit"];
+                key = _configuration["PaymentSecurity:StoreCredit"];
             }
             return hashingService.DeHashing(text, key);
 
