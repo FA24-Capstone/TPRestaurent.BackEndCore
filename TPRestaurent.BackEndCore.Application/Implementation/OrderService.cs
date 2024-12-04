@@ -749,8 +749,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     if (orderRequestDto.OrderType == OrderType.Reservation)
                     {
-                        bool isInvalidReservationTime = orderRequestDto.ReservationOrder.MealTime.AddHours(openTime) > orderRequestDto.ReservationOrder.MealTime ||
-                                                        orderRequestDto.ReservationOrder.MealTime.AddHours(closedTime) < orderRequestDto.ReservationOrder.MealTime;
+                        bool isInvalidReservationTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.MealTime ||
+                                                        orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.MealTime;
                         if (isInvalidReservationTime)
                         {
                             throw new Exception("Thời gian đặt không hợp lệ");
@@ -4287,12 +4287,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                                                                           p => p.Combo
                     );
                 }
-                var bestSellerDishesList = orderDetailsList.Items.Where(p => p.DishSizeDetailId.HasValue).GroupBy(p => p.DishSizeDetail.DishId).ToDictionary(p => p.Key, p => p.ToList());
+                var bestSellerDishesList = orderDetailsList.Items.Where(p => p.DishSizeDetailId.HasValue && p.DishSizeDetail.Dish.IsDeleted == false).GroupBy(p => p.DishSizeDetail.DishId).ToDictionary(p => p.Key, p => p.ToList());
                 foreach (var bestSellerDish in bestSellerDishesList)
                 {
                     bestSellerDishDictionary.Add(bestSellerDish.Key, bestSellerDish.Value.Sum(p => p.Quantity));
                 }
-                var bestSellerComboList = orderDetailsList.Items.Where(p => p.ComboId.HasValue).GroupBy(p => p.ComboId).ToDictionary(p => p.Key, p => p.ToList());
+                var bestSellerComboList = orderDetailsList.Items.Where(p => p.ComboId.HasValue && p.Combo.IsDeleted == false).GroupBy(p => p.ComboId).ToDictionary(p => p.Key, p => p.ToList());
                 foreach (var bestComboSeller in bestSellerComboList)
                 {
                     bestSellerComboDictionary.Add(bestComboSeller.Key, bestComboSeller.Value.Sum(p => p.Quantity));
