@@ -9,21 +9,23 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 {
     public class HashingService : GenericBackendService, IHashingService
     {
-        public HashingService(IServiceProvider service) : base(service) { }
+        private IConfiguration _configuration;
+
+        public HashingService(IServiceProvider service, IConfiguration configuration) : base(service)
+        {
+            _configuration = configuration;
+        }
         public AppActionResult Hashing(string accountId, double amount, bool isLoyaltyPoint)
         {
-            IConfiguration config = new ConfigurationBuilder()
-                           .SetBasePath(Directory.GetCurrentDirectory())
-                           .AddJsonFile("appsettings.json", true, true)
-                           .Build();
+          
             string key = "";
             if (isLoyaltyPoint)
             {
-                key = config["PaymentSecurity:LoyaltyPoint"];
+                key = _configuration["PaymentSecurity:LoyaltyPoint"];
             }
             else
             {
-                key = config["PaymentSecurity:StoreCredit"];
+                key = _configuration["PaymentSecurity:StoreCredit"];
             }
             if (string.IsNullOrEmpty(accountId))
             {
@@ -35,18 +37,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         public AppActionResult UnHashing(string text, bool isLoyaltyPoint)
         {
-            IConfiguration config = new ConfigurationBuilder()
-                           .SetBasePath(Directory.GetCurrentDirectory())
-                           .AddJsonFile("appsettings.json", true, true)
-                           .Build();
+           
             string key = "";
             if (isLoyaltyPoint)
             {
-                key = config["PaymentSecurity:LoyaltyPoint"];
+                key = _configuration["PaymentSecurity:LoyaltyPoint"];
             }
             else
             {
-                key = config["PaymentSecurity:StoreCredit"];
+                key = _configuration["PaymentSecurity:StoreCredit"];
             }
             return DeHashing(text, key);
 
