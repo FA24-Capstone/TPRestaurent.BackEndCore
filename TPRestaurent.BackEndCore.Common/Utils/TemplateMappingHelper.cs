@@ -152,7 +152,7 @@ public class TemplateMappingHelper
 
         <p class=""emailBody"">
           Vui lòng nhập mã xác nhận vào hệ thống để đến bước tiếp theo
-          <a href=""https://lovehouse.vercel.app/""
+          <a href=""https://www.thienphurestaurant.com/""
             ><span style=""font-weight: bold; Text-transform: uppercase""
               >Tại đây</span
             ></a
@@ -314,7 +314,7 @@ public class TemplateMappingHelper
 
         <p class=""emailBody"">
           Please enter the code above into the system to proceed to the next step
-          <a href=""https://lovehouse.vercel.app/""
+          <a href=""https://www.thienphurestaurant.com/""
             ><span style=""font-weight: bold; Text-transform: uppercase""
               >here</span
             ></a
@@ -476,7 +476,7 @@ public class TemplateMappingHelper
 
         <p class=""emailBody"">
           Please enter the code above into the system to proceed to the next step
-          <a href=""https://lovehouse.vercel.app/""
+          <a href=""https://www.thienphurestaurant.com/""
             ><span style=""font-weight: bold; Text-transform: uppercase""
               >here</span
             ></a
@@ -640,7 +640,7 @@ public class TemplateMappingHelper
 
         <p class=""emailBody"">
           Please enter the code above into the system to proceed to the next step
-          <a href=""https://lovehouse.vercel.app/""
+          <a href=""https://www.thienphurestaurant.com/""
             ><span style=""font-weight: bold; Text-transform: uppercase""
               >here</span
             ></a

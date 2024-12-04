@@ -1063,9 +1063,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         string accountLogMessage = await CheckHacked(account, hashingService, loyaltyPointRepository);
                         if (!string.IsNullOrEmpty(accountLogMessage))
                         {
-                            logMessage.AppendLine($"Thông tin số dư và điểm thưởng của account với {account.Id} có dấu hiệu bất thường");
-                            logMessage.AppendLine(accountLogMessage);
-                            logMessage.AppendLine("____________________________________________________________________________________");
+                            logMessage.Append($"Thông tin số dư và điểm thưởng của account với {account.Id} có dấu hiệu bất thường. |");
+                            logMessage.Append(accountLogMessage);
                         }
                     }
                     Logger.WriteLog(new LogDto
@@ -1095,13 +1094,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if (!storeCredit.IsSuccess)
                 {
-                    logMessage.AppendLine($"{i++}. Không thể giải mã số dư ví cho tài khoản.");
+                    logMessage.Append($"{i++}. Không thể giải mã số dư ví cho tài khoản. |");
                     return logMessage.ToString();
                 }
 
                 if (!storeCredit.Result.ToString().Contains(account.Id))
                 {
-                    logMessage.AppendLine($"{i++}. Số dư không thuộc về tài khoản");
+                    logMessage.Append($"{i++}. Số dư không thuộc về tài khoản. |");
                 }
                 var storeCreditAmount = int.Parse(storeCredit.Result.ToString().Split('_')[1]);
                 var storeCreditDb = await _repository.GetAllDataByExpression(t => t.PaymentMethodId == PaymentMethod.STORE_CREDIT
@@ -1113,12 +1112,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     storeCreditRecord = hashingService.UnHashing(item.Amount, false).Result.ToString();
                     if (string.IsNullOrEmpty(storeCreditRecord))
                     {
-                        logMessage.AppendLine($"{i++}. Không thể giải mã lịch sử dùng/nạp ví cho tài khoản (id record {item.Id})");
+                        logMessage.Append($"{i++}. Không thể giải mã lịch sử dùng/nạp ví cho tài khoản (id record {item.Id}). |");
                         continue;
                     }
                     if (!storeCreditRecord.Contains(account.Id))
                     {
-                        logMessage.AppendLine($"{i++}. Lịch sử dùng/nạp ví không thuộc về tài khoản (id record {item.Id})");
+                        logMessage.Append($"{i++}. Lịch sử dùng/nạp ví không thuộc về tài khoản (id record {item.Id}). |");
                         continue;
                     }
 
@@ -1127,18 +1126,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if(storeCreditAmount != 0)
                 {
-                    logMessage.AppendLine($"{i++}. Tổng số dư ví hiện tại không khớp với lịch sử");
+                    logMessage.Append($"{i++}. Tổng số dư ví hiện tại không khớp với lịch sử. |");
                 }
 
                 if (!loyalPoint.IsSuccess)
                 {
-                    logMessage.AppendLine($"{i++}Không thể giải mã điểm thành viên cho tài khoản.");
+                    logMessage.Append($"{i++}Không thể giải mã điểm thành viên cho tài khoản. |");
                     return logMessage.ToString();
                 }
 
                 if (!loyalPoint.Result.ToString().Contains(account.Id))
                 {
-                    logMessage.AppendLine($"{i++}. Số điểm thành viên không thuộc về tài khoản");
+                    logMessage.Append($"{i++}. Số điểm thành viên không thuộc về tài khoản. |");
 
                 }
                 var loyaltyPointAmount = int.Parse(loyalPoint.Result.ToString().Split('_')[1]);
@@ -1153,31 +1152,31 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     newBalanceRecord = hashingService.UnHashing(item.NewBalance, true).Result.ToString();
                     if (string.IsNullOrEmpty(loyaltyPointRecord))
                     {
-                        logMessage.AppendLine($"{i++}. Không thể giải mã lịch sử dùng/cộng điểm thưởng cho tài khoản (id record {item.LoyalPointsHistoryId})");
+                        logMessage.Append($"{i++}. Không thể giải mã lịch sử dùng/cộng điểm thưởng cho tài khoản (id record {item.LoyalPointsHistoryId}). |");
                         continue;
                     }
 
                     if (string.IsNullOrEmpty(newBalanceRecord))
                     {
-                        logMessage.AppendLine($"{i++}. Không thể giải mã lịch sử tổng điểm thưởng mới cho tài khoản (id record {item.LoyalPointsHistoryId})");
+                        logMessage.Append($"{i++}. Không thể giải mã lịch sử tổng điểm thưởng mới cho tài khoản (id record {item.LoyalPointsHistoryId}). |");
                         continue;
                     }
 
                     if (!loyaltyPointRecord.Contains(account.Id))
                     {
-                        logMessage.AppendLine($"{i++}. Lịch sử dùng/cộng điểm thưởng không thuộc về tài khoản (id record {item.LoyalPointsHistoryId})");
+                        logMessage.Append($"{i++}. Lịch sử dùng/cộng điểm thưởng không thuộc về tài khoản (id record {item.LoyalPointsHistoryId}). |");
                         continue;
                     }
 
                     if (!newBalanceRecord.Contains(account.Id))
                     {
-                        logMessage.AppendLine($"{i++}. Lịch sử tổng điểm thưởng mới không thuộc về tài khoản (id record {item.LoyalPointsHistoryId})");
+                        logMessage.Append($"{i++}. Lịch sử tổng điểm thưởng mới không thuộc về tài khoản (id record {item.LoyalPointsHistoryId}). |");
                         continue;
                     }
 
                     if (previousBalance != int.Parse(newBalanceRecord.Split('_')[1]) - int.Parse(loyaltyPointRecord.Split('_')[1]))
                     {
-                        logMessage.AppendLine($"{i++}. Lịch sử tổng điểm thưởng mới không thuộc về tài khoản (id record {item.LoyalPointsHistoryId})");
+                        logMessage.Append($"{i++}. Lịch sử tổng điểm thưởng mới không thuộc về tài khoản (id record {item.LoyalPointsHistoryId}). |");
                     }
 
                     previousBalance = int.Parse(newBalanceRecord.Split('_')[1]);
@@ -1185,7 +1184,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if(previousBalance != loyaltyPointAmount)
                 {
-                    logMessage.AppendLine($"{i++}. Tổng số điểm thưởng hiện tại không khớp với lịch sử");
+                    logMessage.Append($"{i++}. Tổng số điểm thưởng hiện tại không khớp với lịch sử. |");
                 }
             }
             catch (Exception ex)
@@ -1223,39 +1222,40 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var hashingService = Resolve<IHashingService>();
                 var utility = Resolve<Utility>();
                 var customerIds = await GetCustomerId();
-                var accountDb = await accountRepository.GetAllDataByExpression(a => !a.IsDeleted && customerIds.Contains(a.Id), 0, 0, null, false, null);
+                var accountDb = await accountRepository.GetAllDataByExpression(a => !a.IsDeleted && customerIds.Contains(a.Id) && a.Id.Equals("07da3284-5a4c-4509-9302-b619cfe72513"), 0, 0, null, false, null);
                 if (accountDb.Items.Count > 0)
                 {
-                    //foreach (var account in accountDb.Items)
-                    //{
-                    //    var storeCredit = hashingService.UnHashing(account.StoreCreditAmount, false);
-                    //    var loyalPoint = hashingService.UnHashing(account.LoyaltyPoint, true);
-                    //    if (!storeCredit.IsSuccess)
-                    //    {
-                    //        account.StoreCreditAmount = hashingService.Hashing(account.Id, double.Parse(account.StoreCreditAmount), false).Result.ToString();
-                    //    }
-
-                    //    if (!loyalPoint.IsSuccess)
-                    //    {
-                    //        account.LoyaltyPoint = hashingService.Hashing(account.Id, double.Parse(account.LoyaltyPoint), true).Result.ToString();
-                    //    }
-                    //}
-                    var loyaltyPointDb = await loyaltyPointRepository.GetAllDataByExpression(l => !string.IsNullOrEmpty(l.Order.AccountId), 0, 0, null, false, l => l.Order);
-                    foreach (var loyaltyPoint in loyaltyPointDb.Items)
+                    foreach (var account in accountDb.Items)
                     {
-                        var newBalanceHashed = hashingService.UnHashing(loyaltyPoint.NewBalance, true);
-                        if (!newBalanceHashed.IsSuccess)
-                        {
-                            loyaltyPoint.NewBalance = hashingService.Hashing(loyaltyPoint.Order.AccountId, double.Parse(loyaltyPoint.NewBalance), true).Result.ToString();
-                            loyaltyPoint.PointChanged = hashingService.Hashing(loyaltyPoint.Order.AccountId, double.Parse(loyaltyPoint.PointChanged), true).Result.ToString();
-                        } else
-                        {
+                        //var storeCredit = hashingService.UnHashing(account.StoreCreditAmount, false);
+                        var loyalPoint = hashingService.UnHashing(account.LoyaltyPoint, true);
+                        //if (!storeCredit.IsSuccess)
+                        //{
+                        //    account.StoreCreditAmount = hashingService.Hashing(account.Id, double.Parse(account.StoreCreditAmount), false).Result.ToString();
+                        //}
+                        //account.StoreCreditAmount = hashingService.Hashing(account.Id, 0, false).Result.ToString();
 
+                        if (!loyalPoint.IsSuccess)
+                        {
+                            account.LoyaltyPoint = hashingService.Hashing(account.Id, double.Parse(account.LoyaltyPoint), true).Result.ToString();
                         }
                     }
+                    //var loyaltyPointDb = await loyaltyPointRepository.GetAllDataByExpression(l => !string.IsNullOrEmpty(l.Order.AccountId), 0, 0, null, false, l => l.Order);
+                    //foreach (var loyaltyPoint in loyaltyPointDb.Items)
+                    //{
+                    //    var newBalanceHashed = hashingService.UnHashing(loyaltyPoint.NewBalance, true);
+                    //    if (!newBalanceHashed.IsSuccess)
+                    //    {
+                    //        loyaltyPoint.NewBalance = hashingService.Hashing(loyaltyPoint.Order.AccountId, double.Parse(loyaltyPoint.NewBalance), true).Result.ToString();
+                    //        loyaltyPoint.PointChanged = hashingService.Hashing(loyaltyPoint.Order.AccountId, double.Parse(loyaltyPoint.PointChanged), true).Result.ToString();
+                    //    } else
+                    //    {
+
+                    //    }
+                    //}
 
                     //var storeCreditDb = await _repository.GetAllDataByExpression(null, 0, 0, null, false, s => s.Order);
-                    //foreach(var storeCredit in storeCreditDb.Items)
+                    //foreach (var storeCredit in storeCreditDb.Items)
                     //{
                     //    var storeCreditHashed = hashingService.UnHashing(storeCredit.Amount, false);
                     //    if (!storeCreditHashed.IsSuccess)
@@ -1264,9 +1264,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     //    }
                     //}
 
-                    //await accountRepository.UpdateRange(accountDb.Items);
+                    await accountRepository.UpdateRange(accountDb.Items);
                     //await _repository.UpdateRange(storeCreditDb.Items);
-                    await loyaltyPointRepository.UpdateRange(loyaltyPointDb.Items);
+                    //await loyaltyPointRepository.UpdateRange(loyaltyPointDb.Items);
                     await _unitOfWork.SaveChangesAsync();
                 }
             }
