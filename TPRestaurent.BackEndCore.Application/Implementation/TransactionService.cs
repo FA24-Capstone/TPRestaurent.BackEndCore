@@ -52,11 +52,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var hashingService = Resolve<IHashingService>();
                 var utility = Resolve<Utility>();
                 var transaction = new Transaction();
-                IConfiguration config = new ConfigurationBuilder()
-                    .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json", true, true)
-                    .Build();
-                string key = config["HashingKeys:PaymentLink"];
+             
+                string key = _configuration["HashingKeys:PaymentLink"];
                 string paymentUrl = "";
                 double amount = 0;
                 if (!paymentRequest.OrderId.HasValue && string.IsNullOrEmpty(paymentRequest.AccountId))

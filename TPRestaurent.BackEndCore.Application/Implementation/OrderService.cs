@@ -28,8 +28,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private BackEndLogger _logger;
         private IHubServices.IHubServices _hubServices;
         private IHashingService _hashingService;
+        private IConfiguration _configuration;
 
-        public OrderService(IGenericRepository<Order> repository, IGenericRepository<OrderDetail> detailRepository, IGenericRepository<TableDetail> tableDetailRepository, IGenericRepository<OrderSession> sessionRepository, IHashingService hashingService, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service, BackEndLogger logger, IHubServices.IHubServices hubServices
+        public OrderService(IGenericRepository<Order> repository, IGenericRepository<OrderDetail> detailRepository, IGenericRepository<TableDetail> tableDetailRepository, IGenericRepository<OrderSession> sessionRepository, IHashingService hashingService, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service, BackEndLogger logger, IHubServices.IHubServices hubServices,
+            IConfiguration configuration
         ) : base(service)
         {
             _repository = repository;
@@ -41,6 +43,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _logger = logger;
             _hashingService = hashingService;
             _hubServices = hubServices;
+            _configuration = configuration;
         }
 
         public async Task<AppActionResult> AddDishToOrder(AddDishToOrderRequestDto dto)
@@ -4725,18 +4728,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private AppActionResult Hashing(string accountId, double amount, bool isLoyaltyPoint)
         {
             var hashingService = Resolve<IHashingService>();
-            IConfiguration config = new ConfigurationBuilder()
-                           .SetBasePath(Directory.GetCurrentDirectory())
-                           .AddJsonFile("appsettings.json", true, true)
-                           .Build();
+          
             string key = "";
             if (isLoyaltyPoint)
             {
-                key = config["PaymentSecurity:LoyaltyPoint"];
+                key = _configuration["PaymentSecurity:LoyaltyPoint"];
             } 
             else
             {
-                key = config["PaymentSecurity:StoreCredit"];
+                key = _configuration["PaymentSecurity:StoreCredit"];
             }
             return hashingService.Hashing($"{accountId}_{amount}", key);
         }
@@ -4745,18 +4745,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             var hashingService = Resolve<IHashingService>();
 
-            IConfiguration config = new ConfigurationBuilder()
-                           .SetBasePath(Directory.GetCurrentDirectory())
-                           .AddJsonFile("appsettings.json", true, true)
-                           .Build();
+           
             string key = "";
             if (isLoyaltyPoint)
             {
-                key = config["PaymentSecurity:LoyaltyPoint"];
+                key = _configuration["PaymentSecurity:LoyaltyPoint"];
             }
             else
             {
-                key = config["PaymentSecurity:StoreCredit"];
+                key = _configuration["PaymentSecurity:StoreCredit"];
             }
             return hashingService.DeHashing(text, key);
 
