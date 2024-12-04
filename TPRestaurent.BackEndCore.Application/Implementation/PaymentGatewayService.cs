@@ -18,11 +18,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
         public async Task<string> CreatePaymentUrlVnpay(PaymentInformationRequest requestDto)
         {
-            IConfiguration config = new ConfigurationBuilder()
-                           .SetBasePath(Directory.GetCurrentDirectory())
-                           .AddJsonFile("appsettings.json", true, true)
-                           .Build();
-            string key = config["HashingKeys:PaymentLink"];
+         
+            string key = _configuration["HashingKeys:PaymentLink"];
             var paymentUrl = "";
             var vnpay = new PaymentInformationRequest
             {
