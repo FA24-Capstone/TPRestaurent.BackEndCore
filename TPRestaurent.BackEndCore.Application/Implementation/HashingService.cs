@@ -147,18 +147,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (storeCreditAmountResult != null)
                 {
                     account.StoreCreditAmount = storeCreditAmountResult.ToString().Split('_')[1];
-                } else
-                {
-
-                }
+                } 
 
                 var loyaltyPointResult = UnHashing(account.LoyaltyPoint, true).Result;
                 if (loyaltyPointResult != null)
                 {
                     account.LoyaltyPoint = loyaltyPointResult.ToString().Split('_')[1];
-                } else
-                {
-
                 }
             }
             catch (Exception ex)

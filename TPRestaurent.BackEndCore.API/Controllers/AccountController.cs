@@ -139,7 +139,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-account-by-phone-number")]
-        //[TokenValidationMiddleware(Permission.ALL)]
+        [TokenValidationMiddleware(Permission.ALL)]
         public async Task<AppActionResult> GetCustomerInfoByPhoneNumber(string phoneNumber)
         {
             return await _accountService.GetAccountByPhoneNumber(phoneNumber);
