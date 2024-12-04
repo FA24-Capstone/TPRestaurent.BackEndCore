@@ -21,7 +21,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("create-payment")]
-        [TokenValidationMiddleware(Permission.PAYMENT)]
+        //[TokenValidationMiddleware(Permission.PAYMENT)]
         public async Task<AppActionResult> CreatePayment([FromBody] PaymentRequestDto paymentRequest)
         {
             return await _service.CreatePayment(paymentRequest);

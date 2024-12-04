@@ -707,6 +707,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                         (t.OrderId.HasValue && t.Order.AccountId.Equals(customerId.ToString())
                                                                                         || (!string.IsNullOrEmpty(t.AccountId) && t.AccountId.Equals(customerId.ToString()))
                                                                                         )
+                                                                                        && (t.TransationStatusId == TransationStatus.SUCCESSFUL || t.TransationStatusId == TransationStatus.APPLIED)
                                                                                         , 0, 0, t => t.Date, false,
                                                                                     t => t.Order,
                                                                                     t => t.TransactionType,
