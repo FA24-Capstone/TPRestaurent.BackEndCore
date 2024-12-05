@@ -31,154 +31,102 @@ public class TemplateMappingHelper
 
       body {
         font-family: Arial, sans-serif;
-        background-color: #f4f4f4; /* Background color for the entire email */
+        background-color: #f4f4f4;
       }
 
       .container {
         max-width: 900px;
         margin: 20 auto;
-        /* padding: 20px; */
         border-radius: 5px;
-        box-shadow: 0px 0px 5px 2px #ccc; /*Add a shadow to the content */
+        box-shadow: 0px 0px 5px 2px #ccc;
       }
 
       .header {
-        Text-align: center;
-        background-color: #ffba00; /* Header background color */
+        text-align: center;
+        background-color: #ffba00;
         padding: 20px;
       }
-      .header-title {
-        Text-align: left;
-        background-color: #2ad65e; /* Header background color */
-        padding: 20px;
-        color: white;
-      }
+
       .title {
-        color: black; /* Text color for the title */
+        color: black;
         font-size: 30px;
         font-weight: bold;
       }
 
-      .greeting {
-        font-size: 18px;
-        margin: 10 5;
+      .mainBody {
+        background-color: #ffffff;
+        padding: 20px;
       }
+
       .emailBody {
         margin: 5 5;
+        font-size: 16px;
+        color: #333;
       }
+
+      .couponList {
+        margin: 10 5;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        list-style-type: none;
+      }
+
+      .couponList li {
+        margin: 5px 0;
+        padding: 10px;
+        background-color: #fff8ea;
+        border-radius: 3px;
+        box-shadow: 0px 0px 3px 1px #ccc;
+      }
+
       .support {
         font-size: 15px;
         font-style: italic;
         margin: 5 5;
       }
 
-      .mainBody {
-        background-color: #ffffff; /* Main content background color */
-        padding: 20px;
-        /* border-radius: 5px; */
-        /* box-shadow: 0px 0px 5px 2px #ccc; Add a shadow to the content */
-      }
-      .body-content {
-        /* display: flex;
-        flex-direction: column; */
-        border: 1px #fff8ea;
-        border-radius: 5px;
-        margin: 10 5;
-        padding: 10px;
-        /* background-color: #fff8ea; */
-        box-shadow: 0px 0px 5px 2px #ccc;
-      }
-      .title-content {
-        font-weight: bold;
-      }
-
-      u i {
-        color: blue;
+      .signature {
+        text-align: right;
+        font-size: 16px;
+        margin: 5 5;
       }
 
       .footer {
-        font-size: 14px;
-        Text-align: center;
-        background-color: #ffba00; /* Header background color */
+        text-align: center;
+        background-color: #ffba00;
         padding: 10px;
-        display: flex;
-        justify-content: center;
-        flex-direction: column;
-      }
-      .footer-Text {
+        font-size: 14px;
         font-weight: 600;
-      }
-      .signature {
-        Text-align: right;
-        font-size: 16px;
-        margin: 5 5;
       }
     </style>
   </head>
   <body>
     <div class=""container"">
-      <div
-        style=""
-          height: 100px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background-color: white;
-        ""
-      >
-        <p
-          style=""
-            color: #515151;
-            Text-align: center;
-            margin: auto 0;
-            font-size: 30px;
-          ""
-        >
-          Nhà hàng lẩu - nướng Thiên Phú
-        </p>
+      <div class=""header"">
+        <p class=""title"">Nhà hàng Thiên Phú</p>
       </div>
       <div class=""mainBody"">
-        <!-- <div class=""header-title"">
-        </div> -->
-        <h2 class=""emailBody"">Hello " + name + @" ,</h2>
-        <p class=""greeting""></p>
-
+        <h2 class=""emailBody"">Kính gửi "+name+ @",</h2>
         <p class=""emailBody"">
-          Hiện tại bạn đang đăng ký tài khoản tại <b><i>Nhà hàng Thiên Phú </i></b>.
+        Mã OTP của bạn là" + body + @"
         </p>
-        <p class=""emailBody"">
-          Bên dưới là mã xác nhận của bạn:
-          <b><i> " + body + @"</i></b>
-        </p>
-
-        <p class=""emailBody"">
-          Vui lòng nhập mã xác nhận vào hệ thống để đến bước tiếp theo
-          <a href=""https://www.thienphurestaurant.com/""
-            ><span style=""font-weight: bold; Text-transform: uppercase""
-              >Tại đây</span
-            ></a
-          >
-        </p>
-        <p class=""support"">
-          Cảm ơn bạn đã quan tâm đến dịch vụ của <b><i>Nhà hàng Thiên Phú</i></b
-          >, nếu có bất kỳ thắc mắc nào, vui lòng liên hệ
-          <u><i>qk.backend@gmail.com</i></u> để được hỗ trợ
-        </p>
+        
+       
         <div class=""signature"">
-          <p>Thân chào,</p>
-          <p>
-            <b><i>Nhà hàng Thiên Phú</i></b>
-          </p>
+          <p>Trân trọng,</p>
+          <p><b>Hệ thống Nhà hàng Thiên Phú</b></p>
         </div>
       </div>
-      <div style=""height: 100px"">
-
+      <div class=""footer"">
+        <p>Email này được gửi tự động. Vui lòng không trả lời trực tiếp.</p>
       </div>
     </div>
   </body>
 </html>
 
-";
+
+                ";
                 break;
 
             case ContentEmailType.CONTRACT_CODE:
@@ -1043,102 +991,132 @@ public class TemplateMappingHelper
 
     public static string GetTemplateOrderConfirmation(string username, Order order)
     {
-        var content = $@"
-<html>
-  <head>
-    <style>
-      * {{
-        margin: 0;
-        padding: 0;
-      }}
+        var content = @"
+<!DOCTYPE html>
+<html lang=""vi"">
 
-      body {{
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f4; /* Background color for the entire email */
-      }}
+<head>
+  <meta charset=""UTF-8"">
+  <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+  <title>Thông báo hoàn tiền</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+      color: #333;
+    }
 
-      .container {{
-        max-width: 900px;
-        margin: 20px auto;
-        border-radius: 5px;
-        box-shadow: 0px 0px 5px 2px #ccc; /* Shadow for content */
-      }}
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
 
-      .header {{
-        text-align: center;
-        background-color: #ffba00; /* Header background color */
-        padding: 20px;
-      }}
+    .header {
+      background-color: #B71C1C;
+      color: #ffffff;
+      text-align: center;
+      padding: 15px 20px;
+      border-radius: 8px 8px 0 0;
+    }
 
-      .mainBody {{
-        background-color: #ffffff; /* Main content background */
-        padding: 20px;
-      }}
+    .header h1 {
+      display: inline-block;
+      vertical-align: middle;
+      margin: 0;
+      font-size: 20px;
+    }
 
-      .emailBody {{
-        margin: 5px 5px;
-      }}
+    .content {
+      margin: 20px 0;
+      line-height: 1.6;
+    }
 
-      .support {{
-        font-size: 15px;
-        font-style: italic;
-        margin: 5px 5px;
-      }}
+    .highlight {
+      color: #B71C1C;
+      font-weight: bold;
+    }
 
-      .footer {{
-        font-size: 14px;
-        text-align: center;
-        background-color: #ffba00; /* Footer background color */
-        padding: 10px;
-      }}
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
 
-      .signature {{
-        text-align: right;
-        font-size: 16px;
-        margin: 5px 5px;
-      }}
-    </style>
-  </head>
-  <body>
-    <div class=""container"">
-      <div class=""header"">
-        <h1 style=""color: #515151;"">Nhà hàng Thiên Phú</h1>
-      </div>
-      <div class=""mainBody"">
-        <h2 class=""emailBody"">Xin chào {username},</h2>
+    .table th,
+    .table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
 
-        <p class=""emailBody"">
-          Chúng tôi vui mừng thông báo rằng đơn hàng của bạn tại <b><i>Nhà hàng Thiên Phú</i></b> đã được tạo thành công!
-        </p>
+    .table th {
+      background-color: #B71C1C;
+      color: #ffffff;
+    }
 
-        <p class=""emailBody"">
-          Mã đơn hàng: <b>{order.OrderId}</b><br>
-          Ngày đặt hàng: <b>{order.OrderDate}</b><br>
-          Tổng số tiền: <b>{order.TotalAmount:C}</b>
-        </p>
+    .table td {
+      background-color: #ffffff;
+    }
 
-        <p class=""emailBody"">
-          Chúng tôi mong rằng bạn sẽ có một trải nghiệm tuyệt vời tại Nhà hàng Thiên Phú.
-        </p>
+    .btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #FFD54F;
+      color: #B71C1C;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+      text-align: center;
+    }
 
-        <p class=""emailBody"">
-          Nếu bạn cần hỗ trợ hoặc thay đổi đơn hàng, vui lòng liên hệ chúng tôi qua email <u><i>qk.backend@gmail.com</i></u>.
-        </p>
+    .btn:hover {
+      background-color: #B71C1C;
+      color: #ffffff;
+    }
 
-        <p class=""support"">
-          Cảm ơn bạn đã chọn <b><i>Nhà hàng Thiên Phú</i></b>!
-        </p>
-        <div class=""signature"">
-          <p>Trân trọng,</p>
-          <p>
-            <b><i>Đội ngũ Nhà hàng Thiên Phú</i></b>
-          </p>
-        </div>
-      </div>
-      <div style=""height: 100px""></div>
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="""">
+    <div class=""header"">
+      <img
+        src=""https://firebasestorage.googleapis.com/v0/b/hcqs-project.appspot.com/o/dish%2Ff25019dc-3a64-4677-87cb-63b0f3dbcef7.jpg.png?alt=media&token=c784cf86-52e6-4314-bd8a-28d898feb7f5""
+        alt=""Logo Nhà hàng Thiên Phú"" style=""height: 100px; margin-right: 10px; vertical-align: middle;"">
+      <h1 style=""display: inline-block; vertical-align: middle;"">Nhà hàng Thiên Phú</h1>
+      <p style=""text-transform: uppercase; font-weight: 600; color: #ffffff;font-size: 18px;"">Thông báo đặt hàng thành công</p>
     </div>
-  </body>
-</html>";
+    <div class=""content"">
+      <p>Kính gửi <span class=""highlight"">"+username+ @"</span>,</p>
+      <p>Chúng tôi rất vui thông báo rằng đơn hàng của bạn đã được đặt thành công:</p>
+      <p class="" emailBody"">
+    Mã đơn hàng: <b>"+order.OrderId+@"</b><br>
+    Ngày đặt hàng: <b>"+order.OrderDate+@"</b><br>
+    Tổng số tiền: <b>" + order.TotalAmount+@"</b>
+  </p>
+    </div>
+    <div class=""footer"">
+      <p>Trân trọng,<br>Đội ngũ Nhà hàng Thiên Phú</p>
+    </div>
+  </div>
+</body>
+
+</html>
+";
         return content;
     }
 
@@ -1457,621 +1435,331 @@ public class TemplateMappingHelper
     }
     public static string GetTemplateRefundDuplicatedPaymentForCustomer(string username, Order order)
     {
-        var content = @"<!DOCTYPE html PUBLIC ""-//W3C//DTD XHTML 1.0 Strict//EN"" ""http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"">
-<html data-editor-version=""2"" class=""sg-campaigns"" xmlns=""http://www.w3.org/1999/xhtml"">
-    <head>
-      <meta http-equiv=""Content-Type"" content=""text/html; charset=utf-8"">
-      <meta name=""viewport"" content=""width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"">
-      <!--[if !mso]><!-->
-      <meta http-equiv=""X-UA-Compatible"" content=""IE=Edge"">
-      <!--<![endif]-->
-      <!--[if (gte mso 9)|(IE)]>
-      <xml>
-        <o:OfficeDocumentSettings>
-          <o:AllowPNG/>
-          <o:PixelsPerInch>96</o:PixelsPerInch>
-        </o:OfficeDocumentSettings>
-      </xml>
-      <![endif]-->
-      <!--[if (gte mso 9)|(IE)]>
-  <style type=""text/css"">
-    body {{width: 600px;margin: 0 auto;}}
-    table {{border-collapse: collapse;}}
-    table, td {{mso-table-lspace: 0pt;mso-table-rspace: 0pt;}}
-    img {{-ms-interpolation-mode: bicubic;}}
-  </style>
-<![endif]-->
-      <style type=""text/css"">
-    body, p, div {{
-      font-family: arial,helvetica,sans-serif;
-      font-size: 14px;
-    }}
-    body {{
-      color: #000000;
-    }}
-    body a {{
-      color: #1188E6;
-      text-decoration: none;
-    }}
-    p {{ margin: 0; padding: 0; }}
-    table.wrapper {{
-      width:100% !important;
-      table-layout: fixed;
-      -webkit-font-smoothing: antialiased;
-      -webkit-text-size-adjust: 100%;
-      -moz-text-size-adjust: 100%;
-      -ms-text-size-adjust: 100%;
-    }}
-    img.max-width {{
-      max-width: 100% !important;
-    }}
-    .column.of-2 {{
-      width: 50%;
-    }}
-    .column.of-3 {{
-      width: 33.333%;
-    }}
-    .column.of-4 {{
-      width: 25%;
-    }}
-    ul ul ul ul  {{
-      list-style-type: disc !important;
-    }}
-    ol ol {{
-      list-style-type: lower-roman !important;
-    }}
-    ol ol ol {{
-      list-style-type: lower-latin !important;
-    }}
-    ol ol ol ol {{
-      list-style-type: decimal !important;
-    }}
-    @media screen and (max-width:480px) {{
-      .preheader .rightColumnContent,
-      .footer .rightColumnContent {{
-        text-align: left !important;
-      }}
-      .preheader .rightColumnContent div,
-      .preheader .rightColumnContent span,
-      .footer .rightColumnContent div,
-      .footer .rightColumnContent span {{
-        text-align: left !important;
-      }}
-      .preheader .rightColumnContent,
-      .preheader .leftColumnContent {{
-        font-size: 80% !important;
-        padding: 5px 0;
-      }}
-      table.wrapper-mobile {{
-        width: 100% !important;
-        table-layout: fixed;
-      }}
-      img.max-width {{
-        height: auto !important;
-        max-width: 100% !important;
-      }}
-      a.bulletproof-button {{
-        display: block !important;
-        width: auto !important;
-        font-size: 80%;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-      }}
-      .columns {{
-        width: 100% !important;
-      }}
-      .column {{
-        display: block !important;
-        width: 100% !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-      }}
-      .social-icon-column {{
-        display: inline-block !important;
-      }}
-    }}
-  </style>
-      <!--user entered Head Start--><!--End Head user entered-->
-    </head>
-    <body>
-      <center class=""wrapper"" data-link-color=""#1188E6"" data-body-style=""font-size:14px; font-family:arial,helvetica,sans-serif; color:#000000; background-color:#FFFFFF;"">
-        <div class=""webkit"">
-          <table cellpadding=""0"" cellspacing=""0"" border=""0"" width=""100%"" class=""wrapper"" bgcolor=""#FFFFFF"">
-            <tr>
-              <td valign=""top"" bgcolor=""#FFFFFF"" width=""100%"">
-                <table width=""100%"" role=""content-container"" class=""outer"" align=""center"" cellpadding=""0"" cellspacing=""0"" border=""0"">
-                  <tr>
-                    <td width=""100%"">
-                      <table width=""100%"" cellpadding=""0"" cellspacing=""0"" border=""0"">
-                        <tr>
-                          <td>
-                            <!--[if mso]>
-    <center>
-    <table><tr><td width=""600"">
-  <![endif]-->
-                                    <table width=""100%"" cellpadding=""0"" cellspacing=""0"" border=""0"" style=""width:100%; max-width:600px;"" align=""center"">
-                                      <tr>
-                                        <td role=""modules-container"" style=""padding:0px 0px 0px 0px; color:#000000; text-align:left;"" bgcolor=""#FFFFFF"" width=""100%"" align=""left""><table class=""module preheader preheader-hide"" role=""module"" data-type=""preheader"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""display: none !important; mso-hide: all; visibility: hidden; opacity: 0; color: transparent; height: 0; width: 0;"">
-    <tr>
-      <td role=""module-content"">
-        <p></p>
-      </td>
-    </tr>
-  </table><table class=""module"" role=""module"" data-type=""code"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""table-layout: fixed;"" data-muid=""pmykjhoVbGXyhk9mGqkayT"">
-      <tr>
-        <td height=""100%"" valign=""top"" data-role=""module-content""><!DOCTYPE html>
+        var content = @"
+<!DOCTYPE html>
 <html lang=""vi"">
+
 <head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>Thông báo hoàn tiền</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
-            color: #333;
-        }}
-        .container {{
-            max-width: 600px;
-            margin: 20px auto;
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }}
-        .header {{
-            background-color: #B71C1C;
-            color: #ffffff;
-            text-align: center;
-            padding: 15px 20px;
-            border-radius: 8px 8px 0 0;
-        }}
-  
-        .header h1 {{
-            display: inline-block;
-            vertical-align: middle;
-            margin: 0;
-            font-size: 20px;
-        }}
-        .content {{
-            margin: 20px 0;
-            line-height: 1.6;
-        }}
-        .highlight {{
-            color: #B71C1C;
-            font-weight: bold;
-        }}
-        .table {{
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }}
-        .table th, .table td {{
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }}
-        .table th {{
-            background-color: #B71C1C;
-            color: #ffffff;
-        }}
-        .table td {{
-            background-color: #ffffff;
-        }}
-        .btn {{
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #FFD54F;
-            color: #B71C1C;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            text-align: center;
-        }}
-        .btn:hover {{
-            background-color: #B71C1C;
-            color: #ffffff;
-        }}
-        .footer {{
-            text-align: center;
-            margin-top: 20px;
-            font-size: 14px;
-            color: #555;
-        }}
-    </style>
+  <meta charset=""UTF-8"">
+  <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+  <title>Thông báo hoàn tiền</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      background-color: #B71C1C;
+      color: #ffffff;
+      text-align: center;
+      padding: 15px 20px;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .header h1 {
+      display: inline-block;
+      vertical-align: middle;
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .content {
+      margin: 20px 0;
+      line-height: 1.6;
+    }
+
+    .highlight {
+      color: #B71C1C;
+      font-weight: bold;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .table th,
+    .table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    .table th {
+      background-color: #B71C1C;
+      color: #ffffff;
+    }
+
+    .table td {
+      background-color: #ffffff;
+    }
+
+    .btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #FFD54F;
+      color: #B71C1C;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .btn:hover {
+      background-color: #B71C1C;
+      color: #ffffff;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
 </head>
+
 <body>
-    <div class="""">
-        <div class=""header"">
-            <img src=""https://firebasestorage.googleapis.com/v0/b/hcqs-project.appspot.com/o/dish%2Ff25019dc-3a64-4677-87cb-63b0f3dbcef7.jpg.png?alt=media&token=c784cf86-52e6-4314-bd8a-28d898feb7f5"" alt=""Logo Nhà hàng Thiên Phú"" style=""height: 100px; margin-right: 10px; vertical-align: middle;"">
-            <h1 style=""display: inline-block; vertical-align: middle;"">Nhà hàng Thiên Phú</h1>
-            <p style=""text-transform: uppercase; font-weight: 600; color: #ffffff;font-size: 18px;"">Thông báo hoàn tiền đặt hàng</p>
-        </div>
-        <div class=""content"">
-            <p>Kính gửi <span class=""highlight"">"+  username +
-        @"</span>,</p>
-            <p>Chúng tôi rất tiếc vì đã gặp phải sự cố dẫn đến việc phải hoàn tiền cho đơn hàng của bạn. Dưới đây là thông tin chi tiết:</p>
-            <h3>Thông tin hoàn tiền</h3>
-            <ul>
-                <li><strong>Số tiền hoàn: </strong><span class=""highlight"">" + order.TotalAmount + @" VNĐ</span></li>
-                <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">" + order.MealTime + @"</span></li>
-                <li><strong>Mã hóa đơn: </strong><span class=""highlight"">" + order.OrderId + @"</span></li>
-            </ul>
-            <h3>Thông tin khách hàng</h3>
-            <table class=""table"">
-                <tr>
-                    <th>Tên khách hàng</th>
-                    <td>" + order.Account.FirstName + " " + order.Account.LastName + @"</td>
-                </tr>
-                <tr>
-                    <th>Số điện thoại</th>
-                    <td> (+84) " + order.Account.PhoneNumber + @"</td>
-                </tr>
-                <tr>
-                    <th>Email</th>
-                    <td>" + order.Account.Email + @"</td>
-                </tr>
-                "
-                + order.CustomerInfoAddress == null?
-                @"<tr>
-                    <th>Địa chỉ</th>
-                    <td>" + order.CustomerInfoAddress.CustomerInfoAddressName + @"</td>
-                </tr>"
-                : "" 
-                +
-                @"
-            </table>
-
-            <p><strong>Số tiền được hoàn tiền sẽ tự động chuyển về ""<a href=""https://thienphurestaurant.vercel.app/user/transaction-history"" style=""color: #B71C1C; text-decoration: none;"">Tài khoản Ví</a>"" của khách hàng trên hệ thống Website <a href=""https://thienphurestaurant.vercel.app/"" style=""color: #B71C1C; text-decoration: none;"">Nhà Hàng Thiên Phú</a> trong 1 đến 3 ngày tới.</strong> Nếu quý khách muốn hoàn <strong> TIỀN MẶT </strong>, vui lòng trả lời Mail này trong 8h sau khi nhận để được Hỗ trợ.</p>
-
-            <p>Kiểm tra số tiền đã được hoàn vào ví của bạn tại đường dẫn:</p>
-            <a class=""btn"" href=""https://thienphurestaurant.vercel.app/user/transaction-history"">Xem lịch sử giao dịch</a>
-        </div>
-        <div class=""footer"">
-            <p>Trân trọng,<br>Đội ngũ Nhà hàng Thiên Phú</p>
-        </div>
+  <div class="""">
+    <div class=""header"">
+      <img
+        src=""https://firebasestorage.googleapis.com/v0/b/hcqs-project.appspot.com/o/dish%2Ff25019dc-3a64-4677-87cb-63b0f3dbcef7.jpg.png?alt=media&token=c784cf86-52e6-4314-bd8a-28d898feb7f5""
+        alt=""Logo Nhà hàng Thiên Phú"" style=""height: 100px; margin-right: 10px; vertical-align: middle;"">
+      <h1 style=""display: inline-block; vertical-align: middle;"">Nhà hàng Thiên Phú</h1>
+      <p style=""text-transform: uppercase; font-weight: 600; color: #ffffff;font-size: 18px;"">Thông báo hoàn tiền đặt
+        hàng</p>
     </div>
+    <div class=""content"">
+      <p>Kính gửi <span class=""highlight"">[Tên khách hàng]</span>,</p>
+      <p>Chúng tôi rất tiếc vì đã gặp phải sự cố dẫn đến việc phải hoàn tiền cho đơn hàng của bạn. Dưới đây là thông tin
+        chi tiết:</p>
+      <h3>Thông tin hoàn tiền</h3>
+      <ul>
+        <li><strong>Số tiền hoàn: </strong><span class=""highlight"">[Số tiền] VNĐ</span></li>
+        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">[Ngày giờ hoàn]</span></li>
+        <li><strong>Mã hóa đơn: </strong><span class=""highlight"">[Mã hóa đơn]</span></li>
+      </ul>
+      <h3>Thông tin khách hàng</h3>
+      <table class=""table"">
+        <tr>
+          <th>Tên khách hàng</th>
+          <td>[Tên khách hàng]</td>
+        </tr>
+        <tr>
+          <th>Số điện thoại</th>
+          <td>[Số điện thoại]</td>
+        </tr>
+        <tr>
+          <th>Email</th>
+          <td>[Email]</td>
+        </tr>
+        <tr>
+          <th>Địa chỉ</th>
+          <td>[Địa chỉ]</td>
+        </tr>
+      </table>
+
+      <p><strong>Số tiền được hoàn tiền sẽ tự động chuyển về ""<a
+            href=""https://thienphurestaurant.vercel.app/user/transaction-history""
+            style=""color: #B71C1C; text-decoration: none;"">Tài khoản Ví</a>"" của khách hàng trên hệ thống Website <a
+            href=""https://thienphurestaurant.vercel.app/"" style=""color: #B71C1C; text-decoration: none;"">Nhà Hàng Thiên
+            Phú</a> trong 4 đến 8 giờ tới.</strong> Nếu quý khách muốn hoàn <strong> TIỀN MẶT </strong>, vui lòng trả
+        lời Mail này để được Hỗ trợ.</p>
+
+      <p>Kiểm tra số tiền đã được hoàn vào ví của bạn tại đường dẫn:</p>
+      <a class=""btn"" href=""https://thienphurestaurant.vercel.app/user/transaction-history"">Xem lịch sử giao dịch</a>
+    </div>
+    <div class=""footer"">
+      <p>Trân trọng,<br>Đội ngũ Nhà hàng Thiên Phú</p>
+    </div>
+  </div>
 </body>
+
 </html>
-</td>
-      </tr>
-    </table></td>
-                                      </tr>
-                                    </table>
-                                    <!--[if mso]>
-                                  </td>
-                                </tr>
-                              </table>
-                            </center>
-                            <![endif]-->
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </div>
-      </center>
-    </body>
-  </html>";
+
+
+
+";
         return content;
     }
     public static string GetTemplateRefundDuplicatedPaymentForAdmin(string username, Order order)
     {
-        var content = @"<!DOCTYPE html>
-<html data-editor-version=""2"" class=""sg-campaigns"" xmlns=""http://www.w3.org/1999/xhtml"">
-    <head>
-      <meta http-equiv=""Content-Type"" content=""text/html; charset=utf-8"">
-      <meta name=""viewport"" content=""width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"">
-      <!--[if !mso]><!-->
-      <meta http-equiv=""X-UA-Compatible"" content=""IE=Edge"">
-      <!--<![endif]-->
-      <!--[if (gte mso 9)|(IE)]>
-      <xml>
-        <o:OfficeDocumentSettings>
-          <o:AllowPNG/>
-          <o:PixelsPerInch>96</o:PixelsPerInch>
-        </o:OfficeDocumentSettings>
-      </xml>
-      <![endif]-->
-      <!--[if (gte mso 9)|(IE)]>
-  <style type=""text/css"">
-    body {{width: 600px;margin: 0 auto;}}
-    table {{border-collapse: collapse;}}
-    table, td {{mso-table-lspace: 0pt;mso-table-rspace: 0pt;}}
-    img {{-ms-interpolation-mode: bicubic;}}
-  </style>
-<![endif]-->
-      <style type=""text/css"">
-    body, p, div {{
-      font-family: arial,helvetica,sans-serif;
-      font-size: 14px;
-    }}
-    body {{
-      color: #000000;
-    }}
-    body a {{
-      color: #1188E6;
-      text-decoration: none;
-    }}
-    p {{ margin: 0; padding: 0; }}
-    table.wrapper {{
-      width:100% !important;
-      table-layout: fixed;
-      -webkit-font-smoothing: antialiased;
-      -webkit-text-size-adjust: 100%;
-      -moz-text-size-adjust: 100%;
-      -ms-text-size-adjust: 100%;
-    }}
-    img.max-width {{
-      max-width: 100% !important;
-    }}
-    .column.of-2 {{
-      width: 50%;
-    }}
-    .column.of-3 {{
-      width: 33.333%;
-    }}
-    .column.of-4 {{
-      width: 25%;
-    }}
-    ul ul ul ul  {{
-      list-style-type: disc !important;
-    }}
-    ol ol {{
-      list-style-type: lower-roman !important;
-    }}
-    ol ol ol {{
-      list-style-type: lower-latin !important;
-    }}
-    ol ol ol ol {{
-      list-style-type: decimal !important;
-    }}
-    @media screen and (max-width:480px) {{
-      .preheader .rightColumnContent,
-      .footer .rightColumnContent {{
-        text-align: left !important;
-      }}
-      .preheader .rightColumnContent div,
-      .preheader .rightColumnContent span,
-      .footer .rightColumnContent div,
-      .footer .rightColumnContent span {{
-        text-align: left !important;
-      }}
-      .preheader .rightColumnContent,
-      .preheader .leftColumnContent {{
-        font-size: 80% !important;
-        padding: 5px 0;
-      }}
-      table.wrapper-mobile {{
-        width: 100% !important;
-        table-layout: fixed;
-      }}
-      img.max-width {{
-        height: auto !important;
-        max-width: 100% !important;
-      }}
-      a.bulletproof-button {{
-        display: block !important;
-        width: auto !important;
-        font-size: 80%;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-      }}
-      .columns {{
-        width: 100% !important;
-      }}
-      .column {{
-        display: block !important;
-        width: 100% !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-      }}
-      .social-icon-column {{
-        display: inline-block !important;
-      }}
-    }}
-  </style>
-      <!--user entered Head Start--><!--End Head user entered-->
-    </head>
-    <body>
-      <center class=""wrapper"" data-link-color=""#1188E6"" data-body-style=""font-size:14px; font-family:arial,helvetica,sans-serif; color:#000000; background-color:#FFFFFF;"">
-        <div class=""webkit"">
-          <table cellpadding=""0"" cellspacing=""0"" border=""0"" width=""100%"" class=""wrapper"" bgcolor=""#FFFFFF"">
-            <tr>
-              <td valign=""top"" bgcolor=""#FFFFFF"" width=""100%"">
-                <table width=""100%"" role=""content-container"" class=""outer"" align=""center"" cellpadding=""0"" cellspacing=""0"" border=""0"">
-                  <tr>
-                    <td width=""100%"">
-                      <table width=""100%"" cellpadding=""0"" cellspacing=""0"" border=""0"">
-                        <tr>
-                          <td>
-                            <!--[if mso]>
-    <center>
-    <table><tr><td width=""600"">
-  <![endif]-->
-                                    <table width=""100%"" cellpadding=""0"" cellspacing=""0"" border=""0"" style=""width:100%; max-width:600px;"" align=""center"">
-                                      <tr>
-                                        <td role=""modules-container"" style=""padding:0px 0px 0px 0px; color:#000000; text-align:left;"" bgcolor=""#FFFFFF"" width=""100%"" align=""left""><table class=""module preheader preheader-hide"" role=""module"" data-type=""preheader"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""display: none !important; mso-hide: all; visibility: hidden; opacity: 0; color: transparent; height: 0; width: 0;"">
-    <tr>
-      <td role=""module-content"">
-        <p></p>
-      </td>
-    </tr>
-  </table><table class=""module"" role=""module"" data-type=""code"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""table-layout: fixed;"" data-muid=""pmykjhoVbGXyhk9mGqkayT"">
-      <tr>
-        <td height=""100%"" valign=""top"" data-role=""module-content""><!DOCTYPE html>
+        var content = @"
+
+<!DOCTYPE html>
 <html lang=""vi"">
+
 <head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>Thông báo hoàn tiền</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
-            color: #333;
-        }}
-        .container {{
-            max-width: 600px;
-            margin: 20px auto;
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }}
-        .header {{
-            background-color: #B71C1C;
-            color: #ffffff;
-            text-align: center;
-            padding: 15px 20px;
-            border-radius: 8px 8px 0 0;
-        }}
-  
-        .header h1 {{
-            display: inline-block;
-            vertical-align: middle;
-            margin: 0;
-            font-size: 20px;
-        }}
-        .content {{
-            margin: 20px 0;
-            line-height: 1.6;
-        }}
-        .highlight {{
-            color: #B71C1C;
-            font-weight: bold;
-        }}
-        .table {{
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }}
-        .table th, .table td {{
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }}
-        .table th {{
-            background-color: #B71C1C;
-            color: #ffffff;
-        }}
-        .table td {{
-            background-color: #ffffff;
-        }}
-        .btn {{
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #FFD54F;
-            color: #B71C1C;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            text-align: center;
-        }}
-        .btn:hover {{
-            background-color: #B71C1C;
-            color: #ffffff;
-        }}
-        .footer {{
-            text-align: center;
-            margin-top: 20px;
-            font-size: 14px;
-            color: #555;
-        }}
-    </style>
+  <meta charset=""UTF-8"">
+  <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+  <title>Thông báo hoàn tiền</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      background-color: #B71C1C;
+      color: #ffffff;
+      text-align: center;
+      padding: 15px 20px;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .header h1 {
+      display: inline-block;
+      vertical-align: middle;
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .content {
+      margin: 20px 0;
+      line-height: 1.6;
+    }
+
+    .highlight {
+      color: #B71C1C;
+      font-weight: bold;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .table th,
+    .table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    .table th {
+      background-color: #B71C1C;
+      color: #ffffff;
+    }
+
+    .table td {
+      background-color: #ffffff;
+    }
+
+    .btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #FFD54F;
+      color: #B71C1C;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .btn:hover {
+      background-color: #B71C1C;
+      color: #ffffff;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
 </head>
+
 <body>
-    <div class="""">
-        <div class=""header"">
-            <img src=""https://firebasestorage.googleapis.com/v0/b/hcqs-project.appspot.com/o/dish%2Ff25019dc-3a64-4677-87cb-63b0f3dbcef7.jpg.png?alt=media&token=c784cf86-52e6-4314-bd8a-28d898feb7f5"" alt=""Logo Nhà hàng Thiên Phú"" style=""height: 100px; margin-right: 10px; vertical-align: middle;"">
-            <h1 style=""display: inline-block; vertical-align: middle;"">Nhà hàng Thiên Phú</h1>
-            <p style=""text-transform: uppercase; font-weight: 600; color: #ffffff;font-size: 18px;"">Thông báo hoàn tiền đặt hàng</p>
-        </div>
-        <div class=""content"">
-            <p>Kính gửi <span class=""highlight"">quản lí nhà hàng</span>,</p>
-            <p>Do lỗi hệ thống nên đơn hàng dưới đây đã thanh toán 2 lần và cần thực hiện hoàn tiền cho khách hàng:</p>
-            <h3>Thông tin hoàn tiền</h3>
-            <ul>
-                <li><strong>Số tiền hoàn: </strong><span class=""highlight"">" + order.TotalAmount + @" VNĐ</span></li>
-                <li><strong>Thời gian dùng bữa/đặt món: </strong><span class=""highlight"">" + (order.OrderTypeId == OrderType.Delivery ? order.OrderDate : order.MealTime) + @"</span></li>
-                <li><strong>Mã hóa đơn: </strong><span class=""highlight"">" + order.OrderId + @"</span></li>
-            </ul>
-            <h3>Thông tin khách hàng</h3>
-            <table class=""table"">
-                <tr>
-                    <th>Tên khách hàng</th>
-                    <td>" + order.Account.FirstName + " " + order.Account.LastName + @"</td>
-                </tr>
-                <tr>
-                    <th>Số điện thoại</th>
-                    <td> (+84) " + order.Account.PhoneNumber + @"</td>
-                </tr>
-                <tr>
-                    <th>Email</th>
-                    <td>" + order.Account.Email + @"</td>
-                </tr>
-                "
-                + order.CustomerInfoAddress == null ?
-                @"<tr>
-                    <th>Địa chỉ</th>
-                    <td>" + order.CustomerInfoAddress.CustomerInfoAddressName + @"</td>
-                </tr>"
-                : ""
-                +
-                @"
-            </table>
-
-            <p>Vui lòng truy cập ""<a href=""https://thienphurestaurant.vercel.app/admin/order-overview"" style=""color: #B71C1C; text-decoration: none;"">Quản lí tổng quan đơn hàng</a>"" và chọn loại đơn hàng <strong> Cảnh báo thanh toán 2 lần </strong> để xem thông tin chi tiết và thực hiện hoàn tiền.</p>
-            <p>Sau 8h kể từ khi quản lí nhận email này, nếu không nhận được bất kì phản hồi qua mail nào từ khách hàng, phương thức mặc định để hoàn tiền là <strong>Ví số dư Thiên Phú</strong>. Đơn hàng cần được hoàn tiền trong 1-2 ngày sau khi quản lí nhà hàng nhận email này</p>
-
-
-        </div>
-        <div class=""footer"">
-            <p>Trân trọng,<br>Đội ngũ Nhà hàng Thiên Phú</p>
-        </div>
+  <div class="""">
+    <div class=""header"">
+      <img
+        src=""https://firebasestorage.googleapis.com/v0/b/hcqs-project.appspot.com/o/dish%2Ff25019dc-3a64-4677-87cb-63b0f3dbcef7.jpg.png?alt=media&token=c784cf86-52e6-4314-bd8a-28d898feb7f5""
+        alt=""Logo Nhà hàng Thiên Phú"" style=""height: 100px; margin-right: 10px; vertical-align: middle;"">
+      <h1 style=""display: inline-block; vertical-align: middle;"">Nhà hàng Thiên Phú</h1>
+      <p style=""text-transform: uppercase; font-weight: 600; color: #ffffff;font-size: 18px;"">Thông báo hoàn tiền đặt
+        hàng</p>
     </div>
+    <div class=""content"">
+      <p>Kính gửi <span class=""highlight"">[Tên khách hàng]</span>,</p>
+      <p>Chúng tôi rất tiếc vì đã gặp phải sự cố dẫn đến việc phải hoàn tiền cho đơn hàng của bạn. Dưới đây là thông tin
+        chi tiết:</p>
+      <h3>Thông tin hoàn tiền</h3>
+      <ul>
+        <li><strong>Số tiền hoàn: </strong><span class=""highlight"">[Số tiền] VNĐ</span></li>
+        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">[Ngày giờ hoàn]</span></li>
+        <li><strong>Mã hóa đơn: </strong><span class=""highlight"">[Mã hóa đơn]</span></li>
+      </ul>
+      <h3>Thông tin khách hàng</h3>
+      <table class=""table"">
+        <tr>
+          <th>Tên khách hàng</th>
+          <td>[Tên khách hàng]</td>
+        </tr>
+        <tr>
+          <th>Số điện thoại</th>
+          <td>[Số điện thoại]</td>
+        </tr>
+        <tr>
+          <th>Email</th>
+          <td>[Email]</td>
+        </tr>
+        <tr>
+          <th>Địa chỉ</th>
+          <td>[Địa chỉ]</td>
+        </tr>
+      </table>
+
+      <p><strong>Số tiền được hoàn tiền sẽ tự động chuyển về ""<a
+            href=""https://thienphurestaurant.vercel.app/user/transaction-history""
+            style=""color: #B71C1C; text-decoration: none;"">Tài khoản Ví</a>"" của khách hàng trên hệ thống Website <a
+            href=""https://thienphurestaurant.vercel.app/"" style=""color: #B71C1C; text-decoration: none;"">Nhà Hàng Thiên
+            Phú</a> trong 4 đến 8 giờ tới.</strong> Nếu quý khách muốn hoàn <strong> TIỀN MẶT </strong>, vui lòng trả
+        lời Mail này để được Hỗ trợ.</p>
+
+      <p>Kiểm tra số tiền đã được hoàn vào ví của bạn tại đường dẫn:</p>
+      <a class=""btn"" href=""https://thienphurestaurant.vercel.app/user/transaction-history"">Xem lịch sử giao dịch</a>
+    </div>
+    <div class=""footer"">
+      <p>Trân trọng,<br>Đội ngũ Nhà hàng Thiên Phú</p>
+    </div>
+  </div>
 </body>
+
 </html>
-</td>
-      </tr>
-    </table></td>
-                                      </tr>
-                                    </table>
-                                    <!--[if mso]>
-                                  </td>
-                                </tr>
-                              </table>
-                            </center>
-                            <![endif]-->
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </div>
-      </center>
-    </body>
-  </html>";
+";
+
         return content;
     }
 }
