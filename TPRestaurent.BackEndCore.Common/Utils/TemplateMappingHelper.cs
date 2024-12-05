@@ -788,155 +788,293 @@ public class TemplateMappingHelper
     {
         var orderTime = order.OrderTypeId == Domain.Enums.OrderType.Reservation ? order.ReservationDate.Value : order.OrderDate;
 
-        var content = $@"
-<html>
-  <head>
-    <style>
-      * {{
-        margin: 0;
-        padding: 0;
-      }}
+//         var content = $@"
+// <html>
+//   <head>
+//     <style>
+//       * {{
+//         margin: 0;
+//         padding: 0;
+//       }}
+//
+//       body {{
+//         font-family: Arial, sans-serif;
+//         background-color: #f4f4f4; /* Màu nền cho toàn bộ email */
+//       }}
+//
+//       .container {{
+//         max-width: 900px;
+//         margin: 20px auto;
+//         border-radius: 5px;
+//         box-shadow: 0px 0px 5px 2px #ccc; /* Thêm bóng cho nội dung */
+//       }}
+//
+//       .header {{
+//         text-align: center;
+//         background-color: #ffba00; /* Màu nền cho tiêu đề */
+//         padding: 20px;
+//       }}
+//       .header-title {{
+//         text-align: left;
+//         background-color: #2ad65e; /* Màu nền cho tiêu đề */
+//         padding: 20px;
+//         color: white;
+//       }}
+//       .title {{
+//         color: black; /* Màu chữ cho tiêu đề */
+//         font-size: 30px;
+//         font-weight: bold;
+//       }}
+//
+//       .greeting {{
+//         font-size: 18px;
+//         margin: 10px 5px;
+//       }}
+//       .emailBody {{
+//         margin: 5px 5px;
+//       }}
+//       .support {{
+//         font-size: 15px;
+//         font-style: italic;
+//         margin: 5px 5px;
+//       }}
+//
+//       .mainBody {{
+//         background-color: #ffffff; /* Màu nền cho nội dung chính */
+//         padding: 20px;
+//       }}
+//       .body-content {{
+//         border: 1px #fff8ea;
+//         border-radius: 5px;
+//         margin: 10px 5px;
+//         padding: 10px;
+//         box-shadow: 0px 0px 5px 2px #ccc;
+//       }}
+//       .title-content {{
+//         font-weight: bold;
+//       }}
+//
+//       u i {{
+//         color: blue;
+//       }}
+//
+//       .footer {{
+//         font-size: 14px;
+//         text-align: center;
+//         background-color: #ffba00; /* Màu nền cho chân trang */
+//         padding: 10px;
+//         display: flex;
+//         justify-content: center;
+//         flex-direction: column;
+//       }}
+//       .footer-Text {{
+//         font-weight: 600;
+//       }}
+//       .signature {{
+//         text-align: right;
+//         font-size: 16px;
+//         margin: 5px 5px;
+//       }}
+//     </style>
+//   </head>
+//   <body>
+//     <div class=""container"">
+//       <div
+//         style=""
+//           height: 100px;
+//           display: flex;
+//           align-items: center;
+//           justify-content: center;
+//           background-color: white;
+//         ""
+//       >
+//         <p
+//           style=""
+//             color: #515151;
+//             text-align: center;
+//             margin: auto 0;
+//             font-size: 30px;
+//           ""
+//         >
+//           Nhà hàng Thiên Phú
+//         </p>
+//       </div>
+//       <div class=""mainBody"">
+//         <h2 class=""emailBody"">Xin chào {username},</h2>
+//
+//         <p class=""emailBody"">
+//           Chúng tôi rất tiếc phải thông báo rằng đặt bàn của bạn đã bị hủy tại <b><i>Nhà hàng Thiên Phú</i></b>.
+//         </p>
+//
+//         <p class=""emailBody"">
+//           Mã đơn: <b>{order.OrderId.ToString().Substring(0, 5)}</b><br>
+//           Thời gian đặt: <b>{orderTime}</b>
+//           Thời gian dùng bữa tại nhà hàng(Nếu có): <b> {order.MealTime ?? order.MealTime.Value}</b>
+//           Loại phòng: {tableDetail.Table!.Room!}
+//           Loại bàn: {tableDetail.Table!.TableSize!}
+//         </p>
+//
+//         <p class=""emailBody"">
+//           Nếu đây là một sai sót hoặc nếu bạn muốn thực hiện một đặt chỗ/đơn giao tận nơi khác, vui lòng truy cập website của chúng tôi hoặc liên hệ trực tiếp với chúng tôi.
+//         </p>
+//
+//         <p class=""emailBody"">
+//           Để biết thêm thông tin, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi qua
+//           <u><i>qk.backend@gmail.com</i></u>.
+//         </p>
+//
+//         <p class=""support"">
+//           Cảm ơn bạn đã thông cảm, và chúng tôi hy vọng được phục vụ bạn trong tương lai.
+//         </p>
+//         <div class=""signature"">
+//           <p>Trân trọng,</p>
+//           <p>
+//             <b><i>Đội ngũ Nhà hàng Thiên Phú</i></b>
+//           </p>
+//         </div>
+//       </div>
+//       <div style=""height: 100px""></div>
+//     </div>
+//   </body>
+// </html>";
+      var content = @"
+<!DOCTYPE html>
+<html lang=""vi"">
 
-      body {{
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f4; /* Màu nền cho toàn bộ email */
-      }}
+<head>
+  <meta charset=""UTF-8"">
+  <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+  <title>Thông báo hoàn tiền</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+      color: #333;
+    }
 
-      .container {{
-        max-width: 900px;
-        margin: 20px auto;
-        border-radius: 5px;
-        box-shadow: 0px 0px 5px 2px #ccc; /* Thêm bóng cho nội dung */
-      }}
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
 
-      .header {{
-        text-align: center;
-        background-color: #ffba00; /* Màu nền cho tiêu đề */
-        padding: 20px;
-      }}
-      .header-title {{
-        text-align: left;
-        background-color: #2ad65e; /* Màu nền cho tiêu đề */
-        padding: 20px;
-        color: white;
-      }}
-      .title {{
-        color: black; /* Màu chữ cho tiêu đề */
-        font-size: 30px;
-        font-weight: bold;
-      }}
+    .header {
+      background-color: #B71C1C;
+      color: #ffffff;
+      text-align: center;
+      padding: 15px 20px;
+      border-radius: 8px 8px 0 0;
+    }
 
-      .greeting {{
-        font-size: 18px;
-        margin: 10px 5px;
-      }}
-      .emailBody {{
-        margin: 5px 5px;
-      }}
-      .support {{
-        font-size: 15px;
-        font-style: italic;
-        margin: 5px 5px;
-      }}
+    .header h1 {
+      display: inline-block;
+      vertical-align: middle;
+      margin: 0;
+      font-size: 20px;
+    }
 
-      .mainBody {{
-        background-color: #ffffff; /* Màu nền cho nội dung chính */
-        padding: 20px;
-      }}
-      .body-content {{
-        border: 1px #fff8ea;
-        border-radius: 5px;
-        margin: 10px 5px;
-        padding: 10px;
-        box-shadow: 0px 0px 5px 2px #ccc;
-      }}
-      .title-content {{
-        font-weight: bold;
-      }}
+    .content {
+      margin: 20px 0;
+      line-height: 1.6;
+    }
 
-      u i {{
-        color: blue;
-      }}
+    .highlight {
+      color: #B71C1C;
+      font-weight: bold;
+    }
 
-      .footer {{
-        font-size: 14px;
-        text-align: center;
-        background-color: #ffba00; /* Màu nền cho chân trang */
-        padding: 10px;
-        display: flex;
-        justify-content: center;
-        flex-direction: column;
-      }}
-      .footer-Text {{
-        font-weight: 600;
-      }}
-      .signature {{
-        text-align: right;
-        font-size: 16px;
-        margin: 5px 5px;
-      }}
-    </style>
-  </head>
-  <body>
-    <div class=""container"">
-      <div
-        style=""
-          height: 100px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background-color: white;
-        ""
-      >
-        <p
-          style=""
-            color: #515151;
-            text-align: center;
-            margin: auto 0;
-            font-size: 30px;
-          ""
-        >
-          Nhà hàng Thiên Phú
-        </p>
-      </div>
-      <div class=""mainBody"">
-        <h2 class=""emailBody"">Xin chào {username},</h2>
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
 
-        <p class=""emailBody"">
-          Chúng tôi rất tiếc phải thông báo rằng đặt bàn của bạn đã bị hủy tại <b><i>Nhà hàng Thiên Phú</i></b>.
-        </p>
+    .table th,
+    .table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
 
-        <p class=""emailBody"">
-          Mã đơn: <b>{order.OrderId.ToString().Substring(0, 5)}</b><br>
-          Thời gian đặt: <b>{orderTime}</b>
-          Thời gian dùng bữa tại nhà hàng(Nếu có): <b> {order.MealTime ?? order.MealTime.Value}</b>
-          Loại phòng: {tableDetail.Table!.Room!}
-          Loại bàn: {tableDetail.Table!.TableSize!}
-        </p>
+    .table th {
+      background-color: #B71C1C;
+      color: #ffffff;
+    }
 
-        <p class=""emailBody"">
-          Nếu đây là một sai sót hoặc nếu bạn muốn thực hiện một đặt chỗ/đơn giao tận nơi khác, vui lòng truy cập website của chúng tôi hoặc liên hệ trực tiếp với chúng tôi.
-        </p>
+    .table td {
+      background-color: #ffffff;
+    }
 
-        <p class=""emailBody"">
-          Để biết thêm thông tin, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi qua
-          <u><i>qk.backend@gmail.com</i></u>.
-        </p>
+    .btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #FFD54F;
+      color: #B71C1C;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+      text-align: center;
+    }
 
-        <p class=""support"">
-          Cảm ơn bạn đã thông cảm, và chúng tôi hy vọng được phục vụ bạn trong tương lai.
-        </p>
-        <div class=""signature"">
-          <p>Trân trọng,</p>
-          <p>
-            <b><i>Đội ngũ Nhà hàng Thiên Phú</i></b>
-          </p>
-        </div>
-      </div>
-      <div style=""height: 100px""></div>
+    .btn:hover {
+      background-color: #B71C1C;
+      color: #ffffff;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="""">
+    <div class=""header"">
+      <img
+        src=""https://firebasestorage.googleapis.com/v0/b/hcqs-project.appspot.com/o/dish%2Ff25019dc-3a64-4677-87cb-63b0f3dbcef7.jpg.png?alt=media&token=c784cf86-52e6-4314-bd8a-28d898feb7f5""
+        alt=""Logo Nhà hàng Thiên Phú"" style=""height: 100px; margin-right: 10px; vertical-align: middle;"">
+      <h1 style=""display: inline-block; vertical-align: middle;"">Nhà hàng Thiên Phú</h1>
+      <p style=""text-transform: uppercase; font-weight: 600; color: #ffffff;font-size: 18px;"">Thông báo hoàn tiền đặt
+        hàng</p>
     </div>
-  </body>
-</html>";
+    <div class=""content"">
+      <p>Kính gửi <span class=""highlight"">"+username +@"</span>,</p>
+      <p>Chúng tôi rất tiếc vì đã gặp phải sự cố dẫn đến việc phải hoàn tiền cho đơn hàng của bạn. Dưới đây là thông tin
+        chi tiết:</p>
+      <h3>Thông tin hoàn tiền</h3>
+      <ul>
+        <li><strong>Số tiền hoàn: </strong><span class=""highlight"">[Số tiền] VNĐ</span></li>
+        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">[Ngày giờ hoàn]</span></li>
+        <li><strong>Mã hóa đơn: </strong><span class=""highlight"">[Mã hóa đơn]</span></li>
+      </ul>
+     <p class=""""emailBody"""">
+         Mã đơn: <b>"+order.OrderId.ToString().Substring(0, 5) +@"</b><br>
+           Thời gian đặt: <b>"+orderTime+@"</b>
+           Thời gian dùng bữa tại nhà hàng(Nếu có): <b>" +order.MealTime  +@"</b>
+           Loại phòng: "+tableDetail.Table!.Room! +@"
+           Loại bàn: "+tableDetail.Table!.TableSize!+@"
+         </p>
+
+    
+    </div>
+    <div class=""footer"">
+      <p>Trân trọng,<br>Đội ngũ Nhà hàng Thiên Phú</p>
+    </div>
+  </div>
+</body>
+
+</html>
+";
         return content;
     }
 
@@ -1042,416 +1180,748 @@ public class TemplateMappingHelper
 
     public static string GetTemplateOrderConfirmation(string username, Order order)
     {
-        var content = $@"
-<html>
-  <head>
-    <style>
-      * {{
-        margin: 0;
-        padding: 0;
-      }}
+//         var content = $@"
+// <html>
+//   <head>
+//     <style>
+//       * {{
+//         margin: 0;
+//         padding: 0;
+//       }}
+//
+//       body {{
+//         font-family: Arial, sans-serif;
+//         background-color: #f4f4f4; /* Background color for the entire email */
+//       }}
+//
+//       .container {{
+//         max-width: 900px;
+//         margin: 20px auto;
+//         border-radius: 5px;
+//         box-shadow: 0px 0px 5px 2px #ccc; /* Shadow for content */
+//       }}
+//
+//       .header {{
+//         text-align: center;
+//         background-color: #ffba00; /* Header background color */
+//         padding: 20px;
+//       }}
+//
+//       .mainBody {{
+//         background-color: #ffffff; /* Main content background */
+//         padding: 20px;
+//       }}
+//
+//       .emailBody {{
+//         margin: 5px 5px;
+//       }}
+//
+//       .support {{
+//         font-size: 15px;
+//         font-style: italic;
+//         margin: 5px 5px;
+//       }}
+//
+//       .footer {{
+//         font-size: 14px;
+//         text-align: center;
+//         background-color: #ffba00; /* Footer background color */
+//         padding: 10px;
+//       }}
+//
+//       .signature {{
+//         text-align: right;
+//         font-size: 16px;
+//         margin: 5px 5px;
+//       }}
+//     </style>
+//   </head>
+//   <body>
+//     <div class=""container"">
+//       <div class=""header"">
+//         <h1 style=""color: #515151;"">Nhà hàng Thiên Phú</h1>
+//       </div>
+//       <div class=""mainBody"">
+//         <h2 class=""emailBody"">Xin chào {username},</h2>
+//
+//         <p class=""emailBody"">
+//           Chúng tôi vui mừng thông báo rằng đơn hàng của bạn tại <b><i>Nhà hàng Thiên Phú</i></b> đã được tạo thành công!
+//         </p>
+//
+//         <p class=""emailBody"">
+//           Mã đơn hàng: <b>{order.OrderId}</b><br>
+//           Ngày đặt hàng: <b>{order.OrderDate}</b><br>
+//           Tổng số tiền: <b>{order.TotalAmount:C}</b>
+//         </p>
+//
+//         <p class=""emailBody"">
+//           Chúng tôi mong rằng bạn sẽ có một trải nghiệm tuyệt vời tại Nhà hàng Thiên Phú.
+//         </p>
+//
+//         <p class=""emailBody"">
+//           Nếu bạn cần hỗ trợ hoặc thay đổi đơn hàng, vui lòng liên hệ chúng tôi qua email <u><i>qk.backend@gmail.com</i></u>.
+//         </p>
+//
+//         <p class=""support"">
+//           Cảm ơn bạn đã chọn <b><i>Nhà hàng Thiên Phú</i></b>!
+//         </p>
+//         <div class=""signature"">
+//           <p>Trân trọng,</p>
+//           <p>
+//             <b><i>Đội ngũ Nhà hàng Thiên Phú</i></b>
+//           </p>
+//         </div>
+//       </div>
+//       <div style=""height: 100px""></div>
+//     </div>
+//   </body>
+// </html>";
+  var content = @"
+<!DOCTYPE html>
+<html lang=""vi"">
 
-      body {{
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f4; /* Background color for the entire email */
-      }}
+<head>
+  <meta charset=""UTF-8"">
+  <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+  <title>Thông báo hoàn tiền</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+      color: #333;
+    }
 
-      .container {{
-        max-width: 900px;
-        margin: 20px auto;
-        border-radius: 5px;
-        box-shadow: 0px 0px 5px 2px #ccc; /* Shadow for content */
-      }}
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
 
-      .header {{
-        text-align: center;
-        background-color: #ffba00; /* Header background color */
-        padding: 20px;
-      }}
+    .header {
+      background-color: #B71C1C;
+      color: #ffffff;
+      text-align: center;
+      padding: 15px 20px;
+      border-radius: 8px 8px 0 0;
+    }
 
-      .mainBody {{
-        background-color: #ffffff; /* Main content background */
-        padding: 20px;
-      }}
+    .header h1 {
+      display: inline-block;
+      vertical-align: middle;
+      margin: 0;
+      font-size: 20px;
+    }
 
-      .emailBody {{
-        margin: 5px 5px;
-      }}
+    .content {
+      margin: 20px 0;
+      line-height: 1.6;
+    }
 
-      .support {{
-        font-size: 15px;
-        font-style: italic;
-        margin: 5px 5px;
-      }}
+    .highlight {
+      color: #B71C1C;
+      font-weight: bold;
+    }
 
-      .footer {{
-        font-size: 14px;
-        text-align: center;
-        background-color: #ffba00; /* Footer background color */
-        padding: 10px;
-      }}
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
 
-      .signature {{
-        text-align: right;
-        font-size: 16px;
-        margin: 5px 5px;
-      }}
-    </style>
-  </head>
-  <body>
-    <div class=""container"">
-      <div class=""header"">
-        <h1 style=""color: #515151;"">Nhà hàng Thiên Phú</h1>
-      </div>
-      <div class=""mainBody"">
-        <h2 class=""emailBody"">Xin chào {username},</h2>
+    .table th,
+    .table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
 
-        <p class=""emailBody"">
-          Chúng tôi vui mừng thông báo rằng đơn hàng của bạn tại <b><i>Nhà hàng Thiên Phú</i></b> đã được tạo thành công!
-        </p>
+    .table th {
+      background-color: #B71C1C;
+      color: #ffffff;
+    }
 
-        <p class=""emailBody"">
-          Mã đơn hàng: <b>{order.OrderId}</b><br>
-          Ngày đặt hàng: <b>{order.OrderDate}</b><br>
-          Tổng số tiền: <b>{order.TotalAmount:C}</b>
-        </p>
+    .table td {
+      background-color: #ffffff;
+    }
 
-        <p class=""emailBody"">
-          Chúng tôi mong rằng bạn sẽ có một trải nghiệm tuyệt vời tại Nhà hàng Thiên Phú.
-        </p>
+    .btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #FFD54F;
+      color: #B71C1C;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+      text-align: center;
+    }
 
-        <p class=""emailBody"">
-          Nếu bạn cần hỗ trợ hoặc thay đổi đơn hàng, vui lòng liên hệ chúng tôi qua email <u><i>qk.backend@gmail.com</i></u>.
-        </p>
+    .btn:hover {
+      background-color: #B71C1C;
+      color: #ffffff;
+    }
 
-        <p class=""support"">
-          Cảm ơn bạn đã chọn <b><i>Nhà hàng Thiên Phú</i></b>!
-        </p>
-        <div class=""signature"">
-          <p>Trân trọng,</p>
-          <p>
-            <b><i>Đội ngũ Nhà hàng Thiên Phú</i></b>
-          </p>
-        </div>
-      </div>
-      <div style=""height: 100px""></div>
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="""">
+    <div class=""header"">
+      <img
+        src=""https://firebasestorage.googleapis.com/v0/b/hcqs-project.appspot.com/o/dish%2Ff25019dc-3a64-4677-87cb-63b0f3dbcef7.jpg.png?alt=media&token=c784cf86-52e6-4314-bd8a-28d898feb7f5""
+        alt=""Logo Nhà hàng Thiên Phú"" style=""height: 100px; margin-right: 10px; vertical-align: middle;"">
+      <h1 style=""display: inline-block; vertical-align: middle;"">Nhà hàng Thiên Phú</h1>
+      <p style=""text-transform: uppercase; font-weight: 600; color: #ffffff;font-size: 18px;"">Thông báo hoàn tiền đặt
+        hàng</p>
     </div>
-  </body>
-</html>";
+    <div class=""content"">
+      <p>Kính gửi <span class=""highlight"">"+ username+ @"</span>,</p>
+      <p>
+           Chúng tôi vui mừng xác nhận rằng đặt chỗ của bạn tại <b><i>Nhà hàng Thiên Phú</i></b> đã được tạo thành công!
+
+</p>
+      <h3>Dưới đây là thông tin đặt hàng của bạn</h3>
+      <ul>
+        <li><strong>Thời gian đặt hàng: </strong><span class=""highlight"">"+ order.OrderDate+@" </span></li>
+        <li><strong>Đã thanh toán: </strong><span class=""highlight"">"+order.TotalAmount+@"</span></li>
+        <li><strong>Mã hóa đơn: </strong><span class=""highlight"">"+order.OrderId+@"</span></li>
+      </ul>
+ 
+   <p><strong>Quy khách mua à</strong> </p>
+   
+    
+    </div>
+    <div class=""footer"">
+      <p>Trân trọng,<br>Đội ngũ Nhà hàng Thiên Phú</p>
+    </div>
+  </div>
+</body>
+
+</html>
+";
         return content;
     }
 
     public static string GetTemplateReservationConfirmation(string username, Order order)
     {
-        var content = $@"
-<html>
-  <head>
-    <style>
-      * {{
-        margin: 0;
-        padding: 0;
-      }}
+//         var content = $@"
+// <html>
+//   <head>
+//     <style>
+//       * {{
+//         margin: 0;
+//         padding: 0;
+//       }}
+//
+//       body {{
+//         font-family: Arial, sans-serif;
+//         background-color: #f4f4f4; /* Background color for the entire email */
+//       }}
+//
+//       .container {{
+//         max-width: 900px;
+//         margin: 20px auto;
+//         border-radius: 5px;
+//         box-shadow: 0px 0px 5px 2px #ccc; /* Shadow for content */
+//       }}
+//
+//       .header {{
+//         text-align: center;
+//         background-color: #ffba00; /* Header background color */
+//         padding: 20px;
+//       }}
+//
+//       .mainBody {{
+//         background-color: #ffffff; /* Main content background */
+//         padding: 20px;
+//       }}
+//
+//       .emailBody {{
+//         margin: 5px 5px;
+//       }}
+//
+//       .support {{
+//         font-size: 15px;
+//         font-style: italic;
+//         margin: 5px 5px;
+//       }}
+//
+//       .footer {{
+//         font-size: 14px;
+//         text-align: center;
+//         background-color: #ffba00; /* Footer background color */
+//         padding: 10px;
+//       }}
+//
+//       .signature {{
+//         text-align: right;
+//         font-size: 16px;
+//         margin: 5px 5px;
+//       }}
+//     </style>
+//   </head>
+//   <body>
+//     <div class=""container"">
+//       <div class=""header"">
+//         <h1 style=""color: #515151;"">Nhà hàng Thiên Phú</h1>
+//       </div>
+//       <div class=""mainBody"">
+//         <h2 class=""emailBody"">Xin chào {username},</h2>
+//
+//         <p class=""emailBody"">
+//           Chúng tôi vui mừng xác nhận rằng đặt chỗ của bạn tại <b><i>Nhà hàng Thiên Phú</i></b> đã được tạo thành công!
+//         </p>
+//
+//         <p class=""emailBody"">
+//           Mã đặt chỗ: <b>{order.OrderId}</b><br>
+//           Thời gian đặt chỗ: <b>{order.OrderDate}</b><br>
+//           Tổng số tiền: <b>{order.TotalAmount:C}</b>
+//         </p>
+//
+//         <p class=""emailBody"">
+//           Chúng tôi rất mong được chào đón bạn vào thời gian đã chọn. Nếu bạn cần thay đổi thông tin đặt chỗ, vui lòng liên hệ với chúng tôi qua website hoặc email.
+//         </p>
+//
+//         <p class=""emailBody"">
+//           Để biết thêm thông tin, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi qua
+//           <u><i>qk.backend@gmail.com</i></u>.
+//         </p>
+//
+//         <p class=""support"">
+//           Cảm ơn bạn đã chọn <b><i>Nhà hàng Thiên Phú</i></b>, và chúng tôi mong muốn mang đến cho bạn một trải nghiệm tuyệt vời.
+//         </p>
+//         <div class=""signature"">
+//           <p>Trân trọng,</p>
+//           <p>
+//             <b><i>Đội ngũ Nhà hàng Thiên Phú</i></b>
+//           </p>
+//         </div>
+//       </div>
+//       <div style=""height: 100px""></div>
+//     </div>
+//   </body>
+// </html>";
+      var content = @"
+<!DOCTYPE html>
+<html lang=""vi"">
 
-      body {{
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f4; /* Background color for the entire email */
-      }}
+<head>
+  <meta charset=""UTF-8"">
+  <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+  <title>Thông báo hoàn tiền</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+      color: #333;
+    }
 
-      .container {{
-        max-width: 900px;
-        margin: 20px auto;
-        border-radius: 5px;
-        box-shadow: 0px 0px 5px 2px #ccc; /* Shadow for content */
-      }}
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
 
-      .header {{
-        text-align: center;
-        background-color: #ffba00; /* Header background color */
-        padding: 20px;
-      }}
+    .header {
+      background-color: #B71C1C;
+      color: #ffffff;
+      text-align: center;
+      padding: 15px 20px;
+      border-radius: 8px 8px 0 0;
+    }
 
-      .mainBody {{
-        background-color: #ffffff; /* Main content background */
-        padding: 20px;
-      }}
+    .header h1 {
+      display: inline-block;
+      vertical-align: middle;
+      margin: 0;
+      font-size: 20px;
+    }
 
-      .emailBody {{
-        margin: 5px 5px;
-      }}
+    .content {
+      margin: 20px 0;
+      line-height: 1.6;
+    }
 
-      .support {{
-        font-size: 15px;
-        font-style: italic;
-        margin: 5px 5px;
-      }}
+    .highlight {
+      color: #B71C1C;
+      font-weight: bold;
+    }
 
-      .footer {{
-        font-size: 14px;
-        text-align: center;
-        background-color: #ffba00; /* Footer background color */
-        padding: 10px;
-      }}
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
 
-      .signature {{
-        text-align: right;
-        font-size: 16px;
-        margin: 5px 5px;
-      }}
-    </style>
-  </head>
-  <body>
-    <div class=""container"">
-      <div class=""header"">
-        <h1 style=""color: #515151;"">Nhà hàng Thiên Phú</h1>
-      </div>
-      <div class=""mainBody"">
-        <h2 class=""emailBody"">Xin chào {username},</h2>
+    .table th,
+    .table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
 
-        <p class=""emailBody"">
-          Chúng tôi vui mừng xác nhận rằng đặt chỗ của bạn tại <b><i>Nhà hàng Thiên Phú</i></b> đã được tạo thành công!
-        </p>
+    .table th {
+      background-color: #B71C1C;
+      color: #ffffff;
+    }
 
-        <p class=""emailBody"">
-          Mã đặt chỗ: <b>{order.OrderId}</b><br>
-          Thời gian đặt chỗ: <b>{order.OrderDate}</b><br>
-          Tổng số tiền: <b>{order.TotalAmount:C}</b>
-        </p>
+    .table td {
+      background-color: #ffffff;
+    }
 
-        <p class=""emailBody"">
-          Chúng tôi rất mong được chào đón bạn vào thời gian đã chọn. Nếu bạn cần thay đổi thông tin đặt chỗ, vui lòng liên hệ với chúng tôi qua website hoặc email.
-        </p>
+    .btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #FFD54F;
+      color: #B71C1C;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+      text-align: center;
+    }
 
-        <p class=""emailBody"">
-          Để biết thêm thông tin, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi qua
-          <u><i>qk.backend@gmail.com</i></u>.
-        </p>
+    .btn:hover {
+      background-color: #B71C1C;
+      color: #ffffff;
+    }
 
-        <p class=""support"">
-          Cảm ơn bạn đã chọn <b><i>Nhà hàng Thiên Phú</i></b>, và chúng tôi mong muốn mang đến cho bạn một trải nghiệm tuyệt vời.
-        </p>
-        <div class=""signature"">
-          <p>Trân trọng,</p>
-          <p>
-            <b><i>Đội ngũ Nhà hàng Thiên Phú</i></b>
-          </p>
-        </div>
-      </div>
-      <div style=""height: 100px""></div>
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="""">
+    <div class=""header"">
+      <img
+        src=""https://firebasestorage.googleapis.com/v0/b/hcqs-project.appspot.com/o/dish%2Ff25019dc-3a64-4677-87cb-63b0f3dbcef7.jpg.png?alt=media&token=c784cf86-52e6-4314-bd8a-28d898feb7f5""
+        alt=""Logo Nhà hàng Thiên Phú"" style=""height: 100px; margin-right: 10px; vertical-align: middle;"">
+      <h1 style=""display: inline-block; vertical-align: middle;"">Nhà hàng Thiên Phú</h1>
+      <p style=""text-transform: uppercase; font-weight: 600; color: #ffffff;font-size: 18px;"">Thông báo hoàn tiền đặt
+        hàng</p>
     </div>
-  </body>
-</html>";
+    <div class=""content"">
+      <p>Kính gửi <span class=""highlight"">"+ username+ @"</span>,</p>
+      <p>
+           Chúng tôi vui mừng xác nhận rằng đặt chỗ của bạn tại <b><i>Nhà hàng Thiên Phú</i></b> đã được tạo thành công!
+
+</p>
+      <h3>Dưới đây là thông tin đặt chỗ của bạn</h3>
+      <ul>
+        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">"+ order.MealTime+@" </span></li>
+        <li><strong>Đã thanh toán cọc: </strong><span class=""highlight"">"+order.Deposit+@"</span></li>
+        <li><strong>Mã hóa đơn: </strong><span class=""highlight"">"+order.OrderId+@"</span></li>
+      </ul>
+ 
+   <p><strong>Quy khách vui lòng đến đúng giờ, chúng tôi có thể giữ chỗ tối đa thời gian cho quý khách trong vòng 30 phút. Sau 30 phút tiền cọc quý khách sẽ không được hoàn trả</strong> </p>
+   
+    
+    </div>
+    <div class=""footer"">
+      <p>Trân trọng,<br>Đội ngũ Nhà hàng Thiên Phú</p>
+    </div>
+  </div>
+</body>
+
+</html>
+";
         return content;
     }
 
     public static string GetTemplateBirthdayCoupon(string username, CouponProgram couponProgram)
     {
-        var content = $@"
-<html>
-  <head>
-    <style>
-      * {{
-        margin: 0;
-        padding: 0;
-      }}
+       var content = @"
+<!DOCTYPE html>
+<html lang=""vi"">
 
-      body {{
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f4; /* Background color for the entire email */
-      }}
+<head>
+  <meta charset=""UTF-8"">
+  <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+  <title>Thông báo hoàn tiền</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+      color: #333;
+    }
 
-      .container {{
-        max-width: 900px;
-        margin: 20px auto;
-        border-radius: 5px;
-        box-shadow: 0px 0px 5px 2px #ccc; /* Shadow for content */
-      }}
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
 
-      .header {{
-        text-align: center;
-        background-color: #ffba00; /* Header background color */
-        padding: 20px;
-      }}
+    .header {
+      background-color: #B71C1C;
+      color: #ffffff;
+      text-align: center;
+      padding: 15px 20px;
+      border-radius: 8px 8px 0 0;
+    }
 
-      .mainBody {{
-        background-color: #ffffff; /* Main content background */
-        padding: 20px;
-      }}
+    .header h1 {
+      display: inline-block;
+      vertical-align: middle;
+      margin: 0;
+      font-size: 20px;
+    }
 
-      .emailBody {{
-        margin: 5px 5px;
-      }}
+    .content {
+      margin: 20px 0;
+      line-height: 1.6;
+    }
 
-      .support {{
-        font-size: 15px;
-        font-style: italic;
-        margin: 5px 5px;
-      }}
+    .highlight {
+      color: #B71C1C;
+      font-weight: bold;
+    }
 
-      .footer {{
-        font-size: 14px;
-        text-align: center;
-        background-color: #ffba00; /* Footer background color */
-        padding: 10px;
-      }}
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
 
-      .signature {{
-        text-align: right;
-        font-size: 16px;
-        margin: 5px 5px;
-      }}
-    </style>
-  </head>
-  <body>
-    <div class=""container"">
-      <div class=""header"">
-        <h1 style=""color: #515151;"">Nhà hàng Thiên Phú</h1>
-      </div>
-      <div class=""mainBody"">
-        <h2 class=""emailBody"">Xin chào {username},</h2>
+    .table th,
+    .table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
 
-        <p class=""emailBody"">
-          Chúc mừng sinh nhật bạn! 🎉
-        </p>
+    .table th {
+      background-color: #B71C1C;
+      color: #ffffff;
+    }
 
-        <p class=""emailBody"">
-          Để chúc mừng ngày đặc biệt của bạn, chúng tôi xin gửi tặng bạn một coupon sinh nhật từ <b><i>Nhà hàng Thiên Phú</i></b>!
-        </p>
+    .table td {
+      background-color: #ffffff;
+    }
 
-        <p class=""emailBody"">
-          Mã coupon: <b>{couponProgram.Code}</b><br>
-          Giảm giá: <b>{couponProgram.DiscountPercent:C}</b><br>
-          Ngày sử dụng: <b>{couponProgram.StartDate:dd/MM/yyyy}</b>
-          Hạn sử dụng: <b>{couponProgram.ExpiryDate:dd/MM/yyyy}</b>
-        </p>
+    .btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #FFD54F;
+      color: #B71C1C;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+      text-align: center;
+    }
 
-        <p class=""emailBody"">
-          Hãy sử dụng mã coupon này khi bạn đến nhà hàng để tận hưởng bữa ăn tuyệt vời cùng gia đình và bạn bè trong ngày sinh nhật của bạn!
-        </p>
+    .btn:hover {
+      background-color: #B71C1C;
+      color: #ffffff;
+    }
 
-        <p class=""emailBody"">
-          Nếu bạn có bất kỳ câu hỏi nào hoặc cần thêm thông tin, vui lòng liên hệ với chúng tôi qua email <u><i>qk.backend@gmail.com</i></u>.
-        </p>
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
 
-        <p class=""support"">
-          Cảm ơn bạn đã chọn <b><i>Nhà hàng Thiên Phú</i></b> để kỷ niệm ngày đặc biệt này!
-        </p>
-        <div class=""signature"">
-          <p>Trân trọng,</p>
-          <p>
-            <b><i>Đội ngũ Nhà hàng Thiên Phú</i></b>
-          </p>
-        </div>
-      </div>
-      <div style=""height: 100px""></div>
+<body>
+  <div class="""">
+    <div class=""header"">
+      <img
+        src=""https://firebasestorage.googleapis.com/v0/b/hcqs-project.appspot.com/o/dish%2Ff25019dc-3a64-4677-87cb-63b0f3dbcef7.jpg.png?alt=media&token=c784cf86-52e6-4314-bd8a-28d898feb7f5""
+        alt=""Logo Nhà hàng Thiên Phú"" style=""height: 100px; margin-right: 10px; vertical-align: middle;"">
+      <h1 style=""display: inline-block; vertical-align: middle;"">Nhà hàng Thiên Phú</h1>
+      <p style=""text-transform: uppercase; font-weight: 600; color: #ffffff;font-size: 18px;"">Thông báo hoàn tiền đặt
+        hàng</p>
     </div>
-  </body>
-</html>";
+    <div class=""content"">
+      <p>Kính gửi <span class=""highlight""> " +username +@"</span>,</p>
+        <p class=""""emailBody"""">
+         Nhân dịp sinh nhật bạn chúng tôi kính chúc quý khách hàng có một ngày sinh nhật vui vẻ hạnh phúc và bình an bên gia đình! Chúng tôi kính gửi quý khách mã voucher bên dưới nhân ngày đặc biệt.
+        </p>
+
+         <p class=""""emailBody"""">
+           Mã coupon: <b>" +couponProgram.Code +@"</b><br>
+           Giảm giá: <b>"+couponProgram.DiscountPercent + @"%</b><br>
+           Ngày sử dụng: <b>"+couponProgram.StartDate+@"</b><br>
+           Hạn sử dụng: <b>"+ couponProgram.ExpiryDate+@"</b>
+         </p>
+   
+    </div>
+    <div class=""footer"">
+      <p>Trân trọng,<br>Đội ngũ Nhà hàng Thiên Phú</p>
+    </div>
+  </div>
+</body>
+
+</html>
+";
         return content;
     }
 
     public static string GetTemplateFirstRegistrationCoupon(string username, CouponProgram couponProgram)
     {
-        var content = $@"
-<html>
-  <head>
-    <style>
-      * {{
-        margin: 0;
-        padding: 0;
-      }}
+   var content = @"
+<!DOCTYPE html>
+<html lang=""vi"">
 
-      body {{
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f4; /* Background color for the entire email */
-      }}
+<head>
+  <meta charset=""UTF-8"">
+  <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+  <title>Thông báo hoàn tiền</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+      color: #333;
+    }
 
-      .container {{
-        max-width: 900px;
-        margin: 20px auto;
-        border-radius: 5px;
-        box-shadow: 0px 0px 5px 2px #ccc; /* Shadow for content */
-      }}
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
 
-      .header {{
-        text-align: center;
-        background-color: #ffba00; /* Header background color */
-        padding: 20px;
-      }}
+    .header {
+      background-color: #B71C1C;
+      color: #ffffff;
+      text-align: center;
+      padding: 15px 20px;
+      border-radius: 8px 8px 0 0;
+    }
 
-      .mainBody {{
-        background-color: #ffffff; /* Main content background */
-        padding: 20px;
-      }}
+    .header h1 {
+      display: inline-block;
+      vertical-align: middle;
+      margin: 0;
+      font-size: 20px;
+    }
 
-      .emailBody {{
-        margin: 5px 5px;
-      }}
+    .content {
+      margin: 20px 0;
+      line-height: 1.6;
+    }
 
-      .support {{
-        font-size: 15px;
-        font-style: italic;
-        margin: 5px 5px;
-      }}
+    .highlight {
+      color: #B71C1C;
+      font-weight: bold;
+    }
 
-      .footer {{
-        font-size: 14px;
-        text-align: center;
-        background-color: #ffba00; /* Footer background color */
-        padding: 10px;
-      }}
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
 
-      .signature {{
-        text-align: right;
-        font-size: 16px;
-        margin: 5px 5px;
-      }}
-    </style>
-  </head>
-  <body>
-    <div class=""container"">
-      <div class=""header"">
-        <h1 style=""color: #515151;"">Nhà hàng Thiên Phú</h1>
-      </div>
-      <div class=""mainBody"">
-        <h2 class=""emailBody"">Xin chào {username},</h2>
+    .table th,
+    .table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
 
-        <p class=""emailBody"">
-          Chào mừng bạn đã đăng ký tài khoản tại <b><i>Nhà hàng Thiên Phú</i></b>! 🎉
-        </p>
+    .table th {
+      background-color: #B71C1C;
+      color: #ffffff;
+    }
 
-        <p class=""emailBody"">
-          Để chào đón bạn, chúng tôi xin gửi tặng bạn một coupon đặc biệt cho lần đăng ký đầu tiên của bạn!
-        </p>
+    .table td {
+      background-color: #ffffff;
+    }
 
-        <p class=""emailBody"">
-          Mã coupon: <b>{couponProgram.Code}</b><br>
-          Giảm giá: <b>{couponProgram.DiscountPercent:C}</b><br>
-          Ngày sử dụng: <b>{couponProgram.StartDate:dd/MM/yyyy}</b><br>
-          Hạn sử dụng: <b>{couponProgram.ExpiryDate:dd/MM/yyyy}</b>
-        </p>
+    .btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #FFD54F;
+      color: #B71C1C;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+      text-align: center;
+    }
 
-        <p class=""emailBody"">
-          Hãy sử dụng mã coupon này trong lần đến nhà hàng sắp tới để tận hưởng ưu đãi đặc biệt của chúng tôi!
-        </p>
+    .btn:hover {
+      background-color: #B71C1C;
+      color: #ffffff;
+    }
 
-        <p class=""emailBody"">
-          Nếu bạn có bất kỳ câu hỏi nào hoặc cần thêm thông tin, vui lòng liên hệ với chúng tôi qua email <u><i>qk.backend@gmail.com</i></u>.
-        </p>
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
 
-        <p class=""support"">
-          Cảm ơn bạn đã chọn <b><i>Nhà hàng Thiên Phú</i></b>. Chúng tôi rất mong được phục vụ bạn!
-        </p>
-        <div class=""signature"">
-          <p>Trân trọng,</p>
-          <p>
-            <b><i>Đội ngũ Nhà hàng Thiên Phú</i></b>
-          </p>
-        </div>
-      </div>
-      <div style=""height: 100px""></div>
+<body>
+  <div class="""">
+    <div class=""header"">
+      <img
+        src=""https://firebasestorage.googleapis.com/v0/b/hcqs-project.appspot.com/o/dish%2Ff25019dc-3a64-4677-87cb-63b0f3dbcef7.jpg.png?alt=media&token=c784cf86-52e6-4314-bd8a-28d898feb7f5""
+        alt=""Logo Nhà hàng Thiên Phú"" style=""height: 100px; margin-right: 10px; vertical-align: middle;"">
+      <h1 style=""display: inline-block; vertical-align: middle;"">Nhà hàng Thiên Phú</h1>
+      <p style=""text-transform: uppercase; font-weight: 600; color: #ffffff;font-size: 18px;"">Thông báo hoàn tiền đặt
+        hàng</p>
     </div>
-  </body>
-</html>";
+    <div class=""content"">
+      <p>Kính gửi <span class=""highlight""> " +username +@"</span>,</p>
+        <p class=""""emailBody"""">
+         Để chào đón bạn, chúng tôi xin gửi tặng bạn một coupon đặc biệt cho lần đăng ký đầu tiên của bạn!
+        </p>
+
+         <p class=""""emailBody"""">
+           Mã coupon: <b>" +couponProgram.Code +@"</b><br>
+           Giảm giá: <b>"+couponProgram.DiscountPercent + @"%</b><br>
+           Ngày sử dụng: <b>"+couponProgram.StartDate+@"</b><br>
+           Hạn sử dụng: <b>"+ couponProgram.ExpiryDate+@"</b>
+         </p>
+   
+    </div>
+    <div class=""footer"">
+      <p>Trân trọng,<br>Đội ngũ Nhà hàng Thiên Phú</p>
+    </div>
+  </div>
+</body>
+
+</html>
+";
         return content;
     }
 
