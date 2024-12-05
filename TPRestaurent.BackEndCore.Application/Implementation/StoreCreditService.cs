@@ -73,7 +73,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 var storeCreditAmountResult = hashingService.UnHashing(transactionDb.Account.StoreCreditAmount, false);
-                var storeCreditAmount = int.Parse(storeCreditAmountResult.Result.ToString().Split('_')[1]);
+                var storeCreditAmount = storeCreditAmountResult.IsSuccess? int.Parse(storeCreditAmountResult.Result.ToString().Split('_')[1]) : int.Parse((transactionDb.Account.StoreCreditAmount));
 
                 var transactionAmountResult = hashingService.UnHashing(transactionDb.Amount, false);
                 var transactionAmount = int.Parse(transactionAmountResult.Result.ToString().Split('_')[1]);
