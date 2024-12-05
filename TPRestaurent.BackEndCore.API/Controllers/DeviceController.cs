@@ -26,7 +26,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-device-by-id/{deviceId}")]
-        //[TokenValidationMiddleware(Permission.ADMIN)]
+        [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> GetDeviceById(Guid deviceId)
         {
             return await _service.GetDeviceById(deviceId);
