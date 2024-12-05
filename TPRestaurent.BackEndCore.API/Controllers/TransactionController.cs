@@ -21,7 +21,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("create-payment")]
-        [TokenValidationMiddleware(Permission.PAYMENT)]
+        //[TokenValidationMiddleware(Permission.PAYMENT)]
         public async Task<AppActionResult> CreatePayment([FromBody] PaymentRequestDto paymentRequest)
         {
             return await _service.CreatePayment(paymentRequest);
@@ -69,7 +69,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPut("create-duplicated-paid-order-refund")]
-        [TokenValidationMiddleware(Permission.ADMIN)]
+        //[TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> CreateDuplicatedPaidOrderRefund(DuplicatedPaidOrderRefundRequest dto)
         {
             return await _service.CreateDuplicatedPaidOrderRefund(dto);
