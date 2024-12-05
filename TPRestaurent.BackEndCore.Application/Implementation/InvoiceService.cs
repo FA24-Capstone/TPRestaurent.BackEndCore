@@ -320,7 +320,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
     </style>
   </head>
   <body>
-    <div class='container'>
+    <div class=''>
       <div class='header'>
         <img src='https://thienphurestaurant.vercel.app/icon.png' alt='Restaurant Logo' class='logo'>
         <div class='restaurant-info'>
@@ -696,7 +696,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
   </style>
 </head>
 <body>
-  <div class='container'>
+  <div class=''>
     <div class='header'>
       <img src='https://thienphurestaurant.vercel.app/icon.png' alt='Restaurant Logo' class='logo'>
       <div class='restaurant-info'>
