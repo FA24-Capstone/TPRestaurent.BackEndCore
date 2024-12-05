@@ -1327,15 +1327,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             var customerLoyaltyPoint = hashingService.UnHashing(accountDb.LoyaltyPoint, true);
                             if (!customerLoyaltyPoint.IsSuccess)
                             {
-                                throw new Exception("Xảy ra lỗi khi tính điểm thưởng. Vui lòng thử lại.");
+                                loyaltyPoint = int.Parse(accountDb.LoyaltyPoint);
+                            } else
+                            {
+                                var decodedLoyaltyPoint = customerLoyaltyPoint.Result.ToString();
+                                if (!decodedLoyaltyPoint.Contains(accountDb.Id))
+                                {
+                                    throw new Exception("Không đồng bộ dữ liễu điểm thưởng. Vui lòng thử lại sau.");
+                                }
+                                loyaltyPoint = int.Parse(decodedLoyaltyPoint.Split('_')[1]);
                             }
 
-                            var decodedLoyaltyPoint = customerLoyaltyPoint.Result.ToString();
-                            if (!decodedLoyaltyPoint.Contains(accountDb.Id))
-                            {
-                                throw new Exception("Không đồng bộ dữ liễu điểm thưởng. Vui lòng thử lại sau.");
-                            }
-                            loyaltyPoint = int.Parse(decodedLoyaltyPoint.Split('_')[1]);
 
                             // Check if the user has enough points
                             if (loyaltyPoint >= orderRequestDto.DeliveryOrder.LoyalPointToUse)
@@ -1792,15 +1794,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             var customerLoyaltyPoint = hashingService.UnHashing(accountDb.LoyaltyPoint, true);
                             if (!customerLoyaltyPoint.IsSuccess)
                             {
-                                throw new Exception("Xảy ra lỗi khi tính điểm thưởng. Vui lòng thử lại.");
+                                loyaltyPoint = int.Parse(accountDb.LoyaltyPoint);
                             }
-
-                            var decodedLoyaltyPoint = customerLoyaltyPoint.Result.ToString();
-                            if (!decodedLoyaltyPoint.Contains(accountDb.Id))
+                            else
                             {
-                                throw new Exception("Không đồng bộ dữ liễu điểm thưởng. Vui lòng thử lại sau.");
+                                var decodedLoyaltyPoint = customerLoyaltyPoint.Result.ToString();
+                                if (!decodedLoyaltyPoint.Contains(accountDb.Id))
+                                {
+                                    throw new Exception("Không đồng bộ dữ liệu điểm thưởng. Vui lòng thử lại sau.");
+                                }
+                                loyaltyPoint = int.Parse(decodedLoyaltyPoint.Split('_')[1]);
                             }
-                            loyaltyPoint = int.Parse(decodedLoyaltyPoint.Split('_')[1]);
 
                             // Check if the user has enough points
                             if (loyaltyPoint >= orderRequestDto.LoyalPointsToUse)
