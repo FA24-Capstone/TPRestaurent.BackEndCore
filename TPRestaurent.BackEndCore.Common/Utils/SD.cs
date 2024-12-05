@@ -134,6 +134,8 @@ public class SD
         public static string PASSCODE_FORGOT_PASSWORD = "MÃ XÁC THỰC QUÊN MẬT KHẨU";
         public static string NOTIFY_RESERVATION = "NHÀ HÀNG THIÊN PHÚ XIN THÔNG BÁO";
         public static string INSUFFICIENT_COUPON_QUANTITY = "SỐ LƯỢNG COUPON KHÔNG ĐỦ";
+        public static string NOTIFY_DUPLICATED_PAYMENT_OF_ORDER = "THÔNG BÁO HOÀN TIỀN DO ĐƠN HÀNG THANH TOÁN 2 LẦN";
+        public static string NOTIFY_DUPLICATED_PAYMENT_OF_ORDER_REQUEST = "THÔNG BÁO YÊU CẦU HOÀN TIỀN DO ĐƠN HÀNG THANH TOÁN 2 LẦN";
     }
 
     public class WeekForYear
