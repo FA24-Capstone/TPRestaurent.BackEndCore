@@ -2,6 +2,7 @@
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IHubServices;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
@@ -16,10 +17,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         public IOrderSessionService _orderSessionService;
         public ITransactionService _transactionService;
         private IHubServices _hubServices;
+        private IEmailService _emailService;
 
         public TestController(IOrderService orderService, IInvoiceService invoiceService,
                               IHubServices hubServices, IGroupedDishCraftService groupedDishCraftService, 
-                              IOrderSessionService orderSessionService, ITransactionService transactionService)
+                              IOrderSessionService orderSessionService, ITransactionService transactionService, IEmailService emailService)
         {
             _orderService = orderService;
             _invoiceService = invoiceService;
@@ -27,6 +29,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             _groupedDishCraftService = groupedDishCraftService;
             _orderSessionService = orderSessionService;
             _transactionService = transactionService;
+            _emailService = emailService;
         }
 
         [HttpPut("update-order-status")]
@@ -101,6 +104,13 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         public async Task<string> HashingData()
         {
             return await _transactionService.HashingData();
+        }
+
+        [HttpPost("trigger-email")]
+        public async Task<IActionResult> Trigger()
+        {
+             _emailService.SendEmail("duonghongquan0312@gmail.com", "Test", TemplateMappingHelper.GetTemplateOTPEmail(TemplateMappingHelper.ContentEmailType.INSUFFICIENT_COUPON_QUANTITY,"123","quan"));
+            return Ok();
         }
     }
 }
