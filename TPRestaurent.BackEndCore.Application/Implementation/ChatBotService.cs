@@ -132,7 +132,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             });
                             if (findTable.IsSuccess && findTable.Result != null)
                             {
-                                response = $"Nhà hàng có bàn trống cho {customerGreeting} vào khung giờ đó. {customerGreeting} hay truy cập https://thienphurestaurant.vercel.app/booking để đặt bàn nhé";
+                                response = $"Nhà hàng có bàn trống cho {customerGreeting} vào khung giờ đó. {customerGreeting} hay truy cập https://www.thienphurestaurant.com/booking để đặt bàn nhé";
                             }
                         }
                         else

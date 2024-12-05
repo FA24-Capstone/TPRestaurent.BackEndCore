@@ -755,6 +755,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             throw new Exception("Thời gian đặt không hợp lệ");
                         }
+
+                        if (!orderRequestDto.ReservationOrder.EndTime.HasValue)
+                        {
+                            var averageDiningTime = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.AVERAGE_MEAL_DURATION), null);
+                            orderRequestDto.ReservationOrder.EndTime = averageDiningTime != null ? orderRequestDto.ReservationOrder.MealTime.AddHours(double.Parse(averageDiningTime.CurrentValue))
+                                                                                                 : orderRequestDto.ReservationOrder.MealTime.AddHours(1);
+                        }
+                        bool isInvalidEndTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.EndTime.Value ||
+                                                        orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.EndTime.Value;
+                        if (isInvalidEndTime)
+                        {
+                            throw new Exception("Thời gian đặt không hợp lệ");
+                        }
                     }
 
                     // Validate number of people
