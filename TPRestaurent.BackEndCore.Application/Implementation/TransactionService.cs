@@ -1081,78 +1081,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return adminEmails;
         }
 
-        public async Task<AppActionResult> SendDuplicatedRefundEmail(Guid orderId)
-        {
-            AppActionResult result = new AppActionResult();
-            try
-            {
-                var orderRepository = Resolve<IGenericRepository<Order>>();
-                var emailService = Resolve<IEmailService>();
-                var utility = Resolve<Utility>();
-                var orderDb = await orderRepository.GetByExpression(p => p.OrderId == orderId & p.StatusId == OrderStatus.Completed, o => o.Account, o => o.CustomerInfoAddress);
 
-                if (orderDb == null)
-                {
-                    return BuildAppActionResultError(result, $"Đơn hàng không tồn tại hoặc chưa được thanh toán");
-                }
-
-                var transactionDb = await _repository.GetAllDataByExpression(p => p.OrderId == orderId, 0, 0, null, false, null);
-
-                //var successfulTransaction = transactionDb.Items.FirstOrDefault(t => t.TransactionTypeId == TransactionType.Order && t.TransationStatusId == TransationStatus.SUCCESSFUL);
-                //if (successfulTransaction == null)
-                //{
-                //    return BuildAppActionResultError(result, $"Đơn hàng không có lịch sử thanh toán thành công");
-                //}
-                ////One failed after that as order is paid
-                //var failedAfterSuccessfulTransaction = transactionDb.Items.FirstOrDefault(t => t.TransactionTypeId == TransactionType.Order && t.TransationStatusId == TransationStatus.FAILED && t.PaidDate >= successfulTransaction.PaidDate);
-                //if (failedAfterSuccessfulTransaction == null)
-                //{
-                //    return BuildAppActionResultError(result, $"Đơn hàng không có giao dịch thất bại sau thanh toán thành công");
-                //}
-                ////Check if order has been refunded
-                //var existedRefundTransaction = transactionDb.Items.FirstOrDefault(t => t.TransactionTypeId == TransactionType.Refund && t.TransationStatusId == TransationStatus.SUCCESSFUL && t.PaidDate >= failedAfterSuccessfulTransaction.PaidDate);
-                //if (existedRefundTransaction != null)
-                //{
-                //    return BuildAppActionResultError(result, $"Đơn hàng đã được hoàn tiền");
-                //}
-
-                emailService.SendEmail(orderDb.Account.Email, SD.SubjectMail.NOTIFY_DUPLICATED_PAYMENT_OF_ORDER, TemplateMappingHelper.GetTemplateRefundDuplicatedPaymentForCustomer("", orderDb));
-                var adminEmail = await GetAdminEmails();
-                foreach(var email in adminEmail)
-                {
-                    emailService.SendEmail(email, SD.SubjectMail.NOTIFY_DUPLICATED_PAYMENT_OF_ORDER, TemplateMappingHelper.GetTemplateRefundDuplicatedPaymentForAdmin("", orderDb));
-                }
-
-            }
-            catch (Exception ex)
-            {
-                result = BuildAppActionResultError(result, ex.Message);
-            }
-            return result;
-        }
-
-        private async Task<List<string>> GetAdminEmails()
-        {
-            List<string> adminEmails = new List<string>();
-            try
-            {
-                var accountRepository = Resolve<IGenericRepository<Account>>();
-                var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
-                var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
-                var customerRoleDb = await roleRepository.GetByExpression(r => r.Name.ToLower().Equals("admin"));
-                var customerDb = await userRoleRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
-                var roleGroup = customerDb.Items.GroupBy(c => c.UserId).ToDictionary(c => c.Key, c => c.ToList());
-                var adminIds = roleGroup.Where(c => c.Value.FirstOrDefault().RoleId.Equals(customerRoleDb.Id)).Select(c => c.Key).ToList();
-                var adminDb = await accountRepository.GetAllDataByExpression(a => !a.IsDeleted && adminIds.Contains(a.Id), 0, 0, null, false, null);
-                adminEmails = adminDb.Items.Select(a => a.Email).ToList();
-            }
-            catch (Exception ex)
-            {
-                adminEmails = new List<string>();
-            }
-            return adminEmails;
-        }
-
+     
         public List<Transaction> GetDecodedTransactionList(List<Transaction> transactions)
         {
             try
