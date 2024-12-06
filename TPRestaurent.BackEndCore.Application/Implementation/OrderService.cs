@@ -3121,14 +3121,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             session.OrderSessionStatusId = OrderSessionStatus.Completed;
                             orderSessionUpdated = true;
-                            if (orderDetailDb.Items.FirstOrDefault().Order.OrderTypeId == OrderType.Delivery)
+                            if (orderDetailDb.Items.FirstOrDefault(o => o.OrderSessionId == session.OrderSessionId).Order.OrderTypeId == OrderType.Delivery)
                             {
                                 await ChangeOrderStatusService(orderDetailDb.Items.FirstOrDefault().OrderId, true, null,
                                     false);
                             }
                             else
                             {
-                                if (orderDetailDb.Items.FirstOrDefault().Order.StatusId == OrderStatus.Processing)
+                                if (orderDetailDb.Items.FirstOrDefault(o => o.OrderSessionId == session.OrderSessionId).Order.StatusId == OrderStatus.Processing)
                                 {
                                     //All OrderDetail in DB is ready to serve
                                     var allOrderDetailDb = await _detailRepository.GetAllDataByExpression(
