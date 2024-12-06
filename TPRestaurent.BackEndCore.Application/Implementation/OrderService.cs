@@ -893,7 +893,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
 
                                 orderDetail.DishSizeDetailId = item.DishSizeDetailId.Value;
-                                orderDetail.Price = Math.Ceiling((1 - dishSizeDetail.Discount / 100) * dishSizeDetail.Price / 1000) * 1000;
+                                orderDetail.Price = dishSizeDetail.Price;
                                 orderDetail.Discount = dishSizeDetail.Discount;
                                 orderDetail.PreparationTime = await dishManagementService.CalculatePreparationTime(new List<CalculatePreparationTime>
                             {
@@ -944,7 +944,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
 
                                 orderDetail.ComboId = item.Combo.ComboId;
-                                orderDetail.Price = Math.Ceiling((1 - combo.Discount / 100) * combo.Price / 1000) * 1000;
+                                orderDetail.Price = combo.Price;
                                 orderDetail.Discount = combo.Discount;
 
                                 if (item.Combo.DishComboIds.Count == 0)
@@ -3360,7 +3360,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 d => d.DishCombo.ComboOptionSet
             );
 
-            r.Combo.Price = Math.Ceiling((1 - r.Discount / 100) * r.Price / 1000) * 1000;
+            r.Combo.Price = r.Price;
             r.Combo.Discount = r.Discount;
 
             return new ComboDishDto
@@ -3487,7 +3487,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 else
                 {
                     r.DishSizeDetail.Discount = r.Discount;
-                    r.DishSizeDetail.Price = Math.Ceiling((1 - r.Discount / 100) * r.Price / 1000) * 1000;
+                    r.DishSizeDetail.Price = r.Price;
                     reservationDishes.Add(new Common.DTO.Response.OrderDishDto
                     {
                         OrderDetailsId = r.OrderDetailId,

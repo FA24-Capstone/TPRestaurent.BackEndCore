@@ -207,19 +207,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 foreach (var item in dto)
                 {
                     var dishSizeDetailDb = await _dishDetailRepository.GetById(item.DishSizeDetailId);
-                    if (item.QuantityLeft.HasValue)
+                    if (item.DailyCountdown.HasValue)
+                    {
+                        dishSizeDetailDb.DailyCountdown = item.DailyCountdown.Value;
+                        if (!item.QuantityLeft.HasValue || item.QuantityLeft.Value == 0)
+                        {
+                            dishSizeDetailDb.QuantityLeft = item.DailyCountdown.Value;
+                        }
+                    } 
+                    if (item.QuantityLeft.HasValue && item.QuantityLeft.Value > 0)
                     {
                         dishSizeDetailDb.QuantityLeft = item.QuantityLeft.Value;
                     }
 
-                    if (item.DailyCountdown.HasValue)
-                    {
-                        dishSizeDetailDb.DailyCountdown = item.DailyCountdown.Value;
-                        if (!item.QuantityLeft.HasValue)
-                        {
-                            dishSizeDetailDb.QuantityLeft = item.DailyCountdown.Value;
-                        }
-                    }
 
                     if (dishSizeDetailDb.QuantityLeft <= 0)
                     {
