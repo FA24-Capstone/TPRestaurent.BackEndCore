@@ -393,8 +393,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
                             }
                         }
-
-                        await _unitOfWork.SaveChangesAsync();
                     }
                 }
                 result.Result = await orderService.UpdateOrderDetailStatus(updateRequest, true);
