@@ -145,7 +145,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 ? @"
         <table class='info-table'>
       <tr><th>Tên khách hàng:</th><td>" + response.Order.Account.FirstName + " " + response.Order.Account.LastName + @"</td></tr>
-      <tr><th>Số điện thoại:</th><td>" + response.Order.Account.PhoneNumber + @"</td></tr>
+      <tr><th>Số điện thoại:</th><td> (+84)" + response.Order.Account.PhoneNumber + @"</td></tr>
       <tr><th>Email:</th><td>" + response.Order.Account.Email + @"</td></tr>
       <tr><th>Địa chỉ:</th><td>" + response.Order.CustomerInfoAddress?.CustomerInfoAddressName + @"</td></tr>
         </table>"
@@ -374,9 +374,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                       <td>" + o.ComboDish.Combo.Name + "<br>" + comboDetail + @"</td>
                       <td>N/A</td>
                       <td>" + o.Quantity + @"</td>
-                      <td>" + o.ComboDish.Combo.Price.ToString("#,0 VND") + @"</td>
+                      <td>" + (o.ComboDish.Combo.Price).ToString("#,0 VND") + @"</td>
                       <td>" + o.ComboDish.Combo.Discount + @"%</td>
-                      <td>" + (Math.Ceiling(o.ComboDish.Combo.Price * o.Quantity / 1000) * 1000).ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td>
+                      <td>" + (Math.Ceiling(o.ComboDish.Combo.Price * o.Quantity * (1 - o.ComboDish.Combo.Discount / 100) / 1000) * 1000).ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td>
                     </tr>";
                 }
                 return @"
@@ -385,9 +385,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
               <td>" + o.DishSizeDetail.Dish.Name + @"</td>
               <td>" + o.DishSizeDetail.DishSize.VietnameseName + @"</td>
               <td>" + o.Quantity + @"</td>
-                  <td>" + o.DishSizeDetail.Price.ToString("#,0 VND") + @"</td>
+                  <td>" + (o.DishSizeDetail.Price).ToString("#,0 VND") + @"</td>
                   <td>" + o.DishSizeDetail.Discount + @"%</td>
-                  <td>" + (Math.Ceiling(o.DishSizeDetail.Price * o.Quantity / 1000) * 1000).ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td>
+                  <td>" + (Math.Ceiling(o.DishSizeDetail.Price * o.Quantity * (1 - o.DishSizeDetail.Discount / 100) / 1000) * 1000).ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</td>
                 </tr>";
             })) + @"
           </tbody>

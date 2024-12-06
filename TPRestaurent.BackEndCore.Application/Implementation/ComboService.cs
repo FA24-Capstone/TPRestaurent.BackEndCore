@@ -43,6 +43,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         throw new Exception($"Combo này với {comboDto.Name} đã tồn tại");
                     }
+                    if(comboDto.StartDate <= comboDto.EndDate)
+                    {
+                        throw new Exception($"Thời gian diễn ra combo không phù hợp");
+                    }
+
+
 
                     var comboDb = new Combo
                     {
@@ -73,6 +79,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     List<DishCombo> dishComboList = new List<DishCombo>();
                     foreach (var dishComboDto in comboDto.DishComboDtos)
                     {
+                        if(dishComboDto.NumOfChoice >= dishComboDto.ListDishId.Count)
+                        {
+                            throw new Exception($"Số lượng lựa chọn của set {dishComboDto.OptionSetNumber} đang nhiều hơn số món.");
+                        }
                         var comboOptionSet = new ComboOptionSet
                         {
                             ComboOptionSetId = Guid.NewGuid(),
@@ -85,7 +95,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         foreach (var dishId in dishComboDto.ListDishId)
                         {
-                            var dishExisted = await dishSizeDetailRepository!.GetById(dishId.DishSizeDetailId);
+                            var dishExisted = await dishSizeDetailRepository!.GetByExpression(d => d.DishSizeDetailId == dishId.DishSizeDetailId && !d.IsDeleted && !d.Dish.IsDeleted);
                             if (dishExisted == null)
                             {
                                 throw new Exception($"size món ăn với id {dishId.DishSizeDetailId} không tồn tại");
@@ -106,7 +116,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var mainFile = comboDto.MainImg;
                     if (mainFile == null)
                     {
-                        throw new Exception($"The main picture of the dish is empty");
+                        throw new Exception($"Không tìm thấy hình ảnh combo");
                     }
 
                     var mainPathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDb.ComboId}_main.jpg";
