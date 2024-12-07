@@ -1172,7 +1172,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     var smsMessage = $"[NHÀ HÀNG THIÊN PHÚ] Đơn đặt bàn của bạn vào lúc {order.ReservationDate} đã thành công. " +
                                                  $"Vui lòng thanh toán {order.TotalAmount} VND" +
                                                  $"Xin chân trọng cảm ơn quý khách.";
-                                    await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
+                                   // await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
                                 }
                             }
                         }
