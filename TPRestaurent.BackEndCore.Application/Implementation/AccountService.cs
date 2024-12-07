@@ -2202,10 +2202,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var hashingService = Resolve<IHashingService>();
+                var storeCreditResult = new AppActionResult();
+                var loyaltyPointResult = new AppActionResult();
                 foreach (var account in accounts)
                 {
-                    account.StoreCreditAmount = hashingService.UnHashing(account.StoreCreditAmount, false).Result.ToString().Split('_')[1];
-                    account.LoyaltyPoint = hashingService.UnHashing(account.LoyaltyPoint, true).Result.ToString().Split('_')[1];
+                    storeCreditResult = hashingService.UnHashing(account.StoreCreditAmount, false);
+                    if (storeCreditResult.IsSuccess)
+                    {
+                        account.StoreCreditAmount = storeCreditResult.Result.ToString().Split('_')[1];
+                    }
+
+                    loyaltyPointResult = hashingService.UnHashing(account.LoyaltyPoint, true);
+                    if (loyaltyPointResult.IsSuccess)
+                    {
+                        account.LoyaltyPoint = loyaltyPointResult.Result.ToString().Split('_')[1];
+                    }
                 }
             }
             catch (Exception ex)
