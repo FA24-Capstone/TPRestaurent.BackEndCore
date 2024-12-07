@@ -18,5 +18,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         Task UpdateLateOrderSession();
 
         Task ClearOrderSessionDaily();
+        public Task<AppActionResult> CheckOrderDetail();
     }
 }
