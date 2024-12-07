@@ -538,7 +538,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             return BuildAppActionResultError(result, $"Đăng tài khoản cho số điện thoại {phoneNumber} thất bại. Vui lòng thử lại");
                             return result;
                         }
-                        //var response = await smsService!.SendMessage($"Mã xác thực của bạn là là: {code}", phoneNumber);
                     }
 
                     code = await GenerateVerifyCodeSms(phoneNumber, true);
@@ -807,8 +806,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var random = new Random();
                 code = random.Next(100000, 999999).ToString();
                 var smsService = Resolve<ISmsService>();
-                //var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
-                //    phoneNumber);
+                var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
+                    phoneNumber);
             }
 
             return code;

@@ -20,18 +20,21 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-rating-of-dish/{dishId}/{pageNumber}/{pageSize}")]
+        [CacheAttribute(259200)]
         public async Task<AppActionResult> GetAllRatingOfDish(Guid dishId, RatingPoint? ratingPoint, int pageNumber = 1, int pageSize = 10)
         {
             return await _ratingService.GetAllRatingOfDish(dishId, ratingPoint, pageNumber, pageSize);
         }
 
         [HttpGet("get-all-rating-of-between-four-and-five-stars/{pageNumber}/{pageSize}")]
+        [CacheAttribute(259200)]
         public async Task<AppActionResult> GetAllRatingBetweenFourAndFiveStars(int pageNumber = 1, int pageSize = 10)
         {
             return await _ratingService.GetAllRatingBetweenFourAndFiveStars(pageNumber, pageSize);
         }
 
         [HttpGet("get-rating-by-id/{ratingId}")]
+        [CacheAttribute(259200)]
         public async Task<AppActionResult> GetRatingById(Guid ratingId)
         {
             return await _ratingService.GetRatingById(ratingId);
@@ -39,6 +42,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
 
         [HttpPost("create-rating")]
         [TokenValidationMiddleware(Permission.CUSTOMER)]
+        [RemoveCacheAtrribute("rating")]
         public async Task<AppActionResult> CreateRating([FromForm] CreateRatingRequestDto createRatingRequestDto)
         {
             return await _ratingService.CreateRating(createRatingRequestDto);
@@ -46,6 +50,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
 
         [HttpPut("update-rating")]
         [TokenValidationMiddleware(Permission.CUSTOMER)]
+        [RemoveCacheAtrribute("rating")]
         public async Task<AppActionResult> UpdateRating([FromForm] UpdateRatingRequestDto updateRatingRequestDto)
         {
             return await _ratingService.UpdateRating(updateRatingRequestDto);
@@ -53,6 +58,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
 
         [HttpDelete("delete-rating")]
         [TokenValidationMiddleware(Permission.PAYMENT)]
+        [RemoveCacheAtrribute("rating")]
         public async Task<AppActionResult> DeleteRating(Guid ratingId)
         {
             return await _ratingService.DeleteRating(ratingId);
