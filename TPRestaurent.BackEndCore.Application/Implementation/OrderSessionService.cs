@@ -660,5 +660,69 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             Task.CompletedTask.Wait();
         }
+
+        public async Task<AppActionResult> CheckOrderDetail()
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var orderSessionService = Resolve<IOrderSessionService>();
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var groupedDishRepository = Resolve<IGenericRepository<GroupedDishCraft>>();
+                var hubService = Resolve<IHubServices.IHubServices>();
+                var utility = Resolve<Utility>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+
+                var groupedDishDb = await groupedDishRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
+                var openTimeConfig = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.OPEN_TIME), null);
+
+                var previousTimeStamp = groupedDishDb.Items.OrderByDescending(g => g.EndTime).FirstOrDefault();
+
+                DateTime?[] groupedTime = new DateTime?[2];
+                groupedTime[0] = previousTimeStamp == null ? utility.GetCurrentDateInTimeZone().AddHours(double.Parse(openTimeConfig.CurrentValue)) : previousTimeStamp.EndTime;
+                groupedTime[1] = currentTime;
+                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
+                var comboOrderDetailRepository = Resolve<IGenericRepository<ComboOrderDetail>>();
+                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => (
+                                                                                                groupedTime == null
+                                                                                                || (
+                                                                                                    groupedTime != null
+                                                                                                    && (
+                                                                                                        !groupedTime[0].HasValue
+                                                                                                        || (
+                                                                                                            groupedTime[0].HasValue
+                                                                                                            && groupedTime[0] < o.OrderSession.OrderSessionTime
+                                                                                                            )
+                                                                                                        )
+                                                                                                    && groupedTime[1] > o.OrderSession.OrderSessionTime
+                                                                                                   )
+                                                                                            )
+                                                                                           ,
+                                                                                            0, 0, null, false,
+                                                                                            o => o.OrderDetailStatus,
+                                                                                            o => o.Order.Shipper,
+                                                                                            o => o.Order.OrderType,
+                                                                                            o => o.Order.Status,
+                                                                                            o => o.OrderSession.OrderSessionStatus,
+                                                                                            o => o.OrderDetailStatus,
+                                                                                            o => o.DishSizeDetail.Dish.DishItemType,
+                                                                                            o => o.DishSizeDetail.DishSize,
+                                                                                            o => o.Combo);
+                if(orderDetailDb.Items.Count > 0)
+                {
+                    var data = orderDetailDb.Items.Where(o => o.OrderSession.OrderSessionStatusId != OrderSessionStatus.Cancelled
+                                                              && o.OrderSession.OrderSessionStatusId != OrderSessionStatus.PreOrder);
+                    data = data.Where(o => (o.OrderDetailStatusId == OrderDetailStatus.Unchecked || o.OrderDetailStatusId == OrderDetailStatus.Processing));
+                    data = data.Where(o => (o.Order.OrderTypeId != OrderType.Delivery
+    || o.Order.OrderTypeId == OrderType.Delivery && o.Order.StatusId == OrderStatus.Processing));
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
     }
 }

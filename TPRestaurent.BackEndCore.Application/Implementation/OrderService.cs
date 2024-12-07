@@ -2672,6 +2672,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         orderDetailDb.Items.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Unchecked);
                         var orderSessionDb = orderDetailDb.Items.Select(o => o.OrderSession).ToList();
                         orderSessionDb.ForEach(o => o.OrderSessionStatusId = OrderSessionStatus.Confirmed);
+                        orderSessionDb.ForEach(o => o.OrderSessionTime = currentTime);
                         var orderDetailIds = orderDetailDb.Items.Select(o => o.OrderDetailId).ToList();
                         var comboOrderDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId.HasValue && orderDetailIds.Contains(c.OrderDetailId.Value), 0, 0, null, false, null);
                         comboOrderDetailDb.Items.ForEach(c => c.StatusId = DishComboDetailStatus.Unchecked);
@@ -4900,5 +4901,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return hashingService.DeHashing(text, key);
 
         }
+
     }
 }
