@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc.Filters;
 using System.Text;
+using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.ConfigurationModel;
+using Microsoft.AspNetCore.Mvc;
 
 namespace TPRestaurent.BackEndCore.API.Middlewares;
 
@@ -21,21 +23,21 @@ public class CacheAttribute : Attribute, IAsyncActionFilter
             await next();
             return;
         }
-        //var cacheService = context.HttpContext.RequestServices.GetRequiredService<IResponseCacheService>();
-        //var cacheKey = GenerateCacheKeyFromRequest(context.HttpContext.Request);
-        //var cacheResponse = await cacheService.GetCacheResponseAsync(cacheKey);
-        //if (!string.IsNullOrEmpty(cacheResponse))
-        //{
-        //    var contentResult = new ContentResult { Content = cacheResponse, ContentType = "application/json", StatusCode = 200 };
-        //    context.Result = contentResult;
-        //    return;
-        //}
+        var cacheService = context.HttpContext.RequestServices.GetRequiredService<IResponseCacheService>();
+        var cacheKey = GenerateCacheKeyFromRequest(context.HttpContext.Request);
+        var cacheResponse = await cacheService.GetCacheResponseAsync(cacheKey);
+        if (!string.IsNullOrEmpty(cacheResponse))
+        {
+            var contentResult = new ContentResult { Content = cacheResponse, ContentType = "application/json", StatusCode = 200 };
+            context.Result = contentResult;
+            return;
+        }
 
-        //var excutedContext = await next();
-        //if (excutedContext.Result is ObjectResult okObjectResult)
-        //{
-        //    await cacheService.SetCacheResponseAsync(cacheKey, okObjectResult.Value, TimeSpan.FromSeconds(_timeToLiveSeconds));
-        //}
+        var excutedContext = await next();
+        if (excutedContext.Result is ObjectResult okObjectResult)
+        {
+            await cacheService.SetCacheResponseAsync(cacheKey, okObjectResult.Value, TimeSpan.FromSeconds(_timeToLiveSeconds));
+        }
     }
 
     private static string GenerateCacheKeyFromRequest(HttpRequest request)

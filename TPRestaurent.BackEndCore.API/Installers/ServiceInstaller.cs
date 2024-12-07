@@ -47,5 +47,6 @@ public class ServiceInstaller : IInstaller
         services.AddScoped<IRatingService, RatingService>();
         services.AddScoped<IOpenAIClient, OpenAIClient>();
         services.AddScoped<IChatBotService, ChatBotService>();
+        services.AddScoped<IResponseCacheService, ResponseCacheService>();
     }
 }
