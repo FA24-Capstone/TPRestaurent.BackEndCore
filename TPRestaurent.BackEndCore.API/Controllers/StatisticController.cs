@@ -19,6 +19,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
 
         [HttpGet("get-statistic-report-for-number-report")]
         [TokenValidationMiddleware(Permission.ADMIN)]
+        [CacheAttribute(259200)]
         public async Task<AppActionResult> GetStatisticReportForNumberReport(DateTime startDate, DateTime endDate)
         {
             return await _dashboardService.GetStatisticReportForNumberReport(startDate, endDate);
@@ -26,6 +27,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
 
         [HttpGet("get-statistic-report-for-dashboard-report")]
         [TokenValidationMiddleware(Permission.ADMIN)]
+        [CacheAttribute(259200)]
         public async Task<AppActionResult> GetStatisticReportForDashboardReport(DateTime startDate, DateTime endDate)
         {
             return await _dashboardService.GetStatisticReportForDashboardReport(startDate, endDate);

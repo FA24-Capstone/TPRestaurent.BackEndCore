@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.ConfigurationModel;
 
 namespace TPRestaurent.BackEndCore.API.Middlewares;
@@ -20,11 +22,11 @@ public class RemoveCacheAtrribute : Attribute, IAsyncActionFilter
             await next();
             return;
         }
-        //var cacheService = context.HttpContext.RequestServices.GetRequiredService<IResponseCacheService>();
-        //var result = await next();
-        //if (result.Result is ObjectResult okObjectResult)
-        //{
-        //    await cacheService.RemoveCacheResponseAsync(pathEndPoint);
-        //}
+        var cacheService = context.HttpContext.RequestServices.GetRequiredService<IResponseCacheService>();
+        var result = await next();
+        if (result.Result is OkResult okObjectResult)
+        {
+            await cacheService.RemoveCacheResponseAsync(pathEndPoint);
+        }
     }
 }
