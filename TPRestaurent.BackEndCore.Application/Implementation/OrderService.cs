@@ -2924,7 +2924,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     );
                     if (ratingDb.Items.Count > 0)
                     {
-                        dish.dish.averageRating = ratingDb.Items.Average(r => int.Parse(r.PointId.ToString()));
+                        dish.dish.averageRating = ratingDb.Items.Average(r => (long)r.PointId);
                         dish.dish.numberOfRating = ratingDb.Items.Count();
                     }
 

@@ -82,11 +82,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var orderSessionService = Resolve<IOrderSessionService>();
+                var orderService = Resolve<IOrderService>();
                 var configurationRepository = Resolve<IGenericRepository<Configuration>>();
                 var hubService = Resolve<IHubServices.IHubServices>();
                 var utility = Resolve<Utility>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
-
+                await orderService.NotifyReservationDishToKitchen();
                 var groupedDishDb = await _repository.GetAllDataByExpression(null, 0, 0, null, false, null);
                 var openTimeConfig = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.OPEN_TIME), null);
 
