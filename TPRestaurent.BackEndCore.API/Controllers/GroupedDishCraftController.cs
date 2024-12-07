@@ -33,7 +33,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("update-grouped-dish")]
-        //[TokenValidationMiddleware(Permission.CHEF)]
+        [TokenValidationMiddleware(Permission.CHEF)]
         public async Task<AppActionResult> UpdateForceGroupedDish(List<UpdateGroupedDishDto> dto)
         {
             return await _service.UpdateForceGroupedDish(dto);
