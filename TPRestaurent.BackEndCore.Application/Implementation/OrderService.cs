@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using NPOI.POIFS.Crypt.Dsig;
 using NPOI.SS.Formula.Functions;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
@@ -1172,7 +1173,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     var smsMessage = $"[NHÀ HÀNG THIÊN PHÚ] Đơn đặt bàn của bạn vào lúc {order.ReservationDate} đã thành công. " +
                                                  $"Vui lòng thanh toán {order.TotalAmount} VND" +
                                                  $"Xin chân trọng cảm ơn quý khách.";
-                                    await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
+                                   // await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
                                 }
                             }
                         }
@@ -3122,9 +3123,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             session.OrderSessionStatusId = OrderSessionStatus.Completed;
                             orderSessionUpdated = true;
-                            if (orderDetailDb.Items.FirstOrDefault(o => o.OrderSessionId == session.OrderSessionId).Order.OrderTypeId == OrderType.Delivery)
+                            if (orderDetailDb.Items!.FirstOrDefault(o => o.OrderSessionId! == session!.OrderSessionId!).Order!.OrderTypeId == OrderType.Delivery)
                             {
-                                await ChangeOrderStatusService(orderDetailDb.Items.FirstOrDefault().OrderId, true, null,
+                                await ChangeOrderStatusService(orderDetailDb.Items.FirstOrDefault(o => o.OrderSessionId == session.OrderSessionId).OrderId, true, null,
                                     false);
                             }
                             else
@@ -3133,14 +3134,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 {
                                     //All OrderDetail in DB is ready to serve
                                     var allOrderDetailDb = await _detailRepository.GetAllDataByExpression(
-                                        o => o.OrderId == orderDetailDb.Items.FirstOrDefault().OrderId, 0, 0, null,
+                                        o => o.OrderId == orderDetailDb.Items.FirstOrDefault(o => o.OrderSessionId == session.OrderSessionId).OrderId, 0, 0, null,
                                         false, null);
-                                    if (orderDetailDb.Items.FirstOrDefault().Order.StatusId == OrderStatus.Pending &&
+                                    if (orderDetailDb.Items.FirstOrDefault(o => o.OrderSessionId == session.OrderSessionId).Order.StatusId == OrderStatus.Pending &&
                                         allOrderDetailDb.Items.All(a =>
                                             a.OrderDetailStatusId == OrderDetailStatus.ReadyToServe ||
                                             a.OrderDetailStatusId == OrderDetailStatus.Cancelled))
                                     {
-                                        await ChangeOrderStatusService(orderDetailDb.Items.FirstOrDefault().OrderId, true,
+                                        await ChangeOrderStatusService(orderDetailDb.Items.FirstOrDefault(o => o.OrderSessionId == session.OrderSessionId).OrderId, true,
                                             OrderStatus.TemporarilyCompleted, false);
                                     }
                                 }
