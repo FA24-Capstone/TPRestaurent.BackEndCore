@@ -273,7 +273,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var currentTime = utility!.GetCurrentDateTimeInTimeZone();
             try
             {
-                var couponDb = await _couponRepository.GetAllDataByExpression(p => p.AccountId == accountId && p.CouponProgram.ExpiryDate >= currentTime
+                var couponDb = await _couponRepository.GetAllDataByExpression(p => p.AccountId.Equals(accountId) && p.CouponProgram.ExpiryDate >= currentTime
                                                                                     && (!total.HasValue || total.Value >= p.CouponProgram.MinimumAmount)
                                                                                     && !p.IsUsedOrExpired && p.CouponProgram.IsDeleted == false,
                                                                                     pageNumber, pageSize, p => p.CouponProgram.DiscountPercent, false, p => p.Account!, p => p.CouponProgram, p => p.CouponProgram.UserRank, p => p.CouponProgram.CouponProgramType);
@@ -371,6 +371,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             var result = new AppActionResult();
             var accountRepository = Resolve<IGenericRepository<Account>>();
+            var hashingService = Resolve<IHashingService>();
             List<string> accountIds = null; 
             try
             {
@@ -393,10 +394,27 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                             || (hasBeenProvided.Value && accountIds.Contains(p.Id))
                                                                                             || (!hasBeenProvided.Value && !accountIds.Contains(p.Id))
                                                                                          && customerIds.Contains(p.Id)), 0, 0, null, false, null);
+
+                
                 if (userByRankDb.Items.Count == 0)
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy người dùng với rank {userRank}");
                 }
+
+                foreach (var account in userByRankDb.Items)
+                {
+                    var storeCreditAmountResult = hashingService.UnHashing(account.StoreCreditAmount, false).Result;
+                    if (storeCreditAmountResult != null)
+                    {
+                        account.StoreCreditAmount = storeCreditAmountResult.ToString().Split('_')[1];
+                    }
+                    var loyaltyPointResult = hashingService.UnHashing(account.LoyaltyPoint, true).Result;
+                    if (loyaltyPointResult != null)
+                    {
+                        account.LoyaltyPoint = loyaltyPointResult.ToString().Split('_')[1];
+                    }
+                }
+
                 result.Result = userByRankDb;
             }
             catch (Exception ex)
