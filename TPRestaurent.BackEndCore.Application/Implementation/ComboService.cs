@@ -43,7 +43,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         throw new Exception($"Combo này với {comboDto.Name} đã tồn tại");
                     }
-                    if(comboDto.StartDate <= comboDto.EndDate)
+                    if(comboDto.StartDate >= comboDto.EndDate)
                     {
                         throw new Exception($"Thời gian diễn ra combo không phù hợp");
                     }
