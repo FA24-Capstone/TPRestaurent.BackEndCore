@@ -392,8 +392,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var userByRankDb = await accountRepository!.GetAllDataByExpression(p => (userRank == 0 || p.UserRankId == userRank)
                                                                                          && (accountIds == null
                                                                                             || (hasBeenProvided.Value && accountIds.Contains(p.Id))
-                                                                                            || (!hasBeenProvided.Value && !accountIds.Contains(p.Id))
-                                                                                         && customerIds.Contains(p.Id)), 0, 0, null, false, null);
+                                                                                            || (!hasBeenProvided.Value && !accountIds.Contains(p.Id)))
+                                                                                         && customerIds.Contains(p.Id), 0, 0, null, false, null);
 
                 
                 if (userByRankDb.Items.Count == 0)
