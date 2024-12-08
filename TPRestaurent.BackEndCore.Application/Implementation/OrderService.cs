@@ -4700,6 +4700,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
+                var orderDb = await _repository.GetById(orderId);
+                if(orderDb.OrderTypeId == OrderType.Delivery && (status == OrderStatus.Completed || orderDb.StatusId == OrderStatus.Delivering))
+                {
+                    return BuildAppActionResultError(result, "Vui lòng cung cấp hình ảnh xác nhận hoặc lý do huỷ đơn");
+                }
                 await _unitOfWork.ExecuteInTransaction(async () =>
                 {
                     result = await ChangeOrderStatusService(orderId, IsSuccessful, status, asCustomer, requireSignalR);
