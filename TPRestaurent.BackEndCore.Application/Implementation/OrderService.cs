@@ -3700,25 +3700,31 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy địa chỉ đơn hàng");
                 }
-                var deliveryDestination = new double[]
-                {
-                        customerInfoDb.Lat,
-                        customerInfoDb.Lng
-                };
-
-                var shipperLocation = new double[]
-                {
-                        confirmedOrderRequest.Lat,
-                        confirmedOrderRequest.Lng
-                };
-                var validDistance = await mapService.CheckValidShipperDistance(shipperLocation, deliveryDestination);
-                if (!validDistance.IsSuccess)
-                {
-                    return BuildAppActionResultError(result, validDistance.Messages.FirstOrDefault());
-                }
+                
 
                 if (!confirmedOrderRequest.IsSuccessful.HasValue || confirmedOrderRequest.IsSuccessful.Value)
                 {
+                    if(!confirmedOrderRequest.Lng.HasValue || !confirmedOrderRequest.Lng.HasValue)
+                    {
+                        return BuildAppActionResultError(result, $"Không nhận được toạ độ shipper");
+                    }
+                    var deliveryDestination = new double[]
+                    {
+                            customerInfoDb.Lat,
+                            customerInfoDb.Lng
+                    };
+
+                    var shipperLocation = new double[]
+                    {
+                        confirmedOrderRequest.Lat.Value,
+                        confirmedOrderRequest.Lng.Value
+                    };
+                    var validDistance = await mapService.CheckValidShipperDistance(shipperLocation, deliveryDestination);
+                    if (!validDistance.IsSuccess)
+                    {
+                        return BuildAppActionResultError(result, validDistance.Messages.FirstOrDefault());
+                    }
+
                     var pathName = SD.FirebasePathName.ORDER_PREFIX +
                                    $"{confirmedOrderRequest.OrderId}{Guid.NewGuid()}.jpg";
                     var upload = await firebaseService!.UploadFileToFirebase(confirmedOrderRequest.Image, pathName);
