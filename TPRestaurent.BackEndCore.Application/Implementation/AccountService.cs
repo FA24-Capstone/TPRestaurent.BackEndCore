@@ -321,7 +321,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                             var otpsDb = new OTP
                             {
-                                Type = OTPType.Register,
+                                Type = OTPType.Login,
                                 Code = verifyCode,
                                 ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
                             };
@@ -1318,19 +1318,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     accountDb.FirstName = updateAccountRequest.FirstName;
                     accountDb.LastName = updateAccountRequest.LastName;
-                    if (updateAccountRequest.DOB.HasValue && updateAccountRequest.DOB.Value != accountDb.DOB)
-                    {
-                        if (!accountDb.IsManuallyCreated)
-                        {
-                            accountDb.DOB = updateAccountRequest.DOB;
-                            accountDb.IsManuallyCreated = true;
-                        } else
-                        {
-                            throw new Exception(
-                            $"Mỗi tài khoản chỉ được cập nhật ngày sinh 1 lần duy nhất");
-                        }
-                    }
+                    accountDb.DOB = updateAccountRequest.DOB;
                     accountDb.Gender = updateAccountRequest.Gender;
+                    accountDb.IsManuallyCreated = false;
 
                     if (updateAccountRequest.Image != null)
                     {
@@ -2040,7 +2030,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 var otpsDb = new OTP
                                 {
-                                    Type = OTPType.Register,
+                                    Type = OTPType.Login,
                                     Code = verifyCode,
                                     ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
                                 };
