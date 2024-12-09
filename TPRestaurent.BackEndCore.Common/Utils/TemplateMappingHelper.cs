@@ -535,12 +535,12 @@ public class TemplateMappingHelper
         chi tiết:</p>
       <h3>Thông tin hoàn tiền</h3>
       <ul>
-        <li><strong>Số tiền hoàn: </strong><span class=""highlight"">[Số tiền] VNĐ</span></li>
-        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">[Ngày giờ hoàn]</span></li>
-        <li><strong>Mã hóa đơn: </strong><span class=""highlight"">[Mã hóa đơn]</span></li>
+        <li><strong>Số tiền hoàn: </strong><span class=""highlight"">" + order.TotalAmount + @"VNĐ</span></li>
+        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">" + order.MealTime + @"</span></li>
+        <li><strong>Mã hóa đơn: </strong><span class=""highlight"">" + order.OrderId + @"</span></li>
       </ul>
      <p class=""""emailBody"""">
-         Mã đơn: <b>"+order.OrderId.ToString().Substring(0, 5) +@"</b><br>
+         Mã đơn: <b>" + order.OrderId +@"</b><br>
            Thời gian đặt: <b>"+orderTime+@"</b>
            Thời gian dùng bữa tại nhà hàng(Nếu có): <b>" +order.MealTime  +@"</b>
            Loại phòng: "+tableDetail.Table!.Room! +@"
@@ -1358,32 +1358,32 @@ public class TemplateMappingHelper
         hàng</p>
     </div>
     <div class=""content"">
-      <p>Kính gửi <span class=""highlight"">[Tên khách hàng]</span>,</p>
+      <p>Kính gửi <span class=""highlight"">" + $"{order.Account.FirstName} {order.Account.LastName}" + @"</span>,</p>
       <p>Chúng tôi rất tiếc vì đã gặp phải sự cố dẫn đến việc phải hoàn tiền cho đơn hàng của bạn. Dưới đây là thông tin
         chi tiết:</p>
       <h3>Thông tin hoàn tiền</h3>
       <ul>
-        <li><strong>Số tiền hoàn: </strong><span class=""highlight"">[Số tiền] VNĐ</span></li>
-        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">[Ngày giờ hoàn]</span></li>
-        <li><strong>Mã hóa đơn: </strong><span class=""highlight"">[Mã hóa đơn]</span></li>
+        <li><strong>Số tiền hoàn: </strong><span class=""highlight"">" + order.TotalAmount + @" VNĐ</span></li>
+        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">" + order.MealTime + @"</span></li>
+        <li><strong>Mã hóa đơn: </strong><span class=""highlight"">" + order.MealTime + @"</span></li>
       </ul>
       <h3>Thông tin khách hàng</h3>
       <table class=""table"">
         <tr>
           <th>Tên khách hàng</th>
-          <td>[Tên khách hàng]</td>
+          <td>" + $"{order.Account.FirstName} {order.Account.LastName}" + @"</td>
         </tr>
         <tr>
           <th>Số điện thoại</th>
-          <td>[Số điện thoại]</td>
+          <td> (+84)" + order.Account.PhoneNumber + @"</td>
         </tr>
         <tr>
           <th>Email</th>
-          <td>[Email]</td>
+          <td>" + order.Account.Email + @"</td>
         </tr>
         <tr>
           <th>Địa chỉ</th>
-          <td>[Địa chỉ]</td>
+          <td>" + order.CustomerInfoAddress.CustomerInfoAddressName + @"</td>
         </tr>
       </table>
 
@@ -1524,14 +1524,14 @@ public class TemplateMappingHelper
         hàng</p>
     </div>
     <div class=""content"">
-      <p>Kính gửi <span class=""highlight"">[Tên khách hàng]</span>,</p>
+      <p>Kính gửi <span class=""highlight"">" + $"{order.Account.FirstName} {order.Account.LastName}" + @"</span>,</p>
       <p>Chúng tôi rất tiếc vì đã gặp phải sự cố dẫn đến việc phải hoàn tiền cho đơn hàng của bạn. Dưới đây là thông tin
         chi tiết:</p>
       <h3>Thông tin hoàn tiền</h3>
       <ul>
-        <li><strong>Số tiền hoàn: </strong><span class=""highlight"">[Số tiền] VNĐ</span></li>
-        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">[Ngày giờ hoàn]</span></li>
-        <li><strong>Mã hóa đơn: </strong><span class=""highlight"">[Mã hóa đơn]</span></li>
+        <li><strong>Số tiền hoàn: </strong><span class=""highlight"">" + order.TotalAmount + @" VNĐ</span></li>
+        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">" + order.MealTime + @"</span></li>
+        <li><strong>Mã hóa đơn: </strong><span class=""highlight"">" + order.OrderId.ToString() + @"</span></li>
       </ul>
       <h3>Thông tin khách hàng</h3>
       <table class=""table"">
