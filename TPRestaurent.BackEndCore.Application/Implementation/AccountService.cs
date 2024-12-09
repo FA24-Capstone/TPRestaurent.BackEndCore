@@ -321,7 +321,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                             var otpsDb = new OTP
                             {
-                                Type = OTPType.Register,
+                                Type = OTPType.Login,
                                 Code = verifyCode,
                                 ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
                             };
@@ -2040,7 +2040,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 var otpsDb = new OTP
                                 {
-                                    Type = OTPType.Register,
+                                    Type = OTPType.Login,
                                     Code = verifyCode,
                                     ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
                                 };
