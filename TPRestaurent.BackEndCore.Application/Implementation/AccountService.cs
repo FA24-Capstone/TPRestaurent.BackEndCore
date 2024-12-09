@@ -299,56 +299,37 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         user.LoyaltyPoint = loyaltyPoint.Result.ToString();
                     }
 
-                    var resultCreateUser = await _userManager.CreateAsync(user);
-                    if (resultCreateUser.Succeeded)
+                    var storeCredit = hashingService.Hashing(user.Id, 0, false);
+                    if (storeCredit.IsSuccess)
                     {
-                        result.Result = user;
-                        if ((!string.IsNullOrEmpty(signUpRequest.Email) && !string.IsNullOrEmpty(signUpRequest.PhoneNumber) || (!string.IsNullOrEmpty(signUpRequest.Email))))
-                        {
-                            if (!isGoogle)
-                            {
-                                var random = new Random();
-                                var verifyCode = string.Empty;
-                                verifyCode = random.Next(100000, 999999).ToString();
-
-                                emailService!.SendEmail(user.Email, SD.SubjectMail.VERIFY_ACCOUNT,
-                                   TemplateMappingHelper.GetTemplateOTPEmail(
-                                       TemplateMappingHelper.ContentEmailType.VERIFICATION_CODE, verifyCode,
-                                       user.LastName));
-
-                                var otpsDb = new OTP
-                                {
-                                    Type = OTPType.Register,
-                                    Code = verifyCode,
-                                    ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
-                                };
-                                user.OTP = JsonConvert.SerializeObject(otpsDb);
-                                await _accountRepository.Update(user);
-                                await _unitOfWork.SaveChangesAsync();
-                            }
-                        }
-                        //else
-                        //{
-                        //    var otp = JsonConvert.DeserializeObject<OTP>(existedAccount.OTP);
-
-                        //    if (!BuildAppActionResultIsError(result))
-                        //    {
-                        //        string code = await GenerateVerifyCodeSms(user.PhoneNumber, true); ;
-                        //        var otpsDb = new OTP
-                        //        {
-                        //            Type = OTPType.Register,
-                        //            Code = code,
-                        //            ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
-                        //            IsUsed = false,
-                        //        };
-                        //        await _otpRepository.Insert(otpsDb);
-                        //        await _unitOfWork.SaveChangesAsync();
-                        //    }
-                        //}
+                        user.StoreCreditAmount = storeCredit.Result.ToString();
                     }
-                    else
+
+                    result.Result = user;
+                    if ((!string.IsNullOrEmpty(signUpRequest.Email) && !string.IsNullOrEmpty(signUpRequest.PhoneNumber) || (!string.IsNullOrEmpty(signUpRequest.Email))))
                     {
-                        return BuildAppActionResultError(result, $"Tạo tài khoản không thành công");
+                        if (!isGoogle)
+                        {
+                            var random = new Random();
+                            var verifyCode = string.Empty;
+                            verifyCode = random.Next(100000, 999999).ToString();
+
+                            emailService!.SendEmail(user.Email, SD.SubjectMail.VERIFY_ACCOUNT,
+                               TemplateMappingHelper.GetTemplateOTPEmail(
+                                   TemplateMappingHelper.ContentEmailType.VERIFICATION_CODE, verifyCode,
+                                   user.LastName));
+
+                            var otpsDb = new OTP
+                            {
+                                Type = OTPType.Register,
+                                Code = verifyCode,
+                                ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
+                            };
+                            user.OTP = JsonConvert.SerializeObject(otpsDb);
+                            //await _accountRepository.Insert(user);
+                            //await _unitOfWork.SaveChangesAsync();
+                            await _userManager.CreateAsync(user);
+                        }
                     }
 
                     var resultCreateRole = await _userManager.AddToRoleAsync(user, "CUSTOMER");
@@ -2024,80 +2005,49 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             IsVerified = isGoogle ? true : false,
                             IsManuallyCreated = true,
                             RegisteredDate = utility.GetCurrentDateInTimeZone()
+                            
                         };
 
                         var loyaltyPoint = hashingService.Hashing(user.Id, 0, true);
                         if (loyaltyPoint.IsSuccess)
                         {
                             user.LoyaltyPoint = loyaltyPoint.Result.ToString();
+                        } else
+                        {
+                            user.LoyaltyPoint = "";
                         }
 
-                        var resultCreateUser = await _userManager.CreateAsync(user);
-                        if (resultCreateUser.Succeeded)
+                        var storeCredit = hashingService.Hashing(user.Id, 0, false);
+                        if (storeCredit.IsSuccess)
                         {
-                            result.Result = user;
-                            if ((!string.IsNullOrEmpty(signUpRequestDto.Email) &&
-                                 !string.IsNullOrEmpty(signUpRequestDto.PhoneNumber) ||
-                                 (!string.IsNullOrEmpty(signUpRequestDto.Email))))
+                            user.StoreCreditAmount = "";
+                        }
+
+                        if ((!string.IsNullOrEmpty(signUpRequestDto.Email) &&
+                             !string.IsNullOrEmpty(signUpRequestDto.PhoneNumber) ||
+                             (!string.IsNullOrEmpty(signUpRequestDto.Email))))
+                        {
+                            if (!isGoogle)
                             {
-                                if (!isGoogle)
+                                var random = new Random();
+                                var verifyCode = string.Empty;
+                                verifyCode = random.Next(100000, 999999).ToString();
+
+                                emailService!.SendEmail(user.Email, SD.SubjectMail.VERIFY_ACCOUNT,
+                                    TemplateMappingHelper.GetTemplateOTPEmail(
+                                        TemplateMappingHelper.ContentEmailType.VERIFICATION_CODE, verifyCode,
+                                        user.LastName));
+
+                                var otpsDb = new OTP
                                 {
-                                    var random = new Random();
-                                    var verifyCode = string.Empty;
-                                    verifyCode = random.Next(100000, 999999).ToString();
+                                    Type = OTPType.Register,
+                                    Code = verifyCode,
+                                    ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
+                                };
 
-                                    emailService!.SendEmail(user.Email, SD.SubjectMail.VERIFY_ACCOUNT,
-                                        TemplateMappingHelper.GetTemplateOTPEmail(
-                                            TemplateMappingHelper.ContentEmailType.VERIFICATION_CODE, verifyCode,
-                                            user.LastName));
-
-                                    var otpsDb = new OTP
-                                    {
-                                        Type = OTPType.Register,
-                                        Code = verifyCode,
-                                        ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
-                                    };
-
-                                    user.OTP = JsonConvert.SerializeObject(otpsDb);
-                                    await _userManager.UpdateAsync(user);
-                                    await _unitOfWork.SaveChangesAsync();
-                                }
+                                user.OTP = JsonConvert.SerializeObject(otpsDb);
+                                await _userManager.CreateAsync(user);
                             }
-                            else
-                            {
-                                //var availableOtp = await _otpRepository.GetAllDataByExpression(
-                                //    o => o.Account.PhoneNumber.Equals(user.PhoneNumber) && o.Type == OTPType.Register &&
-                                //         o.ExpiredTime > utility.GetCurrentDateTimeInTimeZone() && !o.IsUsed, 0, 0,
-                                //    null, false, null);
-                                //if (availableOtp.Items.Count > 1)
-                                //{
-                                //    throw new Exception ("Xảy ra lỗi trong quá trình xử lí, có nhiều hơn 1 type khả dụng. Vui lòng thử lại sau ít phút");
-                                //}
-
-                                //if (availableOtp.Items.Count == 1)
-                                //{
-                                //    result.Result = availableOtp.Items[0];
-                                //}
-
-                                //if (!BuildAppActionResultIsError(result))
-                                //{
-                                //    string code = await GenerateVerifyCodeSms(user.PhoneNumber, true);
-                                //    ;
-                                //    var otpsDb = new OTP
-                                //    {
-                                //        Type = OTPType.Register,
-                                //        Code = code,
-                                //        ExpiredTime = utility.GetCurrentDateTimeInTimeZone().AddMinutes(5),
-                                //        IsUsed = false,
-                                //    };
-                                //    await _otpRepository.Insert(otpsDb);
-                                //    await _unitOfWork.SaveChangesAsync();
-                                //}
-                            }
-                        }
-                        else
-                        {
-                           throw new Exception($"Tạo tài khoản không thành công");
                         }
 
                         var roleDb = await roleRepository.GetByExpression(p => p.Name == signUpRequestDto.RoleName);
@@ -2108,7 +2058,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         var resultCreateRole = await _userManager.AddToRoleAsync(user, roleDb.Name);
                         if (!resultCreateRole.Succeeded)
-                           throw new Exception($"Cấp quyền khách hàng không thành công");
+                           throw new Exception($"Cấp quyền nhân viên không thành công");
 
                         if (!BuildAppActionResultIsError(result))
                         {
