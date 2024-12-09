@@ -289,7 +289,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         PhoneNumber = signUpRequest.PhoneNumber,
                         Gender = signUpRequest.Gender,
                         IsVerified = isGoogle ? true : false,
-                        IsManuallyCreated = false,
+                        IsManuallyCreated = true,
                         RegisteredDate = utility.GetCurrentDateInTimeZone()
                     };
 
@@ -1318,19 +1318,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     accountDb.FirstName = updateAccountRequest.FirstName;
                     accountDb.LastName = updateAccountRequest.LastName;
-                    if (updateAccountRequest.DOB.HasValue && updateAccountRequest.DOB.Value != accountDb.DOB)
-                    {
-                        if (!accountDb.IsManuallyCreated)
-                        {
-                            accountDb.DOB = updateAccountRequest.DOB;
-                            accountDb.IsManuallyCreated = true;
-                        } else
-                        {
-                            throw new Exception(
-                            $"Mỗi tài khoản chỉ được cập nhật ngày sinh 1 lần duy nhất");
-                        }
-                    }
+                    accountDb.DOB = updateAccountRequest.DOB;
                     accountDb.Gender = updateAccountRequest.Gender;
+                    accountDb.IsManuallyCreated = false;
 
                     if (updateAccountRequest.Image != null)
                     {
@@ -2003,7 +1993,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             PhoneNumber = signUpRequestDto.PhoneNumber,
                             Gender = signUpRequestDto.Gender,
                             IsVerified = isGoogle ? true : false,
-                            IsManuallyCreated = false,
+                            IsManuallyCreated = true,
                             RegisteredDate = utility.GetCurrentDateInTimeZone()
                             
                         };
