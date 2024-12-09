@@ -3680,7 +3680,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
+                var accountRepository = Resolve<IGenericRepository<Account>>();
+                var transactionRepository = Resolve<IGenericRepository<Transaction>>();
                 var firebaseService = Resolve<IFirebaseService>();
+                var hashingService = Resolve<IHashingService>();
+                var notificationService = Resolve<INotificationMessageService>();
                 var mapService = Resolve<IMapService>();
                 var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
                 var utility = Resolve<Utility>();
@@ -3734,6 +3738,44 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     orderDb.CancelledTime = utility.GetCurrentDateTimeInTimeZone();
                     orderDb.CancelDeliveryReason = confirmedOrderRequest.CancelReason;
                     await ChangeOrderStatusService(orderDb.OrderId, false, OrderStatus.Cancelled, false, false);
+                    var accountDb = await accountRepository!.GetById(orderDb.AccountId);
+                    if (accountDb == null)
+                    {
+                        throw new Exception($"Không tìm thấy khách hàng với id {orderDb.AccountId}");
+                    }
+
+                    if (confirmedOrderRequest.RefundRequired)
+                    {
+                        var newTransaction = new Transaction
+                        {
+                            Id = Guid.NewGuid(),
+                            AccountId = orderDb.AccountId,
+                            PaymentMethodId = PaymentMethod.STORE_CREDIT,
+                            TransactionTypeId = TransactionType.Refund,
+                            Date = orderDb.CancelledTime.Value,
+                            Amount = hashingService.Hashing(accountDb.Id, orderDb.TotalAmount, false).Result.ToString(),
+                            OrderId = orderDb.OrderId,
+                            TransationStatusId = TransationStatus.SUCCESSFUL
+                        };
+                        int storeCreditAmount = 0;
+                        var accountStoreCreditResult = hashingService.UnHashing(accountDb.StoreCreditAmount, false);
+                        if (accountStoreCreditResult.IsSuccess)
+                        {
+                            storeCreditAmount = int.Parse(accountStoreCreditResult.Result.ToString().Split('_')[1]);
+                        } else
+                        {
+                            storeCreditAmount = int.Parse(accountDb.StoreCreditAmount);
+                        }
+
+                        storeCreditAmount += (int)(Math.Ceiling(orderDb.TotalAmount));
+
+                        accountDb.StoreCreditAmount = hashingService.Hashing(accountDb.Id, storeCreditAmount, false).Result.ToString();
+
+                        await accountRepository.Update(accountDb);
+                        await transactionRepository!.Insert(newTransaction);
+                        string message = $"Đơn hàng ID {orderDb.OrderId} đã bị hủy và chúng tôi đã hoàn tiền {orderDb.TotalAmount} cho bạn vào ví.";
+                        await notificationService!.SendNotificationToAccountAsync(accountDb.Id, message, true);
+                    }
                 }
 
                 if (!BuildAppActionResultIsError(result))
@@ -4162,107 +4204,107 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var orderAssignedRequestRepository = Resolve<IGenericRepository<OrderAssignedRequest>>();
             var hashingService = Resolve<IHashingService>();
 
-            //try
-            //{
-            //    var orderDb = await _repository.GetAllDataByExpression(
-            //        p => p.OrderId == cancelDeliveringOrderRequest.OrderId,
-            //        0, 0, null, false,
-            //        p => p.Status!, p => p.OrderType!,
-            //        p => p.Account!, p => p.Shipper!,
-            //        p => p.LoyalPointsHistory!
-            //    );
+            try
+            {
+                var orderDb = await _repository.GetAllDataByExpression(
+                    p => p.OrderId == cancelDeliveringOrderRequest.OrderId,
+                    0, 0, null, false,
+                    p => p.Status!, p => p.OrderType!,
+                    p => p.Account!, p => p.Shipper!,
+                    p => p.LoyalPointsHistory!
+                );
 
-            //    if (orderDb!.Items!.Count <= 0)
-            //    {
-            //        throw new Exception($"Không tìm thấy đơn hàng với id {cancelDeliveringOrderRequest.OrderId}");
-            //    }
+                if (orderDb!.Items!.Count <= 0)
+                {
+                    throw new Exception($"Không tìm thấy đơn hàng với id {cancelDeliveringOrderRequest.OrderId}");
+                }
 
-            //    var order = orderDb.Items!.FirstOrDefault();
-            //    if (order == null)
-            //    {
-            //        throw new Exception("Order is null.");
-            //    }
+                var order = orderDb.Items!.FirstOrDefault();
+                if (order == null)
+                {
+                    throw new Exception("Order is null.");
+                }
 
-            //    var accountDb = await accountRepository!.GetById(order.AccountId);
-            //    if (accountDb == null)
-            //    {
-            //        throw new Exception($"Không tìm thấy khách hàng với id {order.AccountId}");
-            //    }
+                var accountDb = await accountRepository!.GetById(order.AccountId);
+                if (accountDb == null)
+                {
+                    throw new Exception($"Không tìm thấy khách hàng với id {order.AccountId}");
+                }
 
-            //    if (cancelDeliveringOrderRequest.isCancelledByAdmin == true)
-            //    {
-            //        order.CancelDeliveryReason = SD.CancelledReason.CANCELLED_BY_SYSTEM;
+                if (cancelDeliveringOrderRequest.isCancelledByAdmin == true)
+                {
+                    order.CancelDeliveryReason = SD.CancelledReason.CANCELLED_BY_SYSTEM;
 
-            //        var newTransaction = new Transaction
-            //        {
-            //            Id = Guid.NewGuid(),
-            //            AccountId = order.AccountId,
-            //            PaymentMethodId = PaymentMethod.STORE_CREDIT,
-            //            TransactionTypeId = TransactionType.Refund,
-            //            Date = currentTime,
-            //            Amount = order.TotalAmount,
-            //            OrderId = order.OrderId,
-            //            TransationStatusId = TransationStatus.SUCCESSFUL
-            //        };
+                    var newTransaction = new Transaction
+                    {
+                        Id = Guid.NewGuid(),
+                        AccountId = order.AccountId,
+                        PaymentMethodId = PaymentMethod.STORE_CREDIT,
+                        TransactionTypeId = TransactionType.Refund,
+                        Date = currentTime,
+                        Amount = hashingService.Hashing(accountDb.Id, order.TotalAmount, false).Result.ToString(),
+                        OrderId = order.OrderId,
+                        TransationStatusId = TransationStatus.SUCCESSFUL
+                    };
 
-            //        await transactionRepository!.Insert(newTransaction);
+                    await transactionRepository!.Insert(newTransaction);
 
-            //        accountDb.LoyaltyPoint += (int)order.TotalAmount;
-            //        var newLoyaltyPointHistory = new LoyalPointsHistory
-            //        {
-            //            LoyalPointsHistoryId = Guid.NewGuid(),
-            //            OrderId = order.OrderId,
-            //            TransactionDate = currentTime,
-            //            PointChanged = hashingService.Hashing(accountDb.Id, (int)order.TotalAmount, true).Result.ToString(),
-            //            NewBalance = accountDb.LoyaltyPoint
-            //        };
+                    accountDb.LoyaltyPoint += (int)order.TotalAmount;
+                    var newLoyaltyPointHistory = new LoyalPointsHistory
+                    {
+                        LoyalPointsHistoryId = Guid.NewGuid(),
+                        OrderId = order.OrderId,
+                        TransactionDate = currentTime,
+                        PointChanged = hashingService.Hashing(accountDb.Id, (int)order.TotalAmount, true).Result.ToString(),
+                        NewBalance = accountDb.LoyaltyPoint
+                    };
 
-            //        await loyalPointsHistoryRepository!.Insert(newLoyaltyPointHistory);
+                    await loyalPointsHistoryRepository!.Insert(newLoyaltyPointHistory);
 
-            //        string message = $"Đơn hàng ID {order.OrderId} đã bị hủy và chúng tôi đã hoàn tiền {order.TotalAmount} cho bạn.";
-            //        await notificationService!.SendNotificationToAccountAsync(accountDb.Id, message, true);
-            //    }
-            //    else
-            //    {
-            //        var shipperDb = await accountRepository.GetById(cancelDeliveringOrderRequest.ShipperRequestId);
-            //        if (shipperDb == null)
-            //        {
-            //            throw new Exception($"Không tìm thấy tài khoản shipper với id {cancelDeliveringOrderRequest.ShipperRequestId}");
-            //        }
+                    string message = $"Đơn hàng ID {order.OrderId} đã bị hủy và chúng tôi đã hoàn tiền {order.TotalAmount} cho bạn.";
+                    await notificationService!.SendNotificationToAccountAsync(accountDb.Id, message, true);
+                }
+                else
+                {
+                    var shipperDb = await accountRepository.GetById(cancelDeliveringOrderRequest.ShipperRequestId);
+                    if (shipperDb == null)
+                    {
+                        throw new Exception($"Không tìm thấy tài khoản shipper với id {cancelDeliveringOrderRequest.ShipperRequestId}");
+                    }
 
-            //        var orderAssignedRequest = new OrderAssignedRequest
-            //        {
-            //            OrderAssignedRequestId = Guid.NewGuid(),
-            //            RequestTime = currentTime,
-            //            OrderId = order.OrderId,
-            //            ShipperAssignedId = shipperDb.Id,
-            //            StatusId = OrderAssignedStatus.Pending,
-            //            Reasons = cancelDeliveringOrderRequest.CancelledReasons
-            //        };
+                    var orderAssignedRequest = new OrderAssignedRequest
+                    {
+                        OrderAssignedRequestId = Guid.NewGuid(),
+                        RequestTime = currentTime,
+                        OrderId = order.OrderId,
+                        ShipperAssignedId = shipperDb.Id,
+                        StatusId = OrderAssignedStatus.Pending,
+                        Reasons = cancelDeliveringOrderRequest.CancelledReasons
+                    };
 
-            //        await orderAssignedRequestRepository!.Insert(orderAssignedRequest);
+                    await orderAssignedRequestRepository!.Insert(orderAssignedRequest);
 
-            //        order.CancelDeliveryReason = cancelDeliveringOrderRequest.CancelledReasons;
+                    order.CancelDeliveryReason = cancelDeliveringOrderRequest.CancelledReasons;
 
-            //        string message = $"Đơn hàng ID {order.OrderId} đã được yêu cầu hủy bởi Shipper {shipperDb.FirstName} {shipperDb.LastName}";
-            //        await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
-            //        await _hubServices.SendAsync(SD.SignalMessages.LOAD_RE_DELIVERING_REQUEST);
-            //    }
+                    string message = $"Đơn hàng ID {order.OrderId} đã được yêu cầu hủy bởi Shipper {shipperDb.FirstName} {shipperDb.LastName}";
+                    await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_RE_DELIVERING_REQUEST);
+                }
 
-            //    order.StatusId = OrderStatus.Cancelled;
-            //    order.CancelledTime = currentTime;
+                order.StatusId = OrderStatus.Cancelled;
+                order.CancelledTime = currentTime;
 
-            //    if (!BuildAppActionResultIsError(result))
-            //    {
-            //        await accountRepository.Update(accountDb);
-            //        await _repository.Update(order);
-            //        await _unitOfWork.SaveChangesAsync();
-            //    }
-            //}
-            //catch (Exception ex)
-            //{
-            //    result = BuildAppActionResultError(result, ex.Message);
-            //}
+                if (!BuildAppActionResultIsError(result))
+                {
+                    await accountRepository.Update(accountDb);
+                    await _repository.Update(order);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
 
             return result;
         }

@@ -24,7 +24,7 @@ public class RemoveCacheAtrribute : Attribute, IAsyncActionFilter
         }
         var cacheService = context.HttpContext.RequestServices.GetRequiredService<IResponseCacheService>();
         var result = await next();
-        if (result.Result is OkResult okObjectResult)
+        if (result.Result != null)
         {
             await cacheService.RemoveCacheResponseAsync(pathEndPoint);
         }

@@ -818,13 +818,10 @@ public class TemplateMappingHelper
 </p>
       <h3>Dưới đây là thông tin đặt hàng của bạn</h3>
       <ul>
-        <li><strong>Thời gian đặt hàng: </strong><span class=""highlight"">"+ order.OrderDate+@" </span></li>
+        <li><strong>Thời gian đặt hàng: </strong><span class=""highlight"">"+ (order.OrderTypeId == OrderType.Delivery ? order.OrderDate : order.ReservationDate) +@" </span></li>
         <li><strong>Đã thanh toán: </strong><span class=""highlight"">"+order.TotalAmount+@"</span></li>
         <li><strong>Mã hóa đơn: </strong><span class=""highlight"">"+order.OrderId+@"</span></li>
-      </ul>
- 
-   <p><strong>Quy khách mua à</strong> </p>
-   
+      </ul> 
     
     </div>
     <div class=""footer"">
@@ -957,7 +954,7 @@ public class TemplateMappingHelper
 </p>
       <h3>Dưới đây là thông tin đặt chỗ của bạn</h3>
       <ul>
-        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">"+ order.MealTime+@" </span></li>
+        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">"+ order.ReservationDate+@" </span></li>
         <li><strong>Đã thanh toán cọc: </strong><span class=""highlight"">"+order.Deposit+@"</span></li>
         <li><strong>Mã hóa đơn: </strong><span class=""highlight"">"+order.OrderId+@"</span></li>
       </ul>

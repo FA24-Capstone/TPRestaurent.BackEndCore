@@ -36,7 +36,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-configuration-version/{pageNumber}/{pageSize}")]
-        [CacheAttribute(259200)]
+        [CacheAttribute(60*60*24)]
         public async Task<AppActionResult> GetAllConfigurationVersion(int pageNumber = 1, int pageSize = 10)
         {
             return await _service.GetAllConfigurationVersion(pageNumber, pageSize);
@@ -51,21 +51,21 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-config/{pageNumber:int}/{pageSize:int}")]
-        [CacheAttribute(259200)]
+        [CacheAttribute(60*60*24)]
         public Task<AppActionResult> GetAll(int pageNumber, int pageSize)
         {
             return _service.GetAll(pageNumber, pageSize);
         }
 
         [HttpGet("get-all-configuration-version/{configId}/{pageNumber}/{pageSize}")]
-        [CacheAttribute(259200)]
+        [CacheAttribute(60*60*24)]
         public Task<AppActionResult> GetAllConfigurationVersion(Guid configId, int pageNumber = 1, int pageSize = 10)
         {
             return _service.GetAllConfigurationVersion(configId, pageNumber, pageSize);
         }
 
         [HttpGet("get-config-by-name/{name}")]
-        [CacheAttribute(259200)]
+        [CacheAttribute(60*60*24)]
         public Task<AppActionResult> GetByName(string name)
         {
             return _service.GetByName(name);
