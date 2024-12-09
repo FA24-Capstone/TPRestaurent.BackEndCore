@@ -289,7 +289,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         PhoneNumber = signUpRequest.PhoneNumber,
                         Gender = signUpRequest.Gender,
                         IsVerified = isGoogle ? true : false,
-                        IsManuallyCreated = true,
+                        IsManuallyCreated = false,
                         RegisteredDate = utility.GetCurrentDateInTimeZone()
                     };
 
@@ -2003,7 +2003,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             PhoneNumber = signUpRequestDto.PhoneNumber,
                             Gender = signUpRequestDto.Gender,
                             IsVerified = isGoogle ? true : false,
-                            IsManuallyCreated = true,
+                            IsManuallyCreated = false,
                             RegisteredDate = utility.GetCurrentDateInTimeZone()
                             
                         };
