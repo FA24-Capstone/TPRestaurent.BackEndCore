@@ -1451,7 +1451,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                         }
                     }
+                    orderWithPayment.Order.Account = hashingService.GetDecodedAccount(orderWithPayment.Order.Account);
                     result.Result = orderWithPayment;
+
                 });
 
                 if (orderRequestDto.OrderType == OrderType.MealWithoutReservation)
@@ -1649,6 +1651,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var couponRepository = Resolve<IGenericRepository<Coupon>>();
                     var customerInfoRepository = Resolve<IGenericRepository<Account>>();
                     var loyalPointsHistoryRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
+                    var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
                     var transactionService = Resolve<ITransactionService>();
                     var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                     var configurationRepository = Resolve<IGenericRepository<Configuration>>();
@@ -1693,9 +1696,42 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                              o.OrderDetailStatusId != OrderDetailStatus.Cancelled, 0, 0, p => p.OrderTime, false, null);
                     double money = orderDb.TotalAmount;
 
-                    money -= ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0)
-                        ? Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000
-                        : 0);
+                    if(orderDb.OrderTypeId == OrderType.Reservation)
+                    {
+                        var depositConfigresult = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.DEPOSIT_PERCENT), null);
+                        if(depositConfigresult == null)
+                        {
+                            throw new Exception("Không tìm thấy cấu hình hệ thống cho sử dụng phân trăm cọc. Vui lòng kiểm tra lại thông tin cấu hình");
+                        }
+                        var depositPercent = double.Parse(depositConfigresult.CurrentValue);
+                        var tableDetailDb = await tableDetailRepository.GetAllDataByExpression(t => t.OrderId == orderDb.OrderId, 0, 0, null, false, t => t.Table.Room);
+                        double tableDeposit = 0;
+                        if (tableDetailDb.Items.FirstOrDefault().Table.Room.IsPrivate)
+                        {
+                            var privateTableDepositConfigResult = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.DEPOSIT_FOR_PRIVATE_TABLE), null);
+                            if (privateTableDepositConfigResult == null)
+                            {
+                                throw new Exception("Không tìm thấy cấu hình hệ thống cho sử dụng phân trăm cọc bàn riêng tư. Vui lòng kiểm tra lại thông tin cấu hình");
+                            }
+                            tableDeposit = int.Parse(privateTableDepositConfigResult.CurrentValue);
+                        } 
+                        else
+                        {
+                            var publicTableDepositConfigResult = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.DEPOSIT_FOR_NORMAL_TABLE), null);
+                            if (publicTableDepositConfigResult == null)
+                            {
+                                throw new Exception("Không tìm thấy cấu hình hệ thống cho sử dụng phân trăm cọc bàn thường. Vui lòng kiểm tra lại thông tin cấu hình");
+                            }
+                            tableDeposit = int.Parse(publicTableDepositConfigResult.CurrentValue);
+                        }
+
+                        if(money - (orderDb.Deposit - tableDeposit) / depositPercent > 1000)
+                        {
+                            money -= ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0)
+                            ? Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000
+                            : 0);
+                        }
+                    }
 
                     if (money < 0)
                     {

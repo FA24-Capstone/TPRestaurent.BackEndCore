@@ -12,6 +12,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     public class TestController : ControllerBase
     {
         public IOrderService _orderService;
+        public IDishService _dishService;
         public IInvoiceService _invoiceService;
         public IGroupedDishCraftService _groupedDishCraftService;
         public IOrderSessionService _orderSessionService;
@@ -19,12 +20,13 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         private IHubServices _hubServices;
         private IEmailService _emailService;
 
-        public TestController(IOrderService orderService, IInvoiceService invoiceService,
+        public TestController(IOrderService orderService, IInvoiceService invoiceService, IDishService dishService,
                               IHubServices hubServices, IGroupedDishCraftService groupedDishCraftService, 
                               IOrderSessionService orderSessionService, ITransactionService transactionService, IEmailService emailService)
         {
             _orderService = orderService;
             _invoiceService = invoiceService;
+            _dishService = dishService;
             _hubServices = hubServices;
             _groupedDishCraftService = groupedDishCraftService;
             _orderSessionService = orderSessionService;
@@ -111,6 +113,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
              _emailService.SendEmail("duonghongquan0312@gmail.com", "Test", TemplateMappingHelper.GetTemplateOTPEmail(TemplateMappingHelper.ContentEmailType.INSUFFICIENT_COUPON_QUANTITY,"123","quan"));
             return Ok();
+        }
+
+        [HttpPost("dish-refill")]
+        public async Task AutoRefillDish()
+        {
+             await _dishService.AutoRefillDish();
         }
     }
 }

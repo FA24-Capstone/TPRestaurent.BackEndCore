@@ -747,6 +747,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
             try
             {
+                var dishManagementService = Resolve<IDishManagementService>();
                 var dishSizeDetailsDb =
                     await dishSizeDetailRepository!.GetAllDataByExpression(
                         p => p.DailyCountdown != 0 && !p.Dish.IsDeleted, 0, 0, null, false, null);
@@ -781,6 +782,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
 
                 await _unitOfWork.SaveChangesAsync();
+
+                await dishManagementService.UpdateComboAvailability();
+                await dishManagementService.UpdateDishAvailability();
             }
             catch (Exception ex)
             {

@@ -180,6 +180,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
+                var hashingService = Resolve<IHashingService>();
                 var headers = httpContext.Request.Headers;
 
                 string userAgent = headers["User-Agent"].ToString();
@@ -193,7 +194,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     throw new Exception($"Không tìm thấy token ");
                 }
-
+                tokenDb.Account = hashingService.GetDecodedAccount(tokenDb.Account);
                 result.Result = tokenDb;
             }
             catch (Exception ex)
