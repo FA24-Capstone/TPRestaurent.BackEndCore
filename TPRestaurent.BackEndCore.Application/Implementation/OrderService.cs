@@ -1727,7 +1727,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         if(money - (orderDb.Deposit - tableDeposit) / depositPercent > 1000)
                         {
-                            money = ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0)
+                            money -= ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0)
                             ? Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000
                             : 0);
                         }
