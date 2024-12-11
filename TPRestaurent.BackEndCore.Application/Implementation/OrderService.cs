@@ -1727,7 +1727,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         if(money - (orderDb.Deposit - tableDeposit) / depositPercent > 1000)
                         {
-                            money -= ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0)
+                            money = ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0)
                             ? Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000
                             : 0);
                         }
@@ -1745,7 +1745,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             OrderId = orderDb.OrderId,
                             Account = accountDb,
-                            RefundAmount = -Math.Ceiling(-money / 1000) * 1000,
+                            RefundAmount = Math.Ceiling(money / 1000) * 1000,
                             PaymentMethod = orderRequestDto.ChooseCashRefund.Value
                                 ? PaymentMethod.Cash
                                 : PaymentMethod.STORE_CREDIT
@@ -1809,7 +1809,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 coupon.OrderId = orderDb.OrderId;
                             }
 
-                            money -= discountMoney;
+                            money = discountMoney;
                             await couponRepository.UpdateRange(customerSavedCouponDb.Items);
                         }
 
@@ -1848,7 +1848,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 // Calculate the discount (assuming 1 point = 1 currency unit)
                                 double loyaltyDiscount = Math.Min(orderRequestDto.LoyalPointsToUse.Value, money);
-                                money -= loyaltyDiscount;
+                                money = loyaltyDiscount;
 
                                 // Ensure the total doesn't go below zero
                                 money = Math.Max(0, money);
