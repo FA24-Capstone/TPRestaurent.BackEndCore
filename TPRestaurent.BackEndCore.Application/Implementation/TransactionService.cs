@@ -1128,6 +1128,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return transactions;
         }
 
+        [Hangfire.Queue("log-money-information-hacked")]
         public async Task<string> LogMoneyInformationHacked()
         {
             StringBuilder logMessage = new StringBuilder();

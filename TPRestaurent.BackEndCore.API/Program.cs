@@ -153,6 +153,12 @@ builder.Services.AddHangfireServer(options =>
     options.WorkerCount = 1;
 });
 
+builder.Services.AddHangfireServer(options =>
+{
+    options.ServerName = $"{Environment.MachineName}:transaction";
+    options.Queues = new[] { "log-money-information-hacked" };
+    options.WorkerCount = 1;
+});
 
 
 var app = builder.Build();
