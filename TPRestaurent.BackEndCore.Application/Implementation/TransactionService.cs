@@ -393,7 +393,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
 
                                 var storeCreditAmountResult = hashingService.UnHashing(accountDb.StoreCreditAmount, false);
-                                var storeCreditAmount = int.Parse(storeCreditAmountResult.Result.ToString().Split('_')[1]);
+                                int storeCreditAmount = 0;
+                                if (storeCreditAmountResult.IsSuccess)
+                                {
+                                    storeCreditAmount = int.Parse(storeCreditAmountResult.Result.ToString().Split('_')[1]);
+                                } else
+                                {
+                                    storeCreditAmount = int.Parse(accountDb.StoreCreditAmount);
+                                }
 
                                 if (storeCreditAmount < amount)
                                 {
@@ -1149,7 +1156,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         Timestamp = utility.GetCurrentDateTimeInTimeZone(),
                         Message = logMessage.ToString()
                     });
-
+                    Console.Write(logMessage.ToString());
                 }
             }
             catch (Exception ex)
