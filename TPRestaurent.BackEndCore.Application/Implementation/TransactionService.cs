@@ -1157,7 +1157,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         Timestamp = utility.GetCurrentDateTimeInTimeZone(),
                         Message = logMessage.ToString()
                     });
-                    Console.Write(logMessage.ToString());
                 }
             }
             catch (Exception ex)
@@ -1193,9 +1192,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     logMessage.Append($"{i++}. Số dư không thuộc về tài khoản. |");
                 }
                 var storeCreditAmount = int.Parse(storeCredit.Result.ToString().Split('_')[1]);
-                var storeCreditDb = await _repository.GetAllDataByExpression(t => t.PaymentMethodId == PaymentMethod.STORE_CREDIT
+                var storeCreditDb = await _repository.GetAllDataByExpression(t => (t.TransactionTypeId == TransactionType.CreditStore || t.TransactionTypeId == TransactionType.Refund || t.PaymentMethodId == PaymentMethod.STORE_CREDIT)
                                                                                     && (t.TransationStatusId == TransationStatus.SUCCESSFUL || t.TransationStatusId == TransationStatus.APPLIED)
-                                                                                    && t.AccountId == account.Id, 0, 0, null, false, t => t.Account, t => t.Order.Account);
+                                                                                    && (t.AccountId.Equals(account.Id) || t.OrderId.HasValue && t.Order.AccountId.Equals(account.Id)), 0, 0, null, false, t => t.Account, t => t.Order.Account);
                 string storeCreditRecord = "";
                 foreach (var item in storeCreditDb.Items) 
                 {
@@ -1210,10 +1209,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         logMessage.Append($"{i++}. Lịch sử dùng/nạp ví không thuộc về tài khoản  {accountInfo} (id record {item.Id}). |");
                         continue;
                     }
+                    if(item.TransactionTypeId == TransactionType.Refund || item.TransactionTypeId == TransactionType.CreditStore)
+                    {
+                        storeCreditAmount -= int.Parse(storeCreditRecord.Split('_')[1]);
+                        Console.WriteLine(-int.Parse(storeCreditRecord.Split('_')[1]));
+                    }
+                    else
+                    {
+                        storeCreditAmount += int.Parse(storeCreditRecord.Split('_')[1]);
+                        Console.WriteLine(int.Parse(storeCreditRecord.Split('_')[1]));
+                    }
 
-                    storeCreditAmount -= int.Parse(storeCreditRecord.Split('_')[1]);
                 }
-
+                Console.WriteLine();
                 if(storeCreditAmount != 0)
                 {
                     logMessage.Append($"{i++}. Tổng số dư ví hiện tại không khớp với lịch sử. |");
