@@ -7,6 +7,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
+using TPRestaurent.BackEndCore.Application.IHubServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response;
@@ -2719,6 +2720,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await comboOrderDetailRepository.UpdateRange(comboOrderDetailDb.Items);
                         await orderSessionRepository.UpdateRange(orderSessionDb);
                         await _unitOfWork.SaveChangesAsync();
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
                     }
                 }
             }
