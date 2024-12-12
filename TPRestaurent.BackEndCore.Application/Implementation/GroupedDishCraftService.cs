@@ -397,7 +397,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                 }
                 result.Result = await orderService.UpdateOrderDetailStatus(updateRequest, true);
-                await _hubServices.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
             }
             catch (Exception ex)
             {

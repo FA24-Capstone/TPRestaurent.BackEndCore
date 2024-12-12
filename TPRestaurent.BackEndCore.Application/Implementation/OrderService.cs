@@ -3199,6 +3199,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     .Select(o => o.OrderDetailId).ToList());
 
                 await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_DETAIL_STATUS);
+                await _hubServices.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
                 if (orderSessionUpdated)
                 {
                     await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
