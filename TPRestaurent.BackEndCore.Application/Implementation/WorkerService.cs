@@ -89,6 +89,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             RecurringJob.AddOrUpdate(() => _couponService.RemoveExpiredCoupon(), Cron.DayInterval(1), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _couponService.AssignCouponToUserWithRank(), "5 0 1 * *", vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _transactionService.LogMoneyInformationHacked(), Cron.HourInterval(4), vietnamTimeZone);
+            RecurringJob.AddOrUpdate(() => _couponService.UpgradeUserRank(), Cron.HourInterval(4), vietnamTimeZone);
+
 
             //RecurringJob.AddOrUpdate(() => _orderService.CancelOverReservation(), Cron.MinuteInterval(2), vietnamTimeZone);
             //RecurringJob.AddOrUpdate(() => _orderService.CancelReservation(), Cron.HourInterval(2), vietnamTimeZone);
