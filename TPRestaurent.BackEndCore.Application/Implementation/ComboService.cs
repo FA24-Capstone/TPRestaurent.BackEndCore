@@ -113,16 +113,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                     }
 
-                    var mainFile = comboDto.MainImg;
-                    if (mainFile == null)
-                    {
-                        throw new Exception($"Không tìm thấy hình ảnh combo");
-                    }
-
-                    var mainPathName = SD.FirebasePathName.COMBO_PREFIX + $"{comboDb.ComboId}_main.jpg";
-                    var uploadMainPicture = await firebaseService!.UploadFileToFirebase(mainFile, mainPathName);
-
-                    comboDb.Image = uploadMainPicture!.Result!.ToString()!;
+                   
 
                     List<Image> staticList = new List<Image>();
 
@@ -142,6 +133,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             throw new Exception("Upload ảnh không thành công");
                         }
                     }
+
+                    comboDb.Image = staticList.FirstOrDefault().Path;
 
                     if (!BuildAppActionResultIsError(result))
                     {
