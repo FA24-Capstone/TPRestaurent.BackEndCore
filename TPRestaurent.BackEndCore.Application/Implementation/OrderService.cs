@@ -252,6 +252,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
                         await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
                         //AddOrderMessageToChef
                     }
                     catch (Exception ex)
@@ -4060,7 +4061,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderIds = orderDiningTableDb.Items.DistinctBy(o => o.OrderId).Select(o => o.OrderId).ToList();
                 if (request.TableId.HasValue)
                 {
-                    var reservationTableDb = await _tableDetailRepository.GetAllDataByExpression(o => orderIds.Contains(o.OrderId), 0, 0, null, false, null);
+                    var reservationTableDb = await _tableDetailRepository.GetAllDataByExpression(o => orderIds.Contains(o.OrderId) 
+                                                                                                      && o.TableId == request.TableId
+                                                                                                        , 0, 0, null, false, null);
                     orderIds = reservationTableDb.Items.Select(o => o.OrderId).ToList();
                 }
                 var orderDiningDb = await _repository.GetAllDataByExpression(o => orderIds.Contains(o.OrderId), request.pageNumber, request.pageSize, null, false, o => o.Status,
