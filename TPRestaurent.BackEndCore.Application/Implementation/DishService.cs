@@ -116,23 +116,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     List<Image> staticList = new List<Image>();
 
-                    var mainFile = dto.MainImageFile;
-                    if (mainFile == null)
-                    {
-                        throw new Exception($"The main picture of the dish is empty");
-                    }
-
-                    var mainPathName = SD.FirebasePathName.DISH_PREFIX + $"{dish.DishId}_main.jpg";
-                    var uploadMainPicture = await firebaseService!.UploadFileToFirebase(mainFile, mainPathName);
-                    var staticMainFile = new Image
-                    {
-                        StaticFileId = Guid.NewGuid(),
-                        DishId = dish.DishId,
-                        Path = uploadMainPicture!.Result!.ToString()!
-                    };
-                    staticList.Add(staticMainFile);
-                    dish.Image = staticMainFile.Path;
-
                     foreach (var file in dto!.ImageFiles!)
                     {
                         var pathName = SD.FirebasePathName.DISH_PREFIX + $"{dish.DishId}{Guid.NewGuid()}.jpg";
@@ -149,6 +132,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             throw new Exception("Upload hình ảnh không thành công");
                         }
                     }
+
+                    dish.Image = staticList.FirstOrDefault().Path;
 
                     if (!BuildAppActionResultIsError(result))
                     {
