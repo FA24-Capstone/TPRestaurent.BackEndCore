@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using TPRestaurent.BackEndCore.API.Installers;
 using TPRestaurent.BackEndCore.API.Middlewares;
+using TPRestaurent.BackEndCore.Application.Implementation;
 using TPRestaurent.BackEndCore.Domain.Data;
 using TPRestaurent.BackEndCore.Infrastructure.ServerHub;
 
@@ -159,6 +160,13 @@ builder.Services.AddHangfireServer(options =>
     options.Queues = new[] { "log-money-information-hacked" };
     options.WorkerCount = 1;
 });
+builder.Services.AddHangfireServer(options =>
+{
+    options.ServerName = $"{Environment.MachineName}:coupon-session";
+    options.Queues = new[] { "upgrade-user-rank" };
+    options.WorkerCount = 1;
+});
+
 
 
 var app = builder.Build();

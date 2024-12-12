@@ -372,13 +372,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             var accountRepository = Resolve<IGenericRepository<Account>>();
             var hashingService = Resolve<IHashingService>();
-            List<string> accountIds = null; 
+            List<string> accountIds = null;
             try
             {
                 if (couponprogramId.HasValue)
                 {
                     var couponProgramDb = await _couponProgramRepository.GetById(couponprogramId.Value);
-                    if(couponProgramDb == null)
+                    if (couponProgramDb == null)
                     {
                         return BuildAppActionResultError(result, $"Không tìm thấy chương trình giảm giá với id {userRank}");
                     }
@@ -395,7 +395,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                             || (!hasBeenProvided.Value && !accountIds.Contains(p.Id)))
                                                                                          && customerIds.Contains(p.Id), 0, 0, null, false, null);
 
-                
+
                 if (userByRankDb.Items.Count == 0)
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy người dùng với rank {userRank}");
@@ -484,27 +484,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 account.UserRankId = UserRank.SILVER;
                             }
-                            else if (totalAmount >= double.Parse(diamondRankDb.CurrentValue))
-                            {
-                                account.UserRankId = UserRank.DIAMOND;
-                            }
                         }
                         else if (account.UserRankId == UserRank.SILVER)
                         {
                             if (totalAmount <= double.Parse(silverRankDb.CurrentValue))
                             {
                                 account.UserRankId = UserRank.BRONZE;
-                            }
-                            else if (totalAmount >= double.Parse(goldRankDb.CurrentValue))
-                            {
-                                account.UserRankId = UserRank.GOLD;
-                            }
-                        }
-                        else if (account.UserRankId == UserRank.BRONZE)
-                        {
-                            if (totalAmount >= double.Parse(silverRankDb.CurrentValue))
-                            {
-                                account.UserRankId = UserRank.SILVER;
                             }
                         }
                     }
@@ -515,6 +500,83 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             catch (Exception ex)
             {
+            }
+        }
+
+        [Hangfire.Queue("upgrade-user-rank")]
+        public async Task<string> UpgradeUserRank()
+        {
+            string message = string.Empty;
+            string notificationMessage = string.Empty;
+            var utility = Resolve<Utility>();
+            var acocuntRepository = Resolve<IGenericRepository<Account>>();
+            var orderRepository = Resolve<IGenericRepository<Order>>();
+            var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+            var notificationService = Resolve<INotificationMessageService>();
+            var currentTime = utility!.GetCurrentDateTimeInTimeZone();
+            var monthBefore = currentTime.AddMonths(-2);
+            var accountDb = await acocuntRepository!.GetAllDataByExpression(null, 0, 0, null, false, null);
+            var bronzeRankDb = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.BRONZE_RANK);
+            var silverRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.SILVER_RANK);
+            var goldRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.GOLD_RANK);
+            var diamondRankDb = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DIAMOND_RANK);
+            try
+            {
+                if (accountDb!.Items!.Count > 0 && accountDb.Items != null)
+                {
+                    foreach (var account in accountDb.Items)
+                    {
+                        var orderDb = await orderRepository!.GetAllDataByExpression(p => p.AccountId == account.Id && (p.OrderDate >= monthBefore && p.OrderDate <= currentTime)
+                       || (p.MealTime >= monthBefore && p.MealTime <= currentTime) && p.StatusId == OrderStatus.Completed, 0, 0, null, false, null);
+                        var totalAmount = orderDb.Items!.Sum(p => p.TotalAmount);
+
+                        if (account.UserRankId == UserRank.GOLD)
+                        {
+                            if (totalAmount >= double.Parse(diamondRankDb.CurrentValue))
+                            {
+                                account.UserRankId = UserRank.DIAMOND;
+                                notificationMessage = "Chúc mừng bạn đã được thăng cấp thứ hạng lên hạng kim cương";
+                                await notificationService!.SendNotificationToAccountAsync(account.Id, message, false);
+                            }
+                        }
+                        else if (account.UserRankId == UserRank.SILVER)
+                        {
+                            if (totalAmount >= double.Parse(goldRankDb.CurrentValue))
+                            {
+                                account.UserRankId = UserRank.GOLD;
+                                notificationMessage = "Chúc mừng bạn đã được thăng cấp thứ hạng lên hạng vàng";
+                                await notificationService!.SendNotificationToAccountAsync(account.Id, message, false);
+                            }
+                        }
+                        else if (account.UserRankId == UserRank.BRONZE)
+                        {
+                            if (totalAmount >= double.Parse(silverRankDb.CurrentValue))
+                            {
+                                account.UserRankId = UserRank.SILVER;
+                                notificationMessage = "Chúc mừng bạn đã được thăng cấp thứ hạng lên hạng bạc";
+                                await notificationService!.SendNotificationToAccountAsync(account.Id, message, false);
+                            }
+                        }
+                        else if (account.UserRankId == null)
+                        {
+                            if (totalAmount >= double.Parse(bronzeRankDb.CurrentValue))
+                            {
+                                account.UserRankId = UserRank.BRONZE;
+                                notificationMessage = "Chúc mừng bạn đã được thăng cấp thứ hạng lên hạng đồng";
+                                await notificationService!.SendNotificationToAccountAsync(account.Id, message, false);
+                            }
+                        }
+                    }
+                }
+                await acocuntRepository.UpdateRange(accountDb.Items);
+                await _unitOfWork.SaveChangesAsync();
+
+                message = "Update account's rank successfully";
+                return message;
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
             }
         }
 
@@ -637,6 +699,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
         }
 
+
+
         private async Task<List<Coupon>> GetCouponListForCreation(List<string> accountIds, UserRank rank, DateTime currentTime, IEmailService emailService)
         {
             List<Coupon> result = new List<Coupon>();
@@ -729,7 +793,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var accountDb = await accountRepository.GetAllDataByExpression(a => customerIds.Contains(a.Id), 0, 0, null, false, null);
                 List<TotalUserByRankResponseDto> data = new List<TotalUserByRankResponseDto>();
                 var bronzeSpent = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.BRONZE_RANK), null);
-                if(bronzeSpent != null)
+                if (bronzeSpent != null)
                 {
                     data.Add(new TotalUserByRankResponseDto
                     {
@@ -779,5 +843,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return result;
         }
+
+
     }
 }
