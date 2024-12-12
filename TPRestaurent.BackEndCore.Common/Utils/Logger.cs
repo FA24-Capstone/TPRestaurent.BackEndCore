@@ -54,6 +54,7 @@ namespace TPRestaurent.BackEndCore.Common.Utils
                                 Message = string.Join("\n", parts[2].Split(" |")),
                             };
                         })
+                        .OrderByDescending(l => l.Timestamp)
                         .ToList();
                 }
             }
