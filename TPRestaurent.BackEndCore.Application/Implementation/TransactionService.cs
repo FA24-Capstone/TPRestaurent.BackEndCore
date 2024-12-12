@@ -671,10 +671,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 await storeCreditService.AddStoreCredit(transactionId);
                             }
                         }
-                        //else if(transactionStatus == TransationStatus.FAILED)
-                        //{
-                        //    await orderService.ChangeOrderStatus(transactionDb.OrderId.Value, false, OrderStatus.Cancelled, false);
-                        //}
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
                     }
                     else
                     {
