@@ -3169,16 +3169,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             if (orderDetailDb.Items.FirstOrDefault(o => o.OrderSessionId == session.OrderSessionId).Order.StatusId == OrderStatus.Processing)
                             {
+                                var orderId = orderDetailDb.Items.FirstOrDefault(o => o.OrderSessionId == session.OrderSessionId).OrderId;
                                 //All OrderDetail in DB is ready to serve
                                 var allOrderDetailDb = await _detailRepository.GetAllDataByExpression(
-                                    o => o.OrderId == orderDetailDb.Items.FirstOrDefault(o => o.OrderSessionId == session.OrderSessionId).OrderId, 0, 0, null,
+                                    o => o.OrderId == orderId, 0, 0, null,
                                     false, null);
                                 if (orderDetailDb.Items.FirstOrDefault(o => o.OrderSessionId == session.OrderSessionId).Order.StatusId == OrderStatus.Pending &&
                                     allOrderDetailDb.Items.All(a =>
                                         a.OrderDetailStatusId == OrderDetailStatus.ReadyToServe ||
                                         a.OrderDetailStatusId == OrderDetailStatus.Cancelled))
                                 {
-                                    await ChangeOrderStatusService(orderDetailDb.Items.FirstOrDefault(o => o.OrderSessionId == session.OrderSessionId).OrderId, true,
+                                    await ChangeOrderStatusService(orderId, true,
                                         OrderStatus.TemporarilyCompleted, false);
                                 }
                             }
