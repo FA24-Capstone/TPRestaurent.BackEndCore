@@ -514,6 +514,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
                         await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
                     }
 
                     var orderDetailDb =
