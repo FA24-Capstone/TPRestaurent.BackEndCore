@@ -749,39 +749,39 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     //Validate order time
 
-                    //if (orderRequestDto.OrderType != OrderType.Reservation)
-                    //{
-                    //    bool isInvalidOrderTime = orderTime.Date.AddHours(openTime) > orderTime ||
-                    //                              orderTime.Date.AddHours(closedTime) < orderTime;
-                    //    if (isInvalidOrderTime)
-                    //    {
-                    //        throw new Exception("Thời gian đặt không hợp lệ");
-                    //    }
-                    //}
+                    if (orderRequestDto.OrderType != OrderType.Reservation)
+                    {
+                        bool isInvalidOrderTime = orderTime.Date.AddHours(openTime) > orderTime ||
+                                                  orderTime.Date.AddHours(closedTime) < orderTime;
+                        if (isInvalidOrderTime)
+                        {
+                            throw new Exception("Thời gian đặt không hợp lệ");
+                        }
+                    }
 
 
-                    //if (orderRequestDto.OrderType == OrderType.Reservation)
-                    //{
-                    //    bool isInvalidReservationTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.MealTime ||
-                    //                                    orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.MealTime;
-                    //    if (isInvalidReservationTime)
-                    //    {
-                    //        throw new Exception("Thời gian đặt không hợp lệ");
-                    //    }
+                    if (orderRequestDto.OrderType == OrderType.Reservation)
+                    {
+                        bool isInvalidReservationTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.MealTime ||
+                                                        orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.MealTime;
+                        if (isInvalidReservationTime)
+                        {
+                            throw new Exception("Thời gian đặt không hợp lệ");
+                        }
 
-                    //    if (!orderRequestDto.ReservationOrder.EndTime.HasValue)
-                    //    {
-                    //        var averageDiningTime = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.AVERAGE_MEAL_DURATION), null);
-                    //        orderRequestDto.ReservationOrder.EndTime = averageDiningTime != null ? orderRequestDto.ReservationOrder.MealTime.AddHours(double.Parse(averageDiningTime.CurrentValue))
-                    //                                                                             : orderRequestDto.ReservationOrder.MealTime.AddHours(1);
-                    //    }
-                    //    bool isInvalidEndTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.EndTime.Value ||
-                    //                                    orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.EndTime.Value;
-                    //    if (isInvalidEndTime)
-                    //    {
-                    //        throw new Exception("Thời gian đặt không hợp lệ");
-                    //    }
-                    //}
+                        if (!orderRequestDto.ReservationOrder.EndTime.HasValue)
+                        {
+                            var averageDiningTime = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.AVERAGE_MEAL_DURATION), null);
+                            orderRequestDto.ReservationOrder.EndTime = averageDiningTime != null ? orderRequestDto.ReservationOrder.MealTime.AddHours(double.Parse(averageDiningTime.CurrentValue))
+                                                                                                 : orderRequestDto.ReservationOrder.MealTime.AddHours(1);
+                        }
+                        bool isInvalidEndTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.EndTime.Value ||
+                                                        orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.EndTime.Value;
+                        if (isInvalidEndTime)
+                        {
+                            throw new Exception("Thời gian đặt không hợp lệ");
+                        }
+                    }
 
                     // Validate number of people
                     bool isInvalidNumberOfPeople = false;
