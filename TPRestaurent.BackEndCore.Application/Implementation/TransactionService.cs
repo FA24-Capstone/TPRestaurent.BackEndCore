@@ -1154,10 +1154,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     foreach (var account in accountDb.Items)
                     {
+                        var userName = account.FirstName + " " + account.LastName;  
                         string accountLogMessage = await CheckHacked(account, hashingService, loyaltyPointRepository);
                         if (!string.IsNullOrEmpty(accountLogMessage))
                         {
-                            logMessage.Append($"Thông tin số dư và điểm thưởng của account với {account.Id} có dấu hiệu bất thường. |");
+                            logMessage.Append($"Thông tin số dư và điểm thưởng của account với {account.Id} - {userName} - {account.PhoneNumber} có dấu hiệu bất thường. |");
                             logMessage.Append(accountLogMessage);
                             if (!ShouldNoticeManager)
                             {
@@ -1165,6 +1166,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                             account.IsBanned = true;
                         }
+
                     }
                     Logger.WriteLog(new LogDto
                     {
