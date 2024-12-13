@@ -109,6 +109,10 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
             var fireBaseService = Resolve<IFirebaseService>();
             var notificationMessageRepository = Resolve<IGenericRepository<NotificationMessage>>();
             var currentTime = utility.GetCurrentDateTimeInTimeZone();
+            if (string.IsNullOrEmpty(message))
+            {
+
+            }
 
             var accountDb = await accountRepository!.GetById(accountId);
             if (accountDb == null)
@@ -122,6 +126,8 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
                 var deviceTokenList = tokenDb.Items.Where(p => !string.IsNullOrEmpty(p.DeviceToken)).Select(p => p.DeviceToken);
                 if (deviceTokenList != null)
                 {
+                    
+
                     var notification = new NotificationMessage
                     {
                         NotificationId = Guid.NewGuid(),
