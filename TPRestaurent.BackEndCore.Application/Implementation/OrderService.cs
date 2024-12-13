@@ -1701,6 +1701,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(
                         o => o.OrderId == orderRequestDto.OrderId &&
                              o.OrderDetailStatusId != OrderDetailStatus.Cancelled, 0, 0, p => p.OrderTime, false, null);
+
+
                     double money = orderDb.TotalAmount;
 
                     if(orderDb.OrderTypeId == OrderType.Reservation)
@@ -3159,9 +3161,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         orderSessionUpdated = true;
                     }
                     else if (orderDetailDb.Items.Where(o => o.OrderSessionId == session.OrderSessionId)
-                                 .All(o => o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe)
+                                 .All(o => o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe || o.OrderDetailStatusId == OrderDetailStatus.Cancelled)
                              && sessionOrderDetailDb.Items.All(o =>
-                                 o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe))
+                                 o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe || o.OrderDetailStatusId == OrderDetailStatus.Cancelled))
                     {
                         session.OrderSessionStatusId = OrderSessionStatus.Completed;
                         orderSessionUpdated = true;
