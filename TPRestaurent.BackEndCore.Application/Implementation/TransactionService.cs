@@ -1271,7 +1271,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                     , 0, 0, null, false, null);
                 string loyaltyPointRecord = "";
                 string newBalanceRecord = "";
-                int previousBalance = 0;
                 foreach (var item in loyaltyPointDb.Items.OrderBy(t => t.TransactionDate))
                 {
                     loyaltyPointRecord = hashingService.UnHashing(item.PointChanged, true).Result.ToString();
@@ -1300,17 +1299,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         continue;
                     }
 
-                    if (previousBalance != int.Parse(newBalanceRecord.Split('_')[1]) - int.Parse(loyaltyPointRecord.Split('_')[1]))
-                    {
-                        logMessage.Append($"{i++}. Lịch sử tổng điểm thưởng mới không thuộc về tài khoản {accountInfo} (id record {item.LoyalPointsHistoryId}). |");
-                    }
-
-                    previousBalance = int.Parse(newBalanceRecord.Split('_')[1]);
-                }
-
-                if(previousBalance != loyaltyPointAmount)
-                {
-                    logMessage.Append($"{i++}. Tổng số điểm thưởng hiện tại không khớp với lịch sử. |");
                 }
 
             }
