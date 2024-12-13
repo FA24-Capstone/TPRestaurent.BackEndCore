@@ -113,7 +113,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     GroupedDishCraftId = Guid.NewGuid(),
                     GroupNumber = previousTimeStamp == null ? 1 : previousTimeStamp.GroupNumber + 1,
-                    StartTime = previousTimeStamp == null ? utility.GetCurrentDateInTimeZone().AddHours(8) : previousTimeStamp.EndTime,
+                    StartTime = previousTimeStamp == null ? utility.GetCurrentDateInTimeZone().AddHours(0) : previousTimeStamp.EndTime,
                     EndTime = currentTime,
                     IsFinished = false,
                     OrderDetailidList = string.Join(",", groupedDishData.OrderDetailIds),
