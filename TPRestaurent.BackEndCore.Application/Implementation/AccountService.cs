@@ -465,13 +465,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (!utility.IsValidPhoneNumberInput(phoneNumber))
                 {
                     return BuildAppActionResultError(result, "Số điện thoại không hợp lệ. Vui lòng kiểm tra lại.");
-                    return result;
                 }
-                var accountDb = await _accountRepository.GetByExpression(o => o.PhoneNumber.Equals(phoneNumber) && !o.IsDeleted && !o.IsBanned, null);
+                var accountDb = await _accountRepository.GetByExpression(o => o.PhoneNumber.Equals(phoneNumber) && !o.IsDeleted, null);
                 if (accountDb == null)
                 {
                     return BuildAppActionResultError(result, $"Không tìm thấy tài khoản khách hàng với số điện thoại {phoneNumber}.");
-                    return result;
+                }
+
+                if (accountDb.IsBanned)
+                {
+                    return BuildAppActionResultError(result, $"Tài khoản khách hàng với số điện thoại {phoneNumber} đã bị cấm.");
                 }
 
                 if (!string.IsNullOrEmpty(accountDb.OTP))
