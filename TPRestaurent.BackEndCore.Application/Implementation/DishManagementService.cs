@@ -59,8 +59,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
+                tags.ForEach(t => t = t.ToLower());
                 var dishTagRepository = Resolve<IGenericRepository<DishTag>>();
-                var dishTagDb = await dishTagRepository.GetAllDataByExpression(d => tags.Contains(d.Tag.Name.ToLower())
+                var tagRepository = Resolve<IGenericRepository<Tag>>();
+                var allData = await tagRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
+                var tagDb = allData.Items
+                .Where(t => tags.Contains(t.Name.ToLower()) ||
+                            tags.Any(name => t.Name.ToLower().Contains(name)))
+                .Select(t => t.TagId)
+                .ToList();
+                var dishTagDb = await dishTagRepository.GetAllDataByExpression(d => d.TagId.HasValue && tagDb.Contains(d.TagId.Value)
                                                                                     && (!d.DishId.HasValue || d.Dish.isAvailable && !d.Dish.IsDeleted)
                                                                                     && (!d.ComboId.HasValue || d.Combo.IsAvailable && !d.Combo.IsDeleted)
                                                                                     , 0, 0, null, false, d => d.Combo, d => d.Dish);
@@ -74,7 +82,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                         return d.Combo.Name;
                     }).ToDictionary(t => t.Key, t => t.Count());
-                    result.Result = dishGroup.OrderByDescending(d => d.Value).Take(batchSize).Select(d => d.Key);
+                    result.Result = dishGroup.OrderByDescending(d => d.Value).Take(batchSize).Select(d => d.Key).ToList();
                 }
             }
             catch (Exception ex)
