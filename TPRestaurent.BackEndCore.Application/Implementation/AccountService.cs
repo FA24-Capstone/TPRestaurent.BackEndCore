@@ -32,6 +32,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private readonly IEmailService _emailService;
         private readonly IExcelService _excelService;
         private readonly IMapService _mapService;
+        private readonly IHashingService _hashingService;
         public AccountService(
             IGenericRepository<Account> accountRepository,
             UserManager<Account> userManager,
@@ -40,6 +41,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             IUnitOfWork unitOfWork,
             IEmailService emailService,
             IExcelService excelService,
+            IHashingService hashingService,
             IMapper mapper,
             IServiceProvider serviceProvider,
             IMapService mapService
@@ -51,6 +53,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _signInManager = signInManager;
             _emailService = emailService;
             _excelService = excelService;
+            _hashingService = hashingService;
             _tokenDto = new TokenDto();
             _mapper = mapper;
             _userRoleRepository = userRoleRepository;
@@ -260,7 +263,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var couponRepository = Resolve<IGenericRepository<Coupon>>();
             var couponProgramRepository = Resolve<IGenericRepository<CouponProgram>>();
             var emnailService = Resolve<IEmailService>();
-            var hashingService = Resolve<IHashingService>();
 
             try
             {
@@ -293,13 +295,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         RegisteredDate = utility.GetCurrentDateInTimeZone()
                     };
 
-                    var loyaltyPoint = hashingService.Hashing(user.Id, 0, true);
+                    var loyaltyPoint = _hashingService.Hashing(user.Id, 0, true);
                     if (loyaltyPoint.IsSuccess)
                     {
                         user.LoyaltyPoint = loyaltyPoint.Result.ToString();
                     }
 
-                    var storeCredit = hashingService.Hashing(user.Id, 0, false);
+                    var storeCredit = _hashingService.Hashing(user.Id, 0, false);
                     if (storeCredit.IsSuccess)
                     {
                         user.StoreCreditAmount = storeCredit.Result.ToString();
@@ -879,9 +881,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 _tokenDto.Token = token;
                 _tokenDto.RefreshToken = refreshToken;
-                user = DecodeStoreCreditAndLoyaltyPointOfAccount(new List<Account>{
-                    user
-                }).FirstOrDefault();
+                user = DecodeStoreCreditAndLoyaltyPointOfAccount(user);
                 _tokenDto.Account = _mapper.Map<AccountResponse>(user);
                 var customerInfoAddressDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.AccountId.Equals(user.Id) && !c.IsDeleted, 0, 0, null, false, null);
                 if (customerInfoAddressDb.Items.Count() > 0)
@@ -1515,7 +1515,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
                 var listRole = await roleRepository!.GetAllDataByExpression(null, 1, 100, null, false, null);
                 var customerInfoDb = await _accountRepository.GetByExpression(c => c.PhoneNumber.Equals(phoneNumber));
-                customerInfoDb = DecodeStoreCreditAndLoyaltyPointOfAccount(new List<Account> { customerInfoDb }).FirstOrDefault();
+                customerInfoDb = DecodeStoreCreditAndLoyaltyPointOfAccount(customerInfoDb);
                 var listMap = _mapper.Map<AccountResponse>(customerInfoDb);
 
                 if (customerInfoDb == null)
@@ -1963,7 +1963,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var jwtService = Resolve<IJwtService>();
             var tokenRepository = Resolve<IGenericRepository<Token>>();
             var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
-            var hashingService = Resolve<IHashingService>();
             await _unitOfWork.ExecuteInTransaction(async () =>
             {
                 try
@@ -2001,7 +2000,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             
                         };
 
-                        var loyaltyPoint = hashingService.Hashing(user.Id, 0, true);
+                        var loyaltyPoint = _hashingService.Hashing(user.Id, 0, true);
                         if (loyaltyPoint.IsSuccess)
                         {
                             user.LoyaltyPoint = loyaltyPoint.Result.ToString();
@@ -2010,7 +2009,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             user.LoyaltyPoint = "";
                         }
 
-                        var storeCredit = hashingService.Hashing(user.Id, 0, false);
+                        var storeCredit = _hashingService.Hashing(user.Id, 0, false);
                         if (storeCredit.IsSuccess)
                         {
                             user.StoreCreditAmount = "";
@@ -2144,18 +2143,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             try
             {
-                var hashingService = Resolve<IHashingService>();
                 var storeCreditResult = new AppActionResult();
                 var loyaltyPointResult = new AppActionResult();
                 foreach (var account in accounts)
                 {
-                    storeCreditResult = hashingService.UnHashing(account.StoreCreditAmount, false);
+                    storeCreditResult = _hashingService.UnHashing(account.StoreCreditAmount, false);
                     if (storeCreditResult.IsSuccess)
                     {
                         account.StoreCreditAmount = storeCreditResult.Result.ToString().Split('_')[1];
                     }
 
-                    loyaltyPointResult = hashingService.UnHashing(account.LoyaltyPoint, true);
+                    loyaltyPointResult = _hashingService.UnHashing(account.LoyaltyPoint, true);
                     if (loyaltyPointResult.IsSuccess)
                     {
                         account.LoyaltyPoint = loyaltyPointResult.Result.ToString().Split('_')[1];
@@ -2167,5 +2165,29 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return accounts;
         }
+        private Account DecodeStoreCreditAndLoyaltyPointOfAccount(Account account)
+        {
+            try
+            {
+                var storeCreditResult = new AppActionResult();
+                var loyaltyPointResult = new AppActionResult();
+                storeCreditResult = _hashingService.UnHashing(account.StoreCreditAmount, false);
+                if (storeCreditResult.IsSuccess)
+                {
+                    account.StoreCreditAmount = storeCreditResult.Result.ToString().Split('_')[1];
+                }
+
+                loyaltyPointResult = _hashingService.UnHashing(account.LoyaltyPoint, true);
+                if (loyaltyPointResult.IsSuccess)
+                {
+                    account.LoyaltyPoint = loyaltyPointResult.Result.ToString().Split('_')[1];
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+            return account;
+        }
+
     }
 }
