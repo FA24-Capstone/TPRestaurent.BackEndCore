@@ -954,6 +954,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 //varlidate order
                 var orderRepository = Resolve<IGenericRepository<Order>>();
                 var hashingService = Resolve<IHashingService>();
+                var emailService = Resolve<IEmailService>();
                 var utility = Resolve<Utility>();
                 var orderDb = await orderRepository.GetByExpression(p => p.OrderId == request.OrderId & p.StatusId == OrderStatus.Completed, o => o.Account);
 
@@ -1012,6 +1013,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 await _repository.Insert(refundTransaction);
                 await _unitOfWork.SaveChangesAsync();
+
+                emailService.SendEmail(orderDb.Account.Email, SD.SubjectMail.NOTIFY_DUPLICATED_PAYMENT_OF_ORDER, TemplateMappingHelper.GetTemplateRefundDuplicatedPaymentForCustomer("", orderDb));
             }
             catch (Exception ex)
             {
