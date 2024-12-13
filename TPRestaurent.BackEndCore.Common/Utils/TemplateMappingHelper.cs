@@ -1574,4 +1574,89 @@ public class TemplateMappingHelper
 
         return content;
     }
+    public static string GetTemplateForDatabaseNotification()
+    {
+        var content = @"
+
+<!DOCTYPE html>
+<html lang=""vi"">
+
+<head>
+  <meta charset=""UTF-8"">
+  <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+  <title>Thông báo từ hệ thống</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      background-color: #B71C1C;
+      color: #ffffff;
+      text-align: center;
+      padding: 15px 20px;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .content {
+      margin: 20px 0;
+      line-height: 1.6;
+    }
+
+    .highlight {
+      color: #B71C1C;
+      font-weight: bold;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <div class=""container"">
+    <div class=""header"">
+      <h1>Thông báo từ Nhà hàng Thiên Phú</h1>
+    </div>
+    <div class=""content"">
+      <p>Xin chào quản lí nhà hàng Thiên Phú,</p>
+      <p>Hiện tại hệ thống phát hiện có một số chỉnh sửa bất thường trong cơ sở dữ liệu liên quan đến thanh toán và số dư. Các tài khoản có những dấu hiệu trên hiện đã bị cấm.</p>
+      <p>Vui lòng truy cập vào trang quản trị, phần log để xem chi tiết, hoặc truy cập đường link sau:</p>
+      <p><a href=""https://www.thienphurestaurant.com/admin/logs"" class=""highlight"">https://www.thienphurestaurant.com/admin/logs</a></p>
+    </div>
+    <div class=""footer"">
+      <p>Trân trọng,<br>Đội ngũ Nhà hàng Thiên Phú</p>
+    </div>
+  </div>
+</body>
+
+</html>
+";
+
+        return content;
+    }
+
 }

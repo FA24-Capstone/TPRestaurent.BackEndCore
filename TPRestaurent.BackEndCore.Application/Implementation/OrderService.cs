@@ -738,7 +738,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     // Get current time in time zone
                     DateTime orderTime = utility.GetCurrentDateTimeInTimeZone();
 
-                    // Validate order time
+                    //Validate order time
 
                     //if (orderRequestDto.OrderType != OrderType.Reservation)
                     //{
@@ -804,7 +804,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         accountDb = await accountRepository.GetByExpression(c => c.Id == orderRequestDto.CustomerId.Value.ToString(), null);
                         if (accountDb == null)
                         {
-                            throw new Exception($"Xảy ra lỗi");
+                            throw new Exception($"Không tìm thấy khách hàng với id {orderRequestDto.CustomerId}");
                         }
 
                         order.AccountId = orderRequestDto.CustomerId.ToString();
@@ -871,6 +871,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         foreach (var item in orderRequestDto.OrderDetailsDtos)
                         {
+                            if(item.Quantity <= 0)
+                            {
+                                throw new Exception($"Số lượng mỗi món phải lớn hơn 0");
+                            }
                             var orderDetail = new OrderDetail()
                             {
                                 OrderDetailId = Guid.NewGuid(),
