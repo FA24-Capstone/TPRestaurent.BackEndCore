@@ -136,6 +136,7 @@ public class SD
         public static string INSUFFICIENT_COUPON_QUANTITY = "SỐ LƯỢNG COUPON KHÔNG ĐỦ";
         public static string NOTIFY_DUPLICATED_PAYMENT_OF_ORDER = "THÔNG BÁO HOÀN TIỀN DO ĐƠN HÀNG THANH TOÁN 2 LẦN";
         public static string NOTIFY_DUPLICATED_PAYMENT_OF_ORDER_REQUEST = "THÔNG BÁO YÊU CẦU HOÀN TIỀN DO ĐƠN HÀNG THANH TOÁN 2 LẦN";
+        public static string NOTIFY_ABNORMAL_DB_MODIFICATION = "THÔNG BÁO KIỂM TRA SỬA ĐỔI BẤT THƯỜNG TRONG CƠ SỞ DỮ LIỆU";
     }
 
     public class WeekForYear
