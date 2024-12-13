@@ -135,7 +135,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPut("update-order-status/{orderId}")]
-        //[TokenValidationMiddleware(Permission.ORDER_STATUS_MANAGEMENT)]
+        [TokenValidationMiddleware(Permission.ORDER_STATUS_MANAGEMENT)]
         public async Task<AppActionResult> ChangeOrderStatus(Guid orderId, bool isSuccessful, OrderStatus? status, bool? asCustomer)
         {
             return await _service.ChangeOrderStatus(orderId, isSuccessful, status, asCustomer, true);
@@ -156,7 +156,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("upload-confirmed-order-image")]
-        //[TokenValidationMiddleware(Permission.SHIPPER)]
+        [TokenValidationMiddleware(Permission.SHIPPER)]
         public async Task<AppActionResult> UploadConfirmedOrderImage([FromForm] ConfirmedOrderRequest confirmedOrderRequest)
         {
             return await _service.UploadConfirmedOrderImage(confirmedOrderRequest);

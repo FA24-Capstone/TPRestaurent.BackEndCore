@@ -1,5 +1,6 @@
 ﻿using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
+using TPRestaurent.BackEndCore.Domain.Enums;
 
 namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
@@ -19,5 +20,8 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public Task<AppActionResult> DeleteTable(Guid id);
 
         public Task<AppActionResult> GetAllTableRating(int pageNumber, int pageSize);
+        public Task<AppActionResult> UpdateTableAvailability(List<Guid> tableIds, TableStatus tableStatus);
+        public Task<AppActionResult> UpdateTableAvailabilityAfterPayment(Guid orderId, TableStatus tableStatus);
+        public Task UpdateTableAvailability();
     }
 }

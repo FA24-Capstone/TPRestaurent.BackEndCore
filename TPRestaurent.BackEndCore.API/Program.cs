@@ -166,6 +166,12 @@ builder.Services.AddHangfireServer(options =>
     options.Queues = new[] { "upgrade-user-rank" };
     options.WorkerCount = 1;
 });
+builder.Services.AddHangfireServer(options =>
+{
+    options.ServerName = $"{Environment.MachineName}:table";
+    options.Queues = new[] { "update-table-availability" };
+    options.WorkerCount = 1;
+});
 
 
 

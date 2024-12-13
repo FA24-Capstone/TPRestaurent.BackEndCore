@@ -31,9 +31,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private BackEndLogger _logger;
         private IHubServices.IHubServices _hubServices;
         private IHashingService _hashingService;
+        private ITableService _tableService;
         private IConfiguration _configuration;
 
-        public OrderService(IGenericRepository<Order> repository, IGenericRepository<OrderDetail> detailRepository, IGenericRepository<TableDetail> tableDetailRepository, IGenericRepository<OrderSession> sessionRepository, IHashingService hashingService, IUnitOfWork unitOfWork, IMapper mapper, IServiceProvider service, BackEndLogger logger, IHubServices.IHubServices hubServices,
+        public OrderService(IGenericRepository<Order> repository, 
+            IGenericRepository<OrderDetail> detailRepository, 
+            IGenericRepository<TableDetail> tableDetailRepository, 
+            IGenericRepository<OrderSession> sessionRepository, 
+            IHashingService hashingService, 
+            ITableService tableService,
+            IUnitOfWork unitOfWork, 
+            IMapper mapper, IServiceProvider service, BackEndLogger logger, IHubServices.IHubServices hubServices,
             IConfiguration configuration
         ) : base(service)
         {
@@ -45,6 +53,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _mapper = mapper;
             _logger = logger;
             _hashingService = hashingService;
+            _tableService = tableService;
             _hubServices = hubServices;
             _configuration = configuration;
         }
@@ -105,7 +114,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             if (o.Combo != null)
                             {
                                 var combo = await comboRepository!.GetById(o.Combo.ComboId);
-                                orderDetail.Price = Math.Ceiling((1 - combo.Discount / 100) * combo.Price / 1000) * 1000;
+                                orderDetail.Price = combo.Price;
                                 orderDetail.ComboId = combo.ComboId;
                                 orderDetail.Discount = combo.Discount;
                                 foreach (var dishComboId in o.Combo.DishComboIds)
@@ -184,7 +193,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     dishSizeDetails.Add(dishSizeDetail);
                                 }
 
-                                orderDetail.Price = Math.Ceiling((1 - dishSizeDetail.Discount / 100) * dishSizeDetail.Price / 1000) * 1000;
+                                orderDetail.Price = dishSizeDetail.Price;
+                                orderDetail.Discount = dishSizeDetail.Discount;
                                 orderDetail.DishSizeDetailId = o.DishSizeDetailId;
                                 orderDetail.Quantity = o.Quantity;
                                 orderDetail.OrderDetailStatusId = OrderDetailStatus.Unchecked;
@@ -321,6 +331,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             if (status.HasValue && status.Value == OrderStatus.Processing)
                             {
                                 orderDb.StatusId = OrderStatus.Processing;
+                                await _tableService.UpdateTableAvailabilityAfterPayment(orderId, TableStatus.CURRENTLYUSED);
                             }
                             else if (!IsSuccessful)
                             {
@@ -356,6 +367,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     orderDb.CancelledTime = utility.GetCurrentDateTimeInTimeZone();
                                     await UpdateCancelledOrderDishQuantity(orderDb, updateDishSizeDetailList, currentTime);
                                 }
+                                await _tableService.UpdateTableAvailabilityAfterPayment(orderId, TableStatus.AVAILABLE);
                             }
                         }
                         else
@@ -472,6 +484,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     orderDb.StatusId = OrderStatus.Cancelled;
                                     await UpdateCancelledOrderDishQuantity(orderDb, updateDishSizeDetailList, currentTime, false);
                                 }
+                                await _tableService.UpdateTableAvailabilityAfterPayment(orderId, TableStatus.AVAILABLE);
                             }
                         }
                         else
@@ -736,39 +749,39 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     //Validate order time
 
-                    if (orderRequestDto.OrderType != OrderType.Reservation)
-                    {
-                        bool isInvalidOrderTime = orderTime.Date.AddHours(openTime) > orderTime ||
-                                                  orderTime.Date.AddHours(closedTime) < orderTime;
-                        if (isInvalidOrderTime)
-                        {
-                            throw new Exception("Thời gian đặt không hợp lệ");
-                        }
-                    }
+                    //if (orderRequestDto.OrderType != OrderType.Reservation)
+                    //{
+                    //    bool isInvalidOrderTime = orderTime.Date.AddHours(openTime) > orderTime ||
+                    //                              orderTime.Date.AddHours(closedTime) < orderTime;
+                    //    if (isInvalidOrderTime)
+                    //    {
+                    //        throw new Exception("Thời gian đặt không hợp lệ");
+                    //    }
+                    //}
 
 
-                    if (orderRequestDto.OrderType == OrderType.Reservation)
-                    {
-                        bool isInvalidReservationTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.MealTime ||
-                                                        orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.MealTime;
-                        if (isInvalidReservationTime)
-                        {
-                            throw new Exception("Thời gian đặt không hợp lệ");
-                        }
+                    //if (orderRequestDto.OrderType == OrderType.Reservation)
+                    //{
+                    //    bool isInvalidReservationTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.MealTime ||
+                    //                                    orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.MealTime;
+                    //    if (isInvalidReservationTime)
+                    //    {
+                    //        throw new Exception("Thời gian đặt không hợp lệ");
+                    //    }
 
-                        if (!orderRequestDto.ReservationOrder.EndTime.HasValue)
-                        {
-                            var averageDiningTime = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.AVERAGE_MEAL_DURATION), null);
-                            orderRequestDto.ReservationOrder.EndTime = averageDiningTime != null ? orderRequestDto.ReservationOrder.MealTime.AddHours(double.Parse(averageDiningTime.CurrentValue))
-                                                                                                 : orderRequestDto.ReservationOrder.MealTime.AddHours(1);
-                        }
-                        bool isInvalidEndTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.EndTime.Value ||
-                                                        orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.EndTime.Value;
-                        if (isInvalidEndTime)
-                        {
-                            throw new Exception("Thời gian đặt không hợp lệ");
-                        }
-                    }
+                    //    if (!orderRequestDto.ReservationOrder.EndTime.HasValue)
+                    //    {
+                    //        var averageDiningTime = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.AVERAGE_MEAL_DURATION), null);
+                    //        orderRequestDto.ReservationOrder.EndTime = averageDiningTime != null ? orderRequestDto.ReservationOrder.MealTime.AddHours(double.Parse(averageDiningTime.CurrentValue))
+                    //                                                                             : orderRequestDto.ReservationOrder.MealTime.AddHours(1);
+                    //    }
+                    //    bool isInvalidEndTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.EndTime.Value ||
+                    //                                    orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.EndTime.Value;
+                    //    if (isInvalidEndTime)
+                    //    {
+                    //        throw new Exception("Thời gian đặt không hợp lệ");
+                    //    }
+                    //}
 
                     // Validate number of people
                     bool isInvalidNumberOfPeople = false;
@@ -1158,6 +1171,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
 
                             await tableDetailRepository.InsertRange(tableDetails);
+
+                            await _tableService.UpdateTableAvailability(orderRequestDto.MealWithoutReservation.TableIds, TableStatus.CURRENTLYUSED);
+
                             orderWithPayment.Order = order;
 
                             if (orderRequestDto.CustomerId.HasValue)
@@ -4830,6 +4846,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                         && orderDetailIds.Contains(d.OrderDetailId) 
                                                                                         && d.OrderDetailStatusId == OrderDetailStatus.Unchecked
                                                                                         , 0, 0, null, false, null);
+                
                 if (orderDetailDb.Items.Count > 0)
                 {
                     orderDetailDb.Items.ForEach(o => o.OrderDetailStatusId = OrderDetailStatus.Cancelled);
@@ -4854,6 +4871,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                             updateDishSizeDetailList.Add(dishSizeDetailDb);
                         }
+
                         orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
                     }
 
@@ -4892,6 +4910,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await _detailRepository.UpdateRange(orderDetailDb.Items);
 
                     //Update Order and Order Session
+                    var orderIds = orderDetailDb.Items.DistinctBy(o => o.OrderId).Select(o => o.OrderId);
+                    var orderDb = await _repository.GetAllDataByExpression(o => orderIds.Contains(o.OrderId) && o.OrderTypeId != OrderType.Delivery, 0, 0, null, false, null);
+                    foreach(var order in orderDb.Items)
+                    {
+                        order.TotalAmount -= orderDetailDb.Items.Where(o => o.OrderId == order.OrderId)
+                                                                .Sum(o => Math.Ceiling((1 - o.Discount / 100) * o.Price * o.Quantity / 1000) * 1000);
+                    }
                     // OrderSession: RecalculateTime, Check Status=> if(all cancelled -> cancelled, else completed)
                     var orderSessionIds = orderDetailDb.Items.DistinctBy(o => o.OrderSessionId).Select(o => o.OrderSessionId);
                     //Recalculate
@@ -4910,8 +4935,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
 
                     //order: Total, if !(uncheck or processing) -> temporarily completed(+type), else, the same
-                    var orderIds = orderDetailDb.Items.DistinctBy(o => o.OrderId).Select(o => o.OrderId);
-                    var orderDb = await _repository.GetAllDataByExpression(o => orderIds.Contains(o.OrderId) && o.OrderTypeId != OrderType.Delivery, 0, 0, null, false, null);
+                    
                     foreach (var order in orderDb.Items)
                     {
                         if (orderDetailDb.Items.Where(o => o.OrderId == order.OrderId).All(o => !(o.OrderDetailStatusId == OrderDetailStatus.Unchecked || o.OrderDetailStatusId == OrderDetailStatus.Processing)))
