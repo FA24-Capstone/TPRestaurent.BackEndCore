@@ -58,6 +58,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
         public double? Deposit { get; set; }
         public bool? IsPrivate { get; set; }
         public Transaction? Transaction { get; set; }
+        public Transaction? RefundTransaction { get; set; }
         public string? ValidatingImg { get; set; }
         public Account? Shipper { get; set; }
         public string? TotalDistance { get; set; }

@@ -506,7 +506,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                      username, orderDb)
                             );
                             string notificationEmailMessage = "Nhà hàng đã gửi thông báo mới tới email của bạn";
-                            await notificationMessageService!.SendNotificationToAccountAsync(accountDb.Id, notificationEmailMessage, true);
+                            await notificationMessageService!.SendNotificationToAccountAsync(accountDb.Id, notificationEmailMessage, false);
                         }
                         else
                         {
@@ -514,7 +514,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                    $"Xin chân trọng cảm ơn quý khách.";
                             //await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
                             string notificationSmsMessage = "Nhà hàng đã gửi thông báo mới tới số điện thoại của bạn";
-                            await notificationMessageService!.SendNotificationToAccountAsync(accountDb.Id, notificationSmsMessage, true);
+                            await notificationMessageService!.SendNotificationToAccountAsync(accountDb.Id, notificationSmsMessage, false);
                         }
                     }
 
@@ -1686,6 +1686,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     else
                     {
                         accountDb = await accountRepository.GetById(orderDb.AccountId);
+                    }
+
+                    if (string.IsNullOrEmpty(orderDb.AccountId))
+                    {
+                        orderDb.AccountId = accountDb.Id;
                     }
 
                     if (accountDb == null && orderRequestDto.CouponIds.Count > 0)
@@ -3431,10 +3436,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var transactionRepository = Resolve<IGenericRepository<Transaction>>();
                 var orderResponse = _mapper.Map<OrderResponse>(order);
-                var orderTransactionDb = await transactionRepository.GetAllDataByExpression(o => o.OrderId.HasValue && o.OrderId == reservationId, 0, 0, null, false, o => o.TransactionType);
+                var orderTransactionDb = await transactionRepository.GetAllDataByExpression(o => o.OrderId.HasValue && o.OrderId == reservationId && o.TransactionTypeId != TransactionType.Refund, 0, 0, null, false, o => o.TransactionType);
+                var refundTransactionDb = await transactionRepository.GetAllDataByExpression(o => o.OrderId.HasValue && o.OrderId == reservationId && o.TransactionTypeId == TransactionType.Refund, 0, 0, null, false, o => o.TransactionType);
                 if (orderTransactionDb.Items.Count() > 0)
                 {
                     orderResponse.Transaction = orderTransactionDb.Items.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).FirstOrDefault();
+                    orderResponse.RefundTransaction = refundTransactionDb.Items.FirstOrDefault();
                     var successfulDepositTransaction = orderTransactionDb.Items.Where(o => o.TransationStatusId == TransationStatus.SUCCESSFUL && o.TransactionTypeId == TransactionType.Deposit).ToList();
                     if (successfulDepositTransaction.Count() == 1)
                     {
