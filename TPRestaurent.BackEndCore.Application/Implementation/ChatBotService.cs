@@ -91,6 +91,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             request.Append($"Nếu khách hỏi có giao hàng không mà không nêu địa chỉ cụ thể hay chứa giao tới nhà tôi-> địa chỉ là {customerInfoAddress.CustomerInfoAddressName}.");
                         }
                     }
+                }else if(dto.IsFirstCall)
+                {
+                    result.Result = $"Nhà hàng Thiên Phú Đà Lạt xin chào, bạn cần hỗ trợ gì ạ?";
+                    return result;
                 }
 
                 request.Append($"{SD.OpenAIPrompt.HOT_FIX_PROMPT}{dto.Message}");
