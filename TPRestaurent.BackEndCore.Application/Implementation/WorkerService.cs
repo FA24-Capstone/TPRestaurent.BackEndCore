@@ -21,6 +21,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         private IInvoiceService _invoiceService;
         private IDishService _dishService;
         private ICouponService _couponService;
+        private ITableService _tableService;
 
         public WorkerService(IServiceProvider serviceProvider,
             BackEndLogger logger,
@@ -35,7 +36,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             ITransactionService transactionService,
             IInvoiceService invoiceService,
             IDishService dishService,
-            ICouponService couponService
+            ICouponService couponService,
+            ITableService tableService
             ) : base(serviceProvider)
         {
             _logger = logger;
@@ -52,6 +54,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _dishService = dishService;
             _dishManagementService = dishManagementService;
             _couponService = couponService;
+            _tableService = tableService;
         }
 
         public async Task Start()
@@ -90,6 +93,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             RecurringJob.AddOrUpdate(() => _couponService.AssignCouponToUserWithRank(), "5 0 1 * *", vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _transactionService.LogMoneyInformationHacked(), Cron.HourInterval(4), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _couponService.UpgradeUserRank(), Cron.HourInterval(4), vietnamTimeZone);
+            RecurringJob.AddOrUpdate(() => _tableService.UpdateTableAvailability(), Cron.MinuteInterval(3), vietnamTimeZone);
 
 
             //RecurringJob.AddOrUpdate(() => _orderService.CancelOverReservation(), Cron.MinuteInterval(2), vietnamTimeZone);

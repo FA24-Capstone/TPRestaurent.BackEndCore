@@ -792,5 +792,79 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return tableHasCurrentOrUpcomingReservation;
         }
+
+        public async Task<AppActionResult> UpdateTableAvailabilityAfterPayment(Guid orderId, TableStatus tableStatus)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
+                var tableDetailDb = await tableDetailRepository.GetAllDataByExpression(t => t.OrderId == orderId, 0, 0, null, false, null);
+                if(tableDetailDb.Items.Count > 0)
+                {
+                    var tableIds = tableDetailDb.Items.Select(t => t.TableId).ToList();
+                    var tableDb = await _repository.GetAllDataByExpression(t => tableIds.Contains(t.TableId), 0, 0, null, false, null);
+                    tableDb.Items.ForEach(t => t.TableStatusId = tableStatus);
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        public async Task<AppActionResult> UpdateTableAvailability(List<Guid> tableIds, TableStatus tableStatus)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var tableDb = await _repository.GetAllDataByExpression(t => tableIds.Contains(t.TableId), 0, 0, null, false, null);
+                tableDb.Items.ForEach(t => t.TableStatusId = tableStatus);
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
+        }
+
+        [Hangfire.Queue("update-table-availability")]
+        public async Task UpdateTableAvailability()
+        {
+            try
+            {
+                var utility = Resolve<Utility>();
+                var orderRepository = Resolve<IGenericRepository<Order>>();
+                var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                var timeToKeepReservationtableResult = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TIME_TO_KEEP_RESERVATION), null);
+                double timeToKeepReservationtable = 30;
+                if (timeToKeepReservationtableResult != null)
+                {
+                    timeToKeepReservationtable = double.Parse(timeToKeepReservationtableResult.CurrentValue);
+                }
+
+                var orderToSetUsing = await orderRepository.GetAllDataByExpression(o => o.OrderTypeId != OrderType.Delivery 
+                                                                                  && o.StatusId == OrderStatus.DepositPaid
+                                                                                  && o.MealTime.Value.AddMinutes(3) >= currentTime, 0, 0, null, false, null);
+                var orderToSetUsingIds = orderToSetUsing.Items.Select(o => o.OrderId).ToList();
+                var tableDetailOrderToSetUsing = await tableDetailRepository.GetAllDataByExpression(t => orderToSetUsingIds.Contains(t.OrderId), 0, 0, null, false, null);
+                await UpdateTableAvailability(tableDetailOrderToSetUsing.Items.Select(t => t.TableId).ToList(), TableStatus.CURRENTLYUSED);
+
+
+                var orderToSetAvailable = await orderRepository.GetAllDataByExpression(o => o.OrderTypeId != OrderType.Delivery 
+                                                                                  && o.StatusId != OrderStatus.DepositPaid
+                                                                                  && o.MealTime.Value.AddMinutes(30) <= currentTime, 0, 0, null, false, null);
+                var orderToSetAvailableIds = orderToSetAvailable.Items.Select(o => o.OrderId).ToList();
+                var tableDetailOrderToSetAvailable = await tableDetailRepository.GetAllDataByExpression(t => orderToSetAvailableIds.Contains(t.OrderId), 0, 0, null, false, null);
+                await UpdateTableAvailability(tableDetailOrderToSetAvailable.Items.Select(t => t.TableId).ToList(), TableStatus.AVAILABLE);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+            }
+        }
     }
 }
