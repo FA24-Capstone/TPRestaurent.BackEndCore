@@ -358,11 +358,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 var orderDb =
                                     await orderRepository!.GetByExpression(p => p.OrderId == paymentRequest.OrderId,
                                         p => p.Account!);
+                                Account accountDb = null;
+                                if (!string.IsNullOrEmpty(orderDb.AccountId))
+                                {
+                                    accountDb = await accountRepository.GetById(orderDb.AccountId);
+                                } else if (!string.IsNullOrEmpty(paymentRequest.AccountId))
+                                {
+                                    accountDb = await accountRepository.GetById(paymentRequest.AccountId);
+                                }
+
+                                if (accountDb == null)
+                                {
+                                    throw new Exception(
+                                           $"Không tìm thấy số dư tài khoản khách hàng");
+                                }
 
                                 if (orderDb.Account == null)
                                 {
-                                    throw new Exception(
-                                           $"Không tìm thấy tài khoản đặt hàng. Khôn thể thực hiện thanh toán với phương thức: Thanh toán với số dư tài khoản.");
+                                    
                                 }
 
                                 if ((orderDb.OrderTypeId != OrderType.Delivery &&
@@ -385,12 +398,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     }
                                 }
 
-                                var accountDb = await accountRepository.GetById(orderDb.AccountId);
-                                if (accountDb == null)
-                                {
-                                    throw new Exception(
-                                           $"Không tìm thấy số dư tài khoản khách hàng");
-                                }
 
                                 var storeCreditAmountResult = hashingService.UnHashing(accountDb.StoreCreditAmount, false);
                                 int storeCreditAmount = 0;
@@ -675,7 +682,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     else
                     {
-                        throw new Exception($"Để cập nhật, Trạn thanh toán phải chờ xử lí và trạng thái mong muốn phải khác chờ xử lí");
+                        throw new Exception($"Để cập nhật, Trạng thanh toán phải chờ xử lí và trạng thái mong muốn phải khác chờ xử lí");
                     }
                 }
                 catch (Exception ex)
@@ -733,7 +740,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> CreateRefund(Order order, bool asCustomer)
+        public async Task<AppActionResult> CreateRefund(Domain.Models.Order order, bool asCustomer)
         {
             AppActionResult result = new AppActionResult();
             try
@@ -1134,9 +1141,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var accountRepository = Resolve<IGenericRepository<Account>>();
                 var loyaltyPointRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
                 var hashingService = Resolve<IHashingService>();
+                var emailService = Resolve<IEmailService>();
+                var notificationService = Resolve<INotificationMessageService>();
                 var utility = Resolve<Utility>();
                 var customerIds = await GetCustomerId();
                 var accountDb = await accountRepository.GetAllDataByExpression(a => !a.IsDeleted && customerIds.Contains(a.Id), 0, 0, null, false, null);
+                bool ShouldNoticeManager = false;
                 if(accountDb.Items.Count > 0)
                 {
                     foreach (var account in accountDb.Items)
@@ -1146,6 +1156,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             logMessage.Append($"Thông tin số dư và điểm thưởng của account với {account.Id} có dấu hiệu bất thường. |");
                             logMessage.Append(accountLogMessage);
+                            if (!ShouldNoticeManager)
+                            {
+                                ShouldNoticeManager = true;
+                            }
+                            account.IsBanned = true;
                         }
                     }
                     Logger.WriteLog(new LogDto
@@ -1154,6 +1169,22 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         Timestamp = utility.GetCurrentDateTimeInTimeZone(),
                         Message = logMessage.ToString()
                     });
+
+                    if (ShouldNoticeManager)
+                    {
+                        //await accountRepository.UpdateRange(accountDb.Items);
+                        //await _unitOfWork.SaveChangesAsync();
+
+                        //Send Email and FCM to All Admin
+                        var adminEmail = await GetAdminEmails();
+                        foreach (var email in adminEmail)
+                        {
+                            emailService.SendEmail(email, SD.SubjectMail.NOTIFY_ABNORMAL_DB_MODIFICATION, TemplateMappingHelper.GetTemplateForDatabaseNotification());
+                        }
+                        var message = "THÔNG BÁO CÓ SỬA ĐỔI BẤT THƯỜNG TRONG CƠ SỞ DỮ LIỆU";
+                        await notificationService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, message);
+
+                    }
                 }
             }
             catch (Exception ex)

@@ -738,41 +738,41 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     // Get current time in time zone
                     DateTime orderTime = utility.GetCurrentDateTimeInTimeZone();
 
-                    // Validate order time
+                    //Validate order time
 
-                    //if (orderRequestDto.OrderType != OrderType.Reservation)
-                    //{
-                    //    bool isInvalidOrderTime = orderTime.Date.AddHours(openTime) > orderTime ||
-                    //                              orderTime.Date.AddHours(closedTime) < orderTime;
-                    //    if (isInvalidOrderTime)
-                    //    {
-                    //        throw new Exception("Thời gian đặt không hợp lệ");
-                    //    }
-                    //}
+                    if (orderRequestDto.OrderType != OrderType.Reservation)
+                    {
+                        bool isInvalidOrderTime = orderTime.Date.AddHours(openTime) > orderTime ||
+                                                  orderTime.Date.AddHours(closedTime) < orderTime;
+                        if (isInvalidOrderTime)
+                        {
+                            throw new Exception("Thời gian đặt không hợp lệ");
+                        }
+                    }
 
 
-                    //if (orderRequestDto.OrderType == OrderType.Reservation)
-                    //{
-                    //    bool isInvalidReservationTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.MealTime ||
-                    //                                    orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.MealTime;
-                    //    if (isInvalidReservationTime)
-                    //    {
-                    //        throw new Exception("Thời gian đặt không hợp lệ");
-                    //    }
+                    if (orderRequestDto.OrderType == OrderType.Reservation)
+                    {
+                        bool isInvalidReservationTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.MealTime ||
+                                                        orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.MealTime;
+                        if (isInvalidReservationTime)
+                        {
+                            throw new Exception("Thời gian đặt không hợp lệ");
+                        }
 
-                    //    if (!orderRequestDto.ReservationOrder.EndTime.HasValue)
-                    //    {
-                    //        var averageDiningTime = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.AVERAGE_MEAL_DURATION), null);
-                    //        orderRequestDto.ReservationOrder.EndTime = averageDiningTime != null ? orderRequestDto.ReservationOrder.MealTime.AddHours(double.Parse(averageDiningTime.CurrentValue))
-                    //                                                                             : orderRequestDto.ReservationOrder.MealTime.AddHours(1);
-                    //    }
-                    //    bool isInvalidEndTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.EndTime.Value ||
-                    //                                    orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.EndTime.Value;
-                    //    if (isInvalidEndTime)
-                    //    {
-                    //        throw new Exception("Thời gian đặt không hợp lệ");
-                    //    }
-                    //}
+                        if (!orderRequestDto.ReservationOrder.EndTime.HasValue)
+                        {
+                            var averageDiningTime = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.AVERAGE_MEAL_DURATION), null);
+                            orderRequestDto.ReservationOrder.EndTime = averageDiningTime != null ? orderRequestDto.ReservationOrder.MealTime.AddHours(double.Parse(averageDiningTime.CurrentValue))
+                                                                                                 : orderRequestDto.ReservationOrder.MealTime.AddHours(1);
+                        }
+                        bool isInvalidEndTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.EndTime.Value ||
+                                                        orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.EndTime.Value;
+                        if (isInvalidEndTime)
+                        {
+                            throw new Exception("Thời gian đặt không hợp lệ");
+                        }
+                    }
 
                     // Validate number of people
                     bool isInvalidNumberOfPeople = false;
@@ -804,7 +804,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         accountDb = await accountRepository.GetByExpression(c => c.Id == orderRequestDto.CustomerId.Value.ToString(), null);
                         if (accountDb == null)
                         {
-                            throw new Exception($"Xảy ra lỗi");
+                            throw new Exception($"Không tìm thấy khách hàng với id {orderRequestDto.CustomerId}");
                         }
 
                         order.AccountId = orderRequestDto.CustomerId.ToString();
@@ -871,6 +871,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         foreach (var item in orderRequestDto.OrderDetailsDtos)
                         {
+                            if(item.Quantity <= 0)
+                            {
+                                throw new Exception($"Số lượng mỗi món phải lớn hơn 0");
+                            }
                             var orderDetail = new OrderDetail()
                             {
                                 OrderDetailId = Guid.NewGuid(),
