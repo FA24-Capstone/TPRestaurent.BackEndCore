@@ -69,7 +69,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         var orderDb = await _repository.GetById(dto.OrderId);
                         var utility = Resolve<Utility>();
-                        var orderCombo = false;
                         if (orderDb == null)
                         {
                             throw new Exception($"Không tìm thấy đơn hàng với id {dto.OrderId}");
@@ -106,7 +105,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             if (o.Combo != null)
                             {
                                 var combo = await comboRepository!.GetById(o.Combo.ComboId);
-                                orderCombo = true;
                                 orderDetail.Price = Math.Ceiling((1 - combo.Discount / 100) * combo.Price / 1000) * 1000;
                                 orderDetail.ComboId = combo.ComboId;
                                 orderDetail.Discount = combo.Discount;
@@ -240,17 +238,16 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await dishManagementService.CalculatePreparationTime(estimatedPreparationTime);
                         orderDb.TotalAmount = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
                         orderDb.StatusId = OrderStatus.Processing;
+
                         await _repository.Update(orderDb);
                         await orderSessionRepository.Insert(orderSession);
                         await orderDetailRepository.InsertRange(orderDetails);
                         await comboOrderDetailRepository!.InsertRange(comboOrderDetails);
                         await dishSizeDetailRepository!.UpdateRange(dishSizeDetails);
                         await _unitOfWork.SaveChangesAsync();
-                        if (orderCombo)
-                        {
-                            await dishManagementService.UpdateComboAvailability();
-                            await dishManagementService.UpdateDishAvailability();
-                        }
+
+                        await dishManagementService.UpdateComboAvailability();
+                        await dishManagementService.UpdateDishAvailability();
 
                         await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
                         await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
@@ -714,7 +711,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var createdOrderId = new Guid();
                 var combo = new Combo();
                 var orderWithPayment = new OrderWithPaymentResponse();
-                var orderCombo = false;
                 List<OrderDetail> orderDetails = new List<OrderDetail>();
                 List<ComboOrderDetail> comboOrderDetails = new List<ComboOrderDetail>();
                 double money = 0;
@@ -740,39 +736,39 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     //Validate order time
 
-                    //if (orderRequestDto.OrderType != OrderType.Reservation)
-                    //{
-                    //    bool isInvalidOrderTime = orderTime.Date.AddHours(openTime) > orderTime ||
-                    //                              orderTime.Date.AddHours(closedTime) < orderTime;
-                    //    if (isInvalidOrderTime)
-                    //    {
-                    //        throw new Exception("Thời gian đặt không hợp lệ");
-                    //    }
-                    //}
+                    if (orderRequestDto.OrderType != OrderType.Reservation)
+                    {
+                        bool isInvalidOrderTime = orderTime.Date.AddHours(openTime) > orderTime ||
+                                                  orderTime.Date.AddHours(closedTime) < orderTime;
+                        if (isInvalidOrderTime)
+                        {
+                            throw new Exception("Thời gian đặt không hợp lệ");
+                        }
+                    }
 
 
-                    //if (orderRequestDto.OrderType == OrderType.Reservation)
-                    //{
-                    //    bool isInvalidReservationTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.MealTime ||
-                    //                                    orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.MealTime;
-                    //    if (isInvalidReservationTime)
-                    //    {
-                    //        throw new Exception("Thời gian đặt không hợp lệ");
-                    //    }
+                    if (orderRequestDto.OrderType == OrderType.Reservation)
+                    {
+                        bool isInvalidReservationTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.MealTime ||
+                                                        orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.MealTime;
+                        if (isInvalidReservationTime)
+                        {
+                            throw new Exception("Thời gian đặt không hợp lệ");
+                        }
 
-                    //    if (!orderRequestDto.ReservationOrder.EndTime.HasValue)
-                    //    {
-                    //        var averageDiningTime = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.AVERAGE_MEAL_DURATION), null);
-                    //        orderRequestDto.ReservationOrder.EndTime = averageDiningTime != null ? orderRequestDto.ReservationOrder.MealTime.AddHours(double.Parse(averageDiningTime.CurrentValue))
-                    //                                                                             : orderRequestDto.ReservationOrder.MealTime.AddHours(1);
-                    //    }
-                    //    bool isInvalidEndTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.EndTime.Value ||
-                    //                                    orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.EndTime.Value;
-                    //    if (isInvalidEndTime)
-                    //    {
-                    //        throw new Exception("Thời gian đặt không hợp lệ");
-                    //    }
-                    //}
+                        if (!orderRequestDto.ReservationOrder.EndTime.HasValue)
+                        {
+                            var averageDiningTime = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.AVERAGE_MEAL_DURATION), null);
+                            orderRequestDto.ReservationOrder.EndTime = averageDiningTime != null ? orderRequestDto.ReservationOrder.MealTime.AddHours(double.Parse(averageDiningTime.CurrentValue))
+                                                                                                 : orderRequestDto.ReservationOrder.MealTime.AddHours(1);
+                        }
+                        bool isInvalidEndTime = orderRequestDto.ReservationOrder.MealTime.Date.AddHours(openTime) > orderRequestDto.ReservationOrder.EndTime.Value ||
+                                                        orderRequestDto.ReservationOrder.MealTime.Date.AddHours(closedTime) < orderRequestDto.ReservationOrder.EndTime.Value;
+                        if (isInvalidEndTime)
+                        {
+                            throw new Exception("Thời gian đặt không hợp lệ");
+                        }
+                    }
 
                     // Validate number of people
                     bool isInvalidNumberOfPeople = false;
@@ -943,7 +939,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                             else if (item.Combo != null)
                             {
-                                orderCombo = true;
                                 combo = await comboRepository.GetById(item.Combo.ComboId);
 
                                 if (combo == null)
@@ -1427,7 +1422,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         await _repository.Insert(order);
                         await _unitOfWork.SaveChangesAsync();
-                        if (orderCombo)
+                        if (orderRequestDto.OrderDetailsDtos.Count > 0 && orderRequestDto.OrderType == OrderType.MealWithoutReservation)
                         {
                             await dishManagementService.UpdateComboAvailability();
                             await dishManagementService.UpdateDishAvailability();
