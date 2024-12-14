@@ -554,18 +554,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             tableResponse.Position.Y = tableCoordinates.FirstOrDefault().Item2;
                         }
 
-                        if (item.TableStatusId == TableStatus.NEW)
-                        {
-                            tableResponse.TableStatusId = TableStatus.NEW;
-                        }
-                        else if (unavailableTableIds.Contains(tableResponse.Id))
-                        {
-                            tableResponse.TableStatusId = TableStatus.CURRENTLYUSED;
-                        }
-                        else
-                        {
-                            tableResponse.TableStatusId = TableStatus.AVAILABLE;
-                        }
+                        tableResponse.TableStatusId = item.TableStatusId;
+
+                        //if (item.TableStatusId == TableStatus.NEW)
+                        //{
+                        //    tableResponse.TableStatusId = TableStatus.NEW;
+                        //}
+                        //else if (unavailableTableIds.Contains(tableResponse.Id))
+                        //{
+                        //    tableResponse.TableStatusId = TableStatus.CURRENTLYUSED;
+                        //}
+                        //else
+                        //{
+                        //    tableResponse.TableStatusId = TableStatus.AVAILABLE;
+                        //}
 
                         data.Add(tableResponse);
                     }
