@@ -16,7 +16,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _hashingService = hashingService;
         }
 
-        public async Task<string> CreatePaymentUrlVnpay(PaymentInformationRequest requestDto)
+        public async Task<string> CreatePaymentUrlVnpay(PaymentInformationRequest requestDto, string returnUrl)
         {
          
             string key = _configuration["HashingKeys:PaymentLink"];
@@ -34,11 +34,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             string urlCallBack = "";
             if (!string.IsNullOrEmpty(requestDto.OrderID))
             {
-                urlCallBack = $"{_configuration["Vnpay:ReturnUrl"]}/{requestDto.OrderID}";
+                urlCallBack = $"${returnUrl}/{requestDto.OrderID}";
             }
             else
             {
-                urlCallBack = $"{_configuration["Vnpay:ReturnUrl"]}";
+                urlCallBack = $"{returnUrl}";
             }
 
             pay.AddRequestData("vnp_Version", _configuration["Vnpay:Version"]);

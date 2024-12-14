@@ -1451,7 +1451,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 OrderId = order.OrderId,
                                 PaymentMethod = orderRequestDto.DeliveryOrder != null ? orderRequestDto.DeliveryOrder.PaymentMethod : orderRequestDto.ReservationOrder.PaymentMethod,
                             };
-                            var linkPaymentDb = await transcationService!.CreatePayment(paymentRequest);
+                            var linkPaymentDb = await transcationService!.CreatePayment(paymentRequest, orderRequestDto.returnUrl);
                             if (!linkPaymentDb.IsSuccess)
                             {
                                 throw new Exception(String.Join(", ", linkPaymentDb.Messages));
@@ -1963,7 +1963,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     PaymentMethod = orderRequestDto.PaymentMethod,
                                     AccountId = accountDb?.Id
                                 };
-                                var linkPaymentDb = await transactionService!.CreatePayment(paymentRequest);
+                                var linkPaymentDb = await transactionService!.CreatePayment(paymentRequest, orderRequestDto.returnUrl);
                                 if (!linkPaymentDb.IsSuccess)
                                 {
                                     throw new Exception("Tạo thanh toán thất bại");
