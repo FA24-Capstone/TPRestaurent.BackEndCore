@@ -12,6 +12,6 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public List<Guid>? CouponIds { get; set; } = new List<Guid> { };
         public int? LoyalPointsToUse { get; set; }
         public bool? ChooseCashRefund { get; set; } = false;
-        public string? returnUrl { get; set; } = "https://thienphurestaurant.vercel.app";
+        public string? returnUrl { get; set; } = "https://thienphurestaurant.vercel.app/payment";
     }
 }
