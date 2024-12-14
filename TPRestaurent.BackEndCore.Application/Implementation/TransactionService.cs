@@ -1164,7 +1164,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 ShouldNoticeManager = true;
                             }
-                            account.IsBanned = true;
+                            //account.IsBanned = true;
                         }
 
                     }
