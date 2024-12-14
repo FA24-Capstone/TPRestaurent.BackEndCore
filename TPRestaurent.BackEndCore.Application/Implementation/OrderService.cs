@@ -493,9 +493,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                     }
 
+                    if((orderDb.OrderTypeId == OrderType.Delivery && orderDb.StatusId == OrderStatus.Processing 
+                        || orderDb.OrderTypeId != OrderType.Delivery && orderDb.StatusId == OrderStatus.Completed) 
+                        && !string.IsNullOrEmpty(orderDb.AccountId))
+                    {
+                        await ApplyLoyalTyPoint(orderDb);
+                    }
 
                     await _repository.Update(orderDb);
                     await _unitOfWork.SaveChangesAsync();
+
+
 
                     if ((orderDb.OrderTypeId == OrderType.Reservation || orderDb.OrderTypeId == OrderType.Delivery && !asCustomer.Value) && orderDb.StatusId == OrderStatus.Cancelled)
                     {
@@ -663,27 +671,43 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        //private async Task ApplyLoyalTyPoint(Order order)
-        //{
-        //    try
-        //    {
-        //        var loyaltyPointRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
-        //        var accountRepository = Resolve<IGenericRepository<Account>>();
-        //        var accountDb = order.Account;
-        //        var loyaltyPointDb = await loyaltyPointRepository.GetAllDataByExpression(l => l.OrderId == order.OrderId, 0, 0, l => l.PointChanged, true, null);
-        //        foreach (var loyaltyPoint in loyaltyPointDb.Items)
-        //        {
-        //            accountDb.LoyaltyPoint += loyaltyPoint.PointChanged;
-        //            loyaltyPoint.NewBalance = accountDb.LoyaltyPoint;
-        //        }
-        //        await accountRepository.Update(accountDb);
-        //        await loyaltyPointRepository.UpdateRange(loyaltyPointDb.Items);
-        //        await _unitOfWork.SaveChangesAsync();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //    }
-        //}
+        private async Task ApplyLoyalTyPoint(Domain.Models.Order order)
+        {
+            try
+            {
+                var loyaltyPointRepository = Resolve<IGenericRepository<LoyalPointsHistory>>();
+                var accountRepository = Resolve<IGenericRepository<Account>>();
+                var hashingService = Resolve<IHashingService>();
+                var accountDb = order.Account;
+                var loyaltyPointDb = await loyaltyPointRepository.GetAllDataByExpression(l => l.OrderId == order.OrderId && !l.IsApplied, 0, 0, l => l.PointChanged, true, null);
+                var accountLoyaltyPointChangeResult = hashingService.UnHashing(accountDb.LoyaltyPoint, true);
+                if (!accountLoyaltyPointChangeResult.IsSuccess)
+                {
+                    return;
+                }
+                int accountPoint = int.Parse(accountLoyaltyPointChangeResult.Result.ToString().Split('_')[1]);
+                foreach (var loyaltyPoint in loyaltyPointDb.Items)
+                {
+                    
+                    var loyaltyPointChangeResult = hashingService.UnHashing(loyaltyPoint.PointChanged, true);
+                    if (!loyaltyPointChangeResult.IsSuccess)
+                    {
+                        return;
+                    }
+                    int pointChange = int.Parse(loyaltyPointChangeResult.Result.ToString().Split('_')[1]);
+                    accountPoint += pointChange;
+                    loyaltyPoint.NewBalance = hashingService.Hashing(accountDb.Id, accountPoint, true).Result.ToString();
+                    loyaltyPoint.IsApplied = true;
+                }
+
+                accountDb.LoyaltyPoint = hashingService.Hashing(accountDb.Id, accountPoint, true).Result.ToString();
+                await accountRepository.Update(accountDb);
+                await loyaltyPointRepository.UpdateRange(loyaltyPointDb.Items);
+            }
+            catch (Exception ex)
+            {
+            }
+        }
 
         public async Task<AppActionResult> CreateOrder(OrderRequestDto orderRequestDto)
         {
@@ -1398,12 +1422,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             TransactionDate = utility!.GetCurrentDateTimeInTimeZone(),
                             OrderId = order.OrderId,
                             PointChanged = hashingService.Hashing(accountDb.Id, (int)(money / 100), true).Result.ToString(),
-                            NewBalance = hashingService.Hashing(accountDb.Id, loyaltyPoint, true).Result.ToString()
+                            NewBalance = hashingService.Hashing(accountDb.Id, loyaltyPoint, true).Result.ToString(),
+                            IsApplied = false
                         };
 
                         await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
 
-                        accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
 
                         orderWithPayment.Order = order;
 
@@ -1411,10 +1435,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         await orderDetailRepository.InsertRange(orderDetails);
 
-                        if (!BuildAppActionResultIsError(result))
-                        {
-                            await accountRepository.Update(accountDb);
-                        }
                     }
                     else
                     {
@@ -1750,7 +1770,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             tableDeposit = int.Parse(publicTableDepositConfigResult.CurrentValue);
                         }
 
-                        if(money - (orderDb.Deposit - tableDeposit) / depositPercent > 1000)
+                        if(Math.Abs((decimal)(money - (orderDb.Deposit - tableDeposit) / depositPercent)) > 2000)
                         {
                             money -= ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0)
                             ? Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000
@@ -1783,6 +1803,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     }
                     else if (accountDb != null)
                     {
+
                         var currentTime = utility.GetCurrentDateTimeInTimeZone();
                         var customerSavedCouponDb = await couponRepository!.GetAllDataByExpression(c =>
                                 currentTime > c.CouponProgram.StartDate && currentTime < c.CouponProgram.ExpiryDate
@@ -1834,7 +1855,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 coupon.OrderId = orderDb.OrderId;
                             }
 
-                            money = discountMoney;
+                            money -= discountMoney;
                             await couponRepository.UpdateRange(customerSavedCouponDb.Items);
                         }
 
@@ -1942,6 +1963,25 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 {
                                     orderDb.CashReceived = orderRequestDto.CashReceived.Value;
                                     orderDb.ChangeReturned = orderRequestDto.ChangeReturned.Value;
+                                    if (!orderRequestDto.ChooseCashRefund.Value)
+                                    {
+                                        int storeCreditAmount = 0;
+                                        var accountStoreCreditResult = hashingService.UnHashing(accountDb.StoreCreditAmount, false);
+                                        if (accountStoreCreditResult.IsSuccess)
+                                        {
+                                            storeCreditAmount = int.Parse(accountStoreCreditResult.Result.ToString().Split('_')[1]);
+                                        }
+                                        else
+                                        {
+                                            storeCreditAmount = int.Parse(accountDb.StoreCreditAmount);
+                                        }
+
+                                        storeCreditAmount += (int)(Math.Ceiling(orderDb.TotalAmount));
+
+                                        accountDb.StoreCreditAmount = hashingService.Hashing(accountDb.Id, storeCreditAmount, false).Result.ToString();
+
+                                        await accountRepository.Update(accountDb);
+                                    }
                                 }
                                 else
                                 {
@@ -3441,6 +3481,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         {
             try
             {
+                var hashingService = Resolve<IHashingService>();
                 var order = await _repository.GetByExpression(r => r.OrderId == reservationId, r => r.Account, r => r.Shipper, r => r.Status, r => r.OrderType, r => r.LoyalPointsHistory, r => r.CustomerInfoAddress);
                 if (order == null)
                 {
@@ -3458,8 +3499,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var refundTransactionDb = await transactionRepository.GetAllDataByExpression(o => o.OrderId.HasValue && o.OrderId == reservationId && o.TransactionTypeId == TransactionType.Refund, 0, 0, null, false, o => o.TransactionType);
                 if (orderTransactionDb.Items.Count() > 0)
                 {
-                    orderResponse.Transaction = orderTransactionDb.Items.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).FirstOrDefault();
-                    orderResponse.RefundTransaction = refundTransactionDb.Items.FirstOrDefault();
+                    var orderTransaction = orderTransactionDb.Items.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).FirstOrDefault();
+                    var transactionAmountResult = hashingService.UnHashing(orderTransaction.Amount, false);
+                    orderTransaction.Amount = transactionAmountResult.Result.ToString().Split('_')[1];
+                    orderResponse.Transaction = orderTransaction;
+
+                    var orderRefundTransaction = refundTransactionDb.Items.FirstOrDefault();
+                    if(orderRefundTransaction != null)
+                    {
+                        var refundTransactionAmountResult = hashingService.UnHashing(orderRefundTransaction.Amount, false);
+                        orderRefundTransaction.Amount = refundTransactionAmountResult.Result.ToString().Split('_')[1];
+                        orderResponse.RefundTransaction = orderRefundTransaction;
+                    }
+
                     var successfulDepositTransaction = orderTransactionDb.Items.Where(o => o.TransationStatusId == TransationStatus.SUCCESSFUL && o.TransactionTypeId == TransactionType.Deposit).ToList();
                     if (successfulDepositTransaction.Count() == 1)
                     {
@@ -4097,7 +4149,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 var orderDiningDb = await _repository.GetAllDataByExpression(o => orderIds.Contains(o.OrderId), request.pageNumber, request.pageSize, null, false, o => o.Status,
                                                                                                                                     o => o.OrderType,
-                                                                                                                                    o => o.Account);
+                                                                                                                                    o => o.Account,
+                                                                                                                                    o => o.Shipper);
                 var decodedAccount = new Dictionary<string, Account>();
                 foreach (var order in orderDiningDb.Items.Where(o => o.Account != null).ToList())
                 {
