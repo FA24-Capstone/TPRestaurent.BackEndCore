@@ -4949,6 +4949,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await _repository.UpdateRange(orderDb.Items);
                     await _unitOfWork.SaveChangesAsync();
                     await groupedDishCraftService.UpdateGroupedDish(orderDetailIds);
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
                 }
             }
             catch (Exception ex)
