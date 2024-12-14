@@ -1704,7 +1704,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         accountDb = await accountRepository.GetById(orderDb.AccountId);
                     }
 
-                    if (!string.IsNullOrEmpty(orderDb.AccountId))
+                    if (string.IsNullOrEmpty(orderDb.AccountId) && accountDb !=null)
                     {
                         orderDb.AccountId = accountDb.Id;
                     }
