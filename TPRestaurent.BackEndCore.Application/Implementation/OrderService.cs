@@ -1719,9 +1719,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                              o.OrderDetailStatusId != OrderDetailStatus.Cancelled, 0, 0, p => p.OrderTime, false, null);
 
 
-                    double money = orderDb.TotalAmount;
+                    double money = orderDetailDb.Items.Sum(o => Math.Ceiling(o.Price * o.Quantity * (1 - o.Discount / 100) / 1000) * 1000);
 
-                    if(orderDb.OrderTypeId == OrderType.Reservation)
+                    if (orderDb.OrderTypeId == OrderType.Reservation)
                     {
                         var depositConfigresult = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.DEPOSIT_PERCENT), null);
                         if(depositConfigresult == null)
@@ -4949,6 +4949,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await _repository.UpdateRange(orderDb.Items);
                     await _unitOfWork.SaveChangesAsync();
                     await groupedDishCraftService.UpdateGroupedDish(orderDetailIds);
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
                 }
             }
             catch (Exception ex)
