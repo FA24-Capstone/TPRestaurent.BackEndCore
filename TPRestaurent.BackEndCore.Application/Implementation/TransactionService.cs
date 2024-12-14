@@ -626,6 +626,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var orderService = Resolve<IOrderService>();
                     var order = await orderService.GetAllOrderDetail(transactionDb.OrderId.Value);
                     var orderResult = order.Result as OrderWithDetailReponse;
+                    orderResult.OrderDishes = orderResult.OrderDishes.Where(o => o.StatusId != OrderDetailStatus.Cancelled).ToList();
                     await CalculateTotal(orderResult);
                     data.Order = orderResult;
                 }
