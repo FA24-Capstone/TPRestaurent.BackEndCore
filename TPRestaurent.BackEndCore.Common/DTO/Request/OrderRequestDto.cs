@@ -11,6 +11,7 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Request
         public ReservationOrderDto? ReservationOrder { get; set; }
         public DeliveryOrderDto? DeliveryOrder { get; set; }
         public MealWithoutReservation? MealWithoutReservation { get; set; }
+        public string? returnUrl { get; set; } = "https://thienphurestaurant.vercel.app/payment";
     }
 
     public class ReservationOrderDto

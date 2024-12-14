@@ -44,7 +44,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _momoConfiguration = Resolve<MomoConfiguration>();
         }
 
-        public async Task<AppActionResult> CreatePayment(PaymentRequestDto paymentRequest)
+        public async Task<AppActionResult> CreatePayment(PaymentRequestDto paymentRequest, string returnUrl)
         {
             AppActionResult result = new AppActionResult();
             try
@@ -136,7 +136,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                                 await _repository.Insert(transaction);
                                 paymentUrl =
-                                    await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest);
+                                    await paymentGatewayService!.CreatePaymentUrlVnpay(paymentInformationRequest, returnUrl);
 
                                 result.Result = paymentUrl;
                             }
@@ -168,7 +168,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     await _repository.Insert(transaction);
                                     paymentUrl =
                                         await paymentGatewayService!.CreatePaymentUrlVnpay(
-                                            paymentInformationRequest);
+                                            paymentInformationRequest, returnUrl);
 
                                     result.Result = paymentUrl;
                                 }
@@ -219,7 +219,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 string accessKey = _momoConfiguration.AccessKey;
                                 string secretkey = _momoConfiguration.Secretkey;
                                 string orderInfo = hashingService.Hashing("OR", key).Result.ToString();
-                                string redirectUrl = $"{_momoConfiguration.RedirectUrl}";
+                                string redirectUrl = $"{returnUrl}";
                                 string ipnUrl = _momoConfiguration.IPNUrl;
                                 string requestType = "payWithATM";
 

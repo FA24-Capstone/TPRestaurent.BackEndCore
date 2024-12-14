@@ -4,6 +4,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
     public interface IPaymentGatewayService
     {
-        Task<string> CreatePaymentUrlVnpay(PaymentInformationRequest request);
+        Task<string> CreatePaymentUrlVnpay(PaymentInformationRequest request, string returnUrl);
     }
 }

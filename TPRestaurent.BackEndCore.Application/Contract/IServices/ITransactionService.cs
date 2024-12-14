@@ -7,7 +7,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 {
     public interface ITransactionService
     {
-        Task<AppActionResult> CreatePayment(PaymentRequestDto paymentRequest);
+        Task<AppActionResult> CreatePayment(PaymentRequestDto paymentRequest, string returnUrl);
 
         //Task<AppActionResult> GetAllPayment(int pageIndex, int pageSize, Domain.Enums.TransationStatus transationStatus);
         Task<AppActionResult> GetTransactionById(Guid paymentId);

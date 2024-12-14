@@ -22,9 +22,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
 
         [HttpPost("create-payment")]
         //[TokenValidationMiddleware(Permission.PAYMENT)]
-        public async Task<AppActionResult> CreatePayment([FromBody] PaymentRequestDto paymentRequest)
+        public async Task<AppActionResult> CreatePayment([FromBody] PaymentRequestDto paymentRequest, string? returnUrl = "https://thienphurestaurant.vercel.app/payment")
         {
-            return await _service.CreatePayment(paymentRequest);
+            return await _service.CreatePayment(paymentRequest, returnUrl);
         }
 
         [HttpGet("get-all-payment/{pageIndex}/{pageSize}")]

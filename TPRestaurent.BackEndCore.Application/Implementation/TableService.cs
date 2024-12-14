@@ -554,18 +554,20 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             tableResponse.Position.Y = tableCoordinates.FirstOrDefault().Item2;
                         }
 
-                        if (item.TableStatusId == TableStatus.NEW)
-                        {
-                            tableResponse.TableStatusId = TableStatus.NEW;
-                        }
-                        else if (unavailableTableIds.Contains(tableResponse.Id))
-                        {
-                            tableResponse.TableStatusId = TableStatus.CURRENTLYUSED;
-                        }
-                        else
-                        {
-                            tableResponse.TableStatusId = TableStatus.AVAILABLE;
-                        }
+                        tableResponse.TableStatusId = item.TableStatusId;
+
+                        //if (item.TableStatusId == TableStatus.NEW)
+                        //{
+                        //    tableResponse.TableStatusId = TableStatus.NEW;
+                        //}
+                        //else if (unavailableTableIds.Contains(tableResponse.Id))
+                        //{
+                        //    tableResponse.TableStatusId = TableStatus.CURRENTLYUSED;
+                        //}
+                        //else
+                        //{
+                        //    tableResponse.TableStatusId = TableStatus.AVAILABLE;
+                        //}
 
                         data.Add(tableResponse);
                     }
@@ -805,6 +807,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var tableIds = tableDetailDb.Items.Select(t => t.TableId).ToList();
                     var tableDb = await _repository.GetAllDataByExpression(t => tableIds.Contains(t.TableId), 0, 0, null, false, null);
                     tableDb.Items.ForEach(t => t.TableStatusId = tableStatus);
+                    await _repository.UpdateRange(tableDb.Items);
                 }
             }
             catch (Exception ex)
@@ -821,6 +824,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var tableDb = await _repository.GetAllDataByExpression(t => tableIds.Contains(t.TableId), 0, 0, null, false, null);
                 tableDb.Items.ForEach(t => t.TableStatusId = tableStatus);
+                await _repository.UpdateRange(tableDb.Items);
             }
             catch (Exception ex)
             {
