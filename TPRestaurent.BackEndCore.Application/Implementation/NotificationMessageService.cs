@@ -111,7 +111,7 @@ public class NotificationMessageService : GenericBackendService, INotificationMe
             var currentTime = utility.GetCurrentDateTimeInTimeZone();
             if (string.IsNullOrEmpty(message))
             {
-
+               
             }
 
             var accountDb = await accountRepository!.GetById(accountId);
