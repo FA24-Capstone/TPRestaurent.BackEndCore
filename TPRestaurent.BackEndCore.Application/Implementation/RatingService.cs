@@ -161,7 +161,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             var result = new AppActionResult();
             try
             {
-                result.Result = await _ratingRepository.GetAllDataByExpression(p => p.RatingId == ratingId, 0, 0, null, false, p => p.OrderDetail!.DishSizeDetail!.Dish!);
+                result.Result = await _ratingRepository.GetAllDataByExpression(p => p.RatingId == ratingId, 0, 0, null, false, p => p.OrderDetail!.DishSizeDetail!.Dish!, p => p.CreateByAccount);
             }
             catch (Exception ex)
             {
