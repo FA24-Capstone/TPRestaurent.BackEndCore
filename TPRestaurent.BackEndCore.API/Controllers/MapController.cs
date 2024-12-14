@@ -45,7 +45,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("get-optimal-path")]
-        [TokenValidationMiddleware(Permission.SHIPPER)]
+        //[TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<AppActionResult> GetOptimalPath(List<Guid> orderIdList)
         {
             return await _service.GetOptimalPath(orderIdList);

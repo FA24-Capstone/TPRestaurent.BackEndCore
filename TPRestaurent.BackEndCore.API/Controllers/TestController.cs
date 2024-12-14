@@ -19,10 +19,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         public ITransactionService _transactionService;
         private IHubServices _hubServices;
         private IEmailService _emailService;
+        private ITableService _tableService;
 
         public TestController(IOrderService orderService, IInvoiceService invoiceService, IDishService dishService,
                               IHubServices hubServices, IGroupedDishCraftService groupedDishCraftService, 
-                              IOrderSessionService orderSessionService, ITransactionService transactionService, IEmailService emailService)
+                              IOrderSessionService orderSessionService, ITransactionService transactionService,
+                              IEmailService emailService, ITableService tableService)
         {
             _orderService = orderService;
             _invoiceService = invoiceService;
@@ -32,6 +34,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             _orderSessionService = orderSessionService;
             _transactionService = transactionService;
             _emailService = emailService;
+            _tableService = tableService;
         }
 
         [HttpPut("update-order-status")]
@@ -119,6 +122,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         public async Task AutoRefillDish()
         {
              await _dishService.AutoRefillDish();
+        }
+
+        [HttpPost("update-table")]
+        public async Task UpdateTableAvailability()
+        {
+            await _tableService.UpdateTableAvailability();
         }
     }
 }
