@@ -536,7 +536,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 account.UserRankId = UserRank.DIAMOND;
                                 notificationMessage = "Chúc mừng bạn đã được thăng cấp thứ hạng lên hạng kim cương";
-                                await notificationService!.SendNotificationToAccountAsync(account.Id, message, false);
+                                await notificationService!.SendNotificationToAccountAsync(account.Id, notificationMessage, false);
                             }
                         }
                         else if (account.UserRankId == UserRank.SILVER)
@@ -545,7 +545,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 account.UserRankId = UserRank.GOLD;
                                 notificationMessage = "Chúc mừng bạn đã được thăng cấp thứ hạng lên hạng vàng";
-                                await notificationService!.SendNotificationToAccountAsync(account.Id, message, false);
+                                await notificationService!.SendNotificationToAccountAsync(account.Id, notificationMessage, false);
                             }
                         }
                         else if (account.UserRankId == UserRank.BRONZE)
@@ -554,7 +554,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 account.UserRankId = UserRank.SILVER;
                                 notificationMessage = "Chúc mừng bạn đã được thăng cấp thứ hạng lên hạng bạc";
-                                await notificationService!.SendNotificationToAccountAsync(account.Id, message, false);
+                                await notificationService!.SendNotificationToAccountAsync(account.Id, notificationMessage, false);
                             }
                         }
                         else if (account.UserRankId == null)
@@ -563,7 +563,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 account.UserRankId = UserRank.BRONZE;
                                 notificationMessage = "Chúc mừng bạn đã được thăng cấp thứ hạng lên hạng đồng";
-                                await notificationService!.SendNotificationToAccountAsync(account.Id, message, false);
+                                await notificationService!.SendNotificationToAccountAsync(account.Id, notificationMessage, false);
                             }
                         }
                     }
