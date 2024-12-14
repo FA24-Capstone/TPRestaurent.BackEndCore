@@ -20,7 +20,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
 
         [HttpGet("get-all-table/{pageNumber}/{pageSize}")]
         [TokenValidationMiddleware(Permission.ADMIN)]
-        [CacheAttribute(259200)]
+        //[CacheAttribute(259200)]
         public async Task<AppActionResult> GetAllTable(int pageNumber = 1, int pageSize = 10)
         {
             return await _service.GetAllTable(pageNumber, pageSize);
@@ -28,7 +28,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
 
         [HttpPost("create-table")]
         [TokenValidationMiddleware(Permission.ADMIN)]
-        [RemoveCacheAtrribute("table")]
+        //[RemoveCacheAtrribute("table")]
         public async Task<AppActionResult> CreateTable([FromBody] TableDto dto)
         {
             return await _service.CreateTable(dto);
@@ -36,7 +36,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
 
         [HttpPost("update-table")]
         [TokenValidationMiddleware(Permission.ADMIN)]
-        [RemoveCacheAtrribute("table")]
+        //[RemoveCacheAtrribute("table")]
         public async Task<AppActionResult> UpdateTable([FromBody] UpdateTableDto dto)
         {
             return await _service.UpdateTable(dto);
@@ -44,7 +44,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
 
         [HttpPost("delete-table/{id}")]
         [TokenValidationMiddleware(Permission.ADMIN)]
-        [RemoveCacheAtrribute("table")]
+        //[RemoveCacheAtrribute("table")]
         public async Task<AppActionResult> DeleteTable(Guid id)
         {
             return await _service.DeleteTable(id);
@@ -58,7 +58,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
 
         [HttpPost("update-table-coordinate")]
         [TokenValidationMiddleware(Permission.ADMIN)]
-        [RemoveCacheAtrribute("table")]
+        //[RemoveCacheAtrribute("table")]
         public async Task<AppActionResult> UpdateTableCoordinates([FromBody] List<TableArrangementResponseItem> request, bool? isForce = false)
         {
             return await _service.UpdateTableCoordinates(request, isForce);
