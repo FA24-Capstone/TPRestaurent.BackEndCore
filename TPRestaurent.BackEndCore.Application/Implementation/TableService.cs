@@ -859,8 +859,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
 
                 var orderToSetAvailable = await orderRepository.GetAllDataByExpression(o => o.OrderTypeId != OrderType.Delivery 
-                                                                                  && o.StatusId != OrderStatus.DepositPaid
-                                                                                  && o.MealTime.Value.AddMinutes(30) <= currentTime, 0, 0, null, false, null);
+                                                                                      && (o.StatusId != OrderStatus.DepositPaid && o.MealTime.Value.AddMinutes(30) <= currentTime
+                                                                                          || o.StatusId == OrderStatus.Cancelled || o.StatusId == OrderStatus.Completed)
+                                                                                      , 0, 0, null, false, null);
                 var orderToSetAvailableIds = orderToSetAvailable.Items.Select(o => o.OrderId).ToList();
                 var tableDetailOrderToSetAvailable = await tableDetailRepository.GetAllDataByExpression(t => orderToSetAvailableIds.Contains(t.OrderId), 0, 0, null, false, null);
                 await UpdateTableAvailability(tableDetailOrderToSetAvailable.Items.Select(t => t.TableId).ToList(), TableStatus.AVAILABLE);
