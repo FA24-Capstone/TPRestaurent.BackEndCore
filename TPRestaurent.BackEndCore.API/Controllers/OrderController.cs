@@ -89,7 +89,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("make-dine-in-order-bill")]
-        [TokenValidationMiddleware(Permission.PAYMENT)]
+        //[TokenValidationMiddleware(Permission.PAYMENT)]
         public async Task<AppActionResult> MakeDineInOrderBill([FromBody] OrderPaymentRequestDto dto)
         {
             return await _service.MakeDineInOrderBill(dto);

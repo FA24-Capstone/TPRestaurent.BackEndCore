@@ -1676,7 +1676,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var dishManagementService = Resolve<IDishManagementService>();
                     var hashingService = Resolve<IHashingService>();
                     var utility = Resolve<Utility>();
-                    var orderDb = await _repository.GetByExpression(o => o.OrderId == orderRequestDto.OrderId, null);
+                    var orderDb = await _repository.GetByExpression(o => o.OrderId == orderRequestDto.OrderId, o=> o.Account);
                     Transaction refundTransaction = null;
 
                     if (orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse.Value < 0)
@@ -1704,7 +1704,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         accountDb = await accountRepository.GetById(orderDb.AccountId);
                     }
 
-                    if (string.IsNullOrEmpty(orderDb.AccountId))
+                    if (!string.IsNullOrEmpty(orderDb.AccountId))
                     {
                         orderDb.AccountId = accountDb.Id;
                     }
