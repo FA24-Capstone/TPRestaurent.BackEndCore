@@ -8,17 +8,17 @@ namespace TPRestaurent.BackEndCore.API.Controllers
     {
         [HttpGet("read-log")]
         [TokenValidationMiddleware(Permission.ADMIN)]
-        public List<LogDto> ReadLogTest()
+        public async Task<List<LogDto>> ReadLogTest()
         {
-            return Logger.ReadLogs();
+            return await Logger.ReadLogs();
         }
 
         [HttpGet("read-log/{id}")]
         [TokenValidationMiddleware(Permission.ADMIN)]
 
-        public LogDto ReadLogTest(Guid id)
+        public async Task<LogDto> ReadLogTest(Guid id)
         {
-            return Logger.ReadLogById(id);
+            return await Logger.ReadLogById(id);
         }
 
         [HttpPost("add-log")]
