@@ -169,7 +169,7 @@ builder.Services.AddHangfireServer(options =>
 builder.Services.AddHangfireServer(options =>
 {
     options.ServerName = $"{Environment.MachineName}:table";
-    options.Queues = new[] { "update-table-availability" };
+    options.Queues = new[] { "update-tables-availability" };
     options.WorkerCount = 1;
 });
 
