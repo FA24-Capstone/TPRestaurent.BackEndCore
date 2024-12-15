@@ -1693,6 +1693,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var transactionService = Resolve<ITransactionService>();
                     var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
                     var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                    var transactionRepository = Resolve<IGenericRepository<Transaction>>();
                     var dishManagementService = Resolve<IDishManagementService>();
                     var hashingService = Resolve<IHashingService>();
                     var utility = Resolve<Utility>();
@@ -1988,11 +1989,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             TransationStatusId = TransationStatus.SUCCESSFUL
                                         };
 
+                                        await transactionRepository.Insert(returnTransaction);
+
                                         storeCreditAmount += (int)(Math.Ceiling((decimal)orderDb.ChangeReturned));
 
                                         accountDb.StoreCreditAmount = hashingService.Hashing(accountDb.Id, storeCreditAmount, false).Result.ToString();
 
                                         await accountRepository.Update(accountDb);
+
                                     }
                                 }
                                 else
@@ -2032,7 +2036,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
 
                         if(orderRequestDto.PaymentMethod == PaymentMethod.Cash) {
-                            _hubServices.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
+                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
                         }
 
                         await dishManagementService.UpdateComboAvailability();
