@@ -1976,7 +1976,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             storeCreditAmount = int.Parse(accountDb.StoreCreditAmount);
                                         }
 
-                                        storeCreditAmount += (int)(Math.Ceiling(orderDb.TotalAmount));
+                                        var returnTransaction = new Transaction
+                                        {
+                                            Id = Guid.NewGuid(),
+                                            AccountId = orderDb.AccountId,
+                                            PaymentMethodId = PaymentMethod.STORE_CREDIT,
+                                            TransactionTypeId = TransactionType.Refund,
+                                            Date = utility.GetCurrentDateTimeInTimeZone(),
+                                            Amount = hashingService.Hashing(accountDb.Id, Math.Ceiling((double)orderDb.ChangeReturned), false).Result.ToString(),
+                                            OrderId = orderDb.OrderId,
+                                            TransationStatusId = TransationStatus.SUCCESSFUL
+                                        };
+
+                                        storeCreditAmount += (int)(Math.Ceiling((decimal)orderDb.ChangeReturned));
 
                                         accountDb.StoreCreditAmount = hashingService.Hashing(accountDb.Id, storeCreditAmount, false).Result.ToString();
 
@@ -2017,6 +2029,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             await _repository.Update(orderDb);
                             await _unitOfWork.SaveChangesAsync();
+                        }
+
+                        if(orderRequestDto.PaymentMethod == PaymentMethod.Cash) {
+                            _hubServices.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
                         }
 
                         await dishManagementService.UpdateComboAvailability();

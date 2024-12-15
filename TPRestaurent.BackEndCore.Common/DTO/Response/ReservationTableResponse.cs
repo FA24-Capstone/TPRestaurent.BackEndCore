@@ -29,9 +29,11 @@ namespace TPRestaurent.BackEndCore.Common.DTO.Response
 
         public string? AccountId { get; set; }
 
-        [ForeignKey(nameof(AccountId))]
         public Account? Account { get; set; }
+        public string? ShipperId { get; set; }
 
+        [ForeignKey(nameof(ShipperId))]
+        public Account? Shipper { get; set; }
         public Guid? LoyalPointsHistoryId { get; set; }
 
         [ForeignKey(nameof(LoyalPointsHistoryId))]
