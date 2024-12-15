@@ -58,6 +58,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         EndDate = comboDto.EndDate,
                         Price = comboDto.Price,
                         StartDate = comboDto.StartDate,
+                        IsAvailable = true,
+                        IsDeleted = false
                     };
 
                     List<DishTag> dishTags = new List<DishTag>();
