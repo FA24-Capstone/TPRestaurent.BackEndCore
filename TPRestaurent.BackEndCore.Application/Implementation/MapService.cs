@@ -332,8 +332,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         currentTrip = obj.Trips[0].Legs[i - 1];
                         currentWaypoint = obj.Waypoints[i];
 
-                        customerInfoAddressList = await customerInfoAddressRepository.GetAllDataByExpression(p => Math.Abs((double)(currentWaypoint.Location[0] - p.Lat)) <= 0.00007
-                                                                  && Math.Abs((double)(currentWaypoint.Location[1] - p.Lng)) <= 0.0001, 0, 0, null, false, null)!;
+                        customerInfoAddressList = await customerInfoAddressRepository.GetAllDataByExpression(p => Math.Abs((double)(currentWaypoint.Location[0] - p.Lat)) <= 0.0007
+                                                                  && Math.Abs((double)(currentWaypoint.Location[1] - p.Lng)) <= 0.001, 0, 0, null, false, null)!;
                         var customerInfoAddress = customerInfoAddressList.Items.OrderBy(c => Math.Pow(c.Lat - currentWaypoint.Location[0], 2) + Math.Pow(c.Lng - currentWaypoint.Location[1], 2)).FirstOrDefault();
                         if (customerInfoAddress == null && customerInfoAddressIds.Contains(customerInfoAddress.CustomerInfoAddressId))
                         {
