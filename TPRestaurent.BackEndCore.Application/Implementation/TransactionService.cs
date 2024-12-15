@@ -618,8 +618,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var hashingService = Resolve<IHashingService>();
                 var data = new TransactionReponse();
                 var transactionDb = await _repository.GetByExpression(t => t.Id == paymentId, t => t.TransactionType, t => t.TransationStatus);
-                var decodedTransactionAmountResult = hashingService.UnHashing(transactionDb.Amount, false).Result.ToString();
-                transactionDb.Amount = decodedTransactionAmountResult.Split('_')[decodedTransactionAmountResult.Split('_').Length - 1];
+                //var decodedTransactionAmountResult = hashingService.UnHashing(transactionDb.Amount, false).Result.ToString();
+                //transactionDb.Amount = decodedTransactionAmountResult.Split('_')[decodedTransactionAmountResult.Split('_').Length - 1];
                 data.Transaction = transactionDb;
                 if (transactionDb.OrderId.HasValue)
                 {

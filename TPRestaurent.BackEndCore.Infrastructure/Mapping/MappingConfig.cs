@@ -190,6 +190,8 @@ public class MappingConfig
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
             .ForMember(dest => dest.AccountId, opt => opt.MapFrom(src => src.AccountId))
             .ForMember(dest => dest.Account, opt => opt.MapFrom(src => src.Account))
+            .ForMember(dest => dest.ShipperId, opt => opt.MapFrom(src => src.ShipperId))
+            .ForMember(dest => dest.ShipperId, opt => opt.MapFrom(src => src.ShipperId))
             .ForMember(dest => dest.LoyalPointsHistoryId, opt => opt.MapFrom(src => src.LoyalPointsHistoryId))
             .ForMember(dest => dest.LoyalPointsHistory, opt => opt.MapFrom(src => src.LoyalPointsHistory))
             .ForMember(dest => dest.Note, opt => opt.MapFrom(src => src.Note))

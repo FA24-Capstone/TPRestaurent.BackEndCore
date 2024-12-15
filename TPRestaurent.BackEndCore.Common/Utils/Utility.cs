@@ -261,5 +261,20 @@ public class Utility
             string[] excelExtensions = { ".xls", ".xlsx" };
             return Array.Exists(excelExtensions, ext => ext.Equals(fileExtension));
         }
+
+        public static string FormatPriceInVietnamese(int price)
+        {
+            // Use Vietnamese culture to format the price
+            var cultureInfo = new CultureInfo("vi-VN");
+
+            // Format the price with thousands separator and append "₫"
+            return string.Format(cultureInfo, "{0:N0} VNĐ", price);
+        }
+
+        public static string FormatDateInVietnamese(DateTime dateTime)
+        {
+            // Format the date and time in the desired Vietnamese style
+            return string.Format("{0:HH:mm}, ngày {0:dd} tháng {0:MM} năm {0:yyyy}", dateTime);
+        }
     }
 }

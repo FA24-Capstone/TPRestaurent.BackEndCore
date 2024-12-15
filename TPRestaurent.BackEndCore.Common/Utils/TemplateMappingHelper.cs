@@ -1,4 +1,5 @@
-﻿using TPRestaurent.BackEndCore.Domain.Enums;
+﻿using System.Globalization;
+using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
 
 namespace TPRestaurent.BackEndCore.Common.Utils;
@@ -535,8 +536,8 @@ public class TemplateMappingHelper
         chi tiết:</p>
       <h3>Thông tin hoàn tiền</h3>
       <ul>
-        <li><strong>Số tiền hoàn: </strong><span class=""highlight"">" + order.TotalAmount + @"VNĐ</span></li>
-        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">" + order.MealTime + @"</span></li>
+        <li><strong>Số tiền hoàn: </strong><span class=""highlight"">" + FormatPriceInVietnamese(order.TotalAmount) + @"VNĐ</span></li>
+        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">" + FormatDateInVietnamese(order.MealTime.Value) + @"</span></li>
         <li><strong>Mã hóa đơn: </strong><span class=""highlight"">" + order.OrderId + @"</span></li>
       </ul>
      <p class=""""emailBody"""">
@@ -678,7 +679,7 @@ public class TemplateMappingHelper
       <p>Bạn ơi, đừng quên chúng ta có hẹn tại nhà hàng hôm nay nhé.</p>
                 <p class=""emailBody"">
                  Mã đặt chỗ: <b>"+ order.OrderId+@"</b><br>
-                 Thời gian đặt chỗ: <b>" +order.ReservationDate+@"</b>
+                 Thời gian đặt chỗ: <b>" +FormatDateInVietnamese(order.ReservationDate.Value) +@"</b>
               </p>
                <p class=""emailBody"">
                 Chúng tôi rất mong được chào đón bạn và hy vọng bạn sẽ có một trải nghiệm tuyệt vời.
@@ -819,7 +820,7 @@ public class TemplateMappingHelper
       <h3>Dưới đây là thông tin đặt hàng của bạn</h3>
       <ul>
         <li><strong>Thời gian đặt hàng: </strong><span class=""highlight"">"+ (order.OrderTypeId == OrderType.Delivery ? order.OrderDate : order.ReservationDate) +@" </span></li>
-        <li><strong>Đã thanh toán: </strong><span class=""highlight"">"+order.TotalAmount+@"</span></li>
+        <li><strong>Đã thanh toán: </strong><span class=""highlight"">"+ FormatPriceInVietnamese(order.TotalAmount) +@"</span></li>
         <li><strong>Mã hóa đơn: </strong><span class=""highlight"">"+order.OrderId+@"</span></li>
       </ul> 
     
@@ -954,8 +955,8 @@ public class TemplateMappingHelper
 </p>
       <h3>Dưới đây là thông tin đặt chỗ của bạn</h3>
       <ul>
-        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">"+ order.ReservationDate+@" </span></li>
-        <li><strong>Đã thanh toán cọc: </strong><span class=""highlight"">"+order.Deposit+@"</span></li>
+        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">"+ FormatDateInVietnamese(order.ReservationDate.Value) +@" </span></li>
+        <li><strong>Đã thanh toán cọc: </strong><span class=""highlight"">"+ FormatPriceInVietnamese(order.Deposit.Value) + @"</span></li>
         <li><strong>Mã hóa đơn: </strong><span class=""highlight"">"+order.OrderId+@"</span></li>
       </ul>
  
@@ -1094,8 +1095,8 @@ public class TemplateMappingHelper
          <p class=""""emailBody"""">
            Mã coupon: <b>" +couponProgram.Code +@"</b><br>
            Giảm giá: <b>"+couponProgram.DiscountPercent + @"%</b><br>
-           Ngày sử dụng: <b>"+couponProgram.StartDate+@"</b><br>
-           Hạn sử dụng: <b>"+ couponProgram.ExpiryDate+@"</b>
+           Ngày sử dụng: <b>"+FormatDateInVietnamese(couponProgram.StartDate) +@"</b><br>
+           Hạn sử dụng: <b>"+ FormatDateInVietnamese(couponProgram.ExpiryDate) +@"</b>
          </p>
    
     </div>
@@ -1230,8 +1231,8 @@ public class TemplateMappingHelper
          <p class=""""emailBody"""">
            Mã coupon: <b>" +couponProgram.Code +@"</b><br>
            Giảm giá: <b>"+couponProgram.DiscountPercent + @"%</b><br>
-           Ngày sử dụng: <b>"+couponProgram.StartDate+@"</b><br>
-           Hạn sử dụng: <b>"+ couponProgram.ExpiryDate+@"</b>
+           Ngày sử dụng: <b>"+FormatDateInVietnamese(couponProgram.StartDate) +@"</b><br>
+           Hạn sử dụng: <b>"+ FormatDateInVietnamese(couponProgram.ExpiryDate) +@"</b>
          </p>
    
     </div>
@@ -1363,9 +1364,9 @@ public class TemplateMappingHelper
         chi tiết:</p>
       <h3>Thông tin hoàn tiền</h3>
       <ul>
-        <li><strong>Số tiền hoàn: </strong><span class=""highlight"">" + order.TotalAmount + @" VNĐ</span></li>
-        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">" + order.MealTime + @"</span></li>
-        <li><strong>Mã hóa đơn: </strong><span class=""highlight"">" + order.MealTime + @"</span></li>
+        <li><strong>Số tiền hoàn: </strong><span class=""highlight"">" + FormatPriceInVietnamese(order.TotalAmount) + @" VNĐ</span></li>
+        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">" + FormatDateInVietnamese(order.MealTime.Value) + @"</span></li>
+        <li><strong>Mã hóa đơn: </strong><span class=""highlight"">" + order.OrderId + @"</span></li>
       </ul>
       <h3>Thông tin khách hàng</h3>
       <table class=""table"">
@@ -1529,8 +1530,8 @@ public class TemplateMappingHelper
         chi tiết:</p>
       <h3>Thông tin hoàn tiền</h3>
       <ul>
-        <li><strong>Số tiền hoàn: </strong><span class=""highlight"">" + order.TotalAmount + @" VNĐ</span></li>
-        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">" + order.MealTime + @"</span></li>
+        <li><strong>Số tiền hoàn: </strong><span class=""highlight"">" + FormatPriceInVietnamese(order.TotalAmount) + @" VNĐ</span></li>
+        <li><strong>Thời gian dùng bữa: </strong><span class=""highlight"">" + FormatDateInVietnamese(order.MealTime.Value) + @"</span></li>
         <li><strong>Mã hóa đơn: </strong><span class=""highlight"">" + order.OrderId.ToString() + @"</span></li>
       </ul>
       <h3>Thông tin khách hàng</h3>
@@ -1657,6 +1658,21 @@ public class TemplateMappingHelper
 ";
 
         return content;
+    }
+
+    public static string FormatPriceInVietnamese(double price)
+    {
+        // Use Vietnamese culture to format the price
+        var cultureInfo = new CultureInfo("vi-VN");
+
+        // Format the price with thousands separator and append "₫"
+        return string.Format(cultureInfo, "{0:N0} VNĐ", price);
+    }
+
+    public static string FormatDateInVietnamese(DateTime dateTime)
+    {
+        // Format the date and time in the desired Vietnamese style
+        return string.Format("{0:HH:mm}, ngày {0:dd} tháng {0:MM} năm {0:yyyy}", dateTime);
     }
 
 }
