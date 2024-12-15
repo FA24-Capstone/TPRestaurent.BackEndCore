@@ -843,7 +843,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 //var tableDetailDb = await tableDetailRepository.GetAllDataByExpression(p => p.OrderId == order.OrderId, 0, 0, null, false, p => p!.Table!, p => p.Table!.Room!, p => p.Table!.TableSize!);
                 //var tableDetail = tableDetailDb!.Items!.FirstOrDefault();
-                //emailService.SendEmail(accountDb.Email, "THÔNG BÁO HUỶ ĐẶT BÀN TẠI NHÀ HÀNG THIÊN PHÚ", TemplateMappingHelper.GetTemplateMailToCancelReservation(accountDb.FirstName, order, tableDetail));
+
+                emailService.SendEmail(accountDb.Email, "THÔNG BÁO HOÀN TIỀN", TemplateMappingHelper.GetTemplateRefundNotification($"{accountDb.LastName} {accountDb.FirstName}", "Tổng hoá đơn nhỏ hơn tiền cọc", refundAmount, refundTransaction.Id));
 
                 result.Result = refundTransaction;
             }
@@ -956,6 +957,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderRepository = Resolve<IGenericRepository<Order>>();
                 var hashingService = Resolve<IHashingService>();
                 var emailService = Resolve<IEmailService>();
+                var notificationMessageService = Resolve<INotificationMessageService>();
                 var utility = Resolve<Utility>();
                 var orderDb = await orderRepository.GetByExpression(p => p.OrderId == request.OrderId & p.StatusId == OrderStatus.Completed, o => o.Account);
 
@@ -1015,7 +1017,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 await _repository.Insert(refundTransaction);
                 await _unitOfWork.SaveChangesAsync();
 
-                emailService.SendEmail(orderDb.Account.Email, SD.SubjectMail.NOTIFY_DUPLICATED_PAYMENT_OF_ORDER, TemplateMappingHelper.GetTemplateRefundDuplicatedPaymentForCustomer("", orderDb));
+                string message = $"Đơn hàng ID {orderDb.OrderId} đã đươc4 xử lí lỗi thanh toán trùng và chúng tôi đã hoàn tiền {orderDb.TotalAmount} cho bạn vào ví.";
+                await notificationMessageService!.SendNotificationToAccountAsync(orderDb.AccountId, message, true);
+                emailService.SendEmail(orderDb.Account.Email, "THÔNG BÁO HOÀN TIỀN DO SHIPPER KHÔNG THỂ GIAO HÀNG", TemplateMappingHelper.GetTemplateRefundNotification($"{orderDb.Account.LastName} {orderDb.Account.FirstName}", "Khách hàng thực hiện thanh toán 2 lần", orderDb.TotalAmount, refundTransaction.Id));
             }
             catch (Exception ex)
             {

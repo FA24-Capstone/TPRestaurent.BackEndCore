@@ -1660,6 +1660,125 @@ public class TemplateMappingHelper
         return content;
     }
 
+    public static string GetTemplateRefundNotification(string username, string refundReason, double refundAmount, Guid transactionId)
+    {
+        var content = @"
+<!DOCTYPE html>
+<html lang=""vi"">
+
+<head>
+  <meta charset=""UTF-8"">
+  <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+  <title>Thông báo hoàn tiền</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      background-color: #1E88E5;
+      color: #ffffff;
+      text-align: center;
+      padding: 15px 20px;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .content {
+      margin: 20px 0;
+      line-height: 1.6;
+    }
+
+    .highlight {
+      color: #1E88E5;
+      font-weight: bold;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .table th,
+    .table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    .table th {
+      background-color: #1E88E5;
+      color: #ffffff;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <div class=""container"">
+     <div class=""header"">
+      <img
+        src=""https://firebasestorage.googleapis.com/v0/b/hcqs-project.appspot.com/o/dish%2Ff25019dc-3a64-4677-87cb-63b0f3dbcef7.jpg.png?alt=media&token=c784cf86-52e6-4314-bd8a-28d898feb7f5""
+        alt=""Logo Nhà hàng Thiên Phú"" style=""height: 100px; margin-right: 10px; vertical-align: middle;"">
+      <h1 style=""display: inline-block; vertical-align: middle;"">Nhà hàng Thiên Phú</h1>
+      <p style=""text-transform: uppercase; font-weight: 600; color: #ffffff;font-size: 18px;"">Thông báo hoàn tiền</p>
+    </div>
+    <div class=""content"">
+      <p>Kính gửi <span class=""highlight"">" + username + @"</span>,</p>
+      <p>
+        Chúng tôi xin thông báo rằng yêu cầu hoàn tiền của bạn đã được xử lý thành công. Dưới đây là thông tin chi tiết:
+      </p>
+      <table class=""table"">
+        <tr>
+          <th>Lý do hoàn tiền</th>
+          <td>" + refundReason + @"</td>
+        </tr>
+        <tr>
+          <th>Số tiền hoàn</th>
+          <td><span class=""highlight"">" + FormatPriceInVietnamese(refundAmount) + @"</span></td>
+        </tr>
+        <tr>
+          <th>Mã giao dịch</th>
+          <td>" + transactionId + @"</td>
+        </tr>
+      </table>
+    </div>
+    <div class=""footer"">
+      <p>Trân trọng,<br>Đội ngũ Nhà hàng Thiên Phú</p>
+    </div>
+  </div>
+</body>
+
+</html>
+";
+        return content;
+    }
+
     public static string FormatPriceInVietnamese(double price)
     {
         // Use Vietnamese culture to format the price
