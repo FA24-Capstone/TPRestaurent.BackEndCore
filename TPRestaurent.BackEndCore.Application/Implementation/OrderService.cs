@@ -512,6 +512,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             throw new Exception($"Thực hiện hoàn tiền thất bại");
                         }
+                        string notificationEmailMessage = "Nhà hàng đã gửi thông báo mới tới email của bạn";
+                        await notificationMessageService!.SendNotificationToAccountAsync(orderDb.AccountId, notificationEmailMessage, false);
                     }
                     await dishManagementService.UpdateComboAvailability();
                     await dishManagementService.UpdateDishAvailability();
@@ -537,6 +539,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             string notificationSmsMessage = "Nhà hàng đã gửi thông báo mới tới số điện thoại của bạn";
                             await notificationMessageService!.SendNotificationToAccountAsync(accountDb.Id, notificationSmsMessage, false);
                         }
+                    }
+
+                    if(orderDb.StatusId == OrderStatus.ReadyForDelivery)
+                    {
+                        string notificationSmsMessage = "Có đơn sẵn sàng đề giao.";
+                        await notificationMessageService!.SendNotificationToRoleAsync(SD.RoleName.ROLE_ADMIN, notificationSmsMessage);
                     }
 
                     if ((!requireSignalR.HasValue || requireSignalR.Value))
@@ -3824,6 +3832,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var hashingService = Resolve<IHashingService>();
                 var notificationService = Resolve<INotificationMessageService>();
                 var mapService = Resolve<IMapService>();
+                var emailService = Resolve<IEmailService>();
                 var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
                 var utility = Resolve<Utility>();
                 var orderDb = await _repository.GetByExpression(p =>
@@ -3919,6 +3928,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         await transactionRepository!.Insert(newTransaction);
                         string message = $"Đơn hàng ID {orderDb.OrderId} đã bị hủy và chúng tôi đã hoàn tiền {orderDb.TotalAmount} cho bạn vào ví.";
                         await notificationService!.SendNotificationToAccountAsync(accountDb.Id, message, true);
+                        emailService.SendEmail(accountDb.Email, "THÔNG BÁO HOÀN TIỀN DO SHIPPER KHÔNG THỂ GIAO HÀNG", TemplateMappingHelper.GetTemplateRefundNotification($"{accountDb.LastName} {accountDb.FirstName}", "Shipper gặp trục trặc trong quá trình giao hàng.", orderDb.TotalAmount, newTransaction.Id));
                     }
                 }
 
@@ -4604,7 +4614,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var currentTime = utility!.GetCurrentDateTimeInTimeZone();
                 var reservationDb = await _repository.GetAllDataByExpression(
-                    (p => p.ReservationDate.HasValue && p.ReservationDate.Value.AddMinutes(30) == currentTime &&
+                    (p => p.MealTime.HasValue && p.MealTime.Value.AddMinutes(30) >= currentTime &&
                     (p.StatusId == OrderStatus.Pending || p.StatusId == OrderStatus.TableAssigned || p.StatusId == OrderStatus.TemporarilyCompleted
                     )), 0, 0, null, false, p => p.Account
                     );

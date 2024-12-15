@@ -109,7 +109,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 ComboOptionSetId = comboOptionSet.ComboOptionSetId,
                                 DishSizeDetailId = dishId.DishSizeDetailId,
                                 Quantity = dishId.Quantity,
-                                IsAvailable = true
+                                QuantityLeft = dishExisted.QuantityLeft / dishId.Quantity,
+                                IsAvailable = dishExisted.QuantityLeft / dishId.Quantity > 0,
+                                IsDeleted = false
                             };
                             dishComboList.Add(dishCombo);
                         }
@@ -585,7 +587,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             DishComboId = Guid.NewGuid(),
                                             ComboOptionSetId = optionSetDb.ComboOptionSetId,
                                             DishSizeDetailId = dishId.DishSizeDetailId,
-                                            Quantity = dishId.Quantity
+                                            Quantity = dishId.Quantity,
+                                            QuantityLeft = dishExisted.QuantityLeft / dishId.Quantity,
+                                            IsAvailable = dishExisted.QuantityLeft / dishId.Quantity > 0,
+                                            IsDeleted = false
                                         };
                                         dishComboList.Add(dishCombo);
                                     }
@@ -616,7 +621,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         DishComboId = Guid.NewGuid(),
                                         ComboOptionSetId = comboOptionSet.ComboOptionSetId,
                                         DishSizeDetailId = dishId.DishSizeDetailId,
-                                        Quantity = dishId.Quantity
+                                        Quantity = dishId.Quantity,
+                                        QuantityLeft = dishExisted.QuantityLeft / dishId.Quantity,
+                                        IsAvailable = dishExisted.QuantityLeft / dishId.Quantity > 0,
+                                        IsDeleted = false
                                     };
                                     dishComboList.Add(dishCombo);
                                 }

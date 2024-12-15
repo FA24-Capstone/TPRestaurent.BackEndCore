@@ -839,7 +839,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        [Hangfire.Queue("update-privateTables-availability")]
+        [Hangfire.Queue("update-tables-availability")]
         public async Task UpdateTableAvailability()
         {
             try
@@ -858,10 +858,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var orderToSetUsing = await orderRepository.GetAllDataByExpression(o => o.OrderTypeId != OrderType.Delivery 
                                                                                   && o.StatusId == OrderStatus.DepositPaid
-                                                                                  && o.MealTime.Value.AddMinutes(3) >= currentTime, 0, 0, null, false, null);
+                                                                                  && (o.MealTime.Value.AddMinutes(5) >= currentTime || o.MealTime.Value.AddMinutes(5) >= currentTime), 0, 0, null, false, null);
                 var orderToSetUsingIds = orderToSetUsing.Items.Select(o => o.OrderId).ToList();
-                var tableDetailOrderToSetUsing = await tableDetailRepository.GetAllDataByExpression(t => orderToSetUsingIds.Contains(t.OrderId), 0, 0, null, false, null);
-                await UpdateTableAvailability(tableDetailOrderToSetUsing.Items.Select(t => t.TableId).ToList(), TableStatus.CURRENTLYUSED);
+                var tableDetailOrderToSetUsing = await tableDetailRepository.GetAllDataByExpression(t => orderToSetUsingIds.Contains(t.OrderId) && t.Table.TableStatusId == TableStatus.AVAILABLE, 0, 0, null, false, null);
+                var toSetUsingTableIds = tableDetailOrderToSetUsing.Items.Select(t => t.TableId).ToList();
+                await UpdateTableAvailability(toSetUsingTableIds, TableStatus.CURRENTLYUSED);
 
 
                 var orderToSetAvailable = await orderRepository.GetAllDataByExpression(o => o.OrderTypeId != OrderType.Delivery 
@@ -869,7 +870,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                                                                           || o.StatusId == OrderStatus.Cancelled || o.StatusId == OrderStatus.Completed)
                                                                                       , 0, 0, null, false, null);
                 var orderToSetAvailableIds = orderToSetAvailable.Items.Select(o => o.OrderId).ToList();
-                var tableDetailOrderToSetAvailable = await tableDetailRepository.GetAllDataByExpression(t => orderToSetAvailableIds.Contains(t.OrderId), 0, 0, null, false, null);
+                var tableDetailOrderToSetAvailable = await tableDetailRepository.GetAllDataByExpression(t => orderToSetAvailableIds.Contains(t.OrderId) && !toSetUsingTableIds.Contains(t.TableId) && t.Table.TableStatusId == TableStatus.CURRENTLYUSED, 0, 0, null, false, null);
                 await UpdateTableAvailability(tableDetailOrderToSetAvailable.Items.Select(t => t.TableId).ToList(), TableStatus.AVAILABLE);
                 await _unitOfWork.SaveChangesAsync();
             }

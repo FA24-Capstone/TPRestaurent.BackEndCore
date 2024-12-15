@@ -76,11 +76,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             RecurringJob.AddOrUpdate(() => _storeCreditService.ChangeOverdueStoreCredit(), Cron.DayInterval(1), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _accountService.DeleteOverdueOTP(), Cron.DayInterval(1), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _groupedDishCraftService.InsertGroupedDish(), Cron.MinuteInterval((int)Math.Round(reloadGrouped)), vietnamTimeZone);
-            RecurringJob.AddOrUpdate(() => _orderService.RemindOrderReservation(), Cron.MinuteInterval(1), vietnamTimeZone);
+            RecurringJob.AddOrUpdate(() => _orderService.RemindOrderReservation(), Cron.MinuteInterval(30), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _transactionService.CancelPendingTransaction(), Cron.DayInterval(1), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _configService.ChangeConfigurationJob(), Cron.MinuteInterval(59), vietnamTimeZone);
-            RecurringJob.AddOrUpdate(() => _groupedDishCraftService.UpdateLateWarningGroupedDish(), Cron.MinuteInterval(3), vietnamTimeZone);
-            RecurringJob.AddOrUpdate(() => _orderSessionService.UpdateLateOrderSession(), Cron.MinuteInterval(3), vietnamTimeZone);
+            RecurringJob.AddOrUpdate(() => _groupedDishCraftService.UpdateLateWarningGroupedDish(), Cron.MinuteInterval(5), vietnamTimeZone);
+            RecurringJob.AddOrUpdate(() => _orderSessionService.UpdateLateOrderSession(), Cron.MinuteInterval(5), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _orderService.CancelOrder(), Cron.MinuteInterval(10), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _invoiceService.GenerateInvoice(), "01 0 * * *", vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _dishService.AutoRefillDish(), "02 0 * * *", vietnamTimeZone);
@@ -93,7 +93,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             RecurringJob.AddOrUpdate(() => _couponService.AssignCouponToUserWithRank(), "5 0 1 * *", vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _transactionService.LogMoneyInformationHacked(), Cron.HourInterval(4), vietnamTimeZone);
             RecurringJob.AddOrUpdate(() => _couponService.UpgradeUserRank(), Cron.HourInterval(4), vietnamTimeZone);
-            RecurringJob.AddOrUpdate(() => _tableService.UpdateTableAvailability(), Cron.MinuteInterval(3), vietnamTimeZone);
+            RecurringJob.AddOrUpdate(() => _tableService.UpdateTableAvailability(), Cron.MinuteInterval(5), vietnamTimeZone);
 
 
             //RecurringJob.AddOrUpdate(() => _orderService.CancelOverReservation(), Cron.MinuteInterval(2), vietnamTimeZone);
