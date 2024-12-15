@@ -33,7 +33,7 @@ namespace TPRestaurent.BackEndCore.Common.Utils
         }
 
         // Method to read logs as a list of LogDto
-        public static List<LogDto> ReadLogs()
+        public static async Task<List<LogDto>> ReadLogs()
         {
             var logs = new List<LogDto>();
 
@@ -41,7 +41,7 @@ namespace TPRestaurent.BackEndCore.Common.Utils
             {
                 if (File.Exists(LogFilePath))
                 {
-                    var lines = File.ReadAllLines(LogFilePath);
+                    var lines = await File.ReadAllLinesAsync(LogFilePath); // Async file read
                     logs = lines
                         .Where(line => !string.IsNullOrWhiteSpace(line))
                         .Select(line =>
@@ -49,7 +49,7 @@ namespace TPRestaurent.BackEndCore.Common.Utils
                             var parts = line.Split(new[] { " - " }, 3, StringSplitOptions.None);
                             return new LogDto
                             {
-                                Id= Guid.Parse(parts[0]),
+                                Id = Guid.Parse(parts[0]),
                                 Timestamp = DateTime.Parse(parts[1]),
                                 Message = string.Join("\n", parts[2].Split(" |")),
                             };
@@ -65,9 +65,9 @@ namespace TPRestaurent.BackEndCore.Common.Utils
 
             return logs;
         }
-        public static LogDto ReadLogById(Guid id)
+        public static async Task<LogDto> ReadLogById(Guid id)
         {
-            var logs = ReadLogs();
+            var logs = await ReadLogs();
             return logs.FirstOrDefault(log => log.Id == id);
         }
     }

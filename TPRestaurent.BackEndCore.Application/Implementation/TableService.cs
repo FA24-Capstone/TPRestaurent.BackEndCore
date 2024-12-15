@@ -1,9 +1,11 @@
 using AutoMapper;
 using Microsoft.IdentityModel.Tokens;
 using System.Linq.Expressions;
+using System.Text;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
+using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
@@ -599,7 +601,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         if (tableSetUpConfig.CurrentValue.Equals(SD.DefaultValue.IS_SET_UP))
                         {
-                            return BuildAppActionResultError(result, $"Sơ đồ bàn đã được thiết lập từ trước. Nếu thay đổi có ảnh hưởng đến lịch đặt bàn sau này");
+                            var checkTableAffect = await CheckUpdateTableCoordinates(request);
+                            if (!checkTableAffect.IsSuccess)
+                            {
+                                return checkTableAffect;
+                            }
                         }
                     }
                 }
@@ -833,7 +839,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        [Hangfire.Queue("update-table-availability")]
+        [Hangfire.Queue("update-privateTables-availability")]
         public async Task UpdateTableAvailability()
         {
             try
@@ -870,6 +876,193 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             catch (Exception ex)
             {
             }
+        }
+
+        public async Task<AppActionResult> CheckUpdateTableCoordinates(List<TableArrangementResponseItem> request)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var configurationRepository = Resolve<IGenericRepository<Configuration>>();
+                var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
+                var orderRepository = Resolve<IGenericRepository<Order>>();
+                var hashingService = Resolve<IHashingService>();
+                var utility = Resolve<Utility>();
+                var tableSetUpConfig = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TABLE_IS_SET_UP), null);
+                if (tableSetUpConfig != null)
+                {
+                    if (tableSetUpConfig.CurrentValue.Equals(SD.DefaultValue.IS_SET_UP))
+                    {
+                        var privateTables = await _repository.GetAllDataByExpression(t => t.Room.IsPrivate, 0, 0, null, false, t => t.Room);
+                        StringBuilder sb = new StringBuilder();
+                        foreach(var privateTable in privateTables.Items)
+                        {
+                            var inputTable = request.FirstOrDefault(i => i.Id == privateTable.TableId);
+                            List<(int, int)> coordinate = new List<(int, int)>();
+                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y));
+                            if (inputTable.TableSizeId != TableSize.EIGHT && inputTable.TableSizeId != TableSize.TEN)
+                            {
+                                for (int i = 1; i < (int)inputTable.TableSizeId / 2; i++)
+                                {
+                                    coordinate.Add((inputTable.Position.X, inputTable.Position.Y + i));
+                                }
+                            }
+                            else
+                            {
+                                if (inputTable.TableSizeId == TableSize.TEN)
+                                {
+                                    coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 1));
+                                    coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 2));
+                                    coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 3));
+
+                                    coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y));
+                                    coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 1));
+                                    coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 2));
+                                    coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 3));
+                                }
+                                else
+                                {
+                                    coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y));
+
+                                    coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 1));
+                                    coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 1));
+                                }
+                            }
+                            if (!ParseListToString(coordinate).Equals(privateTable.Coordinates))
+                            {
+                                sb.Append($"{privateTable.TableName}, ");
+                            }
+
+                            if(sb.Length > 0)
+                            {
+                                sb.Length -= 2;
+                                result.IsSuccess = false;
+                                result.Messages.Add($"Các bàn riêng tư không thể di chuyển: {sb.ToString()}");
+                                return result;
+                            }
+
+                        }
+
+                        //Check update table reservation
+                        var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                        var tableDetailDb = await tableDetailRepository.GetAllDataByExpression(t => t.Order.MealTime >= currentTime
+                                                                                                && (t.Order.StatusId != OrderStatus.Completed
+                                                                                                    || t.Order.StatusId != OrderStatus.Cancelled)
+                                                                                               , 0, 0, null, false, t => t.Table);
+                        var scheduledTables = tableDetailDb.Items.Select(t => t.Table);
+                        var affectedOrderIds = new List<Guid>();
+                        foreach (var scheduledTable in scheduledTables)
+                        {
+                            var inputTable = request.FirstOrDefault(i => i.Id == scheduledTable.TableId);
+                            List<(int, int)> coordinate = new List<(int, int)>();
+                            coordinate.Add((inputTable.Position.X, inputTable.Position.Y));
+                            if (inputTable.TableSizeId != TableSize.EIGHT && inputTable.TableSizeId != TableSize.TEN)
+                            {
+                                for (int i = 1; i < (int)inputTable.TableSizeId / 2; i++)
+                                {
+                                    coordinate.Add((inputTable.Position.X, inputTable.Position.Y + i));
+                                }
+                            }
+                            else
+                            {
+                                if (inputTable.TableSizeId == TableSize.TEN)
+                                {
+                                    coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 1));
+                                    coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 2));
+                                    coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 3));
+
+                                    coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y));
+                                    coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 1));
+                                    coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 2));
+                                    coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 3));
+                                }
+                                else
+                                {
+                                    coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y));
+
+                                    coordinate.Add((inputTable.Position.X, inputTable.Position.Y + 1));
+                                    coordinate.Add((inputTable.Position.X + 1, inputTable.Position.Y + 1));
+                                }
+                            }
+                            if (!ParseListToString(coordinate).Equals(scheduledTable.Coordinates))
+                            {
+                                affectedOrderIds.AddRange(tableDetailDb.Items.Where(t => t.TableId == scheduledTable.TableId).Select(o => o.OrderId));
+                            }
+                        }
+
+                        if (affectedOrderIds.Count > 0)
+                        {
+                            var orderDiningDb = await orderRepository.GetAllDataByExpression(o => affectedOrderIds.Contains(o.OrderId), 0, 0, null, false, o => o.Status,
+                                                                                                                                    o => o.OrderType,
+                                                                                                                                    o => o.Account,
+                                                                                                                                    o => o.Shipper);
+                            var decodedAccount = new Dictionary<string, Account>();
+                            foreach (var order in orderDiningDb.Items.Where(o => o.Account != null).ToList())
+                            {
+                                if (decodedAccount.ContainsKey(order.AccountId))
+                                {
+                                    order.Account = decodedAccount[order.AccountId];
+                                }
+                                else
+                                {
+                                    order.Account = hashingService.GetDecodedAccount(order.Account);
+                                    decodedAccount.Add(order.AccountId, order.Account);
+                                }
+
+                            }
+
+                            List<ReservationTableItemResponse> data = new List<ReservationTableItemResponse>();
+                            if (orderDiningDb != null && orderDiningDb.Items.Count > 0)
+                            {
+                                orderDiningDb.Items = orderDiningDb.Items.OrderByDescending(o => o.MealTime).ToList();
+
+
+                                foreach (var item in orderDiningDb.Items)
+                                {
+                                    if (item == null)
+                                    {
+                                        continue;
+                                    }
+                                    var reservation = await GetReservationDetailByOrder(item);
+                                    if (reservation == null)
+                                    {
+                                        result.Messages.Add($"Xảy ra lỗi khi truy vấn đặt bàn có id {item.OrderId}");
+                                    }
+                                    data.Add(reservation);
+                                }
+                            }
+                            result.Result = new PagedResult<ReservationTableItemResponse>
+                            {
+                                Items = data,
+                                TotalPages = orderDiningDb.TotalPages
+                            };
+                            result.IsSuccess = false;
+                            result.Messages.Append($"Những đặt bàn sau sẽ bị ảnh hưởng bởi các thay đổi bàn");
+                            return result;
+                        }                     
+                    }
+                }
+              
+            }
+            catch (Exception ex)
+            {
+            }
+            return result;
+        }
+
+        private async Task<ReservationTableItemResponse> GetReservationDetailByOrder(Order order)
+        {
+            ReservationTableItemResponse result = null;
+            try
+            {
+                var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
+                result = _mapper.Map<ReservationTableItemResponse>(order);
+                result.Tables = (await tableDetailRepository.GetAllDataByExpression(t => t.OrderId == order.OrderId, 0, 0, t => t.Table.TableName, false, t => t.Table.TableSize, t => t.Table.Room)).Items;
+            }
+            catch (Exception ex)
+            {
+            }
+            return result;
         }
     }
 }
