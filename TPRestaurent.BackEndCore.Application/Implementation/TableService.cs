@@ -839,7 +839,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
+
         //[Hangfire.Queue("update-tables-availability")]
+
         public async Task UpdateTableAvailability()
         {
             try
