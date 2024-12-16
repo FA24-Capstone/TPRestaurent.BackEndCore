@@ -21,7 +21,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpGet("get-all-notification-by-account-id/{accountId}")]
-        [TokenValidationMiddleware(Permission.ALL)]
+        //[TokenValidationMiddleware(Permission.ALL)]
         public async Task<AppActionResult> GetNotificationByAccountId(string accountId)
         {
             return await _notificationMessageService.GetNotificationMessageByAccountId(accountId);

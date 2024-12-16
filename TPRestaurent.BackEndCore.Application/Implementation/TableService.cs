@@ -541,7 +541,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
-                var tableDb = await _repository.GetAllDataByExpression(t => !t.IsDeleted, pageNumber, pageSize, null, false, t => t.Room, t => t.TableSize);
+                var tableDb = await _repository.GetAllDataByExpression(t => !t.IsDeleted, pageNumber, pageSize, t => t.TableSize, false, t => t.Room, t => t.TableSize);
                 if (tableDb.Items.Count > 0)
                 {
                     var data = new List<TableArrangementResponseItem>();
@@ -576,7 +576,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     result.Result = new PagedResult<TableArrangementResponseItem>
                     {
-                        Items = data,
+                        Items = data.OrderBy(o => o.Room.IsPrivate).ThenBy(o => o.TableStatusId).ThenBy(o => o.Name).ToList(),
                         TotalPages = tableDb.TotalPages
                     };
                 }
