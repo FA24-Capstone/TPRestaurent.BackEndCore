@@ -61,6 +61,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 List<Invoice> data = new List<Invoice> { };
                 var orderRepository = Resolve<IGenericRepository<Order>>();
                 var orderService = Resolve<IOrderService>();
+                var hashingService = Resolve<IHashingService>();
                 var utility = Resolve<Utility>();
                 var currentDate = utility.GetCurrentDateInTimeZone();
                 var orderHasCreatedInvoice = await _repository.GetAllDataByExpression(o => o.Date.AddDays(1) == currentDate, 0, 0, null, false, null);
@@ -97,6 +98,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             invoice.pdfLink = Convert.ToString(upload.Result);
                             data.Add(invoice);
                         }
+                    }
+
+                    foreach (var item in orderDb.Items)
+                    {
+                        item.Account = hashingService.GetCodedAccount(item.Account);
                     }
                     await _repository.InsertRange(data);
                     await _unitOfWork.SaveChangesAsync();

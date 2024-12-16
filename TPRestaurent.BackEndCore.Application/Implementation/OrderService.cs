@@ -3276,7 +3276,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 var allOrderDetailDb = await _detailRepository.GetAllDataByExpression(
                                     o => o.OrderId == orderId, 0, 0, null,
                                     false, null);
-                                if (orderDetailDb.Items.FirstOrDefault(o => o.OrderSessionId == session.OrderSessionId).Order.StatusId == OrderStatus.Pending &&
+                                if (orderDetailDb.Items.FirstOrDefault(o => o.OrderSessionId == session.OrderSessionId).Order.StatusId == OrderStatus.Processing &&
                                     allOrderDetailDb.Items.All(a =>
                                         a.OrderDetailStatusId == OrderDetailStatus.ReadyToServe ||
                                         a.OrderDetailStatusId == OrderDetailStatus.Cancelled))
