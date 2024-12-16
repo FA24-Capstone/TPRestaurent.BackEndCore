@@ -20,11 +20,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         private IHubServices _hubServices;
         private IEmailService _emailService;
         private ITableService _tableService;
+        private IAccountService _accountService;
 
         public TestController(IOrderService orderService, IInvoiceService invoiceService, IDishService dishService,
                               IHubServices hubServices, IGroupedDishCraftService groupedDishCraftService, 
                               IOrderSessionService orderSessionService, ITransactionService transactionService,
-                              IEmailService emailService, ITableService tableService)
+                              IEmailService emailService, ITableService tableService, IAccountService accountService)
         {
             _orderService = orderService;
             _invoiceService = invoiceService;
@@ -35,6 +36,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             _transactionService = transactionService;
             _emailService = emailService;
             _tableService = tableService;
+            _accountService = accountService;
         }
 
         [HttpPut("update-order-status")]
@@ -128,6 +130,12 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         public async Task UpdateTableAvailability()
         {
             await _tableService.UpdateTableAvailability();
+        }
+
+        [HttpGet("test-otp")]
+        public async Task<AppActionResult> GetDemoAccountOTP()
+        {
+            return await _accountService.GetDemoAccountOTP();
         }
     }
 }
