@@ -1347,7 +1347,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var hashingService = Resolve<IHashingService>();
                 var utility = Resolve<Utility>();
                 var customerIds = await GetCustomerId();
-                var accountDb = await accountRepository.GetAllDataByExpression(a => customerIds.Contains(a.Id), 0, 0, null, false, null);
+                var accountDb = await accountRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
                 if (accountDb.Items.Count > 0)
                 {
                     foreach (var account in accountDb.Items)
