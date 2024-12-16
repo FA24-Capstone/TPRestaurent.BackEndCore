@@ -75,9 +75,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var notificationService = Resolve<INotificationMessageService>();
                         var dishManagementService = Resolve<IDishManagementService>();
                         var hubService = Resolve<IHubServices.IHubServices>();
-
-                        var orderDb = await _repository.GetById(dto.OrderId);
                         var utility = Resolve<Utility>();
+
+                        var orderDb = await _repository.GetByExpression(o => o.OrderId == dto.OrderId && (o.StatusId == OrderStatus.Processing || o.StatusId == OrderStatus.TemporarilyCompleted), null);
                         if (orderDb == null)
                         {
                             throw new Exception($"Không tìm thấy đơn hàng với id {dto.OrderId}");
@@ -2053,12 +2053,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await _unitOfWork.SaveChangesAsync();
                         }
 
-                        if(orderRequestDto.PaymentMethod == PaymentMethod.Cash) {
-                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
-                        }
-
                         await dishManagementService.UpdateComboAvailability();
                         await dishManagementService.UpdateDishAvailability();
+                    }
+
+                    if (orderRequestDto.PaymentMethod == PaymentMethod.Cash)
+                    {
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
                     }
                 }
                 catch (Exception ex)
@@ -3275,7 +3276,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 var allOrderDetailDb = await _detailRepository.GetAllDataByExpression(
                                     o => o.OrderId == orderId, 0, 0, null,
                                     false, null);
-                                if (orderDetailDb.Items.FirstOrDefault(o => o.OrderSessionId == session.OrderSessionId).Order.StatusId == OrderStatus.Pending &&
+                                if (orderDetailDb.Items.FirstOrDefault(o => o.OrderSessionId == session.OrderSessionId).Order.StatusId == OrderStatus.Processing &&
                                     allOrderDetailDb.Items.All(a =>
                                         a.OrderDetailStatusId == OrderDetailStatus.ReadyToServe ||
                                         a.OrderDetailStatusId == OrderDetailStatus.Cancelled))

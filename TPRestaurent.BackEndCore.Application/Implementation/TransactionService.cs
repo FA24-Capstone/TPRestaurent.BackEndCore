@@ -221,7 +221,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 string orderInfo = hashingService.Hashing("OR", key).Result.ToString();
                                 string redirectUrl = $"{returnUrl}";
                                 string ipnUrl = _momoConfiguration.IPNUrl;
-                                string requestType = "payWithATM";
+                                string requestType = "captureWallet";
 
                                 string requestId = Guid.NewGuid().ToString();
                                 string extraData = transaction.Id.ToString();
@@ -295,7 +295,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         string orderInfo = hashingService.Hashing("OR", key).Result.ToString();
                                         string redirectUrl = $"{_momoConfiguration.RedirectUrl}";
                                         string ipnUrl = _momoConfiguration.IPNUrl;
-                                        string requestType = "payWithATM";
+                                        string requestType = "captureWallet";
 
                                         string requestId = Guid.NewGuid().ToString();
                                         string extraData = transaction.OrderId.ToString();
@@ -1347,7 +1347,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var hashingService = Resolve<IHashingService>();
                 var utility = Resolve<Utility>();
                 var customerIds = await GetCustomerId();
-                var accountDb = await accountRepository.GetAllDataByExpression(a => customerIds.Contains(a.Id), 0, 0, null, false, null);
+                var accountDb = await accountRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
                 if (accountDb.Items.Count > 0)
                 {
                     foreach (var account in accountDb.Items)

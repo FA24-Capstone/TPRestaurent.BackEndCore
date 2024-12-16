@@ -160,5 +160,31 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
             return account;
         }
+
+        public Account GetCodedAccount(Account account)
+        {
+            try
+            {
+                if (account == null)
+                {
+                    return null;
+                }
+                var storeCreditAmountResult = Hashing(account.Id, double.Parse(account.StoreCreditAmount), false).Result;
+                if (storeCreditAmountResult != null)
+                {
+                    account.StoreCreditAmount = storeCreditAmountResult.ToString();
+                }
+
+                var loyaltyPointResult = Hashing(account.Id, double.Parse(account.LoyaltyPoint), true).Result;
+                if (loyaltyPointResult != null)
+                {
+                    account.LoyaltyPoint = loyaltyPointResult.ToString();
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+            return account;
+        }
     }
 }
