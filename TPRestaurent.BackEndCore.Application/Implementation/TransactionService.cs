@@ -221,7 +221,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 string orderInfo = hashingService.Hashing("OR", key).Result.ToString();
                                 string redirectUrl = $"{returnUrl}";
                                 string ipnUrl = _momoConfiguration.IPNUrl;
-                                string requestType = "payWithATM";
+                                string requestType = "captureWallet";
 
                                 string requestId = Guid.NewGuid().ToString();
                                 string extraData = transaction.Id.ToString();
@@ -295,7 +295,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         string orderInfo = hashingService.Hashing("OR", key).Result.ToString();
                                         string redirectUrl = $"{_momoConfiguration.RedirectUrl}";
                                         string ipnUrl = _momoConfiguration.IPNUrl;
-                                        string requestType = "payWithATM";
+                                        string requestType = "captureWallet";
 
                                         string requestId = Guid.NewGuid().ToString();
                                         string extraData = transaction.OrderId.ToString();
