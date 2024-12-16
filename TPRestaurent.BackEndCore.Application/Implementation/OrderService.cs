@@ -1738,9 +1738,19 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         orderDb.AccountId = accountDb.Id;
                     }
 
+                    if (accountDb == null && orderRequestDto.LoyalPointsToUse.HasValue && orderRequestDto.LoyalPointsToUse.Value > 0)
+                    {
+                        throw new Exception($"Bạn cần có tài khoản để áp dụng điểm thưởng");
+                    }
+
                     if (accountDb == null && orderRequestDto.CouponIds.Count > 0)
                     {
                         throw new Exception($"Coupon chỉ áp dụng được cho khách hàng có tài khoản trong hệ thống");
+                    }
+
+                    if (accountDb == null && !orderRequestDto.ChooseCashRefund.Value)
+                    {
+                        throw new Exception($"Bạn cần có tài khoản đề được hoàn vào số dư");
                     }
 
                     var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(
@@ -3270,8 +3280,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                         a.OrderDetailStatusId == OrderDetailStatus.ReadyToServe ||
                                         a.OrderDetailStatusId == OrderDetailStatus.Cancelled))
                                 {
-                                    await ChangeOrderStatusService(orderId, true,
-                                        OrderStatus.TemporarilyCompleted, false);
+                                    await ChangeOrderStatusService(orderId, true, OrderStatus.TemporarilyCompleted,
+                                    false);
                                 }
                             }
                         }

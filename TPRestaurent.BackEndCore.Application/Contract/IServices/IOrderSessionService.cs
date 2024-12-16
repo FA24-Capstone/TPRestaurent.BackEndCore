@@ -9,7 +9,7 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
 
         Task<AppActionResult> GetOrderSessionById(Guid orderSessionId);
 
-        Task<AppActionResult> UpdateOrderSessionStatus(Guid orderSessionId, OrderSessionStatus orderSessionStatus, bool sendSignalR);
+        Task<AppActionResult> UpdateOrderSessionStatus(Guid orderSessionId, OrderSessionStatus orderSessionStatus);
 
         Task<AppActionResult> GetGroupedDish(DateTime?[]? groupeTime);
 

@@ -488,7 +488,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        public async Task<AppActionResult> UpdateOrderSessionStatus(Guid orderSessionId, OrderSessionStatus orderSessionStatus, bool sendSignalR)
+        public async Task<AppActionResult> UpdateOrderSessionStatus(Guid orderSessionId, OrderSessionStatus orderSessionStatus)
         {
             var result = new AppActionResult();
             var dishManagementService = Resolve<IDishManagementService>();
@@ -509,14 +509,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await _orderSessionRepository.Update(orderSessionDb);
 
                     await _unitOfWork.SaveChangesAsync();
-
-                    if (sendSignalR)
-                    {
-                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
-                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
-                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
-                    }
-
                     var orderDetailDb =
                         await orderDetailRepository.GetAllDataByExpression(o => o.OrderSessionId == orderSessionId, 0,
                             0, null, false, null);
@@ -524,11 +516,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         var orderService = Resolve<IOrderService>();
                         var orderId = orderDetailDb.Items.FirstOrDefault().OrderId;
-                        if (sendSignalR)
-                        {
-                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
-                        }
-
+                        
                         var orderDetailToUpdate = orderDetailDb.Items
                             .Where(o => 
                                         //o.OrderDetailStatusId != OrderDetailStatus.Reserved &&
@@ -590,6 +578,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 || o.OrderDetailStatusId == OrderDetailStatus.ReadyToServe)
                             .Select(o => o.OrderDetailId).ToList());
                     }
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER_SESIONS);
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_GROUPED_DISHES);
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
+                    await _hubServices.SendAsync(SD.SignalMessages.LOAD_ORDER);
                 }
                 catch (Exception ex)
                 {

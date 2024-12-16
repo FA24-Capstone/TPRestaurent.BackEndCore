@@ -82,7 +82,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("create-order")]
-        //[TokenValidationMiddleware(Permission.CREATE_ORDER)]
+        [TokenValidationMiddleware(Permission.CREATE_ORDER)]
         public async Task<AppActionResult> CreateOrder([FromBody] OrderRequestDto dto)
         {
             return await _service.CreateOrder(dto);
