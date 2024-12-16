@@ -591,7 +591,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        [Hangfire.Queue("update-late-order-session")]
+        //[Hangfire.Queue("update-late-order-session")]
         public async Task UpdateLateOrderSession()
         {
             try

@@ -213,7 +213,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return isSuccessful;
         }
 
-        [Hangfire.Queue("update-late-warning-grouped-dish")]
+        //[Hangfire.Queue("update-late-warning-grouped-dish")]
         public async Task UpdateLateWarningGroupedDish()
         {
             try

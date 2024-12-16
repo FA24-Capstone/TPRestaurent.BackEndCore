@@ -53,7 +53,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        [Hangfire.Queue("generate-invoice")]
+        //[Hangfire.Queue("generate-invoice")]
         public async Task GenerateInvoice()
         {
             try

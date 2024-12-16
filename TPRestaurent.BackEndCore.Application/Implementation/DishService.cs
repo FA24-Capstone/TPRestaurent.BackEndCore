@@ -726,7 +726,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        [Hangfire.Queue("auto-refill-dish")]
+        //[Hangfire.Queue("auto-refill-dish")]
         public async Task AutoRefillDish()
         {
             var dishSizeDetailRepository = Resolve<IGenericRepository<DishSizeDetail>>();
