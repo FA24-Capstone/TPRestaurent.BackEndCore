@@ -284,6 +284,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var transactionService = Resolve<ITransactionService>();
                 var dishManagementService = Resolve<IDishManagementService>();
                 var notificationMessageService = Resolve<INotificationMessageService>();
+                var smsService = Resolve<ISmsService>();
                 var emailService = Resolve<IEmailService>();
                 var orderDb = await _repository.GetById(orderId);
                 var updateDishSizeDetailList = new List<DishSizeDetail>();
@@ -535,7 +536,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             var smsMessage = $"[NHÀ HÀNG THIÊN PHÚ] Đơn hàng của bạn vào lúc {orderDb.OrderDate} đã thành công. " +
                                    $"Xin chân trọng cảm ơn quý khách.";
-                            //await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
+                            await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
                             string notificationSmsMessage = "Nhà hàng đã gửi thông báo mới tới số điện thoại của bạn";
                             await notificationMessageService!.SendNotificationToAccountAsync(accountDb.Id, notificationSmsMessage, false);
                         }
@@ -1223,7 +1224,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     var smsMessage = $"[NHÀ HÀNG THIÊN PHÚ] Đơn đặt bàn của bạn vào lúc {order.ReservationDate} đã thành công. " +
                                                  $"Vui lòng thanh toán {order.TotalAmount} VND" +
                                                  $"Xin chân trọng cảm ơn quý khách.";
-                                   // await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
+                                   await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
                                 }
                             }
                         }
@@ -1995,6 +1996,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             storeCreditAmount = int.Parse(accountDb.StoreCreditAmount);
                                         }
 
+                                       
+
                                         var returnTransaction = new Transaction
                                         {
                                             Id = Guid.NewGuid(),
@@ -2002,6 +2005,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             PaymentMethodId = PaymentMethod.STORE_CREDIT,
                                             TransactionTypeId = TransactionType.Refund,
                                             Date = utility.GetCurrentDateTimeInTimeZone(),
+                                            PaidDate = utility.GetCurrentDateTimeInTimeZone(),
                                             Amount = hashingService.Hashing(accountDb.Id, Math.Ceiling((double)orderDb.ChangeReturned), false).Result.ToString(),
                                             OrderId = orderDb.OrderId,
                                             TransationStatusId = TransationStatus.SUCCESSFUL
@@ -2022,6 +2026,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     orderDb.CashReceived = Math.Ceiling(orderDb.TotalAmount / 1000) * 1000;
                                     orderDb.ChangeReturned = 0;
                                 }
+
+                                var payTransaction = new Transaction
+                                {
+                                    Id = Guid.NewGuid(),
+                                    AccountId = orderDb.AccountId,
+                                    PaymentMethodId = PaymentMethod.Cash,
+                                    TransactionTypeId = TransactionType.Order,
+                                    Date = utility.GetCurrentDateTimeInTimeZone(),
+                                    PaidDate = utility.GetCurrentDateTimeInTimeZone(),
+                                    Amount = hashingService.Hashing(accountDb.Id, Math.Ceiling((double)orderDb.TotalAmount), false).Result.ToString(),
+                                    OrderId = orderDb.OrderId,
+                                    TransationStatusId = TransationStatus.SUCCESSFUL
+                                };
+
+                                await transactionRepository.Insert(payTransaction);
 
                                 orderDb.StatusId = OrderStatus.Completed;
                                 await _repository.Update(orderDb);
@@ -3534,8 +3553,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 var transactionRepository = Resolve<IGenericRepository<Transaction>>();
                 var orderResponse = _mapper.Map<OrderResponse>(order);
-                var orderTransactionDb = await transactionRepository.GetAllDataByExpression(o => o.OrderId.HasValue && o.OrderId == reservationId && o.TransactionTypeId != TransactionType.Refund, 0, 0, null, false, o => o.TransactionType);
-                var refundTransactionDb = await transactionRepository.GetAllDataByExpression(o => o.OrderId.HasValue && o.OrderId == reservationId && o.TransactionTypeId == TransactionType.Refund, 0, 0, null, false, o => o.TransactionType);
+                var orderTransactionDb = await transactionRepository.GetAllDataByExpression(o => o.OrderId.HasValue && o.OrderId == reservationId && o.TransationStatusId == TransationStatus.SUCCESSFUL && o.TransactionTypeId != TransactionType.Refund, 0, 0, null, false, o => o.TransactionType);
+                var refundTransactionDb = await transactionRepository.GetAllDataByExpression(o => o.OrderId.HasValue && o.OrderId == reservationId && o.TransationStatusId == TransationStatus.SUCCESSFUL && o.TransactionTypeId == TransactionType.Refund, 0, 0, null, false, o => o.TransactionType);
                 if (orderTransactionDb.Items.Count() > 0)
                 {
                     var orderTransaction = orderTransactionDb.Items.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).FirstOrDefault();
@@ -3543,13 +3562,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     orderTransaction.Amount = transactionAmountResult.Result.ToString().Split('_')[1];
                     orderResponse.Transaction = orderTransaction;
 
-                    var orderRefundTransaction = refundTransactionDb.Items.FirstOrDefault();
-                    if(orderRefundTransaction != null)
-                    {
-                        var refundTransactionAmountResult = hashingService.UnHashing(orderRefundTransaction.Amount, false);
-                        orderRefundTransaction.Amount = refundTransactionAmountResult.Result.ToString().Split('_')[1];
-                        orderResponse.RefundTransaction = orderRefundTransaction;
-                    }
 
                     var successfulDepositTransaction = orderTransactionDb.Items.Where(o => o.TransationStatusId == TransationStatus.SUCCESSFUL && o.TransactionTypeId == TransactionType.Deposit).ToList();
                     if (successfulDepositTransaction.Count() == 1)
@@ -3562,6 +3574,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     {
                         orderResponse.OrderPaidDate = successfulOrderTransaction.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).FirstOrDefault().PaidDate;
                     }
+                }
+
+                var orderRefundTransaction = refundTransactionDb.Items.FirstOrDefault();
+                if (orderRefundTransaction != null)
+                {
+                    var refundTransactionAmountResult = hashingService.UnHashing(orderRefundTransaction.Amount, false);
+                    orderRefundTransaction.Amount = refundTransactionAmountResult.Result.ToString().Split('_')[1];
+                    orderResponse.RefundTransaction = orderRefundTransaction;
                 }
 
                 var reservationTableDetails = await GetReservationTableDetails(reservationId);

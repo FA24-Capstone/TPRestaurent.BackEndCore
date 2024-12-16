@@ -1,3 +1,4 @@
+using Aspose.Pdf;
 using AutoMapper;
 using Firebase.Auth;
 using FirebaseAdmin;
@@ -5,6 +6,7 @@ using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Newtonsoft.Json;
+using System.Linq;
 using System.Net;
 using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
@@ -15,6 +17,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
+using static Aspose.Pdf.Artifacts.Pagination.PageNumber;
 using Utility = TPRestaurent.BackEndCore.Common.Utils.Utility;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
@@ -67,6 +70,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 var utility = Resolve<Utility>();
                 var tokenRepository = Resolve<IGenericRepository<Token>>();
+                var hashingService = Resolve<IHashingService>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
 
                 if (!utility.IsValidPhoneNumberInput(loginRequest.PhoneNumber))
@@ -164,6 +168,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await _accountRepository.Update(user);
                 }
                 await _unitOfWork.SaveChangesAsync();
+                user = hashingService.GetDecodedAccount(user);
             }
             catch (Exception ex)
             {
@@ -792,8 +797,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var random = new Random();
                 code = random.Next(100000, 999999).ToString();
                 var smsService = Resolve<ISmsService>();
-                //var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
-                //    phoneNumber);
+                var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
+                    phoneNumber);
             }
 
             return code;
@@ -881,7 +886,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 _tokenDto.Token = token;
                 _tokenDto.RefreshToken = refreshToken;
-                user = DecodeStoreCreditAndLoyaltyPointOfAccount(user);
+                //user = DecodeStoreCreditAndLoyaltyPointOfAccount(user);
                 _tokenDto.Account = _mapper.Map<AccountResponse>(user);
                 var customerInfoAddressDb = await customerInfoAddressRepository.GetAllDataByExpression(c => c.AccountId.Equals(user.Id) && !c.IsDeleted, 0, 0, null, false, null);
                 if (customerInfoAddressDb.Items.Count() > 0)
@@ -1150,6 +1155,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var utility = Resolve<Utility>();
+                var hashingService = Resolve<IHashingService>();
                 if (!utility.IsValidPhoneNumberInput(phoneNumber))
                 {
                     return BuildAppActionResultError(result, "Số điện thoại không hợp lệ. Vui lòng kiểm tra lại.");
@@ -1184,6 +1190,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     await _accountRepository.Update(user);
                     await _unitOfWork.SaveChangesAsync();
                 }
+                user = hashingService.GetDecodedAccount(user);
             }
             catch (Exception ex)
             {
@@ -2189,5 +2196,77 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return account;
         }
 
+        public async Task<AppActionResult> GetDemoAccountOTP()
+        {
+            var result = new AppActionResult();
+            try
+            {
+                List<string> phones = new List<string>
+                {
+                    "945507865",
+                    "366967957",
+                    "984135344",
+                    "389867608",
+                    "966537537"
+                };
+                var list = new PagedResult<Account>();
+                var customerInfoAddressRepository = Resolve<IGenericRepository<CustomerInfoAddress>>();
+                list = await _accountRepository.GetAllDataByExpression(p => phones.Contains(p.PhoneNumber), 0, 0, null, false, null);
+                
+
+                list.Items = DecodeStoreCreditAndLoyaltyPointOfAccount(list.Items);
+
+                var userRoleRepository = Resolve<IGenericRepository<IdentityUserRole<string>>>();
+                var roleRepository = Resolve<IGenericRepository<IdentityRole>>();
+                var listRole = await roleRepository!.GetAllDataByExpression(null, 1, 100, null, false, null);
+                var listMap = _mapper.Map<List<AccountResponse>>(list.Items);
+                foreach (var item in listMap)
+                {
+                    var userRole = new List<IdentityRole>();
+
+                    var customerInfoAddressDb = await customerInfoAddressRepository!.GetAllDataByExpression(p => p.AccountId == item.Id, 0, 0, null, false, null);
+                    var role = await userRoleRepository!.GetAllDataByExpression(a => a.UserId == item.Id, 1, 100, null, false, null);
+                    foreach (var itemRole in role.Items!)
+                    {
+                        var roleUser = listRole.Items!.ToList().FirstOrDefault(a => a.Id == itemRole.RoleId);
+                        if (roleUser != null) userRole.Add(roleUser);
+                    }
+
+                    item.Roles = userRole;
+                    var roleNameList = userRole.DistinctBy(i => i.Id).Select(i => i.Name).ToList();
+                    item.Addresses = customerInfoAddressDb.Items;
+
+                    if (roleNameList.Contains("ADMIN"))
+                    {
+                        item.MainRole = "ADMIN";
+                    }
+                    else if (roleNameList.Contains("SHIPPER"))
+                    {
+                        item.MainRole = "SHIPPER";
+                    }
+                    else if (roleNameList.Contains("CHEF") && !roleNameList.Contains("ADMIN"))
+                    {
+                        item.MainRole = "CHEF";
+                    }
+                    else if (roleNameList.Count > 1)
+                    {
+                        item.MainRole = roleNameList.FirstOrDefault(n => !n.Equals("CUSTOMER"));
+                    }
+                    else
+                    {
+                        item.MainRole = "CUSTOMER";
+                    }
+                }
+
+                result.Result =
+                    new PagedResult<AccountResponse>
+                    { Items = listMap, TotalPages = list.TotalPages };
+                return result;
+            }
+            catch (Exception ex)
+            {
+            }
+            return result;
+        }
     }
 }
