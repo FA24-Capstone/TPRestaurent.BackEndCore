@@ -36,7 +36,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         [TokenValidationMiddleware(Permission.KITCHEN)]
         public async Task<AppActionResult> UpdateOrderSessionStatus(Guid id, OrderSessionStatus status)
         {
-            return await _service.UpdateOrderSessionStatus(id, status, true);
+            return await _service.UpdateOrderSessionStatus(id, status);
         }
 
         [HttpGet("get-grouped-dish")]
