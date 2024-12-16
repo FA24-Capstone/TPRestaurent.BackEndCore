@@ -2792,7 +2792,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return collidedTables;
         }
 
-        [Hangfire.Queue("notify-reservation-dish-to-kitchen")]
+        //[Hangfire.Queue("notify-reservation-dish-to-kitchen")]
         public async Task NotifyReservationDishToKitchen()
         {
             try
@@ -2833,7 +2833,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             Task.CompletedTask.Wait();
         }
 
-        [Hangfire.Queue("account-daily-reservation-dish")]
+        //[Hangfire.Queue("account-daily-reservation-dish")]
         public async Task AccountDailyReservationDish()
         {
             try
@@ -4560,7 +4560,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        [Hangfire.Queue("cancel-order")]
+        //[Hangfire.Queue("cancel-order")]
         public async Task CancelOrder()
         {
             var emailService = Resolve<IEmailService>();
@@ -4616,7 +4616,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             Task.CompletedTask.Wait();
         }
 
-        [Hangfire.Queue("remind-order-reservation")]
+        //[Hangfire.Queue("remind-order-reservation")]
         public async Task RemindOrderReservation()
         {
             var utility = Resolve<Utility>();
@@ -4644,7 +4644,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
         }
 
-        [Hangfire.Queue("cancel-over-reservation")]
+        //[Hangfire.Queue("cancel-over-reservation")]
         public async Task CancelOverReservation()
         {
             var utility = Resolve<Utility>();
@@ -4830,7 +4830,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        [Hangfire.Queue("cancel-reservation")]
+        //[Hangfire.Queue("cancel-reservation")]
         public async Task CancelReservation()
         {
             var emailService = Resolve<IEmailService>();

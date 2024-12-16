@@ -1,4 +1,4 @@
-﻿using Hangfire;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using TPRestaurent.BackEndCore.API.Installers;
 using TPRestaurent.BackEndCore.API.Middlewares;
@@ -32,19 +32,19 @@ builder.Services.InstallerServicesInAssembly(builder.Configuration);
 //    options.WorkerCount = 1;
 //});
 
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:order";
-    options.Queues = new[] { "account-daily-reservation-dish" };
-    options.WorkerCount = 1;
-});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:order";
+//    options.Queues = new[] { "account-daily-reservation-dish" };
+//    options.WorkerCount = 1;
+//});
 
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:order";
-    options.Queues = new[] { "notify-reservation-dish-to-kitchen" };
-    options.WorkerCount = 1;
-});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:order";
+//    options.Queues = new[] { "notify-reservation-dish-to-kitchen" };
+//    options.WorkerCount = 1;
+//});
 
 //builder.Services.AddHangfireServer(options =>
 //{
@@ -53,19 +53,19 @@ builder.Services.AddHangfireServer(options =>
 //    options.WorkerCount = 1;
 //});
 
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:store-credit";
-    options.Queues = new[] { "change-over-due-store-credit" };
-    options.WorkerCount = 1;
-});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:store-credit";
+//    options.Queues = new[] { "change-over-due-store-credit" };
+//    options.WorkerCount = 1;
+//});
 
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:account";
-    options.Queues = new[] { "delete-overdue-otp" };
-    options.WorkerCount = 1;
-});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:account";
+//    options.Queues = new[] { "delete-overdue-otp" };
+//    options.WorkerCount = 1;
+//});
 
 //builder.Services.AddHangfireServer(options =>
 //{
@@ -74,104 +74,104 @@ builder.Services.AddHangfireServer(options =>
 //    options.WorkerCount = 1;
 //});
 
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:order";
-    options.Queues = new[] { "cancel-order" };
-    options.WorkerCount = 1;
-});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:order";
+//    options.Queues = new[] { "cancel-order" };
+//    options.WorkerCount = 1;
+//});
 
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:order";
-    options.Queues = new[] { "remind-order-reservation" };
-    options.WorkerCount = 1;
-});
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:transaction";
-    options.Queues = new[] { "cancel-pending-transaction" };
-    options.WorkerCount = 1;
-});
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:configuration";
-    options.Queues = new[] { "change-configuration" };
-    options.WorkerCount = 1;
-});
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:grouped-dish-craft";
-    options.Queues = new[] { "update-late-warning-grouped-dish" };
-    options.WorkerCount = 1;
-});
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:order-session";
-    options.Queues = new[] { "update-late-order-session" };
-    options.WorkerCount = 1;
-});
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:order";
-    options.Queues = new[] { "cancel-delivery" };
-    options.WorkerCount = 1;
-});
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:invoice";
-    options.Queues = new[] { "generate-invoice" };
-    options.WorkerCount = 1;
-});
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:dish";
-    options.Queues = new[] { "auto-refill-dish" };
-    options.WorkerCount = 1;
-});
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:order-session";
-    options.Queues = new[] { "clear-order-session-daily" };
-    options.WorkerCount = 1;
-});
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:coupon-session";
-    options.Queues = new[] { "get-birthday-user-for-coupon" };
-    options.WorkerCount = 1;
-});
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:coupon-session";
-    options.Queues = new[] { "remove-expired-coupon" };
-    options.WorkerCount = 1;
-});
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:coupon-session";
-    options.Queues = new[] { "reset-user-rank" };
-    options.WorkerCount = 1;
-});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:order";
+//    options.Queues = new[] { "remind-order-reservation" };
+//    options.WorkerCount = 1;
+//});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:transaction";
+//    options.Queues = new[] { "cancel-pending-transaction" };
+//    options.WorkerCount = 1;
+//});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:configuration";
+//    options.Queues = new[] { "change-configuration" };
+//    options.WorkerCount = 1;
+//});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:grouped-dish-craft";
+//    options.Queues = new[] { "update-late-warning-grouped-dish" };
+//    options.WorkerCount = 1;
+//});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:order-session";
+//    options.Queues = new[] { "update-late-order-session" };
+//    options.WorkerCount = 1;
+//});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:order";
+//    options.Queues = new[] { "cancel-delivery" };
+//    options.WorkerCount = 1;
+//});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:invoice";
+//    options.Queues = new[] { "generate-invoice" };
+//    options.WorkerCount = 1;
+//});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:dish";
+//    options.Queues = new[] { "auto-refill-dish" };
+//    options.WorkerCount = 1;
+//});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:order-session";
+//    options.Queues = new[] { "clear-order-session-daily" };
+//    options.WorkerCount = 1;
+//});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:coupon-session";
+//    options.Queues = new[] { "get-birthday-user-for-coupon" };
+//    options.WorkerCount = 1;
+//});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:coupon-session";
+//    options.Queues = new[] { "remove-expired-coupon" };
+//    options.WorkerCount = 1;
+//});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:coupon-session";
+//    options.Queues = new[] { "reset-user-rank" };
+//    options.WorkerCount = 1;
+//});
 
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:transaction";
-    options.Queues = new[] { "log-money-information-hacked" };
-    options.WorkerCount = 1;
-});
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:coupon-session";
-    options.Queues = new[] { "upgrade-user-rank" };
-    options.WorkerCount = 1;
-});
-builder.Services.AddHangfireServer(options =>
-{
-    options.ServerName = $"{Environment.MachineName}:table";
-    options.Queues = new[] { "update-tables-availability" };
-    options.WorkerCount = 1;
-});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:transaction";
+//    options.Queues = new[] { "log-money-information-hacked" };
+//    options.WorkerCount = 1;
+//});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:coupon-session";
+//    options.Queues = new[] { "upgrade-user-rank" };
+//    options.WorkerCount = 1;
+//});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.ServerName = $"{Environment.MachineName}:table";
+//    options.Queues = new[] { "update-tables-availability" };
+//    options.WorkerCount = 1;
+//});
 
 
 
@@ -198,12 +198,12 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
     Authorization = new[] { new DashboardNoAuthorizationFilter() }
 }); ;
 
-//using (var scope = app.Services.CreateScope())
-//{
-//    var serviceProvider = scope.ServiceProvider;
-//    var workerService = serviceProvider.GetRequiredService<WorkerService>();
-//    await workerService.Start();
-//}
+using (var scope = app.Services.CreateScope())
+{
+    var serviceProvider = scope.ServiceProvider;
+    var workerService = serviceProvider.GetRequiredService<WorkerService>();
+    await workerService.Start();
+}
 app.Run();
 
 void ApplyMigration()

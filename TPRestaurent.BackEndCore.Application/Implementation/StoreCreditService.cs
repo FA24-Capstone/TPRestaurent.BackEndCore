@@ -24,7 +24,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _unitOfWork = unitOfWork;
         }
 
-        [Hangfire.Queue("change-over-due-store-credit")]
+        //[Hangfire.Queue("change-over-due-store-credit")]
         public async Task ChangeOverdueStoreCredit()
         {
             AppActionResult result = new AppActionResult();

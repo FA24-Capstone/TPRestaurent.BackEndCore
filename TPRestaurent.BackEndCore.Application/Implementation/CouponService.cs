@@ -286,7 +286,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        [Hangfire.Queue("get-birthday-user-for-coupon")]
+        //[Hangfire.Queue("get-birthday-user-for-coupon")]
         public async Task GetBirthdayUserForCoupon()
         {
             var utility = Resolve<Utility>();
@@ -424,7 +424,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        [Hangfire.Queue("remove-expired-coupon")]
+        //[Hangfire.Queue("remove-expired-coupon")]
         public async Task RemoveExpiredCoupon()
         {
             var utility = Resolve<Utility>();
@@ -448,7 +448,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             Task.CompletedTask.Wait();
         }
 
-        [Hangfire.Queue("reset-user-rank")]
+        //[Hangfire.Queue("reset-user-rank")]
         public async Task ResetUserRank()
         {
             try
@@ -503,7 +503,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }
         }
 
-        [Hangfire.Queue("upgrade-user-rank")]
+        //[Hangfire.Queue("upgrade-user-rank")]
         public async Task<string> UpgradeUserRank()
         {
             string message = string.Empty;
@@ -655,7 +655,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        [Hangfire.Queue("assign-coupon-to-user-with-rank")]
+        //[Hangfire.Queue("assign-coupon-to-user-with-rank")]
         public async Task AssignCouponToUserWithRank()
         {
             try

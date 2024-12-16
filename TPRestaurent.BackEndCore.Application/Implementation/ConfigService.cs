@@ -19,7 +19,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             _logger = logger;
         }
 
-        [Hangfire.Queue("change-configuration")]
+        //[Hangfire.Queue("change-configuration")]
         public async Task ChangeConfigurationJob()
         {
             try

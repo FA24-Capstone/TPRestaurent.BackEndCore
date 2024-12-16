@@ -901,7 +901,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return result;
         }
 
-        [Hangfire.Queue("cancel-pending-transaction")]
+        //[Hangfire.Queue("cancel-pending-transaction")]
         public async Task CancelPendingTransaction()
         {
             try
@@ -1140,7 +1140,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             return transactions;
         }
 
-        [Hangfire.Queue("log-money-information-hacked")]
+        //[Hangfire.Queue("log-money-information-hacked")]
         public async Task<string> LogMoneyInformationHacked()
         {
             StringBuilder logMessage = new StringBuilder();
