@@ -11,5 +11,6 @@ namespace TPRestaurent.BackEndCore.Application.Contract.IServices
         public AppActionResult Hashing(string accountId, double amount, bool isLoyaltyPoint);
         public AppActionResult UnHashing(string text, bool isLoyaltyPoint);
         public Account GetDecodedAccount(Account account);
+        public Account GetCodedAccount(Account account);
     }
 }
