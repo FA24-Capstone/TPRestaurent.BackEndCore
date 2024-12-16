@@ -77,7 +77,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var hubService = Resolve<IHubServices.IHubServices>();
                         var utility = Resolve<Utility>();
 
-                        var orderDb = await _repository.GetByExpression(o => o.OrderId == dto.OrderId && o.StatusId == OrderStatus.Processing, null);
+                        var orderDb = await _repository.GetByExpression(o => o.OrderId == dto.OrderId && (o.StatusId == OrderStatus.Processing || o.StatusId == OrderStatus.TemporarilyCompleted), null);
                         if (orderDb == null)
                         {
                             throw new Exception($"Không tìm thấy đơn hàng với id {dto.OrderId}");
