@@ -2053,12 +2053,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             await _unitOfWork.SaveChangesAsync();
                         }
 
-                        if(orderRequestDto.PaymentMethod == PaymentMethod.Cash) {
-                            await _hubServices.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
-                        }
-
                         await dishManagementService.UpdateComboAvailability();
                         await dishManagementService.UpdateDishAvailability();
+                    }
+
+                    if (orderRequestDto.PaymentMethod == PaymentMethod.Cash)
+                    {
+                        await _hubServices.SendAsync(SD.SignalMessages.LOAD_USER_ORDER);
                     }
                 }
                 catch (Exception ex)
