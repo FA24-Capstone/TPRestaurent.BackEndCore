@@ -161,9 +161,9 @@ namespace TPRestaurent.BackEndCore.API.Controllers
 
         [HttpPut("delete-customer-info-address")]
         [TokenValidationMiddleware(Permission.CUSTOMER)]
-        public async Task<AppActionResult> DeleteCustomerInfoAddress(Guid customerInfoAddresId)
+        public async Task<AppActionResult> DeleteCustomerInfoAddress(Guid customerInfoAddressId)
         {
-            return await _accountService.DeleteCustomerInfoAddress(customerInfoAddresId);
+            return await _accountService.DeleteCustomerInfoAddress(customerInfoAddressId);
         }
 
         [HttpGet("load-available-shipper")]
