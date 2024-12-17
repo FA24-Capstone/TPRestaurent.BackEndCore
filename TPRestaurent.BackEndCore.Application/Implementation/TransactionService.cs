@@ -1109,8 +1109,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var hashingService = Resolve<IHashingService>();
                 foreach (var transaction in transactions)
                 {
-                    var decodedTransaction = hashingService.UnHashing(transaction.Amount, false).Result.ToString();
-                    transaction.Amount = decodedTransaction.Split('_')[decodedTransaction.Split('_').Length - 1];
+                    var decodedTransaction = hashingService.UnHashing(transaction.Amount, false);
+                    if (decodedTransaction.IsSuccess)
+                    {
+                        transaction.Amount = decodedTransaction.Result.ToString().Split('_')[decodedTransaction.Result.ToString().Split('_').Length - 1];
+                    }
                 }
             }
             catch (Exception ex)

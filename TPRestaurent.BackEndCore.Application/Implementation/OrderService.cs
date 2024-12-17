@@ -1942,6 +1942,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             }
                         }
 
+
+                        //accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
+                        //await customerInfoRepository.Update(accountDb);
                         loyaltyPoint += (int)(money / 100);
                         var newLoyalPointHistory = new LoyalPointsHistory
                         {
@@ -1954,9 +1957,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         };
 
                         await loyalPointsHistoryRepository!.Insert(newLoyalPointHistory);
-
-                        //accountDb.LoyaltyPoint = newLoyalPointHistory.NewBalance;
-                        //await customerInfoRepository.Update(accountDb);
                     }
 
                     if (!BuildAppActionResultIsError(result))
@@ -2035,7 +2035,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     TransactionTypeId = TransactionType.Order,
                                     Date = utility.GetCurrentDateTimeInTimeZone(),
                                     PaidDate = utility.GetCurrentDateTimeInTimeZone(),
-                                    Amount = hashingService.Hashing(accountDb.Id, Math.Ceiling((double)orderDb.TotalAmount), false).Result.ToString(),
+                                    Amount = hashingService.Hashing(accountDb?.Id, Math.Ceiling((double)orderDb.TotalAmount), false).Result.ToString(),
                                     OrderId = orderDb.OrderId,
                                     TransationStatusId = TransationStatus.SUCCESSFUL
                                 };
