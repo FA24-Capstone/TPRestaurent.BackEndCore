@@ -68,7 +68,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         }
 
         [HttpPost("calculate-deliver-order")]
-        [TokenValidationMiddleware(Permission.DELIVERY_WITH_CUSTOMER)]
+        //[TokenValidationMiddleware(Permission.DELIVERY_WITH_CUSTOMER)]
         public async Task<AppActionResult> CalculateDeliveryOrder(Guid customerInfoAddressId)
         {
             return await _service.CalculateDeliveryOrder(customerInfoAddressId);

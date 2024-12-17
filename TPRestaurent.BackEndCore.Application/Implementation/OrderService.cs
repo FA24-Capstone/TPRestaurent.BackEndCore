@@ -3734,7 +3734,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var distanceStepFee = double.Parse(distanceStepFeeConfig!.CurrentValue);
                 if (distance > maxDistanceToOrder)
                 {
-                    throw new Exception($"Nhà hàng chỉ hỗ trợ cho đơn giao hàng trong bán kính 10km");
+                    throw new Exception($"Nhà hàng chỉ hỗ trợ cho đơn giao hàng trong bán kính {restaurantMaxDistanceToOrderConfig.CurrentValue} {restaurantMaxDistanceToOrderConfig.Unit}");
                 }
                 else
                 {
