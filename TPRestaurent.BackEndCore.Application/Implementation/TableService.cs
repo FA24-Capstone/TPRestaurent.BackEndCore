@@ -461,7 +461,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (Math.Abs(cell.Item1 - newCell.Item1) + Math.Abs(cell.Item2 - newCell.Item2) == 1)
                         {
                             proximity++;
-                        }
+                        } 
                     }
                 }
             }

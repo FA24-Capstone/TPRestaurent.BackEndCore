@@ -170,6 +170,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         || response.ToLower().Contains("giao")
                         || response.ToLower().Contains("hang")
                         || response.ToLower().Contains("api")
+                        || response.ToLower().Contains("address")
                         )
                     {
                         string[] extract = response.Split(new char[] { ':', '=' }, StringSplitOptions.RemoveEmptyEntries);
