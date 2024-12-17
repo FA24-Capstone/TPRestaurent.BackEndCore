@@ -72,6 +72,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var tokenRepository = Resolve<IGenericRepository<Token>>();
                 var hashingService = Resolve<IHashingService>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                var loginResult = new AppActionResult();
 
                 if (!utility.IsValidPhoneNumberInput(loginRequest.PhoneNumber))
                 {
@@ -125,9 +126,11 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 
 
                 if (otp!.Code != loginRequest.OTPCode) return BuildAppActionResultError(result, "Đăng nhâp thất bại");
-                if (!BuildAppActionResultIsError(result)) result = await LoginDefault(loginRequest.PhoneNumber, user);
+                
+                if (!BuildAppActionResultIsError(result)) 
+                    loginResult = await LoginDefault(loginRequest.PhoneNumber, user);
 
-                var tokenDto = result.Result as TokenDto;
+                var tokenDto = loginResult.Result as TokenDto;
 
                 var headers = httpContext.Request.Headers;
                 string userAgent = headers["User-Agent"].ToString();
@@ -169,6 +172,9 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 }
                 await _unitOfWork.SaveChangesAsync();
                 user = hashingService.GetDecodedAccount(user);
+                tokenDto.Account.LoyalPoint = user.LoyaltyPoint;
+                tokenDto.Account.Amount = user.StoreCreditAmount;
+                result.Result = tokenDto;
             }
             catch (Exception ex)
             {
