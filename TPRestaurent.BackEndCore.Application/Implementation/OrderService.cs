@@ -536,7 +536,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             var smsMessage = $"[NHÀ HÀNG THIÊN PHÚ] Đơn hàng của bạn vào lúc {orderDb.OrderDate} đã thành công. " +
                                    $"Xin chân trọng cảm ơn quý khách.";
-                            await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
+                            //await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
                             string notificationSmsMessage = "Nhà hàng đã gửi thông báo mới tới số điện thoại của bạn";
                             await notificationMessageService!.SendNotificationToAccountAsync(accountDb.Id, notificationSmsMessage, false);
                         }
@@ -1224,7 +1224,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     var smsMessage = $"[NHÀ HÀNG THIÊN PHÚ] Đơn đặt bàn của bạn vào lúc {order.ReservationDate} đã thành công. " +
                                                  $"Vui lòng thanh toán {order.TotalAmount} VND" +
                                                  $"Xin chân trọng cảm ơn quý khách.";
-                                   await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
+                                   //await smsService.SendMessage(smsMessage, accountDb.PhoneNumber);
                                 }
                             }
                         }
