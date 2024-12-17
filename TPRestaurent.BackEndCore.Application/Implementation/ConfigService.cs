@@ -1,4 +1,5 @@
-﻿using TPRestaurent.BackEndCore.Application.Contract.IServices;
+﻿using Microsoft.IdentityModel.Tokens;
+using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Application.IRepositories;
 using TPRestaurent.BackEndCore.Common.DTO.Request;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
@@ -25,7 +26,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var configurationServiceRepository = Resolve<IGenericRepository<ConfigurationVersion>>();
-                var utility = Resolve<Utility>();
+                var utility = Resolve<Common.Utils.Utility>();
                 var currentTime = utility!.GetCurrentDateTimeInTimeZone();
                 var configDb = await _repository.GetAllDataByExpression(null, 0, 0, null, false, null);
                 if (configDb.Items!.Count > 0 && configDb.Items != null)
@@ -63,6 +64,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
+                var configurationVersionRepository = Resolve<IGenericRepository<ConfigurationVersion>>();
+                var utility = Resolve<Common.Utils.Utility>();
                 var configurationDb = await _repository.GetByExpression(c => c.Name.Equals(dto.Name), null);
                 if (configurationDb != null)
                 {
@@ -76,7 +79,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     VietnameseName = dto.VietnameseName,
                     Unit = dto.Unit
                 };
+                var configurationVersion = new ConfigurationVersion
+                {
+                    ConfigurationVersionId = Guid.NewGuid(),
+                    ActiveDate = utility.GetCurrentDateTimeInTimeZone(),
+                    ActiveValue = dto.CurrentValue,
+                    ConfigurationId = configuration.ConfigurationId,
+                    IsApplied = true
+                };
 
+
+                await configurationVersionRepository.Insert(configurationVersion);
                 await _repository.Insert(configuration);
                 await _unitOfWork.SaveChangesAsync();
             }
@@ -182,6 +195,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             AppActionResult result = new AppActionResult();
             try
             {
+                var utility = Resolve<Common.Utils.Utility>();
+                var configurationVersionRepository = Resolve<IGenericRepository<ConfigurationVersion>>();
                 var configurationDb = await _repository.GetById(dto.ConfigurationId);
                 if (configurationDb == null)
                 {
@@ -208,6 +223,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     configurationDb.Unit = dto.Unit;
                 }
 
+                var configurationVersion = new ConfigurationVersion
+                {
+                    ConfigurationVersionId = Guid.NewGuid(),
+                    ActiveDate = utility.GetCurrentDateTimeInTimeZone(),
+                    ActiveValue = dto.CurrentValue,
+                    ConfigurationId = dto.ConfigurationId,
+                    IsApplied = true
+                };
+
+                
+                await configurationVersionRepository.Insert(configurationVersion);
                 await _repository.Update(configurationDb);
                 await _unitOfWork.SaveChangesAsync();
             }
