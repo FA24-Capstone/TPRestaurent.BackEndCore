@@ -58,7 +58,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var token = new JwtSecurityToken(
                             _jwtConfiguration.Issuer,
                             _jwtConfiguration.Audience,
-                            expires: utility!.GetCurrentDateInTimeZone().AddDays(1),
+                            expires: utility!.GetCurrentDateInTimeZone().AddDays(3),
                             claims: claims,
                             signingCredentials: new SigningCredentials(authenKey, SecurityAlgorithms.HmacSha512Signature)
                         );
@@ -158,7 +158,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         if (refreshTokenDb.ExpiryTimeRefreshToken <= utility.GetCurrentDateInTimeZone())
                         {
                             refreshTokenDb.RefreshTokenValue = GenerateRefreshToken();
-                            refreshTokenDb.ExpiryTimeRefreshToken = utility.GetCurrentDateInTimeZone().AddDays(1);
+                            refreshTokenDb.ExpiryTimeRefreshToken = utility.GetCurrentDateInTimeZone().AddDays(3);
                             refreshTokenNew = refreshTokenDb.RefreshTokenValue;
                         }
                         else

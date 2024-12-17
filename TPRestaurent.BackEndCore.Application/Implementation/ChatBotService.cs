@@ -183,7 +183,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         }
                         else
                         {
-                            response = "Nhà hàng chỉ hỗ trợ cho đơn giao hàng trong bán kính 10km";
+                            response = "Nhà hàng chỉ hỗ trợ cho đơn giao hàng trong bán kính 12km";
                         }
                     }
                     else if (response.ToLower().Contains("name"))
