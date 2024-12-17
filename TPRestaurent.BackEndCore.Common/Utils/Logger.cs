@@ -70,6 +70,21 @@ namespace TPRestaurent.BackEndCore.Common.Utils
             var logs = await ReadLogs();
             return logs.FirstOrDefault(log => log.Id == id);
         }
+
+        public static void DeleteLogs()
+        {
+            try
+            {
+                if (File.Exists(LogFilePath))
+                {
+                    File.Delete(LogFilePath); // Async file read
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error reading logs: {ex.Message}");
+            }
+        }
     }
 
 }

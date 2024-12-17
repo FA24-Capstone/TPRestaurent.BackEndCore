@@ -22,6 +22,7 @@ using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Enums;
 using TPRestaurent.BackEndCore.Domain.Models;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -1353,20 +1354,25 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var accountDb = await accountRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
                 if (accountDb.Items.Count > 0)
                 {
+
+                    double storeCreditValue = 0;
+                    double loyaltyPointValue = 0;
                     foreach (var account in accountDb.Items)
                     {
                         var storeCredit = hashingService.UnHashing(account.StoreCreditAmount, false);
                         var loyalPoint = hashingService.UnHashing(account.LoyaltyPoint, true);
-                        if (!storeCredit.IsSuccess)
-                        {
+                        if (!storeCredit.IsSuccess && double.TryParse(account.StoreCreditAmount, out storeCreditValue))
+                        {                      
                             account.StoreCreditAmount = hashingService.Hashing(account.Id, double.Parse(account.StoreCreditAmount), false).Result.ToString();
                         }
 
-                        if (!loyalPoint.IsSuccess)
+                        if (!loyalPoint.IsSuccess && double.TryParse(account.LoyaltyPoint, out loyaltyPointValue))
                         {
                             account.LoyaltyPoint = hashingService.Hashing(account.Id, double.Parse(account.LoyaltyPoint), true).Result.ToString();
                         }
                     }
+
+                    int i = 0;
                     //var loyaltyPointDb = await loyaltyPointRepository.GetAllDataByExpression(l => !string.IsNullOrEmpty(l.Order.AccountId), 0, 0, null, false, l => l.Order);
                     //foreach (var loyaltyPoint in loyaltyPointDb.Items)
                     //{
