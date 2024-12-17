@@ -803,8 +803,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var random = new Random();
                 code = random.Next(100000, 999999).ToString();
                 var smsService = Resolve<ISmsService>();
-                //var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
-                //    phoneNumber);
+                var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
+                    phoneNumber);
             }
 
             return code;
