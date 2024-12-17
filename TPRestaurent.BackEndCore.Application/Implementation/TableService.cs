@@ -398,74 +398,318 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             }).ToList();
         }
 
+        //private async Task<List<Table>> FindBestTables(List<Table> tables, List<int> requestedSizes)
+        //{
+        //    //List<Table> bestCombination = null;
+        //    //Backtrack(new List<Table>(tables.OrderBy(t => t.Coordinates)), requestedSizes.OrderBy(r => r).ToList(), new List<Table>(), ref bestCombination, 0);
+        //    //return bestCombination;
+
+        //    List<List<Table>> allValidCombinations = new List<List<Table>>();
+        //    List<Table> currentCombination = new List<Table>();
+        //    int highestProximity = -1;
+        //    List<Table> bestCombination = null;
+
+        //    // Sort tables by TableSizeId to optimize the combination generation
+        //    var sortedTables = tables.OrderBy(t => t.TableSizeId).ToList();
+
+        //    // Start backtracking to find all valid combinations
+        //    BacktrackFindCombinations(sortedTables, requestedSizes, 0, currentCombination, allValidCombinations);
+
+        //    // Iterate through all valid combinations to find the one with the highest proximity
+        //    foreach (var combination in allValidCombinations)
+        //    {
+        //        int totalProximity = CalculateTotalProximity(combination);
+        //        if (totalProximity > highestProximity)
+        //        {
+        //            highestProximity = totalProximity;
+        //            bestCombination = combination;
+        //        }
+        //    }
+
+        //    return bestCombination;
+        //}
+
+        //    private void Backtrack(List<Table> tables, List<int> sizes, List<Table> currentTables, ref List<Table> bestCombination, int startIndex)
+        //    {
+        //        // If all requested sizes are used, check if this combination is valid
+        //        if (sizes.Count == 0)
+        //        {
+        //            if (bestCombination == null || currentTables.Count < bestCombination.Count)
+        //            {
+        //                bestCombination = new List<Table>(currentTables);
+        //            }
+        //            return;
+        //        }
+
+        //        // Try to find the best table of the current requested size
+        //        int maxProximity = -1;
+        //        Table bestTable = null;
+
+        //        for (int i = startIndex; i < tables.Count; i++)
+        //        {
+        //            int tableSize = (int)tables[i].TableSizeId; // Each cell represents 2 units
+
+        //            if (tableSize == sizes[0])
+        //            {
+        //                int proximity = CalculateProximity(currentTables, tables[i]);
+        //                // If this table is closer to the existing tables, update the best choice
+        //                if (proximity > maxProximity)
+        //                {
+        //                    maxProximity = proximity;
+        //                    bestTable = tables[i];
+        //                }
+        //            }
+        //        }
+
+        //        // If a best table is found, proceed with backtracking
+        //        if (bestTable != null)
+        //        {
+        //            currentTables.Add(bestTable);
+        //            Backtrack(tables.Where(t => t.TableId != bestTable.TableId).ToList(), sizes.Skip(1).ToList(), currentTables, ref bestCombination, startIndex);
+        //            currentTables.RemoveAt(currentTables.Count - 1); // Backtrack step
+        //        }
+        //    }
+
+        //    private int CalculateProximity(List<Table> currentTables, Table newTable)
+        //    {
+        //        int proximity = 0;
+
+        //        foreach (var currentTable in currentTables)
+        //        {
+        //            foreach (var cell in DeserializeList(currentTable.Coordinates))
+        //            {
+        //                foreach (var newCell in DeserializeList(newTable.Coordinates))
+        //                {
+        //                    // Check if cells are adjacent (horizontally or vertically)
+        //                    if (Math.Abs(cell.Item1 - newCell.Item1) + Math.Abs(cell.Item2 - newCell.Item2) == 1)
+        //                    {
+        //                        proximity++;
+        //                    } 
+        //                }
+        //            }
+        //        }
+        //        return proximity;
+        //    }
+
+        //    private void BacktrackFindCombinations(
+        //List<Table> tables,
+        //List<int> sizes,
+        //int startIndex,
+        //List<Table> currentCombination,
+        //List<List<Table>> allValidCombinations)
+        //    {
+        //        // If all sizes have been accommodated, add the current combination to the list
+        //        if (sizes.Count == 0)
+        //        {
+        //            allValidCombinations.Add(new List<Table>(currentCombination));
+        //            return;
+        //        }
+
+        //        int currentSize = sizes[0];
+
+        //        for (int i = startIndex; i < tables.Count; i++)
+        //        {
+        //            // Check if the table size matches the current required size
+        //            if ((int)tables[i].TableSizeId == currentSize)
+        //            {
+        //                // Avoid selecting the same table multiple times
+        //                if (!currentCombination.Contains(tables[i]))
+        //                {
+        //                    currentCombination.Add(tables[i]);
+        //                    // Recurse for the next size requirement
+        //                    BacktrackFindCombinations(tables, sizes.Skip(1).ToList(), i + 1, currentCombination, allValidCombinations);
+        //                    // Backtrack
+        //                    currentCombination.RemoveAt(currentCombination.Count - 1);
+        //                }
+        //            }
+        //        }
+        //    }
+
+        //    private int CalculateTotalProximity(List<Table> combination)
+        //    {
+        //        int totalProximity = 0;
+
+        //        for (int i = 0; i < combination.Count; i++)
+        //        {
+        //            for (int j = i + 1; j < combination.Count; j++)
+        //            {
+        //                totalProximity += CalculateProximityBetweenTables(combination[i], combination[j]);
+        //            }
+        //        }
+
+        //        return totalProximity;
+        //    }
+
+        //    private int CalculateProximityBetweenTables(Table table1, Table table2)
+        //    {
+        //        int proximity = 0;
+        //        var coords1 = DeserializeList(table1.Coordinates);
+        //        var coords2 = DeserializeList(table2.Coordinates);
+
+        //        foreach (var cell1 in coords1)
+        //        {
+        //            foreach (var cell2 in coords2)
+        //            {
+        //                // Calculate Manhattan distance
+        //                int distance = Math.Abs(cell1.Item1 - cell2.Item1) + Math.Abs(cell1.Item2 - cell2.Item2);
+        //                if (distance == 1) // Adjacent cells
+        //                {
+        //                    proximity += 2; // Higher score for adjacency
+        //                }
+        //                else if (distance == 2) // One cell apart
+        //                {
+        //                    proximity += 1; // Lower score
+        //                }
+        //                // No score for distances greater than 2
+        //            }
+        //        }
+
+        //        return proximity;
+        //    }
+
         private async Task<List<Table>> FindBestTables(List<Table> tables, List<int> requestedSizes)
         {
+            List<List<Table>> allValidCombinations = new List<List<Table>>();
+            List<Table> currentCombination = new List<Table>();
+            int highestProximity = -1;
             List<Table> bestCombination = null;
-            Backtrack(new List<Table>(tables.OrderBy(t => t.Coordinates)), requestedSizes.OrderBy(r => r).ToList(), new List<Table>(), ref bestCombination, 0);
+
+            // Sort tables by TableSizeId to optimize the combination generation
+            var sortedTables = tables.OrderBy(t => t.TableSizeId).ToList();
+
+            // Start backtracking to find all valid combinations
+            BacktrackFindCombinations(sortedTables, requestedSizes, 0, currentCombination, allValidCombinations);
+
+            // Iterate through all valid combinations to find the one with the highest proximity
+            foreach (var combination in allValidCombinations)
+            {
+                int totalProximity = CalculateTotalProximity(combination);
+                if (totalProximity > highestProximity)
+                {
+                    highestProximity = totalProximity;
+                    bestCombination = combination;
+                }
+            }
+
             return bestCombination;
         }
 
-        private void Backtrack(List<Table> tables, List<int> sizes, List<Table> currentTables, ref List<Table> bestCombination, int startIndex)
+        private void BacktrackFindCombinations(
+            List<Table> tables,
+            List<int> sizes,
+            int startIndex,
+            List<Table> currentCombination,
+            List<List<Table>> allValidCombinations)
         {
-            // If all requested sizes are used, check if this combination is valid
+            // If all sizes have been accommodated, add the current combination to the list
             if (sizes.Count == 0)
             {
-                if (bestCombination == null || currentTables.Count < bestCombination.Count)
-                {
-                    bestCombination = new List<Table>(currentTables);
-                }
+                allValidCombinations.Add(new List<Table>(currentCombination));
                 return;
             }
 
-            // Try to find the best table of the current requested size
-            int maxProximity = -1;
-            Table bestTable = null;
+            int currentSize = sizes[0];
 
             for (int i = startIndex; i < tables.Count; i++)
             {
-                int tableSize = (int)tables[i].TableSizeId; // Each cell represents 2 units
-
-                if (tableSize == sizes[0])
+                // Check if the table size matches the current required size
+                if ((int)tables[i].TableSizeId == currentSize)
                 {
-                    int proximity = CalculateProximity(currentTables, tables[i]);
-
-                    // If this table is closer to the existing tables, update the best choice
-                    if (proximity > maxProximity)
+                    // Avoid selecting the same table multiple times
+                    if (!currentCombination.Contains(tables[i]))
                     {
-                        maxProximity = proximity;
-                        bestTable = tables[i];
+                        currentCombination.Add(tables[i]);
+                        // Recurse for the next size requirement
+                        BacktrackFindCombinations(tables, sizes.Skip(1).ToList(), i + 1, currentCombination, allValidCombinations);
+                        // Backtrack
+                        currentCombination.RemoveAt(currentCombination.Count - 1);
                     }
                 }
-            }
-
-            // If a best table is found, proceed with backtracking
-            if (bestTable != null)
-            {
-                currentTables.Add(bestTable);
-                Backtrack(tables.Where(t => t.TableId != bestTable.TableId).ToList(), sizes.Skip(1).ToList(), currentTables, ref bestCombination, startIndex);
-                currentTables.RemoveAt(currentTables.Count - 1); // Backtrack step
             }
         }
 
-        private int CalculateProximity(List<Table> currentTables, Table newTable)
+        private int CalculateTotalProximity(List<Table> combination)
         {
-            int proximity = 0;
+            int totalProximity = 0;
 
-            foreach (var currentTable in currentTables)
+            for (int i = 0; i < combination.Count; i++)
             {
-                foreach (var cell in DeserializeList(currentTable.Coordinates))
+                for (int j = i + 1; j < combination.Count; j++)
                 {
-                    foreach (var newCell in DeserializeList(newTable.Coordinates))
-                    {
-                        // Check if cells are adjacent (horizontally or vertically)
-                        if (Math.Abs(cell.Item1 - newCell.Item1) + Math.Abs(cell.Item2 - newCell.Item2) == 1)
-                        {
-                            proximity++;
-                        } 
-                    }
+                    totalProximity += CalculateProximityBetweenTables(combination[i], combination[j]);
                 }
             }
+
+            return totalProximity;
+        }
+
+        private int CalculateProximityBetweenTables(Table table1, Table table2)
+        {
+            int proximity = 0;
+            var coords1 = DeserializeList(table1.Coordinates);
+            var coords2 = DeserializeList(table2.Coordinates);
+
+            foreach (var cell1 in coords1)
+            {
+                foreach (var cell2 in coords2)
+                {
+                    // Calculate Manhattan distance
+                    int distance = Math.Abs(cell1.Item1 - cell2.Item1) + Math.Abs(cell1.Item2 - cell2.Item2);
+                    if (distance == 1) // Adjacent cells
+                    {
+                        proximity += 2; // Higher score for adjacency
+                    }
+                    else if (distance == 2) // One cell apart
+                    {
+                        proximity += 1; // Lower score
+                    }
+                    // No score for distances greater than 2
+                }
+            }
+
             return proximity;
+        }
+
+        private List<int> GetRequiredTableSizes(int numOfPeople)
+        {
+            // Define possible table sizes (assuming tableSizeId represents the number of people the table can accommodate)
+            // For example: 2, 4, 6, 8, 10
+            List<int> sizes = new List<int>();
+
+            // Simple greedy algorithm to determine required sizes
+            // Start with the largest table size and work downwards
+            int remaining = numOfPeople;
+
+            while (remaining > 0)
+            {
+                if (remaining >= 10)
+                {
+                    sizes.Add(10);
+                    remaining -= 10;
+                }
+                else if (remaining >= 8)
+                {
+                    sizes.Add(8);
+                    remaining -= 8;
+                }
+                else if (remaining >= 6)
+                {
+                    sizes.Add(6);
+                    remaining -= 6;
+                }
+                else if (remaining >= 4)
+                {
+                    sizes.Add(4);
+                    remaining -= 4;
+                }
+                else
+                {
+                    sizes.Add(2);
+                    remaining -= 2;
+                }
+            }
+
+            return sizes;
         }
 
         public async Task<List<Table>> GetAvailableTable(DateTime startTime, DateTime? endTime, bool isPrivate, int? numOfPeople, int pageNumber, int pageSize)
@@ -935,15 +1179,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             {
                                 sb.Append($"{privateTable.TableName}, ");
                             }
+                        }
 
-                            if(sb.Length > 0)
-                            {
-                                sb.Length -= 2;
-                                result.IsSuccess = false;
-                                result.Messages.Add($"Các bàn riêng tư không thể di chuyển: {sb.ToString()}");
-                                return result;
-                            }
-
+                        if (sb.Length > 0)
+                        {
+                            sb.Length -= 2;
+                            result.IsSuccess = false;
+                            result.Messages.Add($"Các bàn riêng tư không thể di chuyển: {sb.ToString()}");
+                            return result;
                         }
 
                         //Check update table reservation
@@ -1040,7 +1283,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 TotalPages = orderDiningDb.TotalPages
                             };
                             result.IsSuccess = false;
-                            result.Messages.Append($"Những đặt bàn sau sẽ bị ảnh hưởng bởi các thay đổi bàn");
+                            result.Messages.Add($"Những đặt bàn sau sẽ bị ảnh hưởng bởi các thay đổi bàn");
                             return result;
                         }                     
                     }

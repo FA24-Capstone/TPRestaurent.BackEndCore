@@ -106,7 +106,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var distance = element!.TotalDistance;
                     if (distance > maxDistanceToOrder)
                     {
-                        result.Result = $"Địa chỉ của {customerName} cách nhà hàng hơn {maxDistanceToOrder}km nên nhà hàng không thể giao hàng tận nơi";
+                        result.Result = $"Địa chỉ của {customerName} cách nhà hàng {distance}km, vượt quá bán kính giao hàng ({maxDistanceToOrder}km) nên nhà hàng không thể giao hàng tận nơi";
                     }
                     else
                     {
