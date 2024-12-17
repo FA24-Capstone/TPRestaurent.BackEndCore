@@ -1,15 +1,23 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TPRestaurent.BackEndCore.API.Middlewares;
+using TPRestaurent.BackEndCore.Application.Contract.IServices;
 using TPRestaurent.BackEndCore.Common.Utils;
 
 namespace TPRestaurent.BackEndCore.API.Controllers
 {
-    public class LogController
+    public class LogController 
     {
+        private readonly ITransactionService _transactionService;
+        public LogController(ITransactionService transactionService) 
+        {
+            _transactionService = transactionService; 
+        }
+
         [HttpGet("read-log")]
         [TokenValidationMiddleware(Permission.ADMIN)]
         public async Task<List<LogDto>> ReadLogTest()
         {
+
             return await Logger.ReadLogs();
         }
 
@@ -27,5 +35,11 @@ namespace TPRestaurent.BackEndCore.API.Controllers
             Logger.WriteLog(dto);
         }
 
+        [HttpPost("delete-log")]
+        public async Task Delete()
+        {
+            await _transactionService.HashingData();
+            Logger.DeleteLogs();
+        }
     }
 }
