@@ -1704,6 +1704,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     var configurationRepository = Resolve<IGenericRepository<Configuration>>();
                     var transactionRepository = Resolve<IGenericRepository<Transaction>>();
                     var dishManagementService = Resolve<IDishManagementService>();
+                    var tableService = Resolve<ITableService>();
                     var hashingService = Resolve<IHashingService>();
                     var utility = Resolve<Utility>();
                     var orderDb = await _repository.GetByExpression(o => o.OrderId == orderRequestDto.OrderId, o=> o.Account);
@@ -2074,6 +2075,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         await dishManagementService.UpdateComboAvailability();
                         await dishManagementService.UpdateDishAvailability();
+                        await tableService.UpdateTableAvailability();
                     }
 
                     if (orderRequestDto.PaymentMethod == PaymentMethod.Cash)
@@ -3133,9 +3135,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderDetailIds = orderDetailItems.Select(o => o.OrderDetailId).ToList();
                 var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(
                     p => orderDetailIds.Contains(p.OrderDetailId) &&
-                         !(p.OrderDetailStatusId == OrderDetailStatus.Reserved ||
-                           p.OrderDetailStatusId == OrderDetailStatus.ReadyToServe ||
-                           p.OrderDetailStatusId == OrderDetailStatus.Cancelled), 0, 0, null, false, o => o.Order);
+                         !(p.OrderDetailStatusId == OrderDetailStatus.Reserved 
+                           //p.OrderDetailStatusId == OrderDetailStatus.ReadyToServe ||
+                           //p.OrderDetailStatusId == OrderDetailStatus.Cancelled
+                           ), 0, 0, null, false, o => o.Order);
                 //if (orderDetailDb.Items.Count != orderDetailIds.Count)
                 //{
                 //  throw new Exception($"Tồn tại id gọi món không nằm trong hệ thống hoặc không thể ập nhập trạng thái được");
@@ -3145,24 +3148,25 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var time = utility.GetCurrentDateTimeInTimeZone();
                 bool orderSessionUpdated = false;
                 bool hasFinishedDish = false;
-                foreach (var orderDetail in orderDetailDb.Items.ToList())
-                {
-                    if (orderDetail.ComboId.HasValue)
-                    {
-                        var orderComboDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c =>
-                                c.OrderDetailId == orderDetail.OrderDetailId
+                List<ComboOrderDetail> comboOrderDetails = new List<ComboOrderDetail>();
 
+                foreach(var orderDetail in orderDetailDb.Items.Where(o => o.ComboId.HasValue).ToList())
+                {
+                    var dishIds = orderDetailItems.Where(o => o.OrderDetailId == orderDetail.OrderDetailId).Select(o => o.DishId).ToList();
+                    
+                    var orderComboDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c =>
+                                c.OrderDetailId == orderDetail.OrderDetailId
+                                && (dishIds.Count == 0 || (dishIds.Count > 0 && dishIds.Contains(c.DishCombo.DishSizeDetail.DishId)))
                                 && (c.StatusId != DishComboDetailStatus.Reserved
                                     && c.StatusId != DishComboDetailStatus.ReadyToServe
                                     && c.StatusId != DishComboDetailStatus.Cancelled),
                             0, 0, null, false, c => c.DishCombo.DishSizeDetail);
 
-                        if (orderComboDetailDb.Items.Count() > 0)
+                    if (orderComboDetailDb.Items.Count() > 0)
+                    {
+
+                        foreach(var orderComboDetail in orderComboDetailDb.Items)
                         {
-                            var orderComboDetail = orderComboDetailDb.Items.FirstOrDefault(o =>
-                                o.DishCombo.DishSizeDetail.DishId == orderDetailItems.FirstOrDefault(od =>
-                                    od.OrderDetailId == orderDetail.OrderDetailId
-                                    && od.DishId == o.DishCombo.DishSizeDetail.DishId)?.DishId);
                             if (orderComboDetail != null)
                             {
                                 if (orderComboDetail.StatusId == DishComboDetailStatus.Unchecked)
@@ -3210,35 +3214,36 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     if (!hasFinishedDish) hasFinishedDish = true;
                                 }
                             }
+                        }
 
-                            await comboOrderDetailRepository.Update(orderComboDetail);
+                        await comboOrderDetailRepository.UpdateRange(orderComboDetailDb.Items);
+                    }
+                }
+
+                foreach (var orderDetail in orderDetailDb.Items.Where(o => o.DishSizeDetailId.HasValue).ToList())
+                {
+                    if (orderDetail.OrderDetailStatusId == OrderDetailStatus.Unchecked)
+                    {
+                        if (isSuccessful)
+                        {
+                            orderDetail.OrderDetailStatusId = OrderDetailStatus.Processing;
+                        }
+                        else
+                        {
+                            orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
                         }
                     }
-                    else
+                    else if (orderDetail.OrderDetailStatusId == OrderDetailStatus.Processing)
                     {
-                        if (orderDetail.OrderDetailStatusId == OrderDetailStatus.Unchecked)
+                        if (isSuccessful)
                         {
-                            if (isSuccessful)
-                            {
-                                orderDetail.OrderDetailStatusId = OrderDetailStatus.Processing;
-                            }
-                            else
-                            {
-                                orderDetail.OrderDetailStatusId = OrderDetailStatus.Cancelled;
-                            }
+                            orderDetail.OrderDetailStatusId = OrderDetailStatus.ReadyToServe;
+                            if (!hasFinishedDish) hasFinishedDish = true;
                         }
-                        else if (orderDetail.OrderDetailStatusId == OrderDetailStatus.Processing)
+                        else
                         {
-                            if (isSuccessful)
-                            {
-                                orderDetail.OrderDetailStatusId = OrderDetailStatus.ReadyToServe;
-                                if (!hasFinishedDish) hasFinishedDish = true;
-                            }
-                            else
-                            {
-                                throw new Exception(
-                                    $"Chi tiết đơn hàng đang ở trạng thái dang xử lí, không thể huỷ");
-                            }
+                            throw new Exception(
+                                $"Chi tiết đơn hàng đang ở trạng thái dang xử lí, không thể huỷ");
                         }
                     }
                 }
