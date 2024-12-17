@@ -286,7 +286,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var notificationMessageService = Resolve<INotificationMessageService>();
                 var smsService = Resolve<ISmsService>();
                 var emailService = Resolve<IEmailService>();
-                var orderDb = await _repository.GetById(orderId);
+                var orderDb = await _repository.GetByExpression(o => o.OrderId == orderId, o => o.Account);
                 var updateDishSizeDetailList = new List<DishSizeDetail>();
                 var utility = Resolve<Utility>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
