@@ -1197,7 +1197,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         {
                             sb.Length -= 2;
                             result.IsSuccess = false;
-                            result.Messages.Add($"Các bàn riêng tư không thể di chuyển: {sb.ToString()}");
+                            result.Messages.Add($"Các bàn riêng tư không thể di chuyển: {sb.ToString()}. Bạn vẫn muốn thay đổi chứ?");
                             return result;
                         }
 
@@ -1275,12 +1275,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 }
 
                             }
-
                             List<ReservationTableItemResponse> data = new List<ReservationTableItemResponse>();
                             if (orderDiningDb != null && orderDiningDb.Items.Count > 0)
                             {
+                               StringBuilder tableScheduleWarningMessage = new StringBuilder();
+                                tableScheduleWarningMessage.Append($"Những đặt bàn sau sẽ bị ảnh hưởng bởi các thay đổi bàn:\n");
                                 orderDiningDb.Items = orderDiningDb.Items.OrderByDescending(o => o.MealTime).ToList();
-
 
                                 foreach (var item in orderDiningDb.Items)
                                 {
@@ -1295,14 +1295,33 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     }
                                     data.Add(reservation);
                                 }
+
+                                Dictionary<string, List<DateTime>> tableScheduleWarning = new Dictionary<string, List<DateTime>>();
+                                foreach (var order in data)
+                                {
+                                    foreach (var table in order.Tables)
+                                    {
+                                        if (tableScheduleWarning.ContainsKey(table.Table.TableName))
+                                        {
+                                            tableScheduleWarning[table.Table.TableName].Add(order.MealTime.Value);
+                                        }
+                                        else
+                                        {
+                                            tableScheduleWarning.Add(table.Table.TableName, new List<DateTime> { order.MealTime.Value });
+                                        }
+                                    }
+                                }
+
+                                foreach (var tableMessage in tableScheduleWarning)
+                                {
+                                    tableScheduleWarningMessage.Append($"Bàn {tableMessage.Key} vào các khung giờ:\n");
+                                    tableScheduleWarningMessage.AppendLine($"{GroupAndFormatDateTimes(tableMessage.Value)}\n");
+                                }
+                                tableScheduleWarningMessage.Append("Bạn vẫn muốn tiếp tục cập nhật chứ?");
+                                result.Messages.Add(tableScheduleWarningMessage.ToString());
                             }
-                            result.Result = new PagedResult<ReservationTableItemResponse>
-                            {
-                                Items = data,
-                                TotalPages = orderDiningDb.TotalPages
-                            };
+                            
                             result.IsSuccess = false;
-                            result.Messages.Add($"Những đặt bàn sau sẽ bị ảnh hưởng bởi các thay đổi bàn");
                             return result;
                         }                     
                     }
@@ -1313,6 +1332,26 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
             }
             return result;
+        }
+
+        public string GroupAndFormatDateTimes(List<DateTime> dateTimes)
+        {
+            var groupedByDate = dateTimes
+                .GroupBy(dt => dt.Date) // Group by date (ignoring time)
+                .OrderBy(g => g.Key);   // Sort by date
+
+            var result = new StringBuilder();
+
+            foreach (var group in groupedByDate)
+            {
+                var dateString = group.Key.ToString("dd/MM/yyyy");
+                var times = group
+                    .Select(dt => dt.ToString("HH:mm")) // Format each time as HH:mm
+                    .OrderBy(time => time);             // Sort times within the group
+                result.AppendLine($"[{dateString}: {string.Join(", ", times)}]");
+            }
+
+            return result.ToString().TrimEnd(); // Remove trailing newline
         }
 
         private async Task<ReservationTableItemResponse> GetReservationDetailByOrder(Order order)
