@@ -763,6 +763,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var accountRepository = Resolve<IGenericRepository<Account>>();
                 var emailService = Resolve<IEmailService>();
                 var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
+                var orderDetailRepository = Resolve<IGenericRepository<OrderDetail>>();
 
                 var paidDepositOrder = await _repository.GetAllDataByExpression(r => r.OrderId == order.OrderId
                                                                                      && (r.TransactionTypeId == TransactionType.Deposit && r.Order.OrderTypeId == OrderType.Reservation
@@ -779,16 +780,33 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                 if (refundedOrderDb.Items.Count() > 0)
                 {
-                    throw new Exception($"Đơn hàng đã được hàng tiền");
+                    throw new Exception($"Đơn hàng đã được hoàn tiền");
                 }
 
-                var timeConfigurationDb = await configurationRepository.GetByExpression(t => t.Name.Equals(SD.DefaultValue.TIME_FOR_REFUND));
-                if (timeConfigurationDb == null)
+                Configuration timeConfigurationDb = null;
+
+                var orderDetailDb = await orderDetailRepository.GetAllDataByExpression(o => o.OrderId == order.OrderId && o.OrderDetailStatusId != OrderDetailStatus.Cancelled, 0, 0, null, false, null);
+                if(orderDetailDb.Items.Count > 0)
                 {
-                    throw new Exception($"không tìm thấy cấu hình tên {SD.DefaultValue.TIME_FOR_REFUND}");
+                    timeConfigurationDb = await configurationRepository.GetByExpression(t => t.Name.Equals(SD.DefaultValue.TIME_FOR_REFUND_WITH_DISH));
+                    if (timeConfigurationDb == null)
+                    {
+                        throw new Exception($"Không tìm thấy cấu hình tên {SD.DefaultValue.TIME_FOR_REFUND_WITH_DISH}");
+                    }
+                } else
+                {
+                    timeConfigurationDb = await configurationRepository.GetByExpression(t => t.Name.Equals(SD.DefaultValue.TIME_FOR_REFUND));
+                    if (timeConfigurationDb == null)
+                    {
+                        throw new Exception($"Không tìm thấy cấu hình tên {SD.DefaultValue.TIME_FOR_REFUND}");
+                    }
                 }
 
-                if (asCustomer && (order.MealTime - order.CancelledTime).Value.Hours > double.Parse(timeConfigurationDb.CurrentValue))
+                if (asCustomer 
+                    && order.OrderTypeId == OrderType.Reservation
+                    && ((order.MealTime - order.CancelledTime).Value.Hours < double.Parse(timeConfigurationDb.CurrentValue)
+                    || (order.MealTime - order.ReservationDate).Value.Hours < double.Parse(timeConfigurationDb.CurrentValue))
+                    )
                 {
                     return result;
                 }
@@ -1247,11 +1265,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         logMessage.Append($"{i++}. Không thể giải mã lịch sử dùng/nạp ví cho tài khoản {accountInfo} (id record {item.Id}). |");
                         continue;
                     }
-                    if (!storeCreditRecord.Contains(account.Id))
-                    {
-                        logMessage.Append($"{i++}. Lịch sử dùng/nạp ví không thuộc về tài khoản  {accountInfo} (id record {item.Id}). |");
-                        continue;
-                    }
+                   
                     if(item.TransactionTypeId == TransactionType.Refund || item.TransactionTypeId == TransactionType.CreditStore)
                     {
                         storeCreditAmount -= int.Parse(storeCreditRecord.Split('_')[1]);
@@ -1299,12 +1313,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (string.IsNullOrEmpty(newBalanceRecord))
                     {
                         logMessage.Append($"{i++}. Không thể giải mã lịch sử tổng điểm thưởng mới cho tài khoản {accountInfo} (id record {item.LoyalPointsHistoryId}). |");
-                        continue;
-                    }
-
-                    if (!loyaltyPointRecord.Contains(account.Id))
-                    {
-                        logMessage.Append($"{i++}. Lịch sử dùng/cộng điểm thưởng không thuộc về tài khoản {accountInfo} (id record {item.LoyalPointsHistoryId}). |");
                         continue;
                     }
 
@@ -1388,18 +1396,18 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     //    }
                     //}
 
-                    //var storeCreditDb = await _repository.GetAllDataByExpression(null, 0, 0, null, false, s => s.Order);
-                    //foreach (var storeCredit in storeCreditDb.Items)
-                    //{
-                    //    var storeCreditHashed = hashingService.UnHashing(storeCredit.Amount, false);
-                    //    if (!storeCreditHashed.IsSuccess)
-                    //    {
-                    //        storeCredit.Amount = hashingService.Hashing(storeCredit.Order?.AccountId, double.Parse(storeCredit.Amount), false).Result.ToString();
-                    //    }
-                    //}
+                    var storeCreditDb = await _repository.GetAllDataByExpression(null, 0, 0, null, false, s => s.Order);
+                    foreach (var storeCredit in storeCreditDb.Items)
+                    {
+                        var storeCreditHashed = hashingService.UnHashing(storeCredit.Amount, false);
+                        if (!storeCreditHashed.IsSuccess)
+                        {
+                            storeCredit.Amount = hashingService.Hashing(storeCredit.Order?.AccountId, double.Parse(storeCredit.Amount), false).Result.ToString();
+                        }
+                    }
 
                     await accountRepository.UpdateRange(accountDb.Items);
-                    //await _repository.UpdateRange(storeCreditDb.Items);
+                    await _repository.UpdateRange(storeCreditDb.Items);
                     //await loyaltyPointRepository.UpdateRange(loyaltyPointDb.Items);
                     await _unitOfWork.SaveChangesAsync();
                 }
