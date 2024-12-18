@@ -1628,16 +1628,17 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         IsCurrentUsed = customerInfoAddressRequest.IsCurrentUsed,
                         AccountId = customerInfoAddressRequest!.AccountId!,
                         Lat = customerInfoAddressRequest.Lat,
-                        Lng = customerInfoAddressRequest.Lng,
+                        Lng = customerInfoAddressRequest.Lng,                       
                     };
                     if (customerInfoAddressRequest.IsCurrentUsed == true)
                     {
-                        var mainAddressDb = await customerInfoAddressRepository!.GetByExpression(p =>
-                            p.AccountId == customerInfoAddressRequest.AccountId && p.IsCurrentUsed == true);
-                        if (mainAddressDb != null)
+                        var mainAddressDb = await customerInfoAddressRepository!.GetAllDataByExpression(p =>
+                            p.AccountId == customerInfoAddressRequest.AccountId && p.IsCurrentUsed == true, 0, 0, null, false, null);
+                        if (mainAddressDb.Items.Count > 0)
                         {
-                            mainAddressDb.IsCurrentUsed = false;
-                            await customerInfoAddressRepository.Update(mainAddressDb);
+                            
+                            mainAddressDb.Items.ForEach(a => a.IsCurrentUsed =  false);
+                            await customerInfoAddressRepository.UpdateRange(mainAddressDb.Items);
                         }
 
                         var accountDb =
@@ -1676,30 +1677,24 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         throw new Exception($"Không tìm thấy địa chỉ với id {updateCustomerInforAddress.AccountId}");
                     }
 
-                    customerInfoDb.IsDeleted = true;
-
-                    var newCustomerAddress = new CustomerInfoAddress
-                    {
-                        CustomerInfoAddressId = Guid.NewGuid(),
-                        AccountId = updateCustomerInforAddress.AccountId,
-                        CustomerInfoAddressName = updateCustomerInforAddress.CustomerInfoAddressName,
-                        IsCurrentUsed = updateCustomerInforAddress.IsCurrentUsed,
-                        Lat = updateCustomerInforAddress.Lat,
-                        Lng = updateCustomerInforAddress.Lng
-                    };
+                    customerInfoDb.CustomerInfoAddressName = updateCustomerInforAddress.CustomerInfoAddressName;
+                    customerInfoDb.AccountId = updateCustomerInforAddress.AccountId;
+                    customerInfoDb.IsCurrentUsed = updateCustomerInforAddress.IsCurrentUsed;
+                    customerInfoDb.Lat = updateCustomerInforAddress.Lat;
+                    customerInfoDb.Lng = updateCustomerInforAddress.Lng;
 
                     if (updateCustomerInforAddress.IsCurrentUsed == true)
                     {
-                        var mainAddressDb = await customerInfoAddressRepository!.GetByExpression(p =>
-                            p.AccountId == updateCustomerInforAddress.AccountId && p.IsCurrentUsed == true);
-                        if (mainAddressDb != null)
+                        var mainAddressDb = await customerInfoAddressRepository!.GetAllDataByExpression(p =>
+                            p.AccountId == updateCustomerInforAddress.AccountId && p.IsCurrentUsed == true, 0,0, null, false, null);
+                        if (mainAddressDb.Items.Count > 0)
                         {
                             var accountDb =
                                 await accountRepository.GetByExpression(p =>
                                     p.Id == updateCustomerInforAddress.AccountId);
                             accountDb.Address = updateCustomerInforAddress.CustomerInfoAddressName;
-                            mainAddressDb.IsCurrentUsed = false;
-                            await customerInfoAddressRepository.Update(mainAddressDb);
+                            mainAddressDb.Items.ForEach(o => o.IsCurrentUsed = false);
+                            await customerInfoAddressRepository.UpdateRange(mainAddressDb.Items);
                             await accountRepository.Update(accountDb);
                         }
                     }
@@ -1707,7 +1702,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (!BuildAppActionResultIsError(result))
                     {
                         await customerInfoAddressRepository!.Update(customerInfoDb);
-                        await customerInfoAddressRepository.Insert(newCustomerAddress);
+                        //await customerInfoAddressRepository.Insert(newCustomerAddress);
                         await _unitOfWork.SaveChangesAsync();
                     }
                 }
