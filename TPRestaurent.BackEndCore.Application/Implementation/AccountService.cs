@@ -282,9 +282,13 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     return BuildAppActionResultError(result, "Số điện thoại không hợp lệ. Vui lòng kiểm tra lại.");
                 }
 
-                var existedAccount = await _accountRepository.GetByExpression(r => r!.PhoneNumber == signUpRequest.PhoneNumber && !r.IsDeleted && !r.IsBanned);
-                if (existedAccount != null)
+                var existedAccountWithSamePhoneNumber = await _accountRepository.GetByExpression(r => r!.PhoneNumber == signUpRequest.PhoneNumber && !r.IsDeleted && !r.IsBanned);
+                if (existedAccountWithSamePhoneNumber != null)
                     return BuildAppActionResultError(result, "Số điện thoại đã tồn tại!");
+
+                var existedAccountWithSameEmail = await _accountRepository.GetAllDataByExpression(r => r!.Email.ToLower().Equals(signUpRequest.Email.ToLower()) && !r.IsDeleted, 0, 0, null, false, null);
+                if (existedAccountWithSameEmail != null)
+                    return BuildAppActionResultError(result, "Email đã tồn tại!");
 
                 if (!BuildAppActionResultIsError(result))
                 {
@@ -803,8 +807,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var random = new Random();
                 code = random.Next(100000, 999999).ToString();
                 var smsService = Resolve<ISmsService>();
-                //var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
-                //    phoneNumber);
+                var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
+                    phoneNumber);
             }
 
             return code;

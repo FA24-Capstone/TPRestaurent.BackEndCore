@@ -506,7 +506,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
 
 
-                    if ((orderDb.OrderTypeId == OrderType.Reservation || orderDb.OrderTypeId == OrderType.Delivery && !asCustomer.Value) && orderDb.StatusId == OrderStatus.Cancelled)
+                    if (orderDb.OrderTypeId == OrderType.Reservation && orderDb.StatusId == OrderStatus.Cancelled)
                     {
                         var refund = await transactionService.CreateRefund(orderDb, asCustomer.HasValue && asCustomer.Value);
                         if (!refund.IsSuccess)
@@ -1764,39 +1764,36 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                     if (orderDb.OrderTypeId == OrderType.Reservation)
                     {
-                        var depositConfigresult = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.DEPOSIT_PERCENT), null);
-                        if(depositConfigresult == null)
-                        {
-                            throw new Exception("Không tìm thấy cấu hình hệ thống cho sử dụng phân trăm cọc. Vui lòng kiểm tra lại thông tin cấu hình");
-                        }
-                        var depositPercent = double.Parse(depositConfigresult.CurrentValue);
-                        var tableDetailDb = await tableDetailRepository.GetAllDataByExpression(t => t.OrderId == orderDb.OrderId, 0, 0, null, false, t => t.Table.Room);
-                        double tableDeposit = 0;
-                        if (tableDetailDb.Items.FirstOrDefault().Table.Room.IsPrivate)
-                        {
-                            var privateTableDepositConfigResult = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.DEPOSIT_FOR_PRIVATE_TABLE), null);
-                            if (privateTableDepositConfigResult == null)
-                            {
-                                throw new Exception("Không tìm thấy cấu hình hệ thống cho sử dụng phân trăm cọc bàn riêng tư. Vui lòng kiểm tra lại thông tin cấu hình");
-                            }
-                            tableDeposit = int.Parse(privateTableDepositConfigResult.CurrentValue);
-                        } 
-                        else
-                        {
-                            var publicTableDepositConfigResult = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.DEPOSIT_FOR_NORMAL_TABLE), null);
-                            if (publicTableDepositConfigResult == null)
-                            {
-                                throw new Exception("Không tìm thấy cấu hình hệ thống cho sử dụng phân trăm cọc bàn thường. Vui lòng kiểm tra lại thông tin cấu hình");
-                            }
-                            tableDeposit = int.Parse(publicTableDepositConfigResult.CurrentValue);
-                        }
+                        //var depositConfigresult = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.DEPOSIT_PERCENT), null);
+                        //if(depositConfigresult == null)
+                        //{
+                        //    throw new Exception("Không tìm thấy cấu hình hệ thống cho sử dụng phân trăm cọc. Vui lòng kiểm tra lại thông tin cấu hình");
+                        //}
+                        //var depositPercent = double.Parse(depositConfigresult.CurrentValue);
+                        //var tableDetailDb = await tableDetailRepository.GetAllDataByExpression(t => t.OrderId == orderDb.OrderId, 0, 0, null, false, t => t.Table.Room);
+                        //double tableDeposit = 0;
+                        //if (tableDetailDb.Items.FirstOrDefault().Table.Room.IsPrivate)
+                        //{
+                        //    var privateTableDepositConfigResult = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.DEPOSIT_FOR_PRIVATE_TABLE), null);
+                        //    if (privateTableDepositConfigResult == null)
+                        //    {
+                        //        throw new Exception("Không tìm thấy cấu hình hệ thống cho sử dụng phân trăm cọc bàn riêng tư. Vui lòng kiểm tra lại thông tin cấu hình");
+                        //    }
+                        //    tableDeposit = int.Parse(privateTableDepositConfigResult.CurrentValue);
+                        //} 
+                        //else
+                        //{
+                        //    var publicTableDepositConfigResult = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.DEPOSIT_FOR_NORMAL_TABLE), null);
+                        //    if (publicTableDepositConfigResult == null)
+                        //    {
+                        //        throw new Exception("Không tìm thấy cấu hình hệ thống cho sử dụng phân trăm cọc bàn thường. Vui lòng kiểm tra lại thông tin cấu hình");
+                        //    }
+                        //    tableDeposit = int.Parse(publicTableDepositConfigResult.CurrentValue);
+                        //}
 
-                        if(Math.Abs((decimal)(money - (orderDb.Deposit - tableDeposit) / depositPercent)) <= 4000)
-                        {
-                            money -= ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0)
+                        money -= ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0)
                             ? Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000
                             : 0);
-                        }
                     }
 
                     if (money < 0)
