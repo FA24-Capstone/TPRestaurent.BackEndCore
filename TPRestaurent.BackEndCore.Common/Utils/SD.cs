@@ -107,6 +107,7 @@ public class SD
         public static string TIME_TO_RESERVATION_LAST = "TIME_TO_RESERVATION_LAST";
         public static string TIME_FOR_GROUPED_DISH = "TIME_FOR_GROUPED_DISH";
         public static string TIME_FOR_REFUND = "TIME_FOR_REFUND";
+        public static string TIME_FOR_REFUND_WITH_DISH = "TIME_FOR_REFUND_WITH_DISH";
         public static string REFUND_PERCENTAGE_AS_CUSTOMER = "REFUND_PERCENTAGE_AS_CUSTOMER";
         public static string REFUND_PERCENTAGE_AS_ADMIN = "REFUND_PERCENTAGE_AS_ADMIN";
         public static string TABLE_IS_SET_UP = "TABLE_IS_SET_UP";
