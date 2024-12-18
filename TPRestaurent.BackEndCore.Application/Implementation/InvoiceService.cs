@@ -6,13 +6,6 @@ using TPRestaurent.BackEndCore.Common.DTO.Response;
 using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 using TPRestaurent.BackEndCore.Common.Utils;
 using TPRestaurent.BackEndCore.Domain.Models;
-using static Humanizer.In;
-using static System.Collections.Specialized.BitVector32;
-using Twilio.TwiML.Messaging;
-using TPRestaurent.BackEndCore.Common.DTO.Response;
-using System.Diagnostics.Contracts;
-using Newtonsoft.Json;
-using TPRestaurent.BackEndCore.Common.DTO.Response.BaseDTO;
 
 namespace TPRestaurent.BackEndCore.Application.Implementation
 {
@@ -328,7 +321,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
   <body>
     <div class=''>
       <div class='header'>
-        <img src='https://thienphurestaurant.vercel.app/icon.png' alt='Restaurant Logo' class='logo'>
+        <img src='https://firebasestorage.googleapis.com/v0/b/thienphu-app.appspot.com/o/icon.png?alt=media&token=5a819b51-28eb-4f22-b303-0a01bfc5638d' alt='Restaurant Logo' class='logo'>
         <div class='restaurant-info'>
           <h1>Nhà hàng Thiên Phú</h1>
           <p>Số điện thoại: 091 978 24 44</p>
@@ -369,7 +362,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             </tr>
           </thead>
           <tbody>
-            " + string.Join("", response.OrderDishes.Select(o =>
+            " + string.Join("", response.OrderDishes.Where(r => r.StatusId != Domain.Enums.OrderDetailStatus.Cancelled).Select(o =>
             {
                 if (o.ComboDish != null)
                 {
@@ -400,7 +393,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
         </table>
 
         <div class='total-info'>
-          <p><strong>Tổng (đã bao gồm thuế và phí):</strong> " + response.Order.TotalAmount.ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</p>
+          <p><strong>Tổng (đã bao gồm thuế, phí và tiền cọc):</strong> " + response.Order.TotalAmount.ToString("#,0.## VND", System.Globalization.CultureInfo.InvariantCulture) + @"</p>
           <p>Số tiền này đã bao gồm tất cả các loại thuế và phí bổ sung.</p>
         </div>
       </div>
@@ -704,7 +697,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 <body>
   <div class=''>
     <div class='header'>
-      <img src='https://thienphurestaurant.vercel.app/icon.png' alt='Restaurant Logo' class='logo'>
+      <img src='https://firebasestorage.googleapis.com/v0/b/thienphu-app.appspot.com/o/icon.png?alt=media&token=5a819b51-28eb-4f22-b303-0a01bfc5638d' alt='Restaurant Logo' class='logo'>
       <div class='restaurant-info'>
         <h1>Nhà hàng Thiên Phú</h1>
         <p>Số điện thoại: 091 978 24 44</p>
@@ -752,6 +745,61 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
   </div>
 </body>
 </html>";
+        }
+
+        public async Task<AppActionResult> GetInvoicebyOrderId(Guid orderId)
+        {
+            AppActionResult result = new AppActionResult();
+            try
+            {
+                var orderRepository = Resolve<IGenericRepository<Order>>();
+                var orderService = Resolve<IOrderService>();
+                var hashingService = Resolve<IHashingService>();
+                var utility = Resolve<Utility>();
+                var currentDate = utility.GetCurrentDateInTimeZone();
+                var orderHasCreatedInvoice = await _repository.GetByExpression(o => o.OrderId == orderId, null);
+                if (orderHasCreatedInvoice != null) 
+                {
+                    result.Result = orderHasCreatedInvoice;
+                    return result;
+
+                }
+
+                var orderDb = await orderRepository.GetById(orderId);
+                var orderDetail = await orderService.GetAllOrderDetail(orderId);
+                var transactionInfo = await _transactionRepository.GetByExpression(o => o.OrderId == orderId && o.TransactionTypeId == Domain.Enums.TransactionType.Order && o.TransationStatusId == Domain.Enums.TransationStatus.SUCCESSFUL, o => o.PaymentMethod);
+                if (transactionInfo == null)
+                {
+                    return BuildAppActionResultError(result, $"Không tìm thấy thông tin thanh toán từ khách hàng");
+                }
+                if (orderDetail.IsSuccess && orderDetail.Result != null)
+                {
+                    var invoice = new Invoice
+                    {
+                        InvoiceId = Guid.NewGuid(),
+                        OrderId = orderDb.OrderId,
+                        OrderTypeId = orderDb.OrderTypeId,
+                        TotalAmount = orderDb.TotalAmount,
+                        Date = currentDate,
+                        OrderDetailJson = JsonConvert.SerializeObject(orderDetail.Result as OrderWithDetailReponse)
+                    };
+
+                    var invoiceHtmlScript = GetInvoiceHtmlScript(orderDetail.Result as OrderWithDetailReponse, transactionInfo);
+                    Console.WriteLine(invoiceHtmlScript);
+                    var invoiceContent = _fileService.ConvertHtmlToPdf(invoiceHtmlScript, $"{invoice.InvoiceId}.pdf");
+                    var upload = await _firebaseService.UploadFileToFirebase(invoiceContent, $"{SD.FirebasePathName.INVOICE_PREFIX}{invoice.InvoiceId}", false);
+                    invoice.pdfLink = Convert.ToString(upload.Result);
+                    orderDb.Account = hashingService.GetCodedAccount(orderDb.Account);
+                    await _repository.Insert(invoice);
+                    await _unitOfWork.SaveChangesAsync();
+                    result.Result = invoice;
+                }
+            }
+            catch (Exception ex)
+            {
+                result = BuildAppActionResultError(result, ex.Message);
+            }
+            return result;
         }
     }
 }

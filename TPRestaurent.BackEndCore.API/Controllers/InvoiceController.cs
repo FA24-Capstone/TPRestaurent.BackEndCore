@@ -38,5 +38,13 @@ namespace TPRestaurent.BackEndCore.API.Controllers
         {
             return await _service.GenerateGeneralInvoice(dto);
         }
+
+
+        [HttpPost("get-invoice-by-order-id/{orderId}")]
+        //[TokenValidationMiddleware(Permission.PAYMENT)]
+        public async Task<AppActionResult> GetInvoicebyOrderId(Guid orderId)
+        {
+            return await _service.GetInvoicebyOrderId(orderId);
+        }
     }
 }
