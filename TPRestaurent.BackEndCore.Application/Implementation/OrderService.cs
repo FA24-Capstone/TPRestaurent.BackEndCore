@@ -3162,10 +3162,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     && c.StatusId != DishComboDetailStatus.Cancelled),
                             0, 0, null, false, c => c.DishCombo.DishSizeDetail);
 
+                    var orderComboDetailIds = orderComboDetailDb.Items.Select(o => o.ComboOrderDetailId).ToList();
+                    var otherOrderComboDetailDb = await comboOrderDetailRepository.GetAllDataByExpression(c => c.OrderDetailId == orderDetail.OrderDetailId
+                                                                                                                && !orderComboDetailIds.Contains(c.ComboOrderDetailId),
+                                                                                                                0, 0, null, false, null);
                     if (orderComboDetailDb.Items.Count() > 0)
                     {
 
-                        foreach(var orderComboDetail in orderComboDetailDb.Items)
+                        foreach (var orderComboDetail in orderComboDetailDb.Items)
                         {
                             if (orderComboDetail != null)
                             {
@@ -3194,25 +3198,21 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                     }
                                 }
                             }
+                        }
 
-                            if (orderComboDetail.StatusId == DishComboDetailStatus.Processing)
+                        if (orderComboDetailDb.Items.Any(o => o.StatusId == DishComboDetailStatus.Processing))
+                        {
+                            if (orderDetail.OrderDetailStatusId == OrderDetailStatus.Unchecked)
                             {
-                                if (orderComboDetailDb.Items.Where(o =>
-                                        o.ComboOrderDetailId != orderComboDetail.ComboOrderDetailId)
-                                    .All(o => o.StatusId == DishComboDetailStatus.Unchecked))
-                                {
-                                    orderDetail.OrderDetailStatusId = OrderDetailStatus.Processing;
-                                }
+                                orderDetail.OrderDetailStatusId = OrderDetailStatus.Processing;
                             }
-                            else if (orderComboDetail.StatusId == DishComboDetailStatus.ReadyToServe)
+                        }
+                        else if (orderComboDetailDb.Items.All(o => o.StatusId == DishComboDetailStatus.ReadyToServe))
+                        {
+                            if (otherOrderComboDetailDb.Items.All(o => o.StatusId == DishComboDetailStatus.ReadyToServe))
                             {
-                                if (orderComboDetailDb.Items.Where(o =>
-                                        o.ComboOrderDetailId != orderComboDetail.ComboOrderDetailId)
-                                    .All(o => o.StatusId == DishComboDetailStatus.ReadyToServe))
-                                {
-                                    orderDetail.OrderDetailStatusId = OrderDetailStatus.ReadyToServe;
-                                    if (!hasFinishedDish) hasFinishedDish = true;
-                                }
+                                orderDetail.OrderDetailStatusId = OrderDetailStatus.ReadyToServe;
+                                if (!hasFinishedDish) hasFinishedDish = true;
                             }
                         }
 
