@@ -3564,7 +3564,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 {
                     var orderTransaction = orderTransactionDb.Items.OrderByDescending(o => o.PaidDate).OrderByDescending(o => o.Date).FirstOrDefault();
                     var transactionAmountResult = hashingService.UnHashing(orderTransaction.Amount, false);
-                    orderTransaction.Amount = transactionAmountResult.Result.ToString().Split('_')[1];
+                    if (transactionAmountResult.IsSuccess)
+                    {
+                        orderTransaction.Amount = transactionAmountResult.Result.ToString().Split('_')[1];
+                    }
                     orderResponse.Transaction = orderTransaction;
 
 
@@ -3585,7 +3588,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 if (orderRefundTransaction != null)
                 {
                     var refundTransactionAmountResult = hashingService.UnHashing(orderRefundTransaction.Amount, false);
-                    orderRefundTransaction.Amount = refundTransactionAmountResult.Result.ToString().Split('_')[1];
+                    if (refundTransactionAmountResult.IsSuccess)
+                    {
+                        orderRefundTransaction.Amount = refundTransactionAmountResult.Result.ToString().Split('_')[1];
+                    }
                     orderResponse.RefundTransaction = orderRefundTransaction;
                 }
 
