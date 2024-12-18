@@ -35,8 +35,6 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             double result = 0;
             try
             {
-                var utility = Resolve<Utility>();
-                var currentTime = utility.GetCurrentDateTimeInTimeZone();
                 double preparationTime = 0;
 
                 foreach (var preparationRequest in dto)
