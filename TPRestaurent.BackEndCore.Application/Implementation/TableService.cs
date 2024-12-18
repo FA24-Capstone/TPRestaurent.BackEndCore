@@ -1031,10 +1031,15 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             try
             {
                 var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
+                var configurationRespository = Resolve<IGenericRepository<Configuration>>();
                 var utility = Resolve<Utility>();
                 var currentTime = utility.GetCurrentDateTimeInTimeZone();
+                var averageDiningTimeConfiguration = await configurationRespository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.AVERAGE_MEAL_DURATION), null);
+                double averageDiningTime = averageDiningTimeConfiguration != null ? double.Parse(averageDiningTimeConfiguration.CurrentValue) : 1;
                 var tableDetailDb = await tableDetailRepository.GetAllDataByExpression(t => t.TableId == id &&
-                                                                                          t.Order.MealTime.Value >= currentTime,
+                                                                                          (t.Order.MealTime.Value >= currentTime ||
+                                                                                           t.Order.EndTime.Value >= currentTime ||
+                                                                                           t.Order.MealTime.Value.AddHours(averageDiningTime) >= currentTime),
                                                                                           0, 0, null, false, null);
                 tableHasCurrentOrUpcomingReservation = tableDetailDb.Items.Count() > 0;
             }
@@ -1118,6 +1123,12 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var orderToSetAvailableIds = orderToSetAvailable.Items.Select(o => o.OrderId).ToList();
                 var tableDetailOrderToSetAvailable = await tableDetailRepository.GetAllDataByExpression(t => orderToSetAvailableIds.Contains(t.OrderId) && !toSetUsingTableIds.Contains(t.TableId) && t.Table.TableStatusId == TableStatus.CURRENTLYUSED, 0, 0, null, false, null);
                 await UpdateTableAvailability(tableDetailOrderToSetAvailable.Items.Select(t => t.TableId).ToList(), TableStatus.AVAILABLE);
+
+                var tableHasBeenUsedDb = await tableDetailRepository.GetAllDataByExpression(null, 0, 0, null, false, null);
+                var tableHasBeenIds = tableHasBeenUsedDb.Items.Select(t => t.TableId);
+                var tableHasNotBeenUsedDb = await _repository.GetAllDataByExpression(t => !tableHasBeenIds.Contains(t.TableId), 0, 0, null, false, null);
+                tableHasNotBeenUsedDb.Items.ForEach(t => t.TableStatusId = TableStatus.AVAILABLE);
+                await _repository.UpdateRange(tableHasNotBeenUsedDb.Items);
                 await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
