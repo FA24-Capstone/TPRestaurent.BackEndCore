@@ -1791,7 +1791,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                             tableDeposit = int.Parse(publicTableDepositConfigResult.CurrentValue);
                         }
 
-                        if(Math.Abs((decimal)(money - (orderDb.Deposit - tableDeposit) / depositPercent)) > 2000)
+                        if(Math.Abs((decimal)(money - (orderDb.Deposit - tableDeposit) / depositPercent)) <= 4000)
                         {
                             money -= ((orderDb.Deposit.HasValue && orderDb.Deposit.Value > 0)
                             ? Math.Ceiling(orderDb.Deposit.Value / 1000) * 1000
@@ -2055,7 +2055,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 {
                                     OrderId = orderDb.OrderId,
                                     PaymentMethod = orderRequestDto.PaymentMethod,
-                                    AccountId = accountDb?.Id
+                                    AccountId = accountDb?.Id,
                                 };
                                 var linkPaymentDb = await transactionService!.CreatePayment(paymentRequest, orderRequestDto.returnUrl);
                                 if (!linkPaymentDb.IsSuccess)
