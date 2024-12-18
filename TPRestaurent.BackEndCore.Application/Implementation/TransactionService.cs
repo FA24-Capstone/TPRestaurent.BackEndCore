@@ -116,7 +116,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                 transaction = new Transaction
                                 {
                                     Id = Guid.NewGuid(),
-                                    Amount = hashingService.Hashing("", orderDb.TotalAmount, false).Result.ToString(),
+                                    Amount = orderDb.StatusId == OrderStatus.TableAssigned ? hashingService.Hashing("", orderDb.Deposit.Value, false).Result.ToString() : hashingService.Hashing("", orderDb.TotalAmount, false).Result.ToString(),
                                     PaymentMethodId = Domain.Enums.PaymentMethod.VNPAY,
                                     OrderId = orderDb.OrderId,
                                     Date = utility!.GetCurrentDateTimeInTimeZone(),
@@ -286,7 +286,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                                             AccountId = accountDb.Id,
                                             Date = utility!.GetCurrentDateTimeInTimeZone(),
                                             TransationStatusId = TransationStatus.PENDING,
-                                            TransactionTypeId = TransactionType.CreditStore
+                                            TransactionTypeId = TransactionType.CreditStore,
+                                            
                                         };
                                         amount = (double)paymentRequest.StoreCreditAmount;
                                         string endpoint = _momoConfiguration.Api;
