@@ -41,7 +41,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
 
 
         [HttpPost("get-invoice-by-order-id/{orderId}")]
-        //[TokenValidationMiddleware(Permission.PAYMENT)]
+        [TokenValidationMiddleware(Permission.PAYMENT)]
         public async Task<AppActionResult> GetInvoicebyOrderId(Guid orderId)
         {
             return await _service.GetInvoicebyOrderId(orderId);

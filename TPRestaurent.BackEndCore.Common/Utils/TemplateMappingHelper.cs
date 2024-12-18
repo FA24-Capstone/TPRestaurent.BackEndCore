@@ -1690,7 +1690,7 @@ public class TemplateMappingHelper
     }
 
     .header {
-      background-color: #1E88E5;
+      background-color: #AF1815;
       color: #ffffff;
       text-align: center;
       padding: 15px 20px;
@@ -1708,7 +1708,7 @@ public class TemplateMappingHelper
     }
 
     .highlight {
-      color: #1E88E5;
+      color: #AF1815;
       font-weight: bold;
     }
 
@@ -1726,7 +1726,7 @@ public class TemplateMappingHelper
     }
 
     .table th {
-      background-color: #1E88E5;
+      background-color: #AF1815;
       color: #ffffff;
     }
 

@@ -58,7 +58,7 @@ namespace TPRestaurent.BackEndCore.API.Controllers
 
         [HttpPost("update-table-coordinate")]
         [TokenValidationMiddleware(Permission.ADMIN)]
-        //[RemoveCacheAtrribute("table")]
+        //[RemoveCacheAtrribute("/")]
         public async Task<AppActionResult> UpdateTableCoordinates([FromBody] List<TableArrangementResponseItem> request, bool? isForce = false)
         {
             return await _service.UpdateTableCoordinates(request, isForce);
