@@ -1144,6 +1144,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var configurationRepository = Resolve<IGenericRepository<Configuration>>();
                 var tableDetailRepository = Resolve<IGenericRepository<TableDetail>>();
                 var orderRepository = Resolve<IGenericRepository<Order>>();
+                var configurationRespository = Resolve<IGenericRepository<Configuration>>();
                 var hashingService = Resolve<IHashingService>();
                 var utility = Resolve<Utility>();
                 var tableSetUpConfig = await configurationRepository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.TABLE_IS_SET_UP), null);
@@ -1202,7 +1203,14 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
 
                         //Check update table reservation
                         var currentTime = utility.GetCurrentDateTimeInTimeZone();
-                        var tableDetailDb = await tableDetailRepository.GetAllDataByExpression(t => t.Order.MealTime >= currentTime
+                        ///--
+                        var averageDiningTimeConfiguration = await configurationRespository.GetByExpression(c => c.Name.Equals(SD.DefaultValue.AVERAGE_MEAL_DURATION), null);
+                        double averageDiningTime = averageDiningTimeConfiguration != null ? double.Parse(averageDiningTimeConfiguration.CurrentValue) : 1;
+
+                        var tableDetailDb = await tableDetailRepository.GetAllDataByExpression(t => (t.Order.MealTime >= currentTime
+                                                                                                    || (t.Order.EndTime.HasValue && t.Order.EndTime >= currentTime) 
+                                                                                                    || (!t.Order.EndTime.HasValue && t.Order.MealTime.Value.AddHours(averageDiningTime) >= currentTime)
+                                                                                                    )
                                                                                                 && (t.Order.StatusId != OrderStatus.Completed
                                                                                                     || t.Order.StatusId != OrderStatus.Cancelled)
                                                                                                , 0, 0, null, false, t => t.Table);
