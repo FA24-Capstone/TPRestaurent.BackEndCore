@@ -864,7 +864,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 //var tableDetailDb = await tableDetailRepository.GetAllDataByExpression(p => p.OrderId == order.OrderId, 0, 0, null, false, p => p!.Table!, p => p.Table!.Room!, p => p.Table!.TableSize!);
                 //var tableDetail = tableDetailDb!.Items!.FirstOrDefault();
 
-                emailService.SendEmail(accountDb.Email, "THÔNG BÁO HOÀN TIỀN", TemplateMappingHelper.GetTemplateRefundNotification($"{accountDb.LastName} {accountDb.FirstName}", "Tổng hoá đơn nhỏ hơn tiền cọc", refundAmount, refundTransaction.Id));
+                emailService.SendEmail(accountDb.Email, "THÔNG BÁO HOÀN TIỀN", TemplateMappingHelper.GetTemplateRefundNotification($"{accountDb.LastName} {accountDb.FirstName}", "Huỷ đặt bàn", refundAmount, refundTransaction.Id));
 
                 result.Result = refundTransaction;
             }
