@@ -807,8 +807,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var random = new Random();
                 code = random.Next(100000, 999999).ToString();
                 var smsService = Resolve<ISmsService>();
-                var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
-                    phoneNumber);
+                //var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
+                //    phoneNumber);
             }
 
             return code;
@@ -1690,7 +1690,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (updateCustomerInforAddress.IsCurrentUsed == true)
                     {
                         var mainAddressDb = await customerInfoAddressRepository!.GetAllDataByExpression(p =>
-                            p.AccountId == updateCustomerInforAddress.AccountId && p.IsCurrentUsed == true, 0,0, null, false, null);
+                            p.AccountId == updateCustomerInforAddress.AccountId && p.IsCurrentUsed == true && p.CustomerInfoAddressId != customerInfoDb.CustomerInfoAddressId, 0,0, null, false, null);
                         if (mainAddressDb.Items.Count > 0)
                         {
                             var accountDb =
