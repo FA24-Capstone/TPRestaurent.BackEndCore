@@ -807,8 +807,8 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                 var random = new Random();
                 code = random.Next(100000, 999999).ToString();
                 var smsService = Resolve<ISmsService>();
-                //var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
-                //    phoneNumber);
+                var response = await smsService!.SendMessage($"Mã xác thực tại nhà hàng TP là: {code}",
+                    phoneNumber);
             }
 
             return code;
@@ -2208,7 +2208,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 List<string> phones = new List<string>
                 {
-                    "945507865",
+                    "559405312",
                     "366967957",
                     "984135344",
                     "389867608",
