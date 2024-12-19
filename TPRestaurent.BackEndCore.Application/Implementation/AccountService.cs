@@ -1690,7 +1690,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                     if (updateCustomerInforAddress.IsCurrentUsed == true)
                     {
                         var mainAddressDb = await customerInfoAddressRepository!.GetAllDataByExpression(p =>
-                            p.AccountId == updateCustomerInforAddress.AccountId && p.IsCurrentUsed == true, 0,0, null, false, null);
+                            p.AccountId == updateCustomerInforAddress.AccountId && p.IsCurrentUsed == true && p.CustomerInfoAddressId != customerInfoDb.CustomerInfoAddressId, 0,0, null, false, null);
                         if (mainAddressDb.Items.Count > 0)
                         {
                             var accountDb =
@@ -2208,7 +2208,7 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
             {
                 List<string> phones = new List<string>
                 {
-                    "945507865",
+                    "559405312",
                     "366967957",
                     "984135344",
                     "389867608",
