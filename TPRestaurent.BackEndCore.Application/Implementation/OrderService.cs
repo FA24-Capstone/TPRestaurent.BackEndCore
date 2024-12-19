@@ -1260,10 +1260,10 @@ namespace TPRestaurent.BackEndCore.Application.Implementation
                         var restaurantLngConfig = await configurationRepository!.GetByExpression(p => p.Name == SD.DefaultValue.RESTAURANT_LNG);
                         var restaurantMaxDistanceToOrderConfig = await configurationRepository.GetByExpression(p => p.Name == SD.DefaultValue.DISTANCE_ORDER);
 
-                        var customerInfoAddressListDb = await customerInfoAddressRepository!.GetAllDataByExpression(p => p.CustomerInfoAddressName == accountDb.Address, 0, 0, null, false, null);
+                        var customerInfoAddressListDb = await customerInfoAddressRepository!.GetAllDataByExpression(p => p.CustomerInfoAddressName == accountDb.Address && p.IsCurrentUsed && !p.IsDeleted, 0, 0, null, false, null);
                         if (customerInfoAddressListDb.Items.Count == 0)
                         {
-                            throw new Exception($"Không tìm thấy địa chỉ {accountDb.Address}");
+                            throw new Exception($"Không tìm thấy địa chỉ {accountDb.Address} hoặc tài khoản chưa chọn địa chỉ chính để giao hàng.");
                         }
 
                         var customerAddressDb = customerInfoAddressListDb.Items.FirstOrDefault(c => c.IsCurrentUsed && !c.IsDeleted);
